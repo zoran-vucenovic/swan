@@ -1,0 +1,40 @@
+unit UnitInit;
+// Copyright 2022 Zoran Vučenović
+// SPDX-License-Identifier: Apache-2.0
+{
+  Put here anything that might be needed to execute first. Even before some
+  initialization section in other units.
+  So, keep this unit at the top of main unit uses list (above other our units).
+}
+
+{$mode ObjFPC}{$H+}
+
+interface
+
+uses
+  SysUtils;
+
+implementation
+
+function GetAppName: String;
+begin
+  Result := 'Swan'; // Still without a name...
+end;
+
+{ This is for config path }
+function GetVendorName: String;
+begin
+  Result := GetAppName + ' ZX Spectrum Emulator';
+end;
+
+procedure Init;
+begin
+  OnGetApplicationName := @GetAppName;
+  OnGetVendorName := @GetVendorName;
+end;
+
+initialization
+  Init;
+
+end.
+

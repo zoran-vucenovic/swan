@@ -1,0 +1,294 @@
+object FormKeyMappings: TFormKeyMappings
+  Left = 691
+  Height = 747
+  Top = 65
+  Width = 448
+  BorderIcons = [biSystemMenu]
+  Caption = 'Key mapping schemes'
+  ClientHeight = 747
+  ClientWidth = 448
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  LCLVersion = '2.2.5.0'
+  object Panel8: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 0
+    Height = 747
+    Top = 0
+    Width = 448
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BevelOuter = bvNone
+    ClientHeight = 747
+    ClientWidth = 448
+    TabOrder = 0
+    object Panel2: TPanel
+      AnchorSideLeft.Control = Panel8
+      AnchorSideTop.Control = Panel8
+      AnchorSideRight.Control = Panel8
+      AnchorSideRight.Side = asrBottom
+      Left = 6
+      Height = 72
+      Top = 6
+      Width = 436
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = True
+      BorderSpacing.Around = 6
+      BevelOuter = bvNone
+      ClientHeight = 72
+      ClientWidth = 436
+      TabOrder = 0
+      object Panel3: TPanel
+        AnchorSideLeft.Control = Panel2
+        AnchorSideTop.Control = Panel2
+        AnchorSideRight.Control = Panel2
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 24
+        Top = 0
+        Width = 436
+        Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
+        BevelOuter = bvNone
+        ClientHeight = 24
+        ClientWidth = 436
+        TabOrder = 0
+        object ComboBox1: TComboBox
+          AnchorSideLeft.Control = Label1
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = Panel3
+          AnchorSideTop.Side = asrCenter
+          AnchorSideRight.Control = Panel3
+          AnchorSideRight.Side = asrBottom
+          Left = 54
+          Height = 23
+          Top = 1
+          Width = 382
+          Anchors = [akTop, akLeft, akRight]
+          BorderSpacing.Left = 4
+          ItemHeight = 15
+          Style = csDropDownList
+          TabOrder = 0
+        end
+        object Label1: TLabel
+          AnchorSideLeft.Control = Panel3
+          AnchorSideTop.Control = Panel3
+          AnchorSideTop.Side = asrCenter
+          Left = 0
+          Height = 15
+          Top = 5
+          Width = 50
+          Caption = 'Schemes:'
+          ParentColor = False
+        end
+      end
+      object PanelAddRemoveScheme: TPanel
+        AnchorSideLeft.Control = Panel2
+        AnchorSideTop.Control = Panel3
+        AnchorSideTop.Side = asrBottom
+        Left = 0
+        Height = 24
+        Top = 27
+        Width = 24
+        BorderSpacing.Top = 3
+        TabOrder = 1
+      end
+      object Panel1: TPanel
+        AnchorSideLeft.Control = Panel2
+        AnchorSideTop.Control = PanelAddRemoveScheme
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel2
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 21
+        Top = 51
+        Width = 436
+        Anchors = [akTop, akLeft, akRight]
+        ClientHeight = 21
+        ClientWidth = 436
+        TabOrder = 2
+        object Label4: TLabel
+          AnchorSideLeft.Control = Label5
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = Panel1
+          AnchorSideRight.Control = Panel1
+          AnchorSideRight.Side = asrBottom
+          Left = 35
+          Height = 15
+          Top = 1
+          Width = 400
+          Anchors = [akTop, akLeft, akRight]
+          Caption = 'Label4'
+          ParentColor = False
+          ShowAccelChar = False
+          WordWrap = True
+        end
+        object Label5: TLabel
+          AnchorSideLeft.Control = Panel1
+          AnchorSideTop.Control = Panel1
+          Left = 1
+          Height = 15
+          Top = 1
+          Width = 34
+          Caption = 'Label5'
+          Layout = tlBottom
+          ParentColor = False
+        end
+      end
+    end
+    object Panel4: TPanel
+      AnchorSideLeft.Control = Panel8
+      AnchorSideTop.Control = Panel2
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel8
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = ButtonPanel1
+      Left = 0
+      Height = 625
+      Top = 84
+      Width = 448
+      Anchors = [akTop, akLeft, akRight, akBottom]
+      BevelOuter = bvNone
+      ClientHeight = 625
+      ClientWidth = 448
+      TabOrder = 1
+      object Panel5: TPanel
+        AnchorSideLeft.Control = Panel4
+        AnchorSideTop.Control = Panel6
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel4
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 15
+        Top = 65
+        Width = 448
+        Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
+        BorderSpacing.Top = 4
+        BevelOuter = bvNone
+        ClientHeight = 15
+        ClientWidth = 448
+        TabOrder = 1
+        object Label2: TLabel
+          AnchorSideLeft.Control = Panel5
+          AnchorSideTop.Control = Panel5
+          Left = 5
+          Height = 15
+          Top = 0
+          Width = 39
+          BorderSpacing.Left = 5
+          Caption = 'PC key '
+          ParentColor = False
+        end
+        object Label3: TLabel
+          AnchorSideLeft.Control = Label2
+          AnchorSideLeft.Side = asrBottom
+          AnchorSideTop.Control = Panel5
+          Left = 176
+          Height = 15
+          Top = 0
+          Width = 123
+          BorderSpacing.Left = 132
+          Caption = 'maps to Spectrum keys'
+          ParentColor = False
+        end
+      end
+      object Panel6: TPanel
+        AnchorSideLeft.Control = Panel4
+        AnchorSideTop.Control = Bevel2
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel4
+        AnchorSideRight.Side = asrBottom
+        Left = 6
+        Height = 50
+        Top = 9
+        Width = 436
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Around = 6
+        BevelOuter = bvNone
+        TabOrder = 0
+      end
+      object Panel7: TPanel
+        AnchorSideLeft.Control = Panel4
+        AnchorSideTop.Control = Bevel1
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel4
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = Bevel3
+        Left = 0
+        Height = 539
+        Top = 83
+        Width = 448
+        Anchors = [akTop, akLeft, akRight, akBottom]
+        BevelOuter = bvNone
+        TabOrder = 2
+      end
+      object Bevel1: TBevel
+        AnchorSideLeft.Control = Panel4
+        AnchorSideTop.Control = Panel5
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel4
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 3
+        Top = 80
+        Width = 448
+        Anchors = [akTop, akLeft, akRight]
+        Shape = bsBottomLine
+      end
+      object Bevel2: TBevel
+        AnchorSideLeft.Control = Panel4
+        AnchorSideTop.Control = Panel4
+        AnchorSideRight.Control = Panel4
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 3
+        Top = 0
+        Width = 448
+        Anchors = [akTop, akLeft, akRight]
+        Shape = bsBottomLine
+      end
+      object Bevel3: TBevel
+        AnchorSideLeft.Control = Panel4
+        AnchorSideRight.Control = Panel4
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = Panel4
+        AnchorSideBottom.Side = asrBottom
+        Left = 0
+        Height = 3
+        Top = 622
+        Width = 448
+        Anchors = [akLeft, akRight, akBottom]
+        Shape = bsBottomLine
+      end
+    end
+    object ButtonPanel1: TButtonPanel
+      AnchorSideRight.Control = Panel8
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = Panel8
+      AnchorSideBottom.Side = asrBottom
+      Left = 279
+      Height = 26
+      Top = 715
+      Width = 163
+      Align = alNone
+      Anchors = [akRight, akBottom]
+      OKButton.Name = 'OKButton'
+      OKButton.DefaultCaption = True
+      HelpButton.Name = 'HelpButton'
+      HelpButton.DefaultCaption = True
+      CloseButton.Name = 'CloseButton'
+      CloseButton.DefaultCaption = True
+      CancelButton.Name = 'CancelButton'
+      CancelButton.DefaultCaption = True
+      TabOrder = 2
+      ShowButtons = [pbOK, pbCancel]
+      ShowBevel = False
+    end
+  end
+end

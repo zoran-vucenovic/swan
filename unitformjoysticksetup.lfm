@@ -1,0 +1,217 @@
+object FormJoystickSetup: TFormJoystickSetup
+  Left = 256
+  Height = 342
+  Top = 127
+  Width = 446
+  BorderIcons = [biSystemMenu]
+  Caption = 'Joystick options...'
+  ClientHeight = 342
+  ClientWidth = 446
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  LCLVersion = '2.2.5.0'
+  object Panel1: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 0
+    Height = 342
+    Top = 0
+    Width = 446
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    AutoSize = True
+    ClientHeight = 342
+    ClientWidth = 446
+    TabOrder = 0
+    object ButtonPanel1: TButtonPanel
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = Panel1
+      AnchorSideBottom.Side = asrBottom
+      Left = 276
+      Height = 26
+      Top = 309
+      Width = 163
+      Align = alNone
+      Anchors = [akRight, akBottom]
+      BorderSpacing.Top = 8
+      OKButton.Name = 'OKButton'
+      OKButton.DefaultCaption = True
+      HelpButton.Name = 'HelpButton'
+      HelpButton.DefaultCaption = True
+      CloseButton.Name = 'CloseButton'
+      CloseButton.DefaultCaption = True
+      CancelButton.Name = 'CancelButton'
+      CancelButton.DefaultCaption = True
+      TabOrder = 1
+      ShowButtons = [pbOK, pbCancel]
+      ShowBevel = False
+    end
+    object Panel3: TPanel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel6
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = ButtonPanel1
+      Left = 11
+      Height = 202
+      Top = 93
+      Width = 424
+      Anchors = [akTop, akLeft, akRight, akBottom]
+      AutoSize = True
+      BorderSpacing.Around = 10
+      BevelOuter = bvNone
+      BorderStyle = bsSingle
+      ClientHeight = 198
+      ClientWidth = 420
+      TabOrder = 0
+      object Panel2: TPanel
+        AnchorSideLeft.Control = Panel3
+        AnchorSideTop.Control = Panel4
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Side = asrBottom
+        Left = 14
+        Height = 180
+        Top = 32
+        Width = 381
+        BorderSpacing.Around = 14
+        TabOrder = 1
+      end
+      object Panel4: TPanel
+        AnchorSideLeft.Control = Panel3
+        AnchorSideTop.Control = Panel3
+        AnchorSideRight.Control = Panel3
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 18
+        Top = 0
+        Width = 420
+        Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
+        BevelOuter = bvNone
+        ClientHeight = 18
+        ClientWidth = 420
+        TabOrder = 0
+        object Label1: TLabel
+          AnchorSideLeft.Control = Panel4
+          AnchorSideTop.Control = Panel4
+          Left = 3
+          Height = 15
+          Top = 3
+          Width = 78
+          BorderSpacing.Left = 3
+          BorderSpacing.Top = 3
+          BorderSpacing.Right = 3
+          Caption = 'Key mappings:'
+          ParentColor = False
+        end
+      end
+    end
+    object Panel5: TPanel
+      AnchorSideLeft.Control = Panel3
+      AnchorSideTop.Control = Panel1
+      AnchorSideRight.Control = Panel3
+      AnchorSideRight.Side = asrBottom
+      Left = 11
+      Height = 24
+      Top = 7
+      Width = 424
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = True
+      BorderSpacing.Top = 6
+      BevelOuter = bvNone
+      ClientHeight = 24
+      ClientWidth = 424
+      TabOrder = 2
+      object ComboBox1: TComboBox
+        AnchorSideLeft.Control = Label4
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel5
+        AnchorSideTop.Side = asrCenter
+        Left = 31
+        Height = 23
+        Top = 1
+        Width = 254
+        BorderSpacing.Left = 4
+        ItemHeight = 15
+        Style = csDropDownList
+        TabOrder = 0
+      end
+      object CheckBox1: TCheckBox
+        AnchorSideLeft.Control = ComboBox1
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel5
+        AnchorSideTop.Side = asrCenter
+        Left = 336
+        Height = 19
+        Top = 3
+        Width = 62
+        BorderSpacing.Left = 51
+        Caption = 'Enabled'
+        TabOrder = 1
+      end
+      object Label4: TLabel
+        AnchorSideLeft.Control = Panel5
+        AnchorSideTop.Control = Panel5
+        AnchorSideTop.Side = asrCenter
+        Left = 0
+        Height = 15
+        Top = 5
+        Width = 27
+        Caption = 'Type:'
+        ParentColor = False
+      end
+    end
+    object Panel6: TPanel
+      AnchorSideLeft.Control = Panel3
+      AnchorSideTop.Control = Panel5
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel3
+      AnchorSideRight.Side = asrBottom
+      Left = 11
+      Height = 50
+      Top = 33
+      Width = 424
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Top = 2
+      BevelOuter = bvNone
+      ClientHeight = 50
+      ClientWidth = 424
+      TabOrder = 3
+      object Label2: TLabel
+        AnchorSideLeft.Control = Label3
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel6
+        AnchorSideRight.Control = Panel6
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Side = asrBottom
+        Left = 34
+        Height = 15
+        Top = 0
+        Width = 390
+        Anchors = [akTop, akLeft, akRight]
+        Caption = 'Label2 '
+        ParentColor = False
+        ShowAccelChar = False
+        WordWrap = True
+      end
+      object Label3: TLabel
+        AnchorSideLeft.Control = Panel6
+        AnchorSideTop.Control = Panel6
+        Left = 0
+        Height = 15
+        Top = 0
+        Width = 34
+        Caption = 'Label3'
+        ParentColor = False
+      end
+    end
+  end
+end

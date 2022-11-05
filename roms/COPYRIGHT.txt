@@ -1,0 +1,3 @@
+The file 48.rom is the image of original rom from ZX Spectrum 48K.
+Amstrad holds the copyright to this rom image, but kindly gave the permission to distribute this copyrighted material.
+https://groups.google.com/g/comp.sys.amstrad.8bit/c/HtpBU2Bzv_U/m/HhNDSU3MksAJ

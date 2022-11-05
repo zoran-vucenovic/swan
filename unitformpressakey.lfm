@@ -1,0 +1,32 @@
+object FormPressAKey: TFormPressAKey
+  Left = 306
+  Height = 106
+  Top = 128
+  Width = 251
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'Press a key'
+  ClientHeight = 106
+  ClientWidth = 251
+  Font.CharSet = EASTEUROPE_CHARSET
+  Font.Height = -21
+  Font.Pitch = fpVariable
+  Font.Quality = fqDraft
+  KeyPreview = True
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnKeyDown = FormKeyDown
+  OnShow = FormShow
+  LCLVersion = '2.2.5.0'
+  object Label1: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    Left = 27
+    Height = 30
+    Top = 27
+    Width = 172
+    BorderSpacing.Around = 27
+    Caption = 'Press a key, please'
+    ParentColor = False
+  end
+end

@@ -1,0 +1,136 @@
+object FormBrowseTape: TFormBrowseTape
+  Left = 235
+  Height = 607
+  Top = 61
+  Width = 717
+  BorderIcons = [biSystemMenu]
+  Caption = 'FormBrowseTape'
+  ClientHeight = 607
+  ClientWidth = 717
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  LCLVersion = '2.2.5.0'
+  object Panel3: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 0
+    Height = 607
+    Top = 0
+    Width = 717
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BevelOuter = bvNone
+    ClientHeight = 607
+    ClientWidth = 717
+    TabOrder = 0
+    object Panel1: TPanel
+      AnchorSideLeft.Control = Panel3
+      AnchorSideTop.Control = Panel3
+      AnchorSideRight.Control = Panel3
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 21
+      Top = 0
+      Width = 717
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = True
+      BevelOuter = bvNone
+      ClientHeight = 21
+      ClientWidth = 717
+      TabOrder = 0
+      object Label1: TLabel
+        AnchorSideLeft.Control = Panel1
+        AnchorSideTop.Control = Panel1
+        AnchorSideTop.Side = asrCenter
+        Left = 3
+        Height = 15
+        Top = 3
+        Width = 34
+        BorderSpacing.Around = 3
+        Caption = 'Label1'
+        ParentColor = False
+      end
+      object Label2: TLabel
+        AnchorSideLeft.Control = Label1
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel1
+        AnchorSideTop.Side = asrCenter
+        Left = 40
+        Height = 15
+        Top = 3
+        Width = 34
+        Caption = 'Label2'
+        ParentColor = False
+      end
+    end
+    object Panel2: TPanel
+      AnchorSideLeft.Control = Panel3
+      AnchorSideTop.Control = Panel5
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel3
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = Panel3
+      AnchorSideBottom.Side = asrBottom
+      Left = 0
+      Height = 540
+      Top = 67
+      Width = 717
+      Anchors = [akTop, akLeft, akRight, akBottom]
+      BevelOuter = bvNone
+      TabOrder = 1
+    end
+    object Panel4: TPanel
+      AnchorSideLeft.Control = Panel3
+      AnchorSideTop.Control = Panel1
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel3
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 27
+      Top = 21
+      Width = 717
+      Anchors = [akTop, akLeft, akRight]
+      BevelOuter = bvNone
+      TabOrder = 2
+    end
+    object Panel5: TPanel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel4
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 19
+      Top = 48
+      Width = 717
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = True
+      BevelOuter = bvNone
+      ClientHeight = 19
+      ClientWidth = 717
+      TabOrder = 3
+      object CheckBox1: TCheckBox
+        AnchorSideTop.Control = Panel5
+        AnchorSideRight.Control = Panel5
+        AnchorSideRight.Side = asrBottom
+        Left = 585
+        Height = 19
+        Hint = 'When playing, selection follows the current block'
+        Top = 0
+        Width = 129
+        Anchors = [akTop, akRight]
+        BorderSpacing.Right = 3
+        Caption = 'Follow playing block'
+        OnChange = CheckBox1Change
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 0
+      end
+    end
+  end
+end

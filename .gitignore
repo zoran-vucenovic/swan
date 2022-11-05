@@ -1,0 +1,8 @@
+*.lps
+*.res
+*.exe
+*.ppu
+*.o
+*.obj
+*.bak
+output/

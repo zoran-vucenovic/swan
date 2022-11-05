@@ -1,0 +1,126 @@
+object FormInputLibraryPath: TFormInputLibraryPath
+  Left = 256
+  Height = 130
+  Top = 127
+  Width = 362
+  BorderStyle = bsDialog
+  Caption = 'FormInputLibraryPath'
+  ClientHeight = 130
+  ClientWidth = 362
+  OnCreate = FormCreate
+  LCLVersion = '2.2.5.0'
+  object Panel2: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Side = asrBottom
+    Left = 0
+    Height = 105
+    Top = 0
+    Width = 361
+    AutoSize = True
+    BevelOuter = bvNone
+    ClientHeight = 105
+    ClientWidth = 361
+    TabOrder = 0
+    object Panel1: TPanel
+      AnchorSideLeft.Control = Panel2
+      AnchorSideTop.Control = Panel2
+      Left = 12
+      Height = 43
+      Top = 12
+      Width = 337
+      AutoSize = True
+      BorderSpacing.Around = 12
+      BevelOuter = bvNone
+      ClientHeight = 43
+      ClientWidth = 337
+      TabOrder = 0
+      object Label1: TLabel
+        Left = 0
+        Height = 15
+        Top = 0
+        Width = 132
+        Caption = 'Path to portaudio library:'
+        ParentColor = False
+      end
+      object Edit1: TEdit
+        AnchorSideLeft.Control = Label1
+        AnchorSideTop.Control = Label1
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 23
+        Top = 20
+        Width = 337
+        BorderSpacing.Top = 5
+        TabOrder = 0
+        Text = 'Edit1'
+      end
+      object Panel3: TPanel
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Edit1
+        AnchorSideRight.Control = Edit1
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = Edit1
+        AnchorSideBottom.Side = asrBottom
+        Left = 301
+        Height = 21
+        Top = 21
+        Width = 35
+        Anchors = [akTop, akRight, akBottom]
+        AutoSize = True
+        BorderSpacing.Around = 1
+        BevelOuter = bvNone
+        ClientHeight = 21
+        ClientWidth = 35
+        TabOrder = 1
+        object BitBtn1: TBitBtn
+          AnchorSideLeft.Control = Panel3
+          AnchorSideTop.Control = Panel3
+          AnchorSideBottom.Control = Panel3
+          AnchorSideBottom.Side = asrBottom
+          Left = 0
+          Height = 21
+          Top = 0
+          Width = 35
+          Anchors = [akTop, akLeft, akBottom]
+          AutoSize = True
+          Caption = '...'
+          OnClick = BitBtn1Click
+          TabOrder = 0
+        end
+      end
+    end
+    object ButtonPanel1: TButtonPanel
+      AnchorSideTop.Control = Panel1
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel2
+      AnchorSideRight.Side = asrBottom
+      Left = 190
+      Height = 26
+      Top = 71
+      Width = 163
+      Align = alNone
+      Anchors = [akTop, akRight]
+      BorderSpacing.Top = 16
+      BorderSpacing.Right = 8
+      BorderSpacing.Bottom = 8
+      BorderSpacing.Around = 0
+      OKButton.Name = 'OKButton'
+      OKButton.DefaultCaption = True
+      HelpButton.Name = 'HelpButton'
+      HelpButton.DefaultCaption = True
+      CloseButton.Name = 'CloseButton'
+      CloseButton.DefaultCaption = True
+      CancelButton.Name = 'CancelButton'
+      CancelButton.DefaultCaption = True
+      TabOrder = 1
+      ShowButtons = [pbOK, pbCancel]
+      ShowBevel = False
+    end
+  end
+  object OpenDialog1: TOpenDialog
+    Left = 80
+  end
+end

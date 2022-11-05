@@ -1,0 +1,431 @@
+object Form1: TForm1
+  AnchorSideBottom.Side = asrBottom
+  Left = 88
+  Height = 215
+  Top = 134
+  Width = 443
+  BorderIcons = [biSystemMenu, biMinimize]
+  BorderStyle = bsSingle
+  Caption = 'Form1'
+  ClientHeight = 195
+  ClientWidth = 443
+  Color = clWhite
+  DoubleBuffered = True
+  KeyPreview = True
+  Menu = MainMenu1
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnDeactivate = FormDeactivate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  ParentDoubleBuffered = False
+  LCLVersion = '2.2.5.0'
+  object PaintBox1: TPaintBox
+    AnchorSideLeft.Control = Owner
+    AnchorSideBottom.Control = PanelStatus
+    Left = 0
+    Height = 105
+    Top = 66
+    Width = 105
+    Anchors = [akLeft, akBottom]
+  end
+  object PanelStatus: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 0
+    Height = 24
+    Top = 171
+    Width = 443
+    Anchors = [akLeft, akRight, akBottom]
+    AutoSize = True
+    BevelInner = bvLowered
+    BevelOuter = bvNone
+    ClientHeight = 24
+    ClientWidth = 443
+    TabOrder = 0
+    object SpeedButton1: TSpeedButton
+      AnchorSideRight.Control = PanelStatus
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = PanelStatus
+      AnchorSideBottom.Side = asrBottom
+      Left = 419
+      Height = 22
+      Top = 1
+      Width = 23
+      Anchors = [akRight, akBottom]
+      Flat = True
+      Images = DataModuleImages.ImageList1
+      OnClick = SpeedButton1Click
+    end
+    object Panel1: TPanel
+      AnchorSideLeft.Control = PanelStatus
+      AnchorSideTop.Control = PanelStatus
+      AnchorSideBottom.Control = PanelStatus
+      AnchorSideBottom.Side = asrBottom
+      Left = 1
+      Height = 19
+      Top = 1
+      Width = 38
+      AutoSize = True
+      BevelOuter = bvNone
+      ClientHeight = 19
+      ClientWidth = 38
+      TabOrder = 0
+      object Label1: TLabel
+        AnchorSideLeft.Control = Panel1
+        AnchorSideTop.Control = Panel1
+        Left = 2
+        Height = 15
+        Top = 2
+        Width = 34
+        BorderSpacing.Around = 2
+        Caption = 'Label1'
+        ParentColor = False
+      end
+    end
+    object Panel2: TPanel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = PanelStatus
+      AnchorSideBottom.Control = PanelStatus
+      AnchorSideBottom.Side = asrBottom
+      Left = 39
+      Height = 19
+      Top = 1
+      Width = 38
+      AutoSize = True
+      BevelOuter = bvNone
+      ClientHeight = 19
+      ClientWidth = 38
+      TabOrder = 1
+      object Label2: TLabel
+        AnchorSideLeft.Control = Panel2
+        AnchorSideTop.Control = Panel2
+        Left = 2
+        Height = 15
+        Top = 2
+        Width = 34
+        BorderSpacing.Around = 2
+        Caption = 'Label2'
+        ParentColor = False
+      end
+    end
+  end
+  object ActionList1: TActionList
+    Images = DataModuleImages.ImageList1
+    Left = 197
+    Top = 48
+    object ActionExit: TAction
+      Category = 'File'
+      Caption = '&Exit'
+      OnExecute = ActionExitExecute
+    end
+    object ActionPause: TAction
+      Category = 'Emulation'
+      Caption = 'Pause'
+      ImageIndex = 2
+      OnExecute = ActionPauseExecute
+      SecondaryShortCuts.Strings = (
+        'Break'
+      )
+      ShortCut = 119
+    end
+    object ActionSpeedIncrease: TAction
+      Category = 'Emulation'
+      Caption = 'Increase speed'
+      OnExecute = ActionSpeedIncreaseExecute
+      ShortCut = 121
+    end
+    object ActionSpeedDecrease: TAction
+      Category = 'Emulation'
+      Caption = 'Decrease speed'
+      OnExecute = ActionSpeedDecreaseExecute
+      ShortCut = 120
+    end
+    object ActionNormalSpeed: TAction
+      Category = 'Emulation'
+      Caption = 'Normal speed'
+      ImageIndex = 12
+      OnExecute = ActionNormalSpeedExecute
+      ShortCut = 122
+    end
+    object ActionFullSpeed: TAction
+      Category = 'Emulation'
+      Caption = 'Full speed'
+      ImageIndex = 13
+      OnExecute = ActionFullSpeedExecute
+      ShortCut = 123
+    end
+    object ActionSizeIncrease: TAction
+      Category = 'Options'
+      Caption = 'Increase size'
+      ImageIndex = 8
+      OnExecute = ActionSizeIncreaseExecute
+      ShortCut = 33
+    end
+    object ActionSizeDecrease: TAction
+      Category = 'Options'
+      Caption = 'Decrease size'
+      ImageIndex = 9
+      OnExecute = ActionSizeDecreaseExecute
+      ShortCut = 34
+    end
+    object ActionReset: TAction
+      Category = 'Emulation'
+      Caption = 'Reset Spectrum'
+      ImageIndex = 11
+      OnExecute = ActionResetExecute
+    end
+    object ActionOpen: TAction
+      Category = 'File'
+      Caption = '&Open...'
+      ImageIndex = 0
+      OnExecute = ActionOpenExecute
+      ShortCut = 113
+    end
+    object ActionColours: TAction
+      Category = 'Options'
+      Caption = 'Colour palette...'
+      ImageIndex = 5
+      OnExecute = ActionColoursExecute
+    end
+    object ActionSaveZ80: TAction
+      Category = 'File'
+      Caption = 'Save &z80 snapshot...'
+      ImageIndex = 15
+      OnExecute = ActionSaveZ80Execute
+    end
+    object ActionSaveSna: TAction
+      Category = 'File'
+      Caption = 'Save &sna snapshot...'
+      ImageIndex = 15
+      OnExecute = ActionSaveSnaExecute
+    end
+    object ActionAbout: TAction
+      Category = 'Help'
+      Caption = '&About...'
+      ImageIndex = 7
+      OnExecute = ActionAboutExecute
+    end
+    object ActionShowDebugger: TAction
+      Category = 'Debug'
+      Caption = 'Debugger...'
+      OnExecute = ActionShowDebuggerExecute
+    end
+    object ActionAttachTap: TAction
+      Category = 'Tape'
+      Caption = 'Insert tape...'
+      Hint = 'Insert a tape...'
+      ImageIndex = 10
+      OnExecute = ActionAttachTapExecute
+    end
+    object ActionPlay: TAction
+      Category = 'Tape'
+      Caption = 'Play'
+      Hint = 'Play the tape'
+      ImageIndex = 1
+      OnExecute = ActionPlayExecute
+    end
+    object ActionShowTapePlayer: TAction
+      Category = 'Tape'
+      Caption = 'Show tape player...'
+      OnExecute = ActionShowTapePlayerExecute
+    end
+    object ActionRewind: TAction
+      Category = 'Tape'
+      Caption = 'Rewind'
+      Hint = 'Rewind to beginning'
+      ImageIndex = 4
+      OnExecute = ActionRewindExecute
+    end
+    object ActionStop: TAction
+      Category = 'Tape'
+      Caption = 'Stop'
+      Hint = 'Stop the tape'
+      ImageIndex = 3
+      OnExecute = ActionStopExecute
+    end
+    object ActionIncTapeBlock: TAction
+      Category = 'Tape'
+      Caption = 'Next block'
+      Hint = 'Go to next block'
+      ImageIndex = 6
+      OnExecute = ActionIncTapeBlockExecute
+    end
+    object ActionKeyMappings: TAction
+      Category = 'Options'
+      Caption = 'Key Mappings...'
+      OnExecute = ActionKeyMappingsExecute
+    end
+    object ActionJoystick: TAction
+      Category = 'Options'
+      Caption = 'Joystick...'
+      OnExecute = ActionJoystickExecute
+    end
+    object ActionDecTapeBlock: TAction
+      Category = 'Tape'
+      Caption = 'Previous block'
+      Hint = 'Go to previous block'
+      ImageIndex = 14
+      OnExecute = ActionDecTapeBlockExecute
+    end
+    object ActionEnableJoystick: TAction
+      Category = 'Options'
+      Caption = 'Joystick enabled'
+      OnExecute = ActionEnableJoystickExecute
+    end
+    object ActionEjectTape: TAction
+      Category = 'Tape'
+      Caption = 'Eject'
+      Hint = 'Eject the tape'
+      ImageIndex = 16
+      OnExecute = ActionEjectTapeExecute
+    end
+    object ActionDontDrawScreenWhenLoading: TAction
+      Category = 'Options'
+      Caption = 'Don''t draw screen while tape is running'
+      OnExecute = ActionDontDrawScreenWhenLoadingExecute
+    end
+    object ActionMuteSound: TAction
+      Category = 'Options'
+      Caption = 'Mute sound'
+      OnExecute = ActionMuteSoundExecute
+    end
+    object ActionPortAudioLibPath: TAction
+      Category = 'Options'
+      Caption = 'Portaudio library path...'
+      OnExecute = ActionPortAudioLibPathExecute
+    end
+  end
+  object MainMenu1: TMainMenu
+    Images = DataModuleImages.ImageList1
+    Left = 54
+    Top = 36
+    object MenuItem16: TMenuItem
+      Caption = '&File'
+      object MenuItem17: TMenuItem
+        Action = ActionOpen
+      end
+      object MenuItem13: TMenuItem
+        Action = ActionSaveZ80
+      end
+      object MenuItem18: TMenuItem
+        Action = ActionSaveSna
+      end
+      object MenuItem23: TMenuItem
+        Caption = '-'
+      end
+      object MenuItem24: TMenuItem
+        Action = ActionExit
+      end
+    end
+    object MenuItem3: TMenuItem
+      Caption = '&Emulation'
+      object MenuItem4: TMenuItem
+        Action = ActionPause
+      end
+      object MenuItem12: TMenuItem
+        Action = ActionReset
+      end
+      object MenuItem5: TMenuItem
+        Action = ActionSpeedDecrease
+      end
+      object MenuItem6: TMenuItem
+        Action = ActionSpeedIncrease
+      end
+      object MenuItem7: TMenuItem
+        Action = ActionNormalSpeed
+      end
+      object MenuItem8: TMenuItem
+        Action = ActionFullSpeed
+      end
+    end
+    object MenuItem14: TMenuItem
+      Caption = '&Options'
+      object MenuItem26: TMenuItem
+        Action = ActionSizeIncrease
+      end
+      object MenuItem27: TMenuItem
+        Action = ActionSizeDecrease
+      end
+      object MenuItem15: TMenuItem
+        Action = ActionColours
+      end
+      object MenuItem10: TMenuItem
+        Action = ActionKeyMappings
+      end
+      object MenuItem36: TMenuItem
+        Action = ActionMuteSound
+      end
+      object MenuItem37: TMenuItem
+        Action = ActionPortAudioLibPath
+      end
+      object MenuItem11: TMenuItem
+        Action = ActionJoystick
+      end
+      object MenuItem33: TMenuItem
+        Action = ActionEnableJoystick
+      end
+      object MenuItem35: TMenuItem
+        Action = ActionDontDrawScreenWhenLoading
+      end
+    end
+    object MenuItem1: TMenuItem
+      Caption = '&Tape'
+      object MenuItem30: TMenuItem
+        Action = ActionShowTapePlayer
+      end
+      object Separator1: TMenuItem
+        Caption = '-'
+      end
+      object MenuItem2: TMenuItem
+        Action = ActionAttachTap
+      end
+      object MenuItem34: TMenuItem
+        Action = ActionEjectTape
+      end
+      object MenuItem25: TMenuItem
+        Action = ActionPlay
+      end
+      object MenuItem29: TMenuItem
+        Action = ActionStop
+      end
+      object MenuItem28: TMenuItem
+        Action = ActionRewind
+      end
+      object MenuItem32: TMenuItem
+        Action = ActionDecTapeBlock
+      end
+      object MenuItem9: TMenuItem
+        Action = ActionIncTapeBlock
+      end
+    end
+    object MenuItem21: TMenuItem
+      Caption = '&Debug'
+      object MenuItem22: TMenuItem
+        Action = ActionShowDebugger
+      end
+      object MenuItem31: TMenuItem
+        Caption = 'Pokes...'
+      end
+    end
+    object MenuItem19: TMenuItem
+      Caption = 'Help'
+      object MenuItem20: TMenuItem
+        Action = ActionAbout
+      end
+    end
+  end
+  object OpenDialog1: TOpenDialog
+    Filter = 'snapshot files (sna, z80)|*.sna;*.z80|sna|*.sna|z80|*.z80'
+    Left = 133
+    Top = 25
+  end
+  object SaveDialog1: TSaveDialog
+    Left = 115
+    Top = 85
+  end
+end

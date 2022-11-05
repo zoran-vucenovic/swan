@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectOptions>
+    <Version Value="12"/>
+    <PathDelim Value="\"/>
+    <General>
+      <Flags>
+        <MainUnitHasTitleStatement Value="False"/>
+      </Flags>
+      <SessionStorage Value="InProjectDir"/>
+      <AutoCreateForms Value="False"/>
+      <Title Value="swan"/>
+      <Scaled Value="True"/>
+      <ResourceType Value="res"/>
+      <UseXPManifest Value="True"/>
+      <Icon Value="0"/>
+      <Resources Count="1">
+        <Resource_0 FileName="roms\48.rom" Type="RCDATA" ResourceName="SPECTRUM48_ROM"/>
+      </Resources>
+    </General>
+    <VersionInfo>
+      <UseVersionInfo Value="True"/>
+      <AutoIncrementBuild Value="True"/>
+      <MinorVersionNr Value="9"/>
+      <BuildNr Value="4502"/>
+      <StringTable FileDescription="Swan - ZX Spectrum emulator" LegalCopyright="Copyright 2022 Zoran Vučenović" OriginalFilename="Swan" ProductName="Swan - ZX Spectrum emulator" ProductVersion="0.9.0"/>
+    </VersionInfo>
+    <BuildModes>
+      <Item Name="Release" Default="True"/>
+      <Item Name="ReleaseWin64">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <PathDelim Value="\"/>
+          <Target>
+            <Filename Value="$MakeDir($(ProjPath))$MakeDir(output)$MakeDir($(TargetCPU)-$(TargetOS)-$(BuildMode))$MakeExe($NameOnly($(ProjFile)))" ApplyConventions="False"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir)"/>
+            <UnitOutputDirectory Value="$MakeDir($(ProjPath))$MakeDir(output)$MakeDir(lib)$MakeDir($(TargetCPU)-$(TargetOS)-$(BuildMode))"/>
+          </SearchPaths>
+          <CodeGeneration>
+            <TargetCPU Value="x86_64"/>
+            <TargetOS Value="win64"/>
+            <Optimizations>
+              <OptimizationLevel Value="0"/>
+            </Optimizations>
+          </CodeGeneration>
+          <Linking>
+            <Debugging>
+              <GenerateDebugInfo Value="False"/>
+              <DebugInfoType Value="dsDwarf3"/>
+            </Debugging>
+            <Options>
+              <Win32>
+                <GraphicApplication Value="True"/>
+              </Win32>
+            </Options>
+          </Linking>
+          <Other>
+            <CustomOptions Value="-dUseCThreads"/>
+          </Other>
+        </CompilerOptions>
+      </Item>
+      <Item Name="ReleaseQt">
+        <MacroValues Count="1">
+          <Macro2 Name="LCLWidgetType" Value="qt5"/>
+        </MacroValues>
+        <CompilerOptions>
+          <Version Value="11"/>
+          <PathDelim Value="\"/>
+          <Target>
+            <Filename Value="$MakeDir($(ProjPath))$MakeDir(output)$MakeDir($(TargetCPU)-$(TargetOS)-$(BuildMode))$MakeExe($NameOnly($(ProjFile)))" ApplyConventions="False"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir)"/>
+            <UnitOutputDirectory Value="$MakeDir($(ProjPath))$MakeDir(output)$MakeDir(lib)$MakeDir($(TargetCPU)-$(TargetOS)-$(BuildMode))"/>
+          </SearchPaths>
+          <CodeGeneration>
+            <Optimizations>
+              <OptimizationLevel Value="0"/>
+            </Optimizations>
+          </CodeGeneration>
+          <Linking>
+            <Debugging>
+              <GenerateDebugInfo Value="False"/>
+              <DebugInfoType Value="dsDwarf3"/>
+            </Debugging>
+            <Options>
+              <Win32>
+                <GraphicApplication Value="True"/>
+              </Win32>
+            </Options>
+          </Linking>
+          <Other>
+            <CustomOptions Value="-dUseCThreads"/>
+          </Other>
+        </CompilerOptions>
+      </Item>
+      <Item Name="Debug">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <PathDelim Value="\"/>
+          <Target>
+            <Filename Value="$MakeDir($(ProjPath))$MakeDir(output)$MakeDir($(TargetCPU)-$(TargetOS)-$(BuildMode))$MakeExe($NameOnly($(ProjFile)))" ApplyConventions="False"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir)"/>
+            <UnitOutputDirectory Value="$MakeDir($(ProjPath))$MakeDir(output)$MakeDir(lib)$MakeDir($(TargetCPU)-$(TargetOS)-$(BuildMode))"/>
+          </SearchPaths>
+          <CodeGeneration>
+            <Checks>
+              <IOChecks Value="True"/>
+              <RangeChecks Value="True"/>
+              <OverflowChecks Value="True"/>
+              <StackChecks Value="True"/>
+            </Checks>
+            <Optimizations>
+              <OptimizationLevel Value="0"/>
+            </Optimizations>
+          </CodeGeneration>
+          <Linking>
+            <Debugging>
+              <DebugInfoType Value="dsDwarf3"/>
+              <UseHeaptrc Value="True"/>
+            </Debugging>
+            <Options>
+              <Win32>
+                <GraphicApplication Value="True"/>
+              </Win32>
+            </Options>
+          </Linking>
+          <Other>
+            <CustomOptions Value="-dDebugging
+-dUseCThreads"/>
+          </Other>
+        </CompilerOptions>
+      </Item>
+      <SharedMatrixOptions Count="3">
+        <Item1 ID="576288293047" Modes="ReleaseWin64,Release,ReleaseQt" Value="-XX -CX -Xs -O2"/>
+        <Item2 ID="444597910501" Modes="ReleaseQt" Type="IDEMacro" MacroName="LCLWidgetType" Value="qt5"/>
+        <Item3 ID="154215021068" Modes="Debug" Value="-gw3 -gl"/>
+      </SharedMatrixOptions>
+    </BuildModes>
+    <PublishOptions>
+      <Version Value="2"/>
+      <UseFileFilters Value="True"/>
+    </PublishOptions>
+    <RunParams>
+      <FormatVersion Value="2"/>
+    </RunParams>
+    <RequiredPackages>
+      <Item>
+        <PackageName Value="BGRABitmapPack"/>
+      </Item>
+      <Item>
+        <PackageName Value="LCL"/>
+      </Item>
+    </RequiredPackages>
+    <Units>
+      <Unit>
+        <Filename Value="swan.lpr"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unit1.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="Form1"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+      </Unit>
+      <Unit>
+        <Filename Value="z80processor.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Z80Processor"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitmemory.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitMemory"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitspectrum.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitSpectrum"/>
+      </Unit>
+      <Unit>
+        <Filename Value="debugform.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormDebug"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="DebugForm"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitframeworddisplay.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameWordDisplay"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitFrameWordDisplay"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitfilesna.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitFileSna"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitspectrumkeyboard.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitSpectrumKeyboard"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitver.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitVer"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitconfigs.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitConfigs"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unittzxplayer.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitTzxPlayer"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitformbrowser.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormBrowseTape"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitFormBrowser"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitcolourpalette.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameColourPalette3"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitColourPalette"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitspectrumcolourmap.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitSpectrumColourMap"/>
+      </Unit>
+      <Unit>
+        <Filename Value="commonfunctionslcl.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="CommonFunctionsLCL"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitkeymaps.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitKeyMaps"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitspectrumcoloursbgra.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitSpectrumColoursBGRA"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitkeymaprecords.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitKeyMapRecords"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitframeonekeymap.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameOnePCKeyMapping"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitFrameOneKeyMap"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitformkeymappings.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormKeyMappings"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitFormKeyMappings"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitspectrumkeysdialog.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormSpectrumKeysDialog"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitSpectrumKeysDialog"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitformpressakey.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormPressAKey"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitFormPressAKey"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitcommon.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitCommon"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitcommonspectrum.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitCommonSpectrum"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitjoystick.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitJoystick"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitformjoysticksetup.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormJoystickSetup"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitFormJoystickSetup"/>
+      </Unit>
+      <Unit>
+        <Filename Value="aboutbox.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormAbout"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="AboutBox"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitcolourfunctions.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitColourFunctions"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitdatamoduleimages.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="DataModuleImages"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="DataModule"/>
+        <UnitName Value="UnitDataModuleImages"/>
+      </Unit>
+      <Unit>
+        <Filename Value="portaudioheader.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="PortAudioHeader"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitbeeper.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitBeeper"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitsoundvolume.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormSoundVolume"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="unitSoundVolume"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitinit.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitInit"/>
+      </Unit>
+      <Unit>
+        <Filename Value="fastintegers.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="FastIntegers"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitinputlibrarypathdialog.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormInputLibraryPath"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitInputLibraryPathDialog"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock2a.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock2b.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock5a.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock10.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock11.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock11abstract.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock12.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock13.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock14.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock15.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock16.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock17.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock18.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock19.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock20.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock21.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock22.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock23.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock24.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock25.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock26.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock27.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock28.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock30.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock31.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock32.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock33.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock34.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock35.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblock40.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblocks.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblockstandard.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tzxblockunsupported.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="zxinc.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+    </Units>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="11"/>
+    <PathDelim Value="\"/>
+    <Target>
+      <Filename Value="$MakeDir($(ProjPath))$MakeDir(output)$MakeDir($(TargetCPU)-$(TargetOS)-$(BuildMode))$MakeExe($NameOnly($(ProjFile)))" ApplyConventions="False"/>
+    </Target>
+    <SearchPaths>
+      <IncludeFiles Value="$(ProjOutDir)"/>
+      <UnitOutputDirectory Value="$MakeDir($(ProjPath))$MakeDir(output)$MakeDir(lib)$MakeDir($(TargetCPU)-$(TargetOS)-$(BuildMode))"/>
+    </SearchPaths>
+    <CodeGeneration>
+      <Optimizations>
+        <OptimizationLevel Value="0"/>
+      </Optimizations>
+    </CodeGeneration>
+    <Linking>
+      <Debugging>
+        <GenerateDebugInfo Value="False"/>
+        <DebugInfoType Value="dsDwarf3"/>
+      </Debugging>
+      <Options>
+        <Win32>
+          <GraphicApplication Value="True"/>
+        </Win32>
+      </Options>
+    </Linking>
+    <Other>
+      <CustomOptions Value="-dUseCThreads"/>
+    </Other>
+  </CompilerOptions>
+</CONFIG>
