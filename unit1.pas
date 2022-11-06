@@ -138,6 +138,7 @@ type
     const
       cSection0 = 'f1';
       cSectionSkipWriteScr = 'skip_scr_upd_when_tape_playing';
+      cSectionScreenSizeFactor = 'screen_size_factor';
       cSectionSoundVolume = 'sound_volume';
       cSectionSoundMuted = 'sound_muted';
       cSectionPortAudioLibPath32 = 'portaudio_lib_path32';
@@ -898,6 +899,7 @@ begin
   JObj := TConfJSON.GetJSONObject(cSection0);
   N := GetSoundVolume;
   if Assigned(JObj) then begin
+    SetScreenSizeFactor(JObj.Get(cSectionScreenSizeFactor, Integer(1)));
     FLastFilePath := '';
     FLastFilePath := JObj.Get(cSectionLastFilePath, FLastFilePath);
     FSkipWriteScreen := JObj.Get(cSectionSkipWriteScr, Integer(0)) <> 0;
@@ -942,6 +944,7 @@ begin
     N := 0;
   JObj := TJSONObject.Create;
   try
+    JObj.Add(cSectionScreenSizeFactor, ScreenSizeFactor);
     JObj.Add(cSectionSkipWriteScr, N);
 
     N := GetSoundVolume;
