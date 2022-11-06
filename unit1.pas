@@ -1480,9 +1480,8 @@ procedure TForm1.UpdateScreenSizeFactor;
 begin
   PaintBox1.ClientWidth := WholeScreenWidth * ScreenSizeFactor;
   PaintBox1.ClientHeight := WholeScreenHeight * ScreenSizeFactor;
-  //DrawingRect := Rect(0, 0, WholeScreenWidth * ScreenSizeFactor, WholeScreenHeight * ScreenSizeFactor);
   DrawingRect := PaintBox1.ClientRect;
-  //Bmp.SetSize(PaintBox1.ClientWidth, PaintBox1.ClientHeight);
+
   UpdateTextTapeRunning;
 end;
 
@@ -1493,32 +1492,12 @@ begin
   if NewFactor > High(TScreenSizeFactor) then
     NewFactor := High(TScreenSizeFactor);
   if NewFactor <> ScreenSizeFactor then begin
-    //Self.AutoSize := False;
     ScreenSizeFactor := NewFactor;
     ActionSizeDecrease.Enabled := ScreenSizeFactor > Low(TScreenSizeFactor);
     ActionSizeIncrease.Enabled := ScreenSizeFactor < High(TScreenSizeFactor);
 
     UpdateScreenSizeFactor;
-//    Image1.ClientWidth := WholeScreenWidth * ScreenSizeFactor;
-//    Image1.ClientHeight := WholeScreenHeight * ScreenSizeFactor;
-    //Bmp.SetSize(Image1.ClientWidth, Image1.ClientHeight);
-//    Image1.Stretch := ScreenSizeFactor <> 1;
-    //PaintBox1.ClientWidth := WholeScreenWidth * ScreenSizeFactor;
-    //PaintBox1.ClientHeight := WholeScreenHeight * ScreenSizeFactor;
 
-    //PanelStatus.ClientWidth := WholeScreenWidth * ScreenSizeFactor;
-    //PanelStatus.ClientHeight := WholeScreenHeight * ScreenSizeFactor;
-    //DrawingRect := Rect(0, 0, PanelStatus.ClientWidth - 1, PanelStatus.ClientHeight - 1);
-    //DrawingRect := Rect(0, 0, WholeScreenWidth * ScreenSizeFactor * , WholeScreenHeight * ScreenSizeFactor);
-    //GC.ClientWidth := WholeScreenWidth * ScreenSizeFactor;
-    //GC.ClientHeight := WholeScreenWidth * ScreenSizeFactor;
-    //DrawingRect := PanelStatus.ClientRect;
-    //StatusBar1.Anchors := [];
-    //StatusBar1.AnchorParallel(akLeft, 0, Self);
-    //StatusBar1.AnchorParallel(akTop, DrawingRect.Bottom, Self);
-    //StatusBar1.Width := DrawingRect.Right;
-
-    //Application.QueueAsyncCall(@SetNewAutoSize, 1);
     SetNewAutoSize(2);
   end;
 end;
@@ -1529,10 +1508,6 @@ begin
   ActionSpeedDecrease.Enabled := {(Spectrum.Speed = 0) or} (Spectrum.Speed < TSpectrum.MinSpeed);
   ActionSpeedIncrease.Enabled := (Spectrum.Speed = 0) or (Spectrum.Speed > TSpectrum.MaxSpeed);
 
-  //if Spectrum.Speed > 0 then
-  //  StatusBar1.Panels[0].Text := Format('speed %d%%', [51200 div Spectrum.Speed])
-  //else
-  //  StatusBar1.Panels[0].Text := 'full speed';
 end;
 
 procedure TForm1.ShowTapeBrowser();
