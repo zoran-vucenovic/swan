@@ -2293,6 +2293,7 @@ begin
         FIff2 := False;
         FIff1 := False;
 
+        RefreshMem;
         if FHalt then begin
           FHalt := False;
           Inc(FRegPC);
