@@ -14,13 +14,14 @@ uses
   UnitColourPalette, UnitSpectrumColourMap, CommonFunctionsLCL,
   UnitFormKeyMappings, UnitJoystick, UnitFormJoystickSetup,
   UnitDataModuleImages, unitSoundVolume, UnitConfigs,
-  UnitInputLibraryPathDialog;
+  UnitInputLibraryPathDialog, UnitFormInputPokes;
 
 type
 
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionInputPokes: TAction;
     ActionPortAudioLibPath: TAction;
     ActionMuteSound: TAction;
     ActionDontDrawScreenWhenLoading: TAction;
@@ -109,6 +110,7 @@ type
     procedure ActionExitExecute(Sender: TObject);
     procedure ActionFullSpeedExecute(Sender: TObject);
     procedure ActionIncTapeBlockExecute(Sender: TObject);
+    procedure ActionInputPokesExecute(Sender: TObject);
     procedure ActionJoystickExecute(Sender: TObject);
     procedure ActionKeyMappingsExecute(Sender: TObject);
     procedure ActionMuteSoundExecute(Sender: TObject);
@@ -354,6 +356,9 @@ end;
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   ActionAbout.Caption := 'About ' + ApplicationName + '...';
+  {$ifNdef Debugging}
+  ActionInputPokes.Visible := False;
+  {$endif}
 
   FLastFilePath := '';
   FPortaudioLibPathOtherBitness := '';
@@ -516,6 +521,27 @@ begin
       AddEventToQueue(@ActionIncTapeBlockExecute)
     else begin
       TzxPlayer.IncBlock(1);
+    end;
+  end;
+end;
+
+procedure TForm1.ActionInputPokesExecute(Sender: TObject);
+var
+  Pokes: TPokesArray;
+  PE: TPokeEntry;
+  I: Integer;
+begin
+  if Sender <> Spectrum then
+    AddEventToQueue(@ActionInputPokesExecute)
+  else begin
+    if TFormInputPokes.ShowInputPokesDialog(
+      Spectrum.GetProcessor.GetMemory^.RomSize,
+      Spectrum.GetProcessor.GetMemory^.MemSize - 1, Pokes)
+    then begin
+      for I := Low(Pokes) to High(Pokes) do begin
+        PE := Pokes[I];
+        Spectrum.GetProcessor.GetMemory^.WriteByte(PE.Adr, PE.Value);
+      end;
     end;
   end;
 end;

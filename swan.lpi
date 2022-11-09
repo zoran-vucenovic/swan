@@ -23,7 +23,7 @@
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="9"/>
       <RevisionNr Value="1"/>
-      <BuildNr Value="4513"/>
+      <BuildNr Value="4532"/>
       <StringTable FileDescription="Swan - ZX Spectrum emulator" LegalCopyright="Copyright 2022 Zoran Vučenović" OriginalFilename="Swan" ProductName="Swan - ZX Spectrum emulator" ProductVersion="0.9.1"/>
     </VersionInfo>
     <BuildModes>
@@ -513,6 +513,14 @@
       <Unit>
         <Filename Value="zxinc.inc"/>
         <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitforminputpokes.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormInputPokes"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitFormInputPokes"/>
       </Unit>
     </Units>
   </ProjectOptions>

@@ -299,6 +299,11 @@ object Form1: TForm1
       Caption = 'Portaudio library path...'
       OnExecute = ActionPortAudioLibPathExecute
     end
+    object ActionInputPokes: TAction
+      Category = 'Debug'
+      Caption = 'Pokes...'
+      OnExecute = ActionInputPokesExecute
+    end
   end
   object MainMenu1: TMainMenu
     Images = DataModuleImages.ImageList1
@@ -409,7 +414,7 @@ object Form1: TForm1
         Action = ActionShowDebugger
       end
       object MenuItem31: TMenuItem
-        Caption = 'Pokes...'
+        Action = ActionInputPokes
       end
     end
     object MenuItem19: TMenuItem

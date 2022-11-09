@@ -19,7 +19,7 @@ uses
   UnitFormKeyMappings, UnitSpectrumKeysDialog, UnitFormPressAKey, UnitCommon,
   UnitCommonSpectrum, UnitJoystick, UnitFormJoystickSetup, AboutBox,
   UnitColourFunctions, UnitDataModuleImages, PortAudioHeader, UnitBeeper,
-  unitSoundVolume, FastIntegers, UnitInputLibraryPathDialog;
+  unitSoundVolume, FastIntegers, UnitInputLibraryPathDialog, UnitFormInputPokes;
 
 {$R *.res}
 
