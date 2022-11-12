@@ -141,7 +141,6 @@ type
   strict private
     FlagsModified: Boolean;
     FTStatesInCurrentFrame: Int32Fast;
-    FTStates0: Int32Fast;
     FPrefixByte: Byte;
     FSkipInterruptCheck: Boolean;
     FMemory: UnitMemory.TMemory;
@@ -462,8 +461,8 @@ end;
 
 procedure TProcessor.RequestOutput;
 begin
+  FOnNeedWriteScreen(FTStatesInCurrentFrame - 4);
   IOTimings;
-  FOnNeedWriteScreen(FTStates0);
   FOnOutputRequest();
 end;
 
@@ -480,7 +479,6 @@ begin
   FAddressBus := Adr;
   Contention;
   FOnNeedWriteScreen(FTStatesInCurrentFrame);
-  //FOnNeedWriteScreen(FTStates0);
 
   FMemory.WriteByte(Adr, B);
   Inc(FTStatesInCurrentFrame, 3);
@@ -1392,7 +1390,6 @@ begin
   FIff1 := False;
   FIff2 := False;
   FTStatesInCurrentFrame := 0;
-  FTStates0 := 0;
 
   FillChar(GPRegs, SizeOf(GPRegs), 0); //??
   FillChar(GPRegs1, SizeOf(GPRegs1), 0); //??
@@ -2287,7 +2284,6 @@ begin
 
     if FIntPin then begin
       if FIff1 then begin
-        FTStates0 := FTStatesInCurrentFrame;
         FlagsModified := False;
 
         FIff2 := False;
@@ -2328,7 +2324,6 @@ begin
     Exit;
   end;
 
-  FTStates0 := FTStatesInCurrentFrame;
   FSkipInterruptCheck := False;
   Pref := FPrefixByte;
   FPrefixByte := 0;
