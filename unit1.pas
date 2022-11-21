@@ -844,7 +844,7 @@ begin
             if S[1] <> ExtensionSeparator then
               S := ExtensionSeparator + S;
             if AnsiCompareText(S, EFN) = 0 then begin
-              DoLoad(TSnapshotOrTape.stBoth, Extensions, FN);
+              DoLoad(Sot, Extensions, FN);
               Exit;
             end;
           end;
