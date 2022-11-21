@@ -5,8 +5,8 @@ unit UnitFormInputPokes;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Grids, ExtCtrls,
-  ButtonPanel;
+  Classes, SysUtils, CommonFunctionsLCL, Forms, Controls, Graphics, Dialogs,
+  Grids, LCLType, ExtCtrls, ButtonPanel, StdCtrls, Buttons;
 
 type
   TPokeEntry = record
@@ -17,20 +17,39 @@ type
   TPokesArray = Array of TPokeEntry;
 
   TFormInputPokes = class(TForm)
-    ButtonPanel1: TButtonPanel;
+    BitBtn1: TBitBtn;
+    BitBtn2: TBitBtn;
     Panel1: TPanel;
     Panel2: TPanel;
-    StringGrid1: TStringGrid;
+    Panel3: TPanel;
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
-    procedure StringGrid1ValidateEntry(Sender: TObject; aCol, aRow: Integer;
-      const OldValue: string; var NewValue: String);
-  private
-    LowBoundary: Word;
-    HighBoundary: Word;
-    function ShowPokesDialog(out APokes: TPokesArray): Boolean;
+    procedure FormShow(Sender: TObject);
+  strict private
+    type
+      TGridNums = class(TStringGrid)
+      protected
+        function EditorCanAcceptKey(const Ch: TUTF8Char): Boolean; override;
+        function ValidateEntry(const ACol, ARow: Integer;
+          const OldValue: string; var NewValue: string): Boolean; override;
+      public
+        MinAddress: Word;
+        MaxAddress: Word;
+
+        constructor Create(AOwner: TComponent); override;
+        function CheckValue(const ACol: Integer; var AValue: String; out N: Int32
+          ): Boolean;
+        procedure DefaultDrawCell(aCol, aRow: Integer; var aRect: TRect;
+          aState: TGridDrawState); override;
+
+      end;
+  strict private
+    FPokes: TPokesArray;
+    GridNums: TGridNums;
+    procedure GridOnButtonClick(Sender: TObject; aCol, aRow: Integer);
+    procedure AfterShow(Data: PtrInt);
   public
-    class function ShowInputPokesDialog(const ALowBoundary, AHighBoundary: Word; out APokes: TPokesArray): Boolean;
+    class function ShowInputPokesDialog(const AMinAddress, AMaxAddress: Word; out APokes: TPokesArray): Boolean;
   end;
 
 implementation
@@ -57,128 +76,273 @@ end;
 
 {$R *.lfm}
 
+{ TFormInputPokes.TGridNums }
+
+function TFormInputPokes.TGridNums.EditorCanAcceptKey(const Ch: TUTF8Char
+  ): Boolean;
+begin
+  if Length(Ch) = 1 then
+    case Ch[1] of
+      '0'..'9', Char(VK_BACK):
+        Exit(inherited EditorCanAcceptKey(Ch));
+    otherwise
+    end;
+
+  Result := False;
+end;
+
+function TFormInputPokes.TGridNums.ValidateEntry(const ACol, ARow: Integer;
+  const OldValue: string; var NewValue: string): Boolean;
+var
+  N: Int32;
+begin
+  Result := //((NewValue = '') or (TryStrToIntDecimal(NewValue, N))
+    inherited ValidateEntry(ACol, ARow, OldValue, NewValue);
+
+  if Result then begin
+    Result := CheckValue(ACol, NewValue, N);
+  end;
+
+  if not Result then
+    EditordoResetValue;
+end;
+
+function TFormInputPokes.TGridNums.CheckValue(const ACol: Integer;
+  var AValue: String; out N: Int32): Boolean;
+var
+  MinVal, MaxVal: Integer;
+  UN: UInt32 absolute N;
+begin
+  AValue := Trim(AValue);
+  if AValue = '' then
+    Exit(True);
+
+  if ACol = FixedCols then begin
+    MinVal := MinAddress;
+    MaxVal := MaxAddress;
+  end else begin
+    MinVal := Int8.MinValue;
+    MaxVal := Byte.MaxValue;
+  end;
+
+  Result := TryStrToIntDecimal(AValue, N)
+    and (N >= MinVal) and (N <= MaxVal);
+
+  if Result and (N < 0) then
+    AValue := UN.ToString;
+end;
+
+procedure TFormInputPokes.TGridNums.DefaultDrawCell(aCol, aRow: Integer;
+  var aRect: TRect; aState: TGridDrawState);
+var
+  TS: TTextStyle;
+begin
+  if (ACol = FixedCols + 2) and (aRow >= FixedRows) then begin
+    //if (Trim(Cells[FixedCols, aRow]) = '') and (Trim(Cells[FixedCols + 1, aRow]) = '') then begin
+    //  //DrawFillRect(Canvas, aRect);
+    //  inherited DefaultDrawCell(aCol, aRow, aRect, aState);
+    //end else begin
+      inherited DefaultDrawCell(aCol, aRow, aRect, aState);
+
+      TS := Canvas.TextStyle;
+      TS.Layout := TTextLayout.tlCenter;
+      TS.Alignment := TAlignment.taCenter;
+      TS.Opaque := False;
+      TS.Wordbreak := False;
+      Canvas.TextRect(ARect, ARect.Left, ARect.Top, 'delete', TS);
+    //end;
+  end else begin
+    if aCol < FixedCols then begin
+      TS := Canvas.TextStyle;
+      TS.Alignment := TAlignment.taRightJustify;
+      Canvas.TextStyle := TS;
+    end;
+
+    inherited DefaultDrawCell(aCol, aRow, aRect, aState);
+  end;
+end;
+
+constructor TFormInputPokes.TGridNums.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+
+  ValidateOnSetSelection := True;
+  Options := Options + [goAlwaysShowEditor, goAutoAddRows, goColSizing, goEditing, goTabs, goFixedRowNumbering];
+  FixedCols := 1;
+  FixedRows := 1;
+  Flat := True;
+
+  TitleStyle := tsNative;
+
+  AutoFillColumns := True;
+  RowCount := FixedRows + 1;
+end;
+
 { TFormInputPokes }
 
-procedure TFormInputPokes.StringGrid1ValidateEntry(Sender: TObject; aCol,
-  aRow: Integer; const OldValue: string; var NewValue: String);
+procedure TFormInputPokes.FormCreate(Sender: TObject);
+begin
+  GridNums := TGridNums.Create(Panel2);
+  GridNums.AnchorParallel(akTop, 0, Panel2);
+  GridNums.AnchorParallel(akLeft, 0, Panel2);
+  GridNums.AnchorParallel(akRight, 0, Panel2);
+  GridNums.AnchorParallel(akBottom, 0, Panel2);
+  GridNums.Parent := Panel2;
+  GridNums.OnButtonClick := @GridOnButtonClick;
 
-  procedure ShowErrorMessage(const S: String);
-  begin
-    MessageDlg(S, TMsgDlgType.mtError, [mbClose], 0);
-    //NewValue := '';
-    NewValue := OldValue;
+  AfterShow(0);
+end;
+
+procedure TFormInputPokes.FormShow(Sender: TObject);
+begin
+  AfterShow(1);
+end;
+
+procedure TFormInputPokes.GridOnButtonClick(Sender: TObject; aCol,
+  aRow: Integer);
+begin
+  if (aCol = GridNums.FixedCols + 2) and (aRow >= GridNums.FixedRows) then begin
+    if GridNums.RowCount > GridNums.FixedRows + 1 then
+      GridNums.DeleteRow(aRow)
+    else begin
+      GridNums.Cells[GridNums.FixedCols, aRow] := '';
+      GridNums.Cells[GridNums.FixedCols + 1, aRow] := '';
+    end;
   end;
+end;
 
+procedure TFormInputPokes.AfterShow(Data: PtrInt);
 var
   N: Integer;
-  Value: Byte;
-  ValAsInt8: Int8 absolute Value;
 begin
-  if Trim(NewValue) = '' then begin
-    NewValue := OldValue;
-    Exit;
-  end;
-
-  if not TryStrToIntDecimal(NewValue, N) then begin
-    ShowErrorMessage('Not a number!');
-    Exit;
-  end;
-
-  if aCol = StringGrid1.FixedCols then begin
-    if N < 0 then begin
-      ShowErrorMessage('Negative number not allowed!');
-      Exit;
-    end;
-
-    if N < LowBoundary then begin
-      ShowErrorMessage('Writing to ROM not allowed!');
-      Exit;
-    end;
-      
-    if N > HighBoundary then begin
-      ShowErrorMessage('Address must not be greater than ' + HighBoundary.ToString);
-      //Exit;
-    end;
-
-  end else begin
-    if N > Byte.MaxValue then begin
-      ShowErrorMessage('Value must not be greater than ' + Byte.MaxValue.ToString);
-      Exit;
-    end;
-
-    if N < 0 then begin
-      if N < Int8.MinValue then begin
-        ShowErrorMessage('Value must be greater than ' + Int8.MinValue.ToString);
-        Exit;
-      end;
-
-      ValAsInt8 := N;
-      NewValue := Value.ToString;
-    end;
-
-  end;
-
+  if BitBtn2.Width > BitBtn1.Width then
+    N := BitBtn2.Width
+  else
+    N := BitBtn1.Width;
+  BitBtn1.Constraints.MinWidth := N;
+  BitBtn2.Constraints.MinWidth := N;
+  CommonFunctionsLCL.TCommonFunctionsLCL.AdjustFormPos(Self);
+  if Data > 0 then
+    Application.QueueAsyncCall(@AfterShow, Data - 1);
 end;
 
 procedure TFormInputPokes.FormCloseQuery(Sender: TObject; var CanClose: Boolean
   );
-begin
-  //
-end;
 
-procedure TFormInputPokes.FormCreate(Sender: TObject);
-begin
-  StringGrid1.RowCount := StringGrid1.FixedRows + 1;
-end;
+  procedure SelectCellWithError(const ACol, ARow: Integer; const Msg: String);
+  begin
+    CanClose := False;
+    GridNums.Col := ACol;
+    GridNums.Row := ARow;
+    MessageDlg(Msg, mtError, [mbClose], 0);
+  end;
 
-function TFormInputPokes.ShowPokesDialog(out APokes: TPokesArray): Boolean;
 var
-  I: Integer;
-  N: Integer;
-  Poke: TPokeEntry;
-  Value: Byte;
-  AuxInt8: Int8 absolute Value;
+  I, J, JJ: Integer;
+  N: Int32;
+  Skip: Boolean;
+  PokeEntry: TPokeEntry;
+  S1, S2: String;
+  ColAdr, ColVal: Integer;
+  UN: UInt32 absolute N;
+
 begin
-  Result := False;
-  if ShowModal = mrOK then begin
-    SetLength(APokes, StringGrid1.RowCount - StringGrid1.FixedRows);
-    for I := StringGrid1.FixedRows to StringGrid1.RowCount - 1 do begin
-      if not TryStrToIntDecimal(StringGrid1.Cells[StringGrid1.FixedCols, I], N) then begin
-        Exit;
-      end;
-      if (N < LowBoundary) or (N > HighBoundary) then
-        Exit;
-      Poke.Adr := N;
-      if not TryStrToIntDecimal(StringGrid1.Cells[StringGrid1.FixedCols + 1, I], N) then begin
-        Exit;
-      end;
-      if N > Byte.MaxValue then
-        Exit;
-      if N < 0 then begin
-        if N < Int8.MinValue then
-          Exit;
-        AuxInt8 := N;
-        N := Value;
+
+  if ModalResult = mrOK then begin
+    SetLength(FPokes, GridNums.RowCount - GridNums.FixedRows);
+  //
+    ColAdr := GridNums.FixedCols;
+    ColVal := ColAdr + 1;
+    J := 0;
+    for I := GridNums.FixedRows to GridNums.RowCount - 1 do begin
+      Skip := False;
+      S1 := Trim(GridNums.Cells[ColAdr, I]);
+      S2 := Trim(GridNums.Cells[ColVal, I]);
+      if S1 = '' then begin
+        if S2 = '' then
+          Skip := True
+        else begin
+          SelectCellWithError(ColAdr, I, 'You have to enter address for the poke.');
+          Break;
+        end;
+
+      end else
+        if S2 = '' then begin
+          SelectCellWithError(ColVal, I, 'You have to enter value.');
+          Break;
+        end;
+
+      if not Skip then begin
+        if not GridNums.CheckValue(ColAdr, S1, N) then begin
+          SelectCellWithError(ColAdr, I, 'Invalid address.');
+          Break;
+        end;
+        PokeEntry.Adr := N;
+        if not GridNums.CheckValue(ColVal, S2, N) then begin
+          SelectCellWithError(ColVal, I, 'Invalid Value');
+          Break;
+        end;
+        PokeEntry.Value := UN;
+
+        for JJ := 0 to J - 1 do begin
+          if FPokes[JJ].Adr = PokeEntry.Adr then begin
+            SelectCellWithError(ColAdr, I, Format(
+              'Multiple pokes to address %d entered.%sYou cannot enter multiple pokes to same memory address.',
+              [PokeEntry.Adr, LineEnding]));
+            Break;
+          end;
+        end;
+        if not CanClose then
+          Break;
+
+        FPokes[J] := PokeEntry;
+        Inc(J);
       end;
 
     end;
+    SetLength(FPokes, J);
 
-    Result := True;
-  end;
+    if CanClose and (J = 0) then
+      MessageDlg('No pokes entered.', mtInformation, [mbOk], 0);
+
+  end else
+    SetLength(FPokes, 0);
 end;
 
-class function TFormInputPokes.ShowInputPokesDialog(const ALowBoundary,
-  AHighBoundary: Word; out APokes: TPokesArray): Boolean;
+class function TFormInputPokes.ShowInputPokesDialog(const AMinAddress,
+  AMaxAddress: Word; out APokes: TPokesArray): Boolean;
 var
   F: TFormInputPokes;
+  C: TGridColumn;
+
 begin
   Result := False;
   F := TFormInputPokes.Create(nil);
   try
-    F.LowBoundary := ALowBoundary;
-    F.HighBoundary := AHighBoundary;
+    F.GridNums.MinAddress := AMinAddress;
+    F.GridNums.MaxAddress := AMaxAddress;
+
+    C := F.GridNums.Columns.Add();
+    C.Title.Caption := Format('address (%d-%d)', [AMinAddress, AMaxAddress]);
+    C.SizePriority := 1;
+
+    C := F.GridNums.Columns.Add();
+    C.Title.Caption := Format('value (%d-%d)', [Byte.MinValue, Byte.MaxValue]);
+    C.SizePriority := 1;
+
+    C := F.GridNums.Columns.Add();
+    C.ButtonStyle := cbsButtonColumn;
+    C.Title.Caption := ' ';
+    C.SizePriority := 0;
+    C.Width := (C.Width * 5) div 4;
+
     //
-    Result := F.ShowPokesDialog(APokes);
+    if (F.ShowModal = mrOK) and (Length(F.FPokes) > 0) then begin
+      APokes := F.FPokes;
+      Result := True;
+    end else
+      APokes := nil;
+
   finally
     F.Free;
   end;

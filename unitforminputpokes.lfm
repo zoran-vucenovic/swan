@@ -1,13 +1,14 @@
 object FormInputPokes: TFormInputPokes
-  Left = 638
+  Left = 269
   Height = 560
-  Top = 171
-  Width = 342
+  Top = 119
+  Width = 322
   Caption = 'Input pokes'
   ClientHeight = 560
-  ClientWidth = 342
+  ClientWidth = 322
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
+  OnShow = FormShow
   LCLVersion = '2.2.5.0'
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
@@ -19,87 +20,71 @@ object FormInputPokes: TFormInputPokes
     Left = 0
     Height = 560
     Top = 0
-    Width = 342
+    Width = 322
     Anchors = [akTop, akLeft, akRight, akBottom]
     BevelOuter = bvNone
     ClientHeight = 560
-    ClientWidth = 342
+    ClientWidth = 322
     TabOrder = 0
     object Panel2: TPanel
       AnchorSideLeft.Control = Panel1
       AnchorSideTop.Control = Panel1
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = ButtonPanel1
-      Left = 0
-      Height = 522
-      Top = 0
-      Width = 342
+      AnchorSideBottom.Control = Panel3
+      Left = 6
+      Height = 514
+      Top = 6
+      Width = 310
       Anchors = [akTop, akLeft, akRight, akBottom]
+      BorderSpacing.Around = 6
       BevelOuter = bvNone
-      ClientHeight = 522
-      ClientWidth = 342
       TabOrder = 0
-      object StringGrid1: TStringGrid
-        AnchorSideLeft.Control = Panel2
-        AnchorSideTop.Control = Panel2
-        AnchorSideRight.Control = Panel2
-        AnchorSideRight.Side = asrBottom
-        AnchorSideBottom.Control = Panel2
-        AnchorSideBottom.Side = asrBottom
-        Left = 5
-        Height = 512
-        Top = 5
-        Width = 332
-        Anchors = [akTop, akLeft, akRight, akBottom]
-        AutoFillColumns = True
-        BorderSpacing.Around = 5
-        ColCount = 2
-        Columns = <        
-          item
-            SizePriority = 0
-            Title.Caption = 'address'
-            Width = 139
-          end        
-          item
-            Title.Caption = 'value'
-            Width = 192
-          end>
-        FixedCols = 0
-        Flat = True
-        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goColSizing, goEditing, goAutoAddRows, goAlwaysShowEditor, goSmoothScroll]
-        TabOrder = 0
-        TitleStyle = tsNative
-        OnValidateEntry = StringGrid1ValidateEntry
-        ColWidths = (
-          139
-          192
-        )
-      end
     end
-    object ButtonPanel1: TButtonPanel
-      AnchorSideLeft.Control = Panel1
+    object Panel3: TPanel
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
-      Left = 173
-      Height = 26
-      Top = 528
-      Width = 163
-      Align = alNone
+      Left = 164
+      Height = 28
+      Top = 526
+      Width = 152
       Anchors = [akRight, akBottom]
-      OKButton.Name = 'OKButton'
-      OKButton.DefaultCaption = True
-      HelpButton.Name = 'HelpButton'
-      HelpButton.DefaultCaption = True
-      CloseButton.Name = 'CloseButton'
-      CloseButton.DefaultCaption = True
-      CancelButton.Name = 'CancelButton'
-      CancelButton.DefaultCaption = True
+      AutoSize = True
+      BorderSpacing.Around = 6
+      ClientHeight = 28
+      ClientWidth = 152
       TabOrder = 1
-      ShowButtons = [pbOK, pbCancel]
-      ShowBevel = False
+      object BitBtn1: TBitBtn
+        AnchorSideLeft.Control = Panel3
+        AnchorSideTop.Control = Panel3
+        Left = 1
+        Height = 26
+        Top = 1
+        Width = 62
+        AutoSize = True
+        DefaultCaption = True
+        Kind = bkOK
+        ModalResult = 1
+        TabOrder = 0
+      end
+      object BitBtn2: TBitBtn
+        AnchorSideLeft.Control = BitBtn1
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel3
+        Left = 69
+        Height = 26
+        Top = 1
+        Width = 82
+        AutoSize = True
+        BorderSpacing.Left = 6
+        Cancel = True
+        DefaultCaption = True
+        Kind = bkCancel
+        ModalResult = 2
+        TabOrder = 1
+      end
     end
   end
 end

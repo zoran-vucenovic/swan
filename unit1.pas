@@ -356,9 +356,6 @@ end;
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   ActionAbout.Caption := 'About ' + ApplicationName + '...';
-  {$ifNdef Debugging}
-  ActionInputPokes.Visible := False;
-  {$endif}
 
   FLastFilePath := '';
   FPortaudioLibPathOtherBitness := '';
@@ -530,18 +527,26 @@ var
   Pokes: TPokesArray;
   PE: TPokeEntry;
   I: Integer;
+  WasPaused: Boolean;
 begin
   if Sender <> Spectrum then
     AddEventToQueue(@ActionInputPokesExecute)
   else begin
-    if TFormInputPokes.ShowInputPokesDialog(
-      Spectrum.GetProcessor.GetMemory^.RomSize,
-      Spectrum.GetProcessor.GetMemory^.MemSize - 1, Pokes)
-    then begin
-      for I := Low(Pokes) to High(Pokes) do begin
-        PE := Pokes[I];
-        Spectrum.GetProcessor.GetMemory^.WriteByte(PE.Adr, PE.Value);
+    WasPaused := Spectrum.Paused;
+    try
+      Spectrum.Paused := True;
+      if TFormInputPokes.ShowInputPokesDialog(
+        Spectrum.GetProcessor.GetMemory^.RomSize,
+        Spectrum.GetProcessor.GetMemory^.MemSize - 1, Pokes)
+      then begin
+        for I := Low(Pokes) to High(Pokes) do begin
+          PE := Pokes[I];
+          Spectrum.GetProcessor.GetMemory^.WriteByte(PE.Adr, PE.Value);
+        end;
       end;
+
+    finally
+      Spectrum.Paused := WasPaused;
     end;
   end;
 end;
