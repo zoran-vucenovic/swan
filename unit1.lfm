@@ -4,6 +4,7 @@ object Form1: TForm1
   Height = 215
   Top = 134
   Width = 443
+  AllowDropFiles = True
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'Form1'
@@ -17,6 +18,7 @@ object Form1: TForm1
   OnCreate = FormCreate
   OnDeactivate = FormDeactivate
   OnDestroy = FormDestroy
+  OnDropFiles = FormDropFiles
   OnShow = FormShow
   ParentDoubleBuffered = False
   LCLVersion = '2.2.5.0'

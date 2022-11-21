@@ -8,7 +8,7 @@ unit unit1;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ActnList, Menus,
+  Classes, SysUtils, Types, Forms, Controls, Graphics, Dialogs, ActnList, Menus,
   ComCtrls, LCLType, Buttons, StdCtrls, ExtCtrls, zipper, fpjson, UnitSpectrum,
   UnitFileSna, AboutBox, DebugForm, UnitTzxPlayer, UnitFormBrowser,
   UnitColourPalette, UnitSpectrumColourMap, CommonFunctionsLCL,
@@ -134,6 +134,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure FormDropFiles(Sender: TObject; const FileNames: array of string);
     procedure FormShow(Sender: TObject);
     procedure SpeedButton1Click(Sender: TObject);
   strict private
@@ -219,7 +220,9 @@ type
     procedure EventPlayerOnChangeBlock(Sender: TObject);
     procedure PlayerOnChangeBlock;
     procedure TapeBrowserAttachTape;
-    procedure Load(const SnapshotOrTape: TSnapshotOrTape);
+    procedure GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape; out Extensions: TStringDynArray);
+    procedure LoadAsk(const SnapshotOrTape: TSnapshotOrTape);
+    function DoLoad(const SnapshotOrTape: TSnapshotOrTape; const AcceptedExtensions: TStringDynArray; ASourceFile: String): Boolean;
     procedure RunSpectrum;
     procedure DoOnResetSpectrum;
     procedure DestroySpectrum;
@@ -497,7 +500,7 @@ begin
     AddEventToQueue(@ActionAttachTapExecute);
   end else begin
 
-    Load(TSnapshotOrTape.stTape);
+    LoadAsk(TSnapshotOrTape.stTape);
   end;
 
 end;
@@ -629,7 +632,7 @@ begin
   if Sender <> Spectrum then begin
     AddEventToQueue(@ActionOpenExecute);
   end else begin
-    Load(TSnapshotOrTape.stBoth);
+    LoadAsk(TSnapshotOrTape.stBoth);
   end;
 end;
 
@@ -813,6 +816,43 @@ begin
   FreeAndNil(FormDebug);
   FreeTapePlayer;
   Bmp.Free;
+end;
+
+procedure TForm1.FormDropFiles(Sender: TObject; const FileNames: array of string
+  );
+var
+  I, J: Integer;
+  Extensions: TStringDynArray;
+  S, FN, EFN: AnsiString;
+  Sot: TSnapshotOrTape;
+
+begin
+  if Length(FileNames) > 0 then begin
+    if Sender = FTapeBrowser then
+      Sot := TSnapshotOrTape.stTape
+    else
+      Sot := TSnapshotOrTape.stBoth;
+    GetAcceptableExtensions(Sot, Extensions);
+    I := 0;
+    while I < Length(FileNames) do begin
+      FN := FileNames[I];
+      EFN := ExtractFileExt(FN);
+      if EFN <> '' then begin
+        for J := Low(Extensions) to High(Extensions) do begin
+          S := Extensions[J];
+          if S <> '' then begin
+            if S[1] <> ExtensionSeparator then
+              S := ExtensionSeparator + S;
+            if AnsiCompareText(S, EFN) = 0 then begin
+              DoLoad(TSnapshotOrTape.stBoth, Extensions, FN);
+              Exit;
+            end;
+          end;
+        end;
+      end;
+      Inc(I);
+    end;
+  end;
 end;
 
 procedure TForm1.FormShow(Sender: TObject);
@@ -1223,65 +1263,53 @@ begin
     TzxPlayer.OnChangeBlock := @PlayerOnChangeBlock;
 end;
 
-procedure TForm1.Load(const SnapshotOrTape: TSnapshotOrTape);
-type
-  TAnsiStringArr = array of AnsiString;
-
-  procedure LoadingFailed;
-  begin
-    MessageDlg('Loading failed' + LineEnding + 'Bad file?', mtError, [mbClose], 0);
-  end;
-
-  procedure GetExtensions(out Extensions: TAnsiStringArr);
-  const
-    SnapshotExtensions: array[0..1] of String = ('sna', 'z80');
-    TapeExtensions: array[0..1] of String = ('tap', 'tzx');
-  var
-    I, L: Integer;
-  begin
-    case SnapshotOrTape of
-      stSnapshot:
-        L := Length(SnapshotExtensions);
-      stTape:
-        L := Length(TapeExtensions);
-    otherwise
-      L := Length(SnapshotExtensions) + Length(TapeExtensions);
-    end;
-    SetLength(Extensions{%H-}, L + 1);
-
-    L := 0;
-    if SnapshotOrTape in [stSnapshot, stBoth] then
-      for I := Low(SnapshotExtensions) to High(SnapshotExtensions) do begin
-        Extensions[L] := SnapshotExtensions[I];
-        Inc(L);
-      end;
-    if SnapshotOrTape in [stTape, stBoth] then
-      for I := Low(TapeExtensions) to High(TapeExtensions) do begin
-        Extensions[L] := TapeExtensions[I];
-        Inc(L);
-      end;
-    Extensions[L] := 'zip';
-  end;
-
+procedure TForm1.GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape;
+  out Extensions: TStringDynArray);
+const
+  SnapshotExtensions: array[0..1] of String = ('sna', 'z80');
+  TapeExtensions: array[0..1] of String = ('tap', 'tzx');
 var
-  SnapshotFile: TSnapshotFile;
+  I, L: Integer;
+begin
+  case SnapshotOrTape of
+    stSnapshot:
+      L := Length(SnapshotExtensions);
+    stTape:
+      L := Length(TapeExtensions);
+  otherwise
+    L := Length(SnapshotExtensions) + Length(TapeExtensions);
+  end;
+  SetLength(Extensions{%H-}, L + 1);
+
+  L := 0;
+  if SnapshotOrTape in [stSnapshot, stBoth] then
+    for I := Low(SnapshotExtensions) to High(SnapshotExtensions) do begin
+      Extensions[L] := SnapshotExtensions[I];
+      Inc(L);
+    end;
+  if SnapshotOrTape in [stTape, stBoth] then
+    for I := Low(TapeExtensions) to High(TapeExtensions) do begin
+      Extensions[L] := TapeExtensions[I];
+      Inc(L);
+    end;
+  Extensions[L] := 'zip';
+end;
+
+procedure TForm1.LoadAsk(const SnapshotOrTape: TSnapshotOrTape);
+var
   WasPaused: Boolean;
-  Extension: String;
-  FileName: String;
   L: Boolean;
-  Extensions: TAnsiStringArr;
-  Stream: TStream;
+  Extensions: TStringDynArray;
   S: String;
   I: Integer;
 
 begin
-  Stream := nil;
   if Spectrum.IsRunning then begin
     WasPaused := Spectrum.Paused;
     try
       Spectrum.Paused := True;
 
-      GetExtensions(Extensions);
+      GetAcceptableExtensions(SnapshotOrTape, Extensions);
       OpenDialog1.FilterIndex := 1;
       OpenDialog1.Filter := MakeExtensionsFilter(Extensions);
 
@@ -1302,82 +1330,111 @@ begin
           OpenDialog1.FileName := '';
       end;
 
-      if OpenDialog1.Execute then begin
-        Extension := ExtractFileExt(OpenDialog1.FileName);
-
-        if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
-          if not TFileUnzipper.GetFileFromZipFile(OpenDialog1.FileName, Extensions, Stream, FileName) then
-            Stream := nil
-          else begin
-            Extension := ExtractFileExt(FileName);
-            FileName := IncludeTrailingPathDelimiter(OpenDialog1.FileName) + FileName;
-          end;
-        end else
-          try
-            Stream := TFileStream.Create(OpenDialog1.FileName, fmOpenRead or fmShareDenyWrite);
-            FileName := OpenDialog1.FileName;
-          except
-            Stream := nil;
-          end;
-
-        if Assigned(Stream) then begin
+      if OpenDialog1.Execute then
+        if DoLoad(SnapshotOrTape, Extensions, OpenDialog1.FileName) then
           FLastFilePath := OpenDialog1.FileName;
-          try
-            SnapshotFile := nil;
-            if SnapshotOrTape in [stSnapshot, stBoth] then begin
-              if AnsiCompareText(Extension, ExtensionSeparator + 'sna') = 0 then
-                SnapshotFile := TSnapshotSNA.Create
-              else if AnsiCompareText(Extension, ExtensionSeparator + 'z80') = 0 then
-                SnapshotFile := TSnapshotZ80.Create;
-            end;
-
-            if Assigned(SnapshotFile) then begin
-              try
-                SnapshotFile.SetSpectrum(Spectrum);
-
-                Spectrum.ResetSpectrum;
-                if not SnapshotFile.LoadFromStream(Stream) then
-                  LoadingFailed;
-
-              finally
-                SnapshotFile.Free;
-              end;
-            end else if SnapshotOrTape in [stTape, stBoth] then begin
-              FreeTapePlayer;
-              TzxPlayer := TTzxPlayer.Create;
-              TzxPlayer.FileName := FileName;
-
-              if AnsiCompareText(Extension, ExtensionSeparator + 'tap') = 0 then
-                TzxPlayer.TapeType := UnitTzxPlayer.TTapeType.ttTap
-              else
-                TzxPlayer.TapeType := UnitTzxPlayer.TTapeType.ttTzx;
-
-              L := False;
-              try
-                if TzxPlayer.LoadFromStream(Stream) then begin
-                  Spectrum.AttachTapePlayer(TzxPlayer);
-                  TapeBrowserAttachTape;
-                  L := True;
-                end else
-                  LoadingFailed;
-
-              finally
-                if not L then begin
-                  FreeTapePlayer;
-                end;
-              end;
-            end;
-          finally
-            Stream.Free;
-          end;
-        end;
-
-      end;
 
     finally
       Spectrum.Paused := WasPaused;
     end;
 
+  end;
+end;
+
+function TForm1.DoLoad(const SnapshotOrTape: TSnapshotOrTape;
+  const AcceptedExtensions: TStringDynArray; ASourceFile: String): Boolean;
+
+  procedure LoadingFailed;
+  begin
+    MessageDlg('Loading failed' + LineEnding + 'Bad file?', mtError, [mbClose], 0);
+  end;
+
+var
+  WasPaused: Boolean;
+  Extension: String;
+  FileName: String;
+  Stream: TStream;
+  SnapshotFile: TSnapshotFile;
+
+begin
+  Result := False;
+  Stream := nil;
+  if Spectrum.IsRunning then begin
+    WasPaused := Spectrum.Paused;
+    try
+      Spectrum.Paused := True;
+
+      Extension := ExtractFileExt(ASourceFile);
+      
+      if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
+        if not TFileUnzipper.GetFileFromZipFile(ASourceFile, AcceptedExtensions, Stream, FileName) then begin
+          Stream := nil;
+        end else begin
+          Extension := ExtractFileExt(FileName);
+          FileName := IncludeTrailingPathDelimiter(ASourceFile) + FileName;
+        end;
+      end else
+        try
+          Stream := TFileStream.Create(ASourceFile, fmOpenRead or fmShareDenyWrite);
+          FileName := ASourceFile;
+        except
+          Stream := nil;
+        end;
+
+      if Assigned(Stream) then begin
+        try
+          SnapshotFile := nil;
+          if SnapshotOrTape in [stSnapshot, stBoth] then begin
+            if AnsiCompareText(Extension, ExtensionSeparator + 'sna') = 0 then
+              SnapshotFile := TSnapshotSNA.Create
+            else if AnsiCompareText(Extension, ExtensionSeparator + 'z80') = 0 then
+              SnapshotFile := TSnapshotZ80.Create;
+          end;
+
+          if Assigned(SnapshotFile) then begin
+            try
+              SnapshotFile.SetSpectrum(Spectrum);
+
+              Spectrum.ResetSpectrum;
+              Result := SnapshotFile.LoadFromStream(Stream);
+              if not Result then
+                LoadingFailed;
+
+            finally
+              SnapshotFile.Free;
+            end;
+          end else if SnapshotOrTape in [stTape, stBoth] then begin
+            FreeTapePlayer;
+            TzxPlayer := TTzxPlayer.Create;
+            TzxPlayer.FileName := FileName;
+
+            if AnsiCompareText(Extension, ExtensionSeparator + 'tap') = 0 then
+              TzxPlayer.TapeType := UnitTzxPlayer.TTapeType.ttTap
+            else
+              TzxPlayer.TapeType := UnitTzxPlayer.TTapeType.ttTzx;
+
+            try
+              if TzxPlayer.LoadFromStream(Stream) then begin
+                Spectrum.AttachTapePlayer(TzxPlayer);
+                TapeBrowserAttachTape;
+                Result := True;
+              end else
+                LoadingFailed;
+
+            finally
+              if not Result then begin
+                FreeTapePlayer;
+              end;
+            end;
+          end;
+        finally
+          Stream.Free;
+        end;
+      end;
+
+    finally
+      Spectrum.Paused := WasPaused;
+    end;
   end;
 end;
 
@@ -1551,6 +1608,8 @@ begin
   if FTapeBrowser = nil then begin
     FTapeBrowser := TFormBrowseTape.Create(nil);
     FTapeBrowser.FreeNotification(Self);
+    FTapeBrowser.AllowDropFiles := True;
+    FTapeBrowser.OnDropFiles := Self.OnDropFiles;
   end;
 
   W := 24;
