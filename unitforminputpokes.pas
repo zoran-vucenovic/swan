@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, CommonFunctionsLCL, Forms, Controls, Graphics, Dialogs,
-  Grids, LCLType, ExtCtrls, ButtonPanel, StdCtrls, Buttons;
+  Grids, LCLType, ExtCtrls, Buttons;
 
 type
   TPokeEntry = record
@@ -37,7 +37,7 @@ type
         MaxAddress: Word;
 
         constructor Create(AOwner: TComponent); override;
-        function CheckValue(const ACol: Integer; var AValue: String; out N: Int32
+        function CheckValue(const ACol: Integer; const AValue: String; out N: Int32
           ): Boolean;
         procedure DefaultDrawCell(aCol, aRow: Integer; var aRect: TRect;
           aState: TGridDrawState); override;
@@ -96,24 +96,18 @@ function TFormInputPokes.TGridNums.ValidateEntry(const ACol, ARow: Integer;
 var
   N: Int32;
 begin
-  Result := //((NewValue = '') or (TryStrToIntDecimal(NewValue, N))
-    inherited ValidateEntry(ACol, ARow, OldValue, NewValue);
-
-  if Result then begin
-    Result := CheckValue(ACol, NewValue, N);
-  end;
+  Result := inherited ValidateEntry(ACol, ARow, OldValue, NewValue)
+    and CheckValue(ACol, Trim(NewValue), N);
 
   if not Result then
     EditordoResetValue;
 end;
 
 function TFormInputPokes.TGridNums.CheckValue(const ACol: Integer;
-  var AValue: String; out N: Int32): Boolean;
+  const AValue: String; out N: Int32): Boolean;
 var
   MinVal, MaxVal: Integer;
-  UN: UInt32 absolute N;
 begin
-  AValue := Trim(AValue);
   if AValue = '' then
     Exit(True);
 
@@ -121,15 +115,13 @@ begin
     MinVal := MinAddress;
     MaxVal := MaxAddress;
   end else begin
-    MinVal := Int8.MinValue;
+    MinVal := Byte.MinValue;
     MaxVal := Byte.MaxValue;
   end;
 
   Result := TryStrToIntDecimal(AValue, N)
     and (N >= MinVal) and (N <= MaxVal);
 
-  if Result and (N < 0) then
-    AValue := UN.ToString;
 end;
 
 procedure TFormInputPokes.TGridNums.DefaultDrawCell(aCol, aRow: Integer;
@@ -138,19 +130,14 @@ var
   TS: TTextStyle;
 begin
   if (ACol = FixedCols + 2) and (aRow >= FixedRows) then begin
-    //if (Trim(Cells[FixedCols, aRow]) = '') and (Trim(Cells[FixedCols + 1, aRow]) = '') then begin
-    //  //DrawFillRect(Canvas, aRect);
-    //  inherited DefaultDrawCell(aCol, aRow, aRect, aState);
-    //end else begin
-      inherited DefaultDrawCell(aCol, aRow, aRect, aState);
+    inherited DefaultDrawCell(aCol, aRow, aRect, aState);
 
-      TS := Canvas.TextStyle;
-      TS.Layout := TTextLayout.tlCenter;
-      TS.Alignment := TAlignment.taCenter;
-      TS.Opaque := False;
-      TS.Wordbreak := False;
-      Canvas.TextRect(ARect, ARect.Left, ARect.Top, 'delete', TS);
-    //end;
+    TS := Canvas.TextStyle;
+    TS.Layout := TTextLayout.tlCenter;
+    TS.Alignment := TAlignment.taCenter;
+    TS.Opaque := False;
+    TS.Wordbreak := False;
+    Canvas.TextRect(ARect, ARect.Left, ARect.Top, 'delete', TS);
   end else begin
     if aCol < FixedCols then begin
       TS := Canvas.TextStyle;
@@ -174,7 +161,6 @@ begin
 
   TitleStyle := tsNative;
 
-  AutoFillColumns := True;
   RowCount := FixedRows + 1;
 end;
 
@@ -190,7 +176,7 @@ begin
   GridNums.Parent := Panel2;
   GridNums.OnButtonClick := @GridOnButtonClick;
 
-  AfterShow(0);
+  AfterShow(-1);
 end;
 
 procedure TFormInputPokes.FormShow(Sender: TObject);
@@ -213,7 +199,7 @@ end;
 
 procedure TFormInputPokes.AfterShow(Data: PtrInt);
 var
-  N: Integer;
+  I, N: Integer;
 begin
   if BitBtn2.Width > BitBtn1.Width then
     N := BitBtn2.Width
@@ -222,8 +208,12 @@ begin
   BitBtn1.Constraints.MinWidth := N;
   BitBtn2.Constraints.MinWidth := N;
   CommonFunctionsLCL.TCommonFunctionsLCL.AdjustFormPos(Self);
-  if Data > 0 then
-    Application.QueueAsyncCall(@AfterShow, Data - 1);
+  if Data >= 0 then begin
+    for I := GridNums.FixedCols to GridNums.FixedCols + 1 do
+      GridNums.AutoSizeColumn(I);
+    if Data > 0 then
+      Application.QueueAsyncCall(@AfterShow, Data - 1);
+  end;
 end;
 
 procedure TFormInputPokes.FormCloseQuery(Sender: TObject; var CanClose: Boolean
@@ -247,7 +237,6 @@ var
   UN: UInt32 absolute N;
 
 begin
-
   if ModalResult = mrOK then begin
     SetLength(FPokes, GridNums.RowCount - GridNums.FixedRows);
   //
@@ -302,9 +291,6 @@ begin
     end;
     SetLength(FPokes, J);
 
-    if CanClose and (J = 0) then
-      MessageDlg('No pokes entered.', mtInformation, [mbOk], 0);
-
   end else
     SetLength(FPokes, 0);
 end;
@@ -324,19 +310,14 @@ begin
 
     C := F.GridNums.Columns.Add();
     C.Title.Caption := Format('address (%d-%d)', [AMinAddress, AMaxAddress]);
-    C.SizePriority := 1;
 
     C := F.GridNums.Columns.Add();
     C.Title.Caption := Format('value (%d-%d)', [Byte.MinValue, Byte.MaxValue]);
-    C.SizePriority := 1;
 
     C := F.GridNums.Columns.Add();
     C.ButtonStyle := cbsButtonColumn;
     C.Title.Caption := ' ';
-    C.SizePriority := 0;
-    C.Width := (C.Width * 5) div 4;
 
-    //
     if (F.ShowModal = mrOK) and (Length(F.FPokes) > 0) then begin
       APokes := F.FPokes;
       Result := True;

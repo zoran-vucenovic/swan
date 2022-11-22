@@ -2,10 +2,10 @@ object FormInputPokes: TFormInputPokes
   Left = 269
   Height = 560
   Top = 119
-  Width = 322
+  Width = 346
   Caption = 'Input pokes'
   ClientHeight = 560
-  ClientWidth = 322
+  ClientWidth = 346
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnShow = FormShow
@@ -20,11 +20,11 @@ object FormInputPokes: TFormInputPokes
     Left = 0
     Height = 560
     Top = 0
-    Width = 322
+    Width = 346
     Anchors = [akTop, akLeft, akRight, akBottom]
     BevelOuter = bvNone
     ClientHeight = 560
-    ClientWidth = 322
+    ClientWidth = 346
     TabOrder = 0
     object Panel2: TPanel
       AnchorSideLeft.Control = Panel1
@@ -35,7 +35,7 @@ object FormInputPokes: TFormInputPokes
       Left = 6
       Height = 516
       Top = 6
-      Width = 310
+      Width = 334
       Anchors = [akTop, akLeft, akRight, akBottom]
       BorderSpacing.Around = 6
       BevelOuter = bvNone
@@ -46,7 +46,7 @@ object FormInputPokes: TFormInputPokes
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
-      Left = 166
+      Left = 190
       Height = 26
       Top = 528
       Width = 150
