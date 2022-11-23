@@ -225,6 +225,8 @@ procedure TFormInputPokes.FormCloseQuery(Sender: TObject; var CanClose: Boolean
     GridNums.Col := ACol;
     GridNums.Row := ARow;
     MessageDlg(Msg, mtError, [mbClose], 0);
+    if GridNums.CanSetFocus then
+      GridNums.SetFocus;
   end;
 
 var
