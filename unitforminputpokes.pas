@@ -41,6 +41,7 @@ type
           ): Boolean;
         procedure DefaultDrawCell(aCol, aRow: Integer; var aRect: TRect;
           aState: TGridDrawState); override;
+        procedure EditingDone; override;
 
       end;
   strict private
@@ -149,6 +150,15 @@ begin
   end;
 end;
 
+procedure TFormInputPokes.TGridNums.EditingDone;
+begin
+  inherited EditingDone;
+
+  if Row = RowCount - 1 then
+    if not IsEmptyRow(Row) then
+      RowCount := RowCount + 1;
+end;
+
 constructor TFormInputPokes.TGridNums.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
@@ -188,7 +198,7 @@ procedure TFormInputPokes.GridOnButtonClick(Sender: TObject; aCol,
   aRow: Integer);
 begin
   if (aCol = GridNums.FixedCols + 2) and (aRow >= GridNums.FixedRows) then begin
-    if GridNums.RowCount > GridNums.FixedRows + 1 then
+    if aRow < GridNums.RowCount - 1 then
       GridNums.DeleteRow(aRow)
     else begin
       GridNums.Cells[GridNums.FixedCols, aRow] := '';
@@ -212,7 +222,10 @@ begin
     for I := GridNums.FixedCols to GridNums.FixedCols + 1 do
       GridNums.AutoSizeColumn(I);
     if Data > 0 then
-      Application.QueueAsyncCall(@AfterShow, Data - 1);
+      Application.QueueAsyncCall(@AfterShow, Data - 1)
+    else
+      if GridNums.CanSetFocus then
+        GridNums.SetFocus;
   end;
 end;
 
