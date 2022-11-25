@@ -222,7 +222,7 @@ type
     procedure TapeBrowserAttachTape;
     procedure GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape; out Extensions: TStringDynArray);
     procedure LoadAsk(const SnapshotOrTape: TSnapshotOrTape);
-    function DoLoad(const SnapshotOrTape: TSnapshotOrTape; const AcceptedExtensions: TStringDynArray; ASourceFile: String): Boolean;
+    procedure DoLoad(const SnapshotOrTape: TSnapshotOrTape; const AcceptedExtensions: TStringDynArray; ASourceFile: String);
     procedure RunSpectrum;
     procedure DoOnResetSpectrum;
     procedure DestroySpectrum;
@@ -1331,8 +1331,7 @@ begin
       end;
 
       if OpenDialog1.Execute then
-        if DoLoad(SnapshotOrTape, Extensions, OpenDialog1.FileName) then
-          FLastFilePath := OpenDialog1.FileName;
+        DoLoad(SnapshotOrTape, Extensions, OpenDialog1.FileName);
 
     finally
       Spectrum.Paused := WasPaused;
@@ -1341,8 +1340,8 @@ begin
   end;
 end;
 
-function TForm1.DoLoad(const SnapshotOrTape: TSnapshotOrTape;
-  const AcceptedExtensions: TStringDynArray; ASourceFile: String): Boolean;
+procedure TForm1.DoLoad(const SnapshotOrTape: TSnapshotOrTape;
+  const AcceptedExtensions: TStringDynArray; ASourceFile: String);
 
   procedure LoadingFailed;
   begin
@@ -1355,9 +1354,9 @@ var
   FileName: String;
   Stream: TStream;
   SnapshotFile: TSnapshotFile;
+  L: Boolean;
 
 begin
-  Result := False;
   Stream := nil;
   if Spectrum.IsRunning then begin
     WasPaused := Spectrum.Paused;
@@ -1391,13 +1390,14 @@ begin
               SnapshotFile := TSnapshotZ80.Create;
           end;
 
+          L := False;
           if Assigned(SnapshotFile) then begin
             try
               SnapshotFile.SetSpectrum(Spectrum);
 
               Spectrum.ResetSpectrum;
-              Result := SnapshotFile.LoadFromStream(Stream);
-              if not Result then
+              L := SnapshotFile.LoadFromStream(Stream);
+              if not L then
                 LoadingFailed;
 
             finally
@@ -1417,16 +1417,19 @@ begin
               if TzxPlayer.LoadFromStream(Stream) then begin
                 Spectrum.AttachTapePlayer(TzxPlayer);
                 TapeBrowserAttachTape;
-                Result := True;
+                L := True;
               end else
                 LoadingFailed;
 
             finally
-              if not Result then begin
+              if not L then begin
                 FreeTapePlayer;
               end;
             end;
           end;
+
+          if L then
+            FLastFilePath := ASourceFile;
         finally
           Stream.Free;
         end;
@@ -1565,6 +1568,8 @@ end;
 procedure TForm1.SpectrumStartRun;
 begin
   LoadFromConf;
+  //
+  { #todo : check application params and call DoLoad }
 end;
 
 procedure TForm1.UpdateScreenSizeFactor;
