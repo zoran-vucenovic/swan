@@ -149,7 +149,7 @@ end;
 
 procedure TFormKeyMappings.FillKeyMappingsNames;
 var
-  I, N, J, K: Integer;
+  I, N, K: Integer;
   S: RawByteString;
   KM: TKeyMapRecs;
 begin

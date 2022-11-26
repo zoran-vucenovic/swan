@@ -250,6 +250,7 @@ begin
       Result := 'PA1';
     VK_OEM_CLEAR:
       Result := 'Clear key';
+  otherwise
   end;
 end;
 
