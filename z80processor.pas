@@ -118,7 +118,7 @@ type
     property RegHL1: Word read GPRegs1.HL.U16bit write GPRegs1.HL.U16bit;
 
     property RegA1: Byte read FRegAF1.UByteHi write FRegAF1.UByteHi;
-    property RegF1: Byte read FRegAF1.UByteHi write FRegAF1.UByteHi;
+    property RegF1: Byte read FRegAF1.UByteLo write FRegAF1.UByteLo;
     property RegH1: Byte read GPRegs1.HL.UByteHi write GPRegs1.HL.UByteHi;
     property RegL1: Byte read GPRegs1.HL.UByteLo write GPRegs1.HL.UByteLo;
     property RegB1: Byte read GPRegs1.BC.UByteHi write GPRegs1.BC.UByteHi;
