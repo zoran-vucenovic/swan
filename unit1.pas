@@ -14,13 +14,15 @@ uses
   UnitColourPalette, UnitSpectrumColourMap, CommonFunctionsLCL,
   UnitFormKeyMappings, UnitJoystick, UnitFormJoystickSetup,
   UnitDataModuleImages, unitSoundVolume, UnitConfigs,
-  UnitInputLibraryPathDialog, UnitFormInputPokes;
+  UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots;
 
 type
 
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionEnableHistory: TAction;
+    ActionMoveBack: TAction;
     ActionInputPokes: TAction;
     ActionPortAudioLibPath: TAction;
     ActionMuteSound: TAction;
@@ -86,6 +88,7 @@ type
     MenuItem35: TMenuItem;
     MenuItem36: TMenuItem;
     MenuItem37: TMenuItem;
+    MenuItem38: TMenuItem;
     MenuItem4: TMenuItem;
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
@@ -106,6 +109,7 @@ type
     procedure ActionDecTapeBlockExecute(Sender: TObject);
     procedure ActionDontDrawScreenWhenLoadingExecute(Sender: TObject);
     procedure ActionEjectTapeExecute(Sender: TObject);
+    procedure ActionEnableHistoryExecute(Sender: TObject);
     procedure ActionEnableJoystickExecute(Sender: TObject);
     procedure ActionExitExecute(Sender: TObject);
     procedure ActionFullSpeedExecute(Sender: TObject);
@@ -113,6 +117,7 @@ type
     procedure ActionInputPokesExecute(Sender: TObject);
     procedure ActionJoystickExecute(Sender: TObject);
     procedure ActionKeyMappingsExecute(Sender: TObject);
+    procedure ActionMoveBackExecute(Sender: TObject);
     procedure ActionMuteSoundExecute(Sender: TObject);
     procedure ActionNormalSpeedExecute(Sender: TObject);
     procedure ActionOpenExecute(Sender: TObject);
@@ -205,6 +210,7 @@ type
     FSoundVolumeForm: TFormSoundVolume;
     FLastFilePath: RawByteString;
     FPortaudioLibPathOtherBitness: RawByteString;
+    HistoryQueue: TSnapshotHistoryQueue;
 
     procedure UpdateTextTapeRunning;
     procedure UpdateWriteScreen;
@@ -358,7 +364,13 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  HistoryQueue := nil;
   ActionAbout.Caption := 'About ' + ApplicationName + '...';
+  ActionEnableHistory.Hint :=
+    'Enable going through emulation back in time step by step';
+
+  ActionEnableHistory.Visible := True;
+  ActionMoveBack.Visible := True;
 
   FLastFilePath := '';
   FPortaudioLibPathOtherBitness := '';
@@ -464,6 +476,22 @@ begin
     end else begin
       FreeTapePlayer;
     end;
+  end;
+end;
+
+procedure TForm1.ActionEnableHistoryExecute(Sender: TObject);
+begin
+  if Sender <> Spectrum then begin
+    AddEventToQueue(@ActionEnableHistoryExecute);
+  end else begin
+    if Assigned(HistoryQueue) then begin
+      FreeAndNil(HistoryQueue);
+    end else begin
+      HistoryQueue := TSnapshotHistoryQueue.Create;
+      HistoryQueue.SetSpectrum(Spectrum);
+    end;
+    ActionEnableHistory.Checked := Assigned(HistoryQueue);
+    ActionMoveBack.Enabled := Assigned(HistoryQueue);
   end;
 end;
 
@@ -604,6 +632,17 @@ begin
 
     finally
       Spectrum.Paused := WasPaused;
+    end;
+  end;
+end;
+
+procedure TForm1.ActionMoveBackExecute(Sender: TObject);
+begin
+  if Assigned(HistoryQueue) then begin
+    if Sender <> Spectrum then begin
+      AddEventToQueue(@ActionMoveBackExecute);
+    end else begin
+      HistoryQueue.LoadSnapshot(0);
     end;
   end;
 end;
@@ -810,6 +849,7 @@ begin
     FreeAndNil(FTapeBrowser);
   end;
   DestroySoundVolumeForm();
+  FreeAndNil(HistoryQueue);
 
   DestroySpectrum;
 
@@ -1487,6 +1527,7 @@ begin
   KeyEventCount := 0;
   SetLength(EventsQueue, 0);
   SetLength(KeyEventQueue, 0);
+  FreeAndNil(HistoryQueue);
   if Spectrum <> nil then begin
     Spectrum.OnSync := nil;
     FreeTapePlayer;

@@ -38,6 +38,8 @@ type
 
   TSnapshotFileClass = class of TSnapshotFile;
 
+  // https://sinclair.wiki.zxnet.co.uk/wiki/SNA_format
+  // https://worldofspectrum.org/faq/reference/formats.htm#File
   TSnapshotSNA = class(TSnapshotFile)
   strict private
     type
@@ -64,6 +66,8 @@ type
 
   TSnapshotSNAClass = class of TSnapshotSNA;
 
+  // https://sinclair.wiki.zxnet.co.uk/wiki/Z80_format
+  // https://worldofspectrum.org/faq/reference/z80format.htm
   TSnapshotZ80 = class(TSnapshotFile)
   strict private
     type
@@ -117,7 +121,144 @@ type
 
   TSnapshotZ80Class = class of TSnapshotZ80;
 
+  TSnapshotInternal48 = class(TSnapshot)
+  strict private
+    type
+      TState = record
+        AF, BC, DE, HL: Word;
+        AF1, BC1, DE1, HL1: Word;
+        Ix, Iy: Word;
+        PC, SP: Word;
+        IR: Word;
+        WZ: Word;
+        IFF1, IFF2: Boolean;
+        T_States: Integer;
+        InterruptMode: Byte; // 0, 1, or 2
+        BorderColour: Byte;
+        FlashState: UInt16;
+        Ear: Byte;
+      end;
+  public
+    function LoadFromStream(const Stream: TStream): Boolean; override;
+    function SaveToStream(const Stream: TStream): Boolean; override;
+  end;
+
 implementation
+
+{ TSnapshotInternal48 }
+
+function TSnapshotInternal48.LoadFromStream(const Stream: TStream): Boolean;
+var
+  Proc: TProcessor;
+  State: TState;
+  WasPaused: Boolean;
+begin
+  Result := False;
+
+  if Stream = nil then
+    Exit;
+
+  if Stream.Size <> SizeOf(TState) + KB48 then
+    Exit;
+
+  if FSpectrum = nil then
+    Exit;
+
+  if not FSpectrum.IsRunning then
+    Exit;
+
+  Proc := FSpectrum.GetProcessor;
+  if Proc = nil then
+    Exit;
+
+  WasPaused := FSpectrum.Paused;
+  try
+    FSpectrum.ResetSpectrum;
+    FSpectrum.Paused := True;
+
+    Stream.Position := 0;
+    if Stream.Read(State, SizeOf(State)) = SizeOf(State) then
+      if Proc.GetMemory^.LoadRamFromStream(Stream) then begin
+        Proc.RegAF := State.AF;
+        Proc.RegBC := State.BC;
+        Proc.RegDE := State.DE;
+        Proc.RegHL := State.HL;
+        Proc.RegAF1 := State.AF1;
+        Proc.RegBC1 := State.BC1;
+        Proc.RegDE1 := State.DE1;
+        Proc.RegHL1 := State.HL1;
+        Proc.Ix := State.Ix;
+        Proc.Iy := State.Iy;
+        Proc.RegPC := State.PC;
+        Proc.RegSP := State.SP;
+        Proc.RegIR := State.IR;
+        Proc.RegWZ := State.WZ;
+        Proc.Iff1 := State.IFF1;
+        Proc.Iff2 := State.IFF2;
+        Proc.TStatesInCurrentFrame := State.T_States;
+        Proc.InterruptMode := State.InterruptMode;
+
+        FSpectrum.CodedBorderColour := State.BorderColour;
+        FSpectrum.FlashState := State.FlashState;
+        FSpectrum.Ear := State.Ear;
+
+        Result := True;
+      end;
+  finally
+    FSpectrum.Paused := WasPaused;
+  end;
+
+end;
+
+function TSnapshotInternal48.SaveToStream(const Stream: TStream): Boolean;
+var
+  Proc: TProcessor;
+  State: TState;
+begin
+  Result := False;
+
+  if Stream = nil then
+    Exit;
+
+  if FSpectrum = nil then
+    Exit;
+
+  if not FSpectrum.IsRunning then
+    Exit;
+
+  Proc := FSpectrum.GetProcessor;
+  if Proc = nil then
+    Exit;
+
+  State.AF := Proc.RegAF;
+  State.BC := Proc.RegBC;
+  State.DE := Proc.RegDE;
+  State.HL := Proc.RegHL;
+  State.AF1 := Proc.RegAF1;
+  State.BC1 := Proc.RegBC1;
+  State.DE1 := Proc.RegDE1;
+  State.HL1 := Proc.RegHL1;
+  State.Ix := Proc.Ix;
+  State.Iy := Proc.Iy;
+  State.PC := Proc.RegPC;
+  State.SP := Proc.RegSP;
+  State.IR := Proc.RegIR;
+  State.WZ := Proc.RegWZ;
+  State.IFF1 := Proc.Iff1;
+  State.IFF2 := Proc.Iff2;
+  State.T_States := Proc.TStatesInCurrentFrame;
+  State.InterruptMode := Proc.InterruptMode;
+
+  State.BorderColour := FSpectrum.CodedBorderColour;
+  State.FlashState := FSpectrum.FlashState;
+  State.Ear := FSpectrum.Ear;
+
+  Stream.Position := 0;
+  if Stream.Write(State, SizeOf(State)) = SizeOf(State) then
+    if Proc.GetMemory^.SaveRamToStream(Stream) then
+      Result := True;
+
+end;
 
 { TSnapshotZ80 }
 

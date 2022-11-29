@@ -73,7 +73,7 @@ type
     // screen processing
     FCodedBorderColour: Byte;
     FLCLColours: TLCLColourMap;
-    FlashState: Int16Fast;
+    FFlashState: Int16Fast;
     TicksFrom: Int32Fast;
     FSumTicks: Int64;
     MicrosecondsNeeded: Int64;
@@ -109,12 +109,15 @@ type
     procedure RunSpectrum;
 
   strict private
+    FOnCheckSaveHistorySnapshot: TProcedureOfObject;
     FOnResetSpectrum: TThreadMethod;
     FOnStartRun: TThreadMethod;
     FSoundMuted: Boolean;
     SpectrumColoursBGRA: TSpectrumColoursBGRA;
+    function GetFlashState: UInt16;
     function GetPortAudioLibPath: String;
     function GetSoundVolume: Int8;
+    procedure SetFlashState(AValue: UInt16);
     procedure SetPortAudioLibPath(const AValue: String);
     procedure SetSoundMuted(AValue: Boolean);
     procedure SetSoundVolume(AValue: Int8);
@@ -156,11 +159,13 @@ type
     property OnStartRun: TThreadMethod read FOnStartRun write FOnStartRun;
     property OnEndRun: TThreadMethod read FOnEndRun write SetOnEndRun;
     property OnResetSpectrum: TThreadMethod read FOnResetSpectrum write FOnResetSpectrum;
+    property OnCheckSaveHistorySnapshot: TProcedureOfObject read FOnCheckSaveHistorySnapshot write FOnCheckSaveHistorySnapshot;
     property Paused: Boolean read FPaused write SetPaused;
     property PortAudioLibPath: String read GetPortAudioLibPath write SetPortAudioLibPath;
     property SoundMuted: Boolean read FSoundMuted write SetSoundMuted;
     property SoundVolume: Int8 read GetSoundVolume write SetSoundVolume;
     property Ear: Byte read FEar write SetEar;
+    property FlashState: UInt16 read GetFlashState write SetFlashState;
   end;
 
 implementation
@@ -429,6 +434,8 @@ begin
   FOnSync := nil;
   FOnStartRun := nil;
   FOnEndRun := nil;
+  FOnCheckSaveHistorySnapshot := nil;
+  FOnResetSpectrum := nil;
 
   ResetSpectrum;
 
@@ -561,6 +568,7 @@ end;
 
 procedure TSpectrum.StopRunning;
 begin
+  FOnCheckSaveHistorySnapshot := nil;
   FRunning := False;
 end;
 
@@ -584,7 +592,7 @@ some bug... This is a workaround, so investigate, see to remove this "stop playi
   SetCodedBorderColour(7);
   TicksFrom := ScreenStart;
   FProcessor.ResetCPU;
-  FlashState := 0;
+  FFlashState := 0;
   FProcessor.GetMemory()^.ClearRam;
 
   FFrameCount := 0;
@@ -657,7 +665,7 @@ procedure TSpectrum.RunSpectrum;
 
       TicksFrom := ScreenStart;
 
-      FlashState := (FlashState + 1) and 31;
+      FFlashState := (FFlashState + 1) and 31;
 
       if AskForSpeedCorrection then begin
         UpdateBeeperBuffer;
@@ -673,6 +681,9 @@ procedure TSpectrum.RunSpectrum;
       end;
 
       DoSync;
+
+      if Assigned(FOnCheckSaveHistorySnapshot) then
+        FOnCheckSaveHistorySnapshot();
     end;
   end;
 
@@ -733,9 +744,19 @@ begin
   Result := TBeeper.BeeperVolume;
 end;
 
+procedure TSpectrum.SetFlashState(AValue: UInt16);
+begin
+  FFlashState := AValue and 31;
+end;
+
 function TSpectrum.GetPortAudioLibPath: String;
 begin
   Result := TBeeper.LibPath;
+end;
+
+function TSpectrum.GetFlashState: UInt16;
+begin
+  Result := FFlashState and 31;
 end;
 
 procedure TSpectrum.SetPortAudioLibPath(const AValue: String);
@@ -779,7 +800,7 @@ var
     CPaper := SpectrumColoursBGRA.BGRAColours[Bright, (BAttr shr 3) and %111];
     CInk := SpectrumColoursBGRA.BGRAColours[Bright, BAttr and %111];
 
-    if (FlashState and %10000 <> 0) and (BAttr and %10000000 <> 0) then
+    if (FFlashState and %10000 <> 0) and (BAttr and %10000000 <> 0) then
       By := not By;
 
     for I := 7 downto 0 do begin

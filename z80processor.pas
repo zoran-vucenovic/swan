@@ -284,7 +284,7 @@ type
 
     function GetMemory: PMemory;
 
-    //property SkipInterruptCheck: Boolean read FSkipInterruptCheck;
+    property SkipInterruptCheck: Boolean read FSkipInterruptCheck;
     property TStatesInCurrentFrame: Int32Fast read FTStatesInCurrentFrame write FTStatesInCurrentFrame;
     //property PrefixByte: Byte read FPrefixByte;
     property OnInputRequest: TProcessorEvent read FOnInputRequest write SetOnInputRequest;

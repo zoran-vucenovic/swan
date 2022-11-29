@@ -306,6 +306,21 @@ object Form1: TForm1
       Caption = 'Pokes...'
       OnExecute = ActionInputPokesExecute
     end
+    object ActionMoveBack: TAction
+      Category = 'Emulation'
+      Caption = 'Move back'
+      Enabled = False
+      Hint = 'Rewind to previous snapshot'
+      OnExecute = ActionMoveBackExecute
+      ShortCut = 116
+      Visible = False
+    end
+    object ActionEnableHistory: TAction
+      Category = 'Options'
+      Caption = 'History snapshots enabled'
+      OnExecute = ActionEnableHistoryExecute
+      Visible = False
+    end
   end
   object MainMenu1: TMainMenu
     Images = DataModuleImages.ImageList1
@@ -378,6 +393,9 @@ object Form1: TForm1
       end
       object MenuItem35: TMenuItem
         Action = ActionDontDrawScreenWhenLoading
+      end
+      object MenuItem38: TMenuItem
+        Action = ActionEnableHistory
       end
     end
     object MenuItem1: TMenuItem

@@ -23,7 +23,7 @@
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="9"/>
       <RevisionNr Value="1"/>
-      <BuildNr Value="4674"/>
+      <BuildNr Value="4718"/>
       <StringTable FileDescription="Swan - ZX Spectrum emulator" LegalCopyright="Copyright 2022 Zoran Vučenović" OriginalFilename="Swan" ProductName="Swan - ZX Spectrum emulator" ProductVersion="0.9.1"/>
     </VersionInfo>
     <BuildModes>
@@ -59,6 +59,10 @@
           </Linking>
           <Other>
             <CustomOptions Value="-dUseCThreads"/>
+            <OtherDefines Count="2">
+              <Define0 Value="Debugging"/>
+              <Define1 Value="UseCThreads"/>
+            </OtherDefines>
           </Other>
         </CompilerOptions>
       </Item>
@@ -133,6 +137,10 @@
           <Other>
             <CustomOptions Value="-dDebugging
 -dUseCThreads"/>
+            <OtherDefines Count="2">
+              <Define0 Value="Debugging"/>
+              <Define1 Value="UseCThreads"/>
+            </OtherDefines>
           </Other>
         </CompilerOptions>
       </Item>
@@ -521,6 +529,11 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="UnitFormInputPokes"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unithistorysnapshots.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitHistorySnapshots"/>
       </Unit>
     </Units>
   </ProjectOptions>
