@@ -20,7 +20,7 @@ uses
   UnitCommonSpectrum, UnitJoystick, UnitFormJoystickSetup, AboutBox,
   UnitColourFunctions, UnitDataModuleImages, PortAudioHeader, UnitBeeper,
   unitSoundVolume, FastIntegers, UnitInputLibraryPathDialog,
-  UnitFormInputPokes;
+  UnitFormInputPokes, UnitSZX, UnitStreamCompression;
 
 {$R *.res}
 

@@ -34,6 +34,7 @@ type
     function GetSnap(): TSnapshot;
     procedure SetSavePeriod(AValue: Integer);
     procedure SaveSnapshot();
+    procedure SetSpectrum(const ASpectrum: TSpectrum);
 
     procedure SpectrumOnCheckSaveHistorySnapshot;
   public
@@ -44,9 +45,10 @@ type
     constructor Create;
     destructor Destroy; override;
 
-    function LoadSnapshot(NegativeOffset: Integer = 0): Boolean;
-    procedure SetSpectrum(const ASpectrum: TSpectrum);
+    function LoadSnapshot(NegativeOffset: Integer): Boolean;
+    function GetStream(NegativeOffset: Integer; out Stream: TStream): Boolean;
 
+    property Spectrum: TSpectrum read FSpectrum write SetSpectrum;
     property SavePeriod: Integer read FSavePeriod write SetSavePeriod; // in frames (20 is about 1 second)
   end;
 
@@ -105,6 +107,13 @@ begin
     Last := Element;
     Count := N;
   end;
+end;
+
+function TSnapshotHistoryQueue.GetStream(NegativeOffset: Integer; out
+  Stream: TStream): Boolean;
+begin
+  Result := False;
+  //
 end;
 
 procedure TSnapshotHistoryQueue.SaveSnapshot;

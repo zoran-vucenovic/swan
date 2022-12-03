@@ -116,9 +116,11 @@ type
     SpectrumColoursBGRA: TSpectrumColoursBGRA;
     function GetFlashState: UInt16;
     function GetPortAudioLibPath: String;
+    function GetRemainingIntPinUp: Integer;
     function GetSoundVolume: Int8;
     procedure SetFlashState(AValue: UInt16);
     procedure SetPortAudioLibPath(const AValue: String);
+    procedure SetRemainingIntPinUp(AValue: Integer);
     procedure SetSoundMuted(AValue: Boolean);
     procedure SetSoundVolume(AValue: Int8);
     procedure UpdateDebuggedOrPaused;
@@ -152,6 +154,8 @@ type
     function GetFrameCount: Int64;
     procedure DrawToCanvas(ACanvas: TCanvas); inline;
 
+    property RemainingIntPinUp: Integer // for szx file
+      read GetRemainingIntPinUp write SetRemainingIntPinUp;
     property SumTicks: Int64 read FSumTicks;
     property CodedBorderColour: Byte read FCodedBorderColour write SetCodedBorderColour;
     property Speed: Integer read FSpeed write SetSpeed;
@@ -754,6 +758,14 @@ begin
   Result := TBeeper.LibPath;
 end;
 
+function TSpectrum.GetRemainingIntPinUp: Integer;
+begin
+  if FProcessor.IntPin and (FIntPinUpCount > FProcessor.TStatesInCurrentFrame) then begin
+    Result := FIntPinUpCount - FProcessor.TStatesInCurrentFrame;
+  end else
+    Result := 0;
+end;
+
 function TSpectrum.GetFlashState: UInt16;
 begin
   Result := FFlashState and 31;
@@ -763,6 +775,15 @@ procedure TSpectrum.SetPortAudioLibPath(const AValue: String);
 begin
   TBeeper.LibPath := AValue;
   CheckStartBeeper;
+end;
+
+procedure TSpectrum.SetRemainingIntPinUp(AValue: Integer);
+begin
+  if AValue > 0 then begin
+    FIntPinUpCount := FProcessor.TStatesInCurrentFrame + AValue
+  end else
+    FIntPinUpCount := 0;
+  FProcessor.IntPin := FIntPinUpCount > 0;
 end;
 
 procedure TSpectrum.SetSoundVolume(AValue: Int8);

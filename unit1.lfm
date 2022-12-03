@@ -1,8 +1,8 @@
 object Form1: TForm1
   AnchorSideBottom.Side = asrBottom
-  Left = 88
+  Left = 355
   Height = 215
-  Top = 134
+  Top = 154
   Width = 443
   AllowDropFiles = True
   BorderIcons = [biSystemMenu, biMinimize]
@@ -194,18 +194,6 @@ object Form1: TForm1
       ImageIndex = 5
       OnExecute = ActionColoursExecute
     end
-    object ActionSaveZ80: TAction
-      Category = 'File'
-      Caption = 'Save &z80 snapshot...'
-      ImageIndex = 15
-      OnExecute = ActionSaveZ80Execute
-    end
-    object ActionSaveSna: TAction
-      Category = 'File'
-      Caption = 'Save &sna snapshot...'
-      ImageIndex = 15
-      OnExecute = ActionSaveSnaExecute
-    end
     object ActionAbout: TAction
       Category = 'Help'
       Caption = '&About...'
@@ -313,13 +301,30 @@ object Form1: TForm1
       Hint = 'Rewind to previous snapshot'
       OnExecute = ActionMoveBackExecute
       ShortCut = 116
-      Visible = False
     end
     object ActionEnableHistory: TAction
       Category = 'Options'
       Caption = 'History snapshots enabled'
       OnExecute = ActionEnableHistoryExecute
-      Visible = False
+    end
+    object ActionSaveSzx: TAction
+      Category = 'File'
+      Caption = 'Save &szx snapshot...'
+      Hint = 'Save szx snapshot'
+      ImageIndex = 15
+      OnExecute = ActionSaveSzxExecute
+    end
+    object ActionSaveZ80: TAction
+      Category = 'File'
+      Caption = 'Save &z80 snapshot...'
+      ImageIndex = 15
+      OnExecute = ActionSaveZ80Execute
+    end
+    object ActionSaveSna: TAction
+      Category = 'File'
+      Caption = 'Save sna snapshot...'
+      ImageIndex = 15
+      OnExecute = ActionSaveSnaExecute
     end
   end
   object MainMenu1: TMainMenu
@@ -330,6 +335,9 @@ object Form1: TForm1
       Caption = '&File'
       object MenuItem17: TMenuItem
         Action = ActionOpen
+      end
+      object MenuItem39: TMenuItem
+        Action = ActionSaveSzx
       end
       object MenuItem13: TMenuItem
         Action = ActionSaveZ80

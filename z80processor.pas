@@ -139,7 +139,7 @@ type
       TIncDecProc = procedure(const PB: PByte) of object;
 
   strict private
-    FlagsModified: Boolean;
+    FFlagsModified: Boolean;
     FTStatesInCurrentFrame: Int32Fast;
     FPrefixByte: Byte;
     FSkipInterruptCheck: Boolean;
@@ -265,7 +265,7 @@ type
     //property RFSH: Boolean read FRFSH;
 
     // CPU control (5 pins, one output, other four input)
-    property Halt: Boolean read FHalt;
+    property Halt: Boolean read FHalt write FHalt; {write, because of szx}
     //property Wait: Boolean write FWait;
     property IntPin: Boolean read FIntPin write FIntPin;
     property NMI: Boolean write FNMI;
@@ -284,7 +284,9 @@ type
 
     function GetMemory: PMemory;
 
-    property SkipInterruptCheck: Boolean read FSkipInterruptCheck;
+    property SkipInterruptCheck: Boolean read FSkipInterruptCheck write FSkipInterruptCheck;
+    property FlagsModified: Boolean read FFlagsModified write FFlagsModified;
+
     property TStatesInCurrentFrame: Int32Fast read FTStatesInCurrentFrame write FTStatesInCurrentFrame;
     //property PrefixByte: Byte read FPrefixByte;
     property OnInputRequest: TProcessorEvent read FOnInputRequest write SetOnInputRequest;
@@ -673,7 +675,7 @@ begin
 
   RegF := Flags;
 
-  FlagsModified := True;
+  FFlagsModified := True;
 end;
 
 procedure TProcessor.DecR(const PB: PByte);
@@ -701,7 +703,7 @@ begin
 
   RegF := Flags;
 
-  FlagsModified := True;
+  FFlagsModified := True;
 end;
 
 procedure TProcessor.RLCA;
@@ -772,7 +774,7 @@ procedure TProcessor.SCF;
 var
   B: Byte;
 begin
-  if FlagsModified then
+  if FFlagsModified then
     B := RegA
   else
     B := RegF or RegA;
@@ -791,7 +793,7 @@ procedure TProcessor.CCF;
 var
   B: Byte;
 begin
-  if FlagsModified then
+  if FFlagsModified then
     B := RegA
   else
     B := RegF or RegA;
@@ -886,19 +888,19 @@ begin
 
   // Leave flags 5 and 3 to be set by caller, here, memptr (WZ register) might affect these flags!
 
-  FlagsModified := True;
+  FFlagsModified := True;
 end;
 
 procedure TProcessor.SetBit(const BitNo: Byte; var B: Byte);
 begin
   B := B or (1 shl BitNo);
-  FlagsModified := False;
+  FFlagsModified := False;
 end;
 
 procedure TProcessor.ResetBit(const BitNo: Byte; var B: Byte);
 begin
   B := B and (not (1 shl BitNo));
-  FlagsModified := False;
+  FFlagsModified := False;
 end;
 
 procedure TProcessor.RldOrRrd(const IsRRD: Boolean);
@@ -930,7 +932,7 @@ begin
       RegF := RegF or %100; // PV
   end;
 
-  FlagsModified := True;
+  FFlagsModified := True;
 end;
 
 procedure TProcessor.InAn;
@@ -1120,7 +1122,7 @@ begin
   otherwise
   end;
 
-  FlagsModified := True;
+  FFlagsModified := True;
 end;
 
 procedure TProcessor.Rot(const I: Integer; var B: Byte);
@@ -1185,7 +1187,7 @@ begin
 
   RegF := FlagsToSet and $FF;
 
-  FlagsModified := True;
+  FFlagsModified := True;
 end;
 
 procedure TProcessor.Bli(const A, B: Byte);
@@ -1361,7 +1363,7 @@ begin
 
   RegF := FlagsToSet;
 
-  FlagsModified := True;
+  FFlagsModified := True;
 end;
 
 procedure TProcessor.RefreshMem;
@@ -1383,7 +1385,7 @@ end;
 
 procedure TProcessor.ResetCPU;
 begin
-  FlagsModified := False;
+  FFlagsModified := False;
   FInterruptMode := 0;
   FSkipInterruptCheck := False;
   FPrefixByte := 0;
@@ -1632,7 +1634,7 @@ var
     // N is reset
     RegF := Flags;
 
-    FlagsModified := True;
+    FFlagsModified := True;
   end;
 
   procedure IncDecHL(const Fun: TIncDecProc);
@@ -1715,14 +1717,14 @@ var
           otherwise // 4..7 // JR cc[y-4], d
             RelativeJump(IfCc(y and %11));
           end;
-          FlagsModified := False;
+          FFlagsModified := False;
         end;
       1:
         case y and 1 of
           0: // LD rp[p], nn
             begin
               ResolveTableRP()^ := ReadNextWord;
-              FlagsModified := False;
+              FFlagsModified := False;
             end;
           1: // ADD HL, rp[p]
             begin
@@ -1782,7 +1784,7 @@ var
                 FRegWZ := Adr + 1;
               end;
           end;
-          FlagsModified := False;
+          FFlagsModified := False;
         end;
       3:
         begin
@@ -1793,7 +1795,7 @@ var
             1: // DEC rp[p]
               Dec(ResolveTableRP()^);
           end;
-          FlagsModified := False;
+          FFlagsModified := False;
         end;
       4: // INC r[y]
         if y <> 6 then
@@ -1812,7 +1814,7 @@ var
           else
             LDmHLn;
 
-          FlagsModified := False;
+          FFlagsModified := False;
         end;
       7:
         begin
@@ -1835,7 +1837,7 @@ var
               CCF;
           end;
           
-          FlagsModified := True;
+          FFlagsModified := True;
         end;
     end;
   end;
@@ -1881,7 +1883,7 @@ var
         Dec(FRegPC);
       end;
     end;
-    FlagsModified := False;
+    FFlagsModified := False;
   end;
 
   procedure ProcessX2; inline;
@@ -1910,7 +1912,7 @@ var
     W: Word;
     PW: PWord;
   begin
-    FlagsModified := False;
+    FFlagsModified := False;
     case z of
       0: // RET cc[y]
         begin
@@ -2100,7 +2102,7 @@ var
       // flags S, 5, 3 copied from A
       RegF := FlagsToSet or (B and %10101000); // S, 5, 3
 
-    FlagsModified := True;
+    FFlagsModified := True;
   end;
 
   procedure ProcessED;
@@ -2115,7 +2117,7 @@ var
               InC0;
               if y <> 6 then
                 ResolveTableR(y)^ := FDataBus;
-              FlagsModified := True;
+              FFlagsModified := True;
             end;
           1:
             begin
@@ -2127,7 +2129,7 @@ var
               FAddressBus := RegBC;
               FRegWZ := FAddressBus + 1;
               RequestOutput;
-              FlagsModified := False;
+              FFlagsModified := False;
             end;
           2:
             begin
@@ -2141,7 +2143,7 @@ var
                   AdcHLss(ResolveTableRP()^);
               otherwise
               end;
-              FlagsModified := True;
+              FFlagsModified := True;
             end;
           3:
             begin
@@ -2154,14 +2156,14 @@ var
               otherwise
               end;
               Inc(FRegWZ);
-              FlagsModified := False;
+              FFlagsModified := False;
             end;
           4: // NEG
             begin
               B := RegA;
               RegA := 0;
               SubA(B);
-              FlagsModified := True;
+              FFlagsModified := True;
             end;
           5:
             begin
@@ -2185,7 +2187,7 @@ var
                                     // So... I just don't know.
                 FIff1 := FIff2;
               end;
-              FlagsModified := False;
+              FFlagsModified := False;
             end;
           6: // IM im[y]
             begin
@@ -2197,7 +2199,7 @@ var
               otherwise
                 FInterruptMode := 0;
               end;
-              FlagsModified := False;
+              FFlagsModified := False;
             end;
           7:
             case y of
@@ -2205,13 +2207,13 @@ var
                 begin
                   ContentionAndIncTStates;
                   RegI := RegA;
-                  FlagsModified := False;
+                  FFlagsModified := False;
                 end;
               1: // LD R, A
                 begin
                   ContentionAndIncTStates;
                   RegR := RegA;
-                  FlagsModified := False;
+                  FFlagsModified := False;
                 end;
               2: // LD A, I
                 LDAri(RegI);
@@ -2222,7 +2224,7 @@ var
               5: // RLD
                 RldOrRrd(False);
               6, 7: // NOP
-                FlagsModified := False;
+                FFlagsModified := False;
             end;
         end;
       2:
@@ -2232,12 +2234,12 @@ var
         else begin
           // NONI + NOP
           FSkipInterruptCheck := True;
-          FlagsModified := False;
+          FFlagsModified := False;
         end;
     otherwise
       //0, 3: // NONI + NOP
       FSkipInterruptCheck := True;
-      FlagsModified := False;
+      FFlagsModified := False;
     end;
   end;
 
@@ -2277,14 +2279,14 @@ begin
       PushToStack(FRegPC);
 
       FRegPC := NMIStartAdr;
-      FlagsModified := False;
+      FFlagsModified := False;
       //Exit(FTStatesInCurrentFrame);
       Exit;
     end;
 
     if FIntPin then begin
       if FIff1 then begin
-        FlagsModified := False;
+        FFlagsModified := False;
 
         FIff2 := False;
         FIff1 := False;
@@ -2373,7 +2375,7 @@ begin
             // NONI
             FPrefixByte := OpCode;
             FSkipInterruptCheck := True;
-            FlagsModified := False;
+            FFlagsModified := False;
             Exit;
           end;
         $CB:

@@ -10,7 +10,34 @@ interface
 uses
   Classes, SysUtils, UnitSpectrum, UnitMemory, Z80Processor, FastIntegers;
 
+const
+  KB48 = 48 * 1024;
+  KB16 = 16 * 1024;
+
 type
+
+  TSpectrumInternalState = record
+  public
+    AF, BC, DE, HL: Word;
+    AF1, BC1, DE1, HL1: Word;
+    Ix, Iy: Word;
+    PC, SP: Word;
+    IR: Word;
+    WZ: Word;
+    IFF1, IFF2: Boolean;
+    T_States: Integer;
+    InterruptMode: Byte; // 0, 1, or 2
+    Halt: Boolean;
+    FlagsModified: Boolean;
+    SkipInterruptCheck: Boolean;
+    RemainingIntPinUp: UInt16;
+    BorderColour: Byte; //--
+    FlashState: UInt16;
+    Ear: Byte; //--
+
+    function LoadFromSpectrum(const ASpectrum: TSpectrum): Boolean;
+    function SaveToSpectrum(const ASpectrum: TSpectrum): Boolean;
+  end;
 
   TSpectrumFile = class(TObject)
   strict protected
@@ -20,13 +47,11 @@ type
   end;
 
   TSnapshot = class abstract (TSpectrumFile)
-  strict protected
-    const
-      KB48 = 48 * 1024;
-      KB16 = 16 * 1024;
   public
     function LoadFromStream(const Stream: TStream): Boolean; virtual; abstract;
     function SaveToStream(const Stream: TStream): Boolean; virtual; abstract;
+
+    //property State: TSpectrumInternalState read FState
   end;
 
   TSnapshotFile = class abstract (TSnapshot)
@@ -122,22 +147,6 @@ type
   TSnapshotZ80Class = class of TSnapshotZ80;
 
   TSnapshotInternal48 = class(TSnapshot)
-  strict private
-    type
-      TState = record
-        AF, BC, DE, HL: Word;
-        AF1, BC1, DE1, HL1: Word;
-        Ix, Iy: Word;
-        PC, SP: Word;
-        IR: Word;
-        WZ: Word;
-        IFF1, IFF2: Boolean;
-        T_States: Integer;
-        InterruptMode: Byte; // 0, 1, or 2
-        BorderColour: Byte;
-        FlashState: UInt16;
-        Ear: Byte;
-      end;
   public
     function LoadFromStream(const Stream: TStream): Boolean; override;
     function SaveToStream(const Stream: TStream): Boolean; override;
@@ -145,12 +154,94 @@ type
 
 implementation
 
+{ TSpectrumInternalState }
+
+function TSpectrumInternalState.LoadFromSpectrum(const ASpectrum: TSpectrum): Boolean;
+var
+  Proc: TProcessor;
+begin
+  if Assigned(ASpectrum) then begin
+    Proc := ASpectrum.GetProcessor;
+    if Assigned(Proc) then begin
+      AF := Proc.RegAF;
+      BC := Proc.RegBC;
+      DE := Proc.RegDE;
+      HL := Proc.RegHL;
+      AF1 := Proc.RegAF1;
+      BC1 := Proc.RegBC1;
+      DE1 := Proc.RegDE1;
+      HL1 := Proc.RegHL1;
+      Ix := Proc.Ix;
+      Iy := Proc.Iy;
+      PC := Proc.RegPC;
+      SP := Proc.RegSP;
+      IR := Proc.RegIR;
+      WZ := Proc.RegWZ;
+      IFF1 := Proc.Iff1;
+      IFF2 := Proc.Iff2;
+      T_States := Proc.TStatesInCurrentFrame;
+      InterruptMode := Proc.InterruptMode;
+      Halt := Proc.Halt;
+      FlagsModified := Proc.FlagsModified;
+      SkipInterruptCheck := Proc.SkipInterruptCheck;
+
+      RemainingIntPinUp := ASpectrum.RemainingIntPinUp;
+      BorderColour := ASpectrum.CodedBorderColour;
+      FlashState := ASpectrum.FlashState;
+      Ear := ASpectrum.Ear;
+      Exit(True);
+    end;
+  end;
+
+  Result := False;
+end;
+
+function TSpectrumInternalState.SaveToSpectrum(const ASpectrum: TSpectrum): Boolean;
+var
+  Proc: TProcessor;
+begin
+  if Assigned(ASpectrum) then begin
+    Proc := ASpectrum.GetProcessor;
+    if Assigned(Proc) then begin
+      Proc.RegAF := AF;
+      Proc.RegBC := BC;
+      Proc.RegDE := DE;
+      Proc.RegHL := HL;
+      Proc.RegAF1 := AF1;
+      Proc.RegBC1 := BC1;
+      Proc.RegDE1 := DE1;
+      Proc.RegHL1 := HL1;
+      Proc.Ix := Ix;
+      Proc.Iy := Iy;
+      Proc.RegPC := PC;
+      Proc.RegSP := SP;
+      Proc.RegIR := IR;
+      Proc.RegWZ := WZ;
+      Proc.Iff1 := IFF1;
+      Proc.Iff2 := IFF2;
+      Proc.TStatesInCurrentFrame := T_States;
+      Proc.InterruptMode := InterruptMode;
+      Proc.Halt := Halt;
+      Proc.FlagsModified := FlagsModified;
+      Proc.SkipInterruptCheck := SkipInterruptCheck;
+
+      ASpectrum.RemainingIntPinUp := RemainingIntPinUp;
+      ASpectrum.CodedBorderColour := BorderColour;
+      ASpectrum.FlashState := FlashState;
+      ASpectrum.Ear := Ear;
+
+      Exit(True);
+    end;
+  end;
+  Result := False;
+end;
+
 { TSnapshotInternal48 }
 
 function TSnapshotInternal48.LoadFromStream(const Stream: TStream): Boolean;
 var
   Proc: TProcessor;
-  State: TState;
+  State: TSpectrumInternalState;
   WasPaused: Boolean;
 begin
   Result := False;
@@ -158,7 +249,7 @@ begin
   if Stream = nil then
     Exit;
 
-  if Stream.Size <> SizeOf(TState) + KB48 then
+  if Stream.Size <> SizeOf(TSpectrumInternalState) + KB48 then
     Exit;
 
   if FSpectrum = nil then
@@ -177,33 +268,11 @@ begin
     FSpectrum.Paused := True;
 
     Stream.Position := 0;
-    if Stream.Read(State, SizeOf(State)) = SizeOf(State) then
+    if Stream.Read(State{%H-}, SizeOf(State)) = SizeOf(State) then begin
       if Proc.GetMemory^.LoadRamFromStream(Stream) then begin
-        Proc.RegAF := State.AF;
-        Proc.RegBC := State.BC;
-        Proc.RegDE := State.DE;
-        Proc.RegHL := State.HL;
-        Proc.RegAF1 := State.AF1;
-        Proc.RegBC1 := State.BC1;
-        Proc.RegDE1 := State.DE1;
-        Proc.RegHL1 := State.HL1;
-        Proc.Ix := State.Ix;
-        Proc.Iy := State.Iy;
-        Proc.RegPC := State.PC;
-        Proc.RegSP := State.SP;
-        Proc.RegIR := State.IR;
-        Proc.RegWZ := State.WZ;
-        Proc.Iff1 := State.IFF1;
-        Proc.Iff2 := State.IFF2;
-        Proc.TStatesInCurrentFrame := State.T_States;
-        Proc.InterruptMode := State.InterruptMode;
-
-        FSpectrum.CodedBorderColour := State.BorderColour;
-        FSpectrum.FlashState := State.FlashState;
-        FSpectrum.Ear := State.Ear;
-
-        Result := True;
+        Result := State.SaveToSpectrum(FSpectrum);
       end;
+    end;
   finally
     FSpectrum.Paused := WasPaused;
   end;
@@ -213,7 +282,7 @@ end;
 function TSnapshotInternal48.SaveToStream(const Stream: TStream): Boolean;
 var
   Proc: TProcessor;
-  State: TState;
+  State: TSpectrumInternalState;
 begin
   Result := False;
 
@@ -230,33 +299,12 @@ begin
   if Proc = nil then
     Exit;
 
-  State.AF := Proc.RegAF;
-  State.BC := Proc.RegBC;
-  State.DE := Proc.RegDE;
-  State.HL := Proc.RegHL;
-  State.AF1 := Proc.RegAF1;
-  State.BC1 := Proc.RegBC1;
-  State.DE1 := Proc.RegDE1;
-  State.HL1 := Proc.RegHL1;
-  State.Ix := Proc.Ix;
-  State.Iy := Proc.Iy;
-  State.PC := Proc.RegPC;
-  State.SP := Proc.RegSP;
-  State.IR := Proc.RegIR;
-  State.WZ := Proc.RegWZ;
-  State.IFF1 := Proc.Iff1;
-  State.IFF2 := Proc.Iff2;
-  State.T_States := Proc.TStatesInCurrentFrame;
-  State.InterruptMode := Proc.InterruptMode;
-
-  State.BorderColour := FSpectrum.CodedBorderColour;
-  State.FlashState := FSpectrum.FlashState;
-  State.Ear := FSpectrum.Ear;
-
-  Stream.Position := 0;
-  if Stream.Write(State, SizeOf(State)) = SizeOf(State) then
-    if Proc.GetMemory^.SaveRamToStream(Stream) then
-      Result := True;
+  if State.LoadFromSpectrum(FSpectrum) then begin
+    Stream.Position := 0;
+    if Stream.Write(State, SizeOf(State)) = SizeOf(State) then
+      if Proc.GetMemory^.SaveRamToStream(Stream) then
+        Result := True;
+  end;
 
 end;
 

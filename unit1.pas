@@ -14,13 +14,14 @@ uses
   UnitColourPalette, UnitSpectrumColourMap, CommonFunctionsLCL,
   UnitFormKeyMappings, UnitJoystick, UnitFormJoystickSetup,
   UnitDataModuleImages, unitSoundVolume, UnitConfigs,
-  UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots;
+  UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX;
 
 type
 
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionSaveSzx: TAction;
     ActionEnableHistory: TAction;
     ActionMoveBack: TAction;
     ActionInputPokes: TAction;
@@ -89,6 +90,7 @@ type
     MenuItem36: TMenuItem;
     MenuItem37: TMenuItem;
     MenuItem38: TMenuItem;
+    MenuItem39: TMenuItem;
     MenuItem4: TMenuItem;
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
@@ -127,6 +129,7 @@ type
     procedure ActionResetExecute(Sender: TObject);
     procedure ActionRewindExecute(Sender: TObject);
     procedure ActionSaveSnaExecute(Sender: TObject);
+    procedure ActionSaveSzxExecute(Sender: TObject);
     procedure ActionSaveZ80Execute(Sender: TObject);
     procedure ActionShowDebuggerExecute(Sender: TObject);
     procedure ActionShowTapePlayerExecute(Sender: TObject);
@@ -162,6 +165,7 @@ type
     procedure SaveToConf;
     function GetSoundVolume: Int8;
     procedure SetSoundVolume(N: Int8);
+    procedure SetSnapshotHistoryEnabled(const B: Boolean);
 
     procedure DoOnKeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
     procedure DoOnKeyUp(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
@@ -212,6 +216,7 @@ type
     FPortaudioLibPathOtherBitness: RawByteString;
     HistoryQueue: TSnapshotHistoryQueue;
 
+    procedure UpdateActiveSnapshotHistory;
     procedure UpdateTextTapeRunning;
     procedure UpdateWriteScreen;
     procedure UpdateCheckWriteScreen;
@@ -369,8 +374,7 @@ begin
   ActionEnableHistory.Hint :=
     'Enable going through emulation back in time step by step';
 
-  ActionEnableHistory.Visible := True;
-  ActionMoveBack.Visible := True;
+  UpdateActiveSnapshotHistory;
 
   FLastFilePath := '';
   FPortaudioLibPathOtherBitness := '';
@@ -484,14 +488,7 @@ begin
   if Sender <> Spectrum then begin
     AddEventToQueue(@ActionEnableHistoryExecute);
   end else begin
-    if Assigned(HistoryQueue) then begin
-      FreeAndNil(HistoryQueue);
-    end else begin
-      HistoryQueue := TSnapshotHistoryQueue.Create;
-      HistoryQueue.SetSpectrum(Spectrum);
-    end;
-    ActionEnableHistory.Checked := Assigned(HistoryQueue);
-    ActionMoveBack.Enabled := Assigned(HistoryQueue);
+    SetSnapshotHistoryEnabled(not Assigned(HistoryQueue));
   end;
 end;
 
@@ -742,6 +739,14 @@ begin
     AddEventToQueue(@ActionSaveSnaExecute);
   end else
     SaveSnapshot(TSnapshotSNA);
+end;
+
+procedure TForm1.ActionSaveSzxExecute(Sender: TObject);
+begin
+  if Sender <> Spectrum then begin
+    AddEventToQueue(@ActionSaveSzxExecute);
+  end else
+    SaveSnapshot(TSnapshotSZX);
 end;
 
 procedure TForm1.ActionSaveZ80Execute(Sender: TObject);
@@ -1105,6 +1110,19 @@ begin
   Spectrum.SoundVolume := N * 4;
 end;
 
+procedure TForm1.SetSnapshotHistoryEnabled(const B: Boolean);
+begin
+  if Assigned(HistoryQueue) xor B then begin
+    if B then begin
+      HistoryQueue := TSnapshotHistoryQueue.Create;
+      HistoryQueue.Spectrum := Spectrum;
+    end else begin
+      FreeAndNil(HistoryQueue);
+    end;
+    UpdateActiveSnapshotHistory();
+  end;
+end;
+
 procedure TForm1.DoOnKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState
   );
 begin
@@ -1114,6 +1132,12 @@ end;
 procedure TForm1.DoOnKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   AddKeyEventToQueue(Key, False);
+end;
+
+procedure TForm1.UpdateActiveSnapshotHistory;
+begin
+  ActionEnableHistory.Checked := Assigned(HistoryQueue);
+  ActionMoveBack.Enabled := Assigned(HistoryQueue);
 end;
 
 procedure TForm1.UpdateTextTapeRunning;
@@ -1306,7 +1330,7 @@ end;
 procedure TForm1.GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape;
   out Extensions: TStringDynArray);
 const
-  SnapshotExtensions: array[0..1] of String = ('sna', 'z80');
+  SnapshotExtensions: array[0..2] of String = ('szx', 'z80', 'sna');
   TapeExtensions: array[0..1] of String = ('tap', 'tzx');
 var
   I, L: Integer;
@@ -1426,6 +1450,8 @@ begin
           if SnapshotOrTape in [stSnapshot, stBoth] then begin
             if AnsiCompareText(Extension, ExtensionSeparator + 'sna') = 0 then
               SnapshotFile := TSnapshotSNA.Create
+            else if AnsiCompareText(Extension, ExtensionSeparator + 'szx') = 0 then
+              SnapshotFile := TSnapshotSZX.Create
             else if AnsiCompareText(Extension, ExtensionSeparator + 'z80') = 0 then
               SnapshotFile := TSnapshotZ80.Create;
           end;
