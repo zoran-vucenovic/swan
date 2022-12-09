@@ -31,9 +31,9 @@ type
     FlagsModified: Boolean;
     SkipInterruptCheck: Boolean;
     RemainingIntPinUp: UInt16;
-    BorderColour: Byte; //--
+    BorderColour: Byte;
     FlashState: UInt16;
-    Ear: Byte; //--
+    Ear: Byte;
 
     function LoadFromSpectrum(const ASpectrum: TSpectrum): Boolean;
     function SaveToSpectrum(const ASpectrum: TSpectrum): Boolean;
@@ -50,8 +50,6 @@ type
   public
     function LoadFromStream(const Stream: TStream): Boolean; virtual; abstract;
     function SaveToStream(const Stream: TStream): Boolean; virtual; abstract;
-
-    //property State: TSpectrumInternalState read FState
   end;
 
   TSnapshotFile = class abstract (TSnapshot)
@@ -148,6 +146,7 @@ type
 
   TSnapshotInternal48 = class(TSnapshot)
   public
+    class function GetScreenMem(const Stream: TStream; var ScreenMemArr: Array of Byte): Boolean; static;
     function LoadFromStream(const Stream: TStream): Boolean; override;
     function SaveToStream(const Stream: TStream): Boolean; override;
   end;
@@ -237,6 +236,17 @@ begin
 end;
 
 { TSnapshotInternal48 }
+
+class function TSnapshotInternal48.GetScreenMem(const Stream: TStream;
+  var ScreenMemArr: array of Byte): Boolean;
+begin
+  if Assigned(Stream) and (Length(ScreenMemArr) = 6912) and (Stream.Size >= SizeOf(TSpectrumInternalState) + Length(ScreenMemArr)) then begin
+    Stream.Seek(SizeOf(TSpectrumInternalState), TSeekOrigin.soBeginning);
+    if Stream.Read(ScreenMemArr[0], Length(ScreenMemArr)) = Length(ScreenMemArr) then
+      Exit(True);
+  end;
+  Result := False;
+end;
 
 function TSnapshotInternal48.LoadFromStream(const Stream: TStream): Boolean;
 var

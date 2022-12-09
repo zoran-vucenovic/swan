@@ -7,8 +7,8 @@ object FrameOnePCKeyMapping: TFrameOnePCKeyMapping
   ClientWidth = 516
   OnResize = FrameResize
   TabOrder = 0
-  DesignLeft = 2190
-  DesignTop = 126
+  DesignLeft = 691
+  DesignTop = 50
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

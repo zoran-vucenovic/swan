@@ -78,7 +78,7 @@ type
     FSumTicks: Int64;
     MicrosecondsNeeded: Int64;
 
-    PCTicksStart, PCTicksEnd: Int64;
+    PCTicksStart: Int64;
 
     FSpeed: Integer;
     SpeedCorrection: Int16Fast;
@@ -109,7 +109,6 @@ type
     procedure RunSpectrum;
 
   strict private
-    FOnCheckSaveHistorySnapshot: TProcedureOfObject;
     FOnResetSpectrum: TThreadMethod;
     FOnStartRun: TThreadMethod;
     FSoundMuted: Boolean;
@@ -148,11 +147,11 @@ type
 
     procedure StopRunning;
     procedure ResetSpectrum;
-    function GetTicksRun(): Int64;
     function IsRunning: Boolean;
     function GetProcessor: TProcessor;
     function GetFrameCount: Int64;
     procedure DrawToCanvas(ACanvas: TCanvas); inline;
+    function GetBgraColours: TBGRAColours;
 
     property RemainingIntPinUp: Integer // for szx file
       read GetRemainingIntPinUp write SetRemainingIntPinUp;
@@ -163,7 +162,6 @@ type
     property OnStartRun: TThreadMethod read FOnStartRun write FOnStartRun;
     property OnEndRun: TThreadMethod read FOnEndRun write SetOnEndRun;
     property OnResetSpectrum: TThreadMethod read FOnResetSpectrum write FOnResetSpectrum;
-    property OnCheckSaveHistorySnapshot: TProcedureOfObject read FOnCheckSaveHistorySnapshot write FOnCheckSaveHistorySnapshot;
     property Paused: Boolean read FPaused write SetPaused;
     property PortAudioLibPath: String read GetPortAudioLibPath write SetPortAudioLibPath;
     property SoundMuted: Boolean read FSoundMuted write SetSoundMuted;
@@ -385,8 +383,11 @@ procedure TSpectrum.UpdateAskForSpeedCorrection;
 begin
   if AskForSpeedCorrection =
       (FDebuggedOrPaused or (SpeedCorrection = 0)
-                                or (FProcessor.OnNeedWriteScreen <> @WriteToScreen))
+      or (FProcessor.OnNeedWriteScreen <> @WriteToScreen))
   then begin
+    KeyBoard.ClearKeyboard;
+    TJoystick.Joystick.ResetState;
+
     AskForSpeedCorrection := not AskForSpeedCorrection;
     if AskForSpeedCorrection then begin
       InitTimes;
@@ -438,7 +439,6 @@ begin
   FOnSync := nil;
   FOnStartRun := nil;
   FOnEndRun := nil;
-  FOnCheckSaveHistorySnapshot := nil;
   FOnResetSpectrum := nil;
 
   ResetSpectrum;
@@ -572,7 +572,6 @@ end;
 
 procedure TSpectrum.StopRunning;
 begin
-  FOnCheckSaveHistorySnapshot := nil;
   FRunning := False;
 end;
 
@@ -607,11 +606,6 @@ some bug... This is a workaround, so investigate, see to remove this "stop playi
   CheckStartBeeper;
 end;
 
-function TSpectrum.GetTicksRun(): Int64;
-begin
-  Result := PCTicksEnd - PCTicksStart;
-end;
-
 function TSpectrum.IsRunning: Boolean;
 begin
   Result := FRunning;
@@ -633,6 +627,11 @@ begin
   SpectrumColoursBGRA.Bmp.Draw(ACanvas, 0, 0, True);
 end;
 
+function TSpectrum.GetBgraColours: TBGRAColours;
+begin
+  Result := SpectrumColoursBGRA.BGRAColours;
+end;
+
 procedure TSpectrum.RunSpectrum;
 
   procedure DoStep; inline;    
@@ -646,13 +645,12 @@ procedure TSpectrum.RunSpectrum;
       FTapePlayer.GetNextPulse();
     FProcessor.DoProcess;
 
-    if FIntPinUpCount > 0 then begin
+    if FIntPinUpCount <> 0 then begin
       if FProcessor.IntPin then begin
         if FProcessor.TStatesInCurrentFrame >= FIntPinUpCount then begin
           FProcessor.IntPin := False;
           FIntPinUpCount := 0;
         end;
-
       end;
     end;
 
@@ -666,6 +664,8 @@ procedure TSpectrum.RunSpectrum;
       FSumTicks := FSumTicks + FrameTicks;
       FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame - FrameTicks;
       FIntPinUpCount := FProcessor.TStatesInCurrentFrame + 32;
+      //FIntPinUpCount := FProcessor.TStatesInCurrentFrame + 1;
+      //FIntPinUpCount := 32;
 
       TicksFrom := ScreenStart;
 
@@ -678,16 +678,13 @@ procedure TSpectrum.RunSpectrum;
 
         // speed 100%:
         MilliSecondsPassed := GetTickCount64 - PCTicksStart;
-        MilliSecondsToWait := (MicrosecondsNeeded div 1000) - MilliSecondsPassed;
+        MilliSecondsToWait := MicrosecondsNeeded div 1000 - MilliSecondsPassed;
 
         if MilliSecondsToWait > 0 then
           Sleep(MilliSecondsToWait);
       end;
 
       DoSync;
-
-      if Assigned(FOnCheckSaveHistorySnapshot) then
-        FOnCheckSaveHistorySnapshot();
     end;
   end;
 
@@ -725,7 +722,6 @@ begin
   end;
   TBeeper.StopBeeper;
 
-  PCTicksEnd := GetTickCount64;
   FSumTicks := FSumTicks + FProcessor.TStatesInCurrentFrame;
 
   if Assigned(FOnEndRun) then

@@ -17,6 +17,7 @@
 {$else}
   {$Assertions off}
   {$inline on}
+  {$Optimization LEVEL3}
 {$endif}
 
 

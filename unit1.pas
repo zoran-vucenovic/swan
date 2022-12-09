@@ -14,13 +14,15 @@ uses
   UnitColourPalette, UnitSpectrumColourMap, CommonFunctionsLCL,
   UnitFormKeyMappings, UnitJoystick, UnitFormJoystickSetup,
   UnitDataModuleImages, unitSoundVolume, UnitConfigs,
-  UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX;
+  UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
+  UnitFormHistorySnapshots;
 
 type
 
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionHistorySnapshots: TAction;
     ActionSaveSzx: TAction;
     ActionEnableHistory: TAction;
     ActionMoveBack: TAction;
@@ -92,6 +94,7 @@ type
     MenuItem38: TMenuItem;
     MenuItem39: TMenuItem;
     MenuItem4: TMenuItem;
+    MenuItem40: TMenuItem;
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
@@ -115,6 +118,7 @@ type
     procedure ActionEnableJoystickExecute(Sender: TObject);
     procedure ActionExitExecute(Sender: TObject);
     procedure ActionFullSpeedExecute(Sender: TObject);
+    procedure ActionHistorySnapshotsExecute(Sender: TObject);
     procedure ActionIncTapeBlockExecute(Sender: TObject);
     procedure ActionInputPokesExecute(Sender: TObject);
     procedure ActionJoystickExecute(Sender: TObject);
@@ -215,7 +219,9 @@ type
     FLastFilePath: RawByteString;
     FPortaudioLibPathOtherBitness: RawByteString;
     HistoryQueue: TSnapshotHistoryQueue;
+    SnapshotHistoryOptions: TSnapshotHistoryOptions;
 
+    procedure TryLoadFromFiles(const SnapshotOrTape: TSnapshotOrTape; AFileNames: Array of String);
     procedure UpdateActiveSnapshotHistory;
     procedure UpdateTextTapeRunning;
     procedure UpdateWriteScreen;
@@ -373,6 +379,12 @@ begin
   ActionAbout.Caption := 'About ' + ApplicationName + '...';
   ActionEnableHistory.Hint :=
     'Enable going through emulation back in time step by step';
+
+  SnapshotHistoryOptions.MaxNumberOfSnapshotsInMemory := 12;
+  SnapshotHistoryOptions.SavePeriodInFrames := 150;
+  SnapshotHistoryOptions.KeyGoBack := VK_F5;
+  SnapshotHistoryOptions.LoadFromConf;
+  ActionMoveBack.ShortCut := SnapshotHistoryOptions.KeyGoBack;
 
   UpdateActiveSnapshotHistory;
 
@@ -536,6 +548,34 @@ begin
     AddEventToQueue(@ActionFullSpeedExecute);
   end else begin
     SetSpectrumSpeed(0);
+  end;
+end;
+
+procedure TForm1.ActionHistorySnapshotsExecute(Sender: TObject);
+var
+  HE: Boolean;
+  WasPaused: Boolean;
+begin
+  if Sender <> Spectrum then
+    AddEventToQueue(@ActionHistorySnapshotsExecute)
+  else begin
+    WasPaused := Spectrum.Paused;
+    try
+      Spectrum.Paused := True;
+      if TFormHistorySnapshots.ShowFormHistorySnapshots(
+        HistoryQueue, SnapshotHistoryOptions, Spectrum.GetBgraColours(), HE)
+      then begin
+        ActionMoveBack.ShortCut := SnapshotHistoryOptions.KeyGoBack;
+        if Assigned(HistoryQueue) xor HE then
+          SetSnapshotHistoryEnabled(HE)
+        else
+          if Assigned(HistoryQueue) then
+            HistoryQueue.UpdateOptions(SnapshotHistoryOptions);
+
+      end;
+    finally
+      Spectrum.Paused := WasPaused;
+    end;
   end;
 end;
 
@@ -861,14 +901,13 @@ begin
   FreeAndNil(FormDebug);
   FreeTapePlayer;
   Bmp.Free;
+
+  SnapshotHistoryOptions.SaveToConf;
 end;
 
 procedure TForm1.FormDropFiles(Sender: TObject; const FileNames: array of string
   );
 var
-  I, J: Integer;
-  Extensions: TStringDynArray;
-  S, FN, EFN: AnsiString;
   Sot: TSnapshotOrTape;
 
 begin
@@ -877,26 +916,7 @@ begin
       Sot := TSnapshotOrTape.stTape
     else
       Sot := TSnapshotOrTape.stBoth;
-    GetAcceptableExtensions(Sot, Extensions);
-    I := 0;
-    while I < Length(FileNames) do begin
-      FN := FileNames[I];
-      EFN := ExtractFileExt(FN);
-      if EFN <> '' then begin
-        for J := Low(Extensions) to High(Extensions) do begin
-          S := Extensions[J];
-          if S <> '' then begin
-            if S[1] <> ExtensionSeparator then
-              S := ExtensionSeparator + S;
-            if AnsiCompareText(S, EFN) = 0 then begin
-              DoLoad(Sot, Extensions, FN);
-              Exit;
-            end;
-          end;
-        end;
-      end;
-      Inc(I);
-    end;
+    TryLoadFromFiles(Sot, FileNames);
   end;
 end;
 
@@ -912,6 +932,35 @@ begin
       AddEventToQueue(@SpeedButton1Click)
     else
       ShowSoundVolumeForm();
+  end;
+end;
+
+procedure TForm1.TryLoadFromFiles(const SnapshotOrTape: TSnapshotOrTape;
+  AFileNames: array of String);
+var
+  I, J: Integer;
+  Extensions: TStringDynArray;
+  S, FN, EFN: AnsiString;
+begin
+  if Length(AFileNames) > 0 then begin
+    GetAcceptableExtensions(SnapshotOrTape, Extensions);
+    for I := Low(AFileNames) to High(AFileNames) do begin
+      FN := AFileNames[I];
+      EFN := ExtractFileExt(FN);
+      if EFN <> '' then begin
+        for J := Low(Extensions) to High(Extensions) do begin
+          S := Extensions[J];
+          if S <> '' then begin
+            if S[1] <> ExtensionSeparator then
+              S := ExtensionSeparator + S;
+            if AnsiCompareText(S, EFN) = 0 then begin
+              DoLoad(SnapshotOrTape, Extensions, FN);
+              Exit;
+            end;
+          end;
+        end;
+      end;
+    end;
   end;
 end;
 
@@ -1020,6 +1069,7 @@ begin
     FLastFilePath := JObj.Get(cSectionLastFilePath, FLastFilePath);
     FSkipWriteScreen := JObj.Get(cSectionSkipWriteScr, Integer(0)) <> 0;
     UpdateCheckWriteScreen;
+
     Spectrum.SoundMuted := JObj.Get(cSectionSoundMuted, Integer(0)) <> 0;
     UpdateShowSound;
     SPortaudioLib64 := '';
@@ -1116,6 +1166,7 @@ begin
     if B then begin
       HistoryQueue := TSnapshotHistoryQueue.Create;
       HistoryQueue.Spectrum := Spectrum;
+      HistoryQueue.UpdateOptions(SnapshotHistoryOptions);
     end else begin
       FreeAndNil(HistoryQueue);
     end;
@@ -1409,7 +1460,7 @@ procedure TForm1.DoLoad(const SnapshotOrTape: TSnapshotOrTape;
 
   procedure LoadingFailed;
   begin
-    MessageDlg('Loading failed' + LineEnding + 'Bad file?', mtError, [mbClose], 0);
+    MessageDlg('Loading failed.' + LineEnding + '%s' + LineEnding + 'Bad file?', mtError, [mbClose], 0);
   end;
 
 var
@@ -1448,12 +1499,14 @@ begin
         try
           SnapshotFile := nil;
           if SnapshotOrTape in [stSnapshot, stBoth] then begin
-            if AnsiCompareText(Extension, ExtensionSeparator + 'sna') = 0 then
-              SnapshotFile := TSnapshotSNA.Create
-            else if AnsiCompareText(Extension, ExtensionSeparator + 'szx') = 0 then
+            if (AnsiCompareText(Extension, ExtensionSeparator + 'szx') = 0)
+              //or (AnsiCompareText(Extension, ExtensionSeparator + 'zx-state') = 0)
+            then
               SnapshotFile := TSnapshotSZX.Create
             else if AnsiCompareText(Extension, ExtensionSeparator + 'z80') = 0 then
-              SnapshotFile := TSnapshotZ80.Create;
+              SnapshotFile := TSnapshotZ80.Create
+            else if AnsiCompareText(Extension, ExtensionSeparator + 'sna') = 0 then
+              SnapshotFile := TSnapshotSNA.Create;
           end;
 
           L := False;
@@ -1625,6 +1678,9 @@ begin
       Label1.Invalidate;
     end;
   end;
+
+  if Assigned(HistoryQueue) then
+    HistoryQueue.CheckSaveHistorySnapshot;
 end;
 
 procedure TForm1.SpectrumEndRun;
@@ -1633,10 +1689,16 @@ begin
 end;
 
 procedure TForm1.SpectrumStartRun;
+var
+  I: Integer;
+  Arr: TStringDynArray;
 begin
   LoadFromConf;
-  //
-  { #todo : check application params and call DoLoad }
+
+  SetLength(Arr{%H-}, ParamCount);
+  for I := 1 to ParamCount do
+    Arr[I - 1] := ParamStr(I);
+  TryLoadFromFiles(TSnapshotOrTape.stBoth, Arr);
 end;
 
 procedure TForm1.UpdateScreenSizeFactor;

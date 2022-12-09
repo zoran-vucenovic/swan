@@ -523,11 +523,11 @@ begin
   Label7.Caption := 'The Swan icon created by Handoko';
 
   Label4.Caption :=
-    'Spectrum 48k rom image, included in the executable, is copyright';
+    'ZX Spectrum 48K rom image, included in the executable, is';
 
   C1 := CreateLinkLabel(Panel7,
     'https://groups.google.com/g/comp.sys.amstrad.8bit/c/HtpBU2Bzv_U/m/HhNDSU3MksAJ',
-    'gave permission', 'of Amstrad. Amstrad kindly ', ' to distribute it');
+    'gave permission', 'copyright of Amstrad. Amstrad kindly ', ' to distribute it');
   C1.AnchorToNeighbour(akTop, 2, Label4);
   C1.AnchorHorizontalCenterTo(Panel7);
   C1.Parent := Panel7;

@@ -191,6 +191,7 @@ var
   R: TRect;
   P: TPoint;
   N, K: Integer;
+  W, H: Integer;
   SpectrumForm: TCustomForm;
 begin
   SpectrumForm := Application.MainForm;
@@ -202,17 +203,24 @@ begin
       if (R.Left >= R.Right) or (R.Top >= R.Bottom) then
         R := M.BoundsRect;
 
+      W := Form.Width;
+      H := Form.Height;
+      if W > R.Width then
+        W := R.Width;
+      if H > R.Height then
+        H := R.Height;
+
       N := 6;
       P.X := (R.Width - SpectrumForm.Width) div 2;
       if SpectrumForm.Left < P.X then begin
         P.X := SpectrumForm.BoundsRect.Right + N;
       end else begin
-        P.X := SpectrumForm.Left - Form.Width - N;
+        P.X := SpectrumForm.Left - W - N;
         if Form.BorderStyle <> bsNone then
           P.X := P.X - N;
       end;
 
-      K := R.Width - Form.Width;
+      K := R.Width - W;
 
       if Form.BorderStyle <> bsNone then begin
         R.Bottom := R.Bottom - 27 - N;
@@ -225,14 +233,13 @@ begin
         P.X := 0;
 
       P.Y := SpectrumForm.BoundsRect.Top;
-      if P.Y + Form.Height > R.Bottom then begin
-        P.Y := R.Bottom - Form.Height; // - N;
+      if P.Y + H > R.Bottom then begin
+        P.Y := R.Bottom - H; // - N;
       end;
       if P.Y < 0 then
         P.Y := 0;
 
-      Form.Top := P.Y;
-      Form.Left := P.X;
+      Form.SetBounds(P.X, P.Y, W, H);
     end;
   end;
 end;

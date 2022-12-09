@@ -300,11 +300,16 @@ object Form1: TForm1
       Enabled = False
       Hint = 'Rewind to previous snapshot'
       OnExecute = ActionMoveBackExecute
-      ShortCut = 116
+    end
+    object ActionHistorySnapshots: TAction
+      Category = 'Options'
+      Caption = 'Autosaving snapshots...'
+      ImageIndex = 20
+      OnExecute = ActionHistorySnapshotsExecute
     end
     object ActionEnableHistory: TAction
       Category = 'Options'
-      Caption = 'History snapshots enabled'
+      Caption = 'Autosaving snapshots enabled'
       OnExecute = ActionEnableHistoryExecute
     end
     object ActionSaveSzx: TAction
@@ -401,6 +406,9 @@ object Form1: TForm1
       end
       object MenuItem35: TMenuItem
         Action = ActionDontDrawScreenWhenLoading
+      end
+      object MenuItem40: TMenuItem
+        Action = ActionHistorySnapshots
       end
       object MenuItem38: TMenuItem
         Action = ActionEnableHistory

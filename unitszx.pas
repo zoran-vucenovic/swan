@@ -611,7 +611,7 @@ begin
     while LoadBlock() do
       if Stream.Position = Stream.Size then begin
         if State.SaveToSpectrum(FSpectrum) then begin
-          GetMemStr.Position := 0;
+          GetMemStr().Position := 0;
           if FSpectrum.GetProcessor.GetMemory^.LoadRamFromStream(GetMemStr()) then
             Exit(True);
         end;
@@ -655,6 +655,7 @@ begin
   Result := False;
 
   if State.LoadFromSpectrum(FSpectrum) then begin
+    GetMemStr.Position := 0;
     if FSpectrum.GetProcessor.GetMemory^.SaveRamToStream(GetMemStr()) then begin
       if SaveHeader then begin
         if SaveBlock(TZxstCreator.Create)
