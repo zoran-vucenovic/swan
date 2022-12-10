@@ -53,10 +53,10 @@ end;
 procedure TControlScreenBitmap.DrawToBgraBitmap;
 var
   M, N, I, J, X, Y: Integer;
-  ScreenPixel, ScreenPixelF: PBGRAPixel;
+  ScreenPixel, ScreenPixelF, Spx: PBGRAPixel;
   CInk, CPaper: TBGRAPixel;
   By, BAttr: Byte;
-  HasFlashAttr, Bright: Boolean;
+  HasFlashAttr, Bright, LastPass: Boolean;
   W: Word;
   WRAdr: WordRec absolute W;
 begin
@@ -69,6 +69,15 @@ begin
       Bright := BAttr and %01000000 <> 0;
       HasFlashAttr := BAttr and %10000000 <> 0;
 
+      if HasFlashAttr and (BmpFlash = nil) then begin
+        BmpFlash := TBGRABitmap.Create(ClientWidth, ClientHeight);
+        for J := 0 to Y * 8 - 1 do
+          Move(SpectrumColoursBGRA.Bmp.ScanLine[J]^, BmpFlash.ScanLine[J]^, 8 * 32 * SizeOf(TBGRAPixel));
+        if X > 0 then
+          for J := Y * 8 to Y * 8 + 7 do
+            Move(SpectrumColoursBGRA.Bmp.ScanLine[J]^, BmpFlash.ScanLine[J]^, 8 * SizeOf(TBGRAPixel) * X);
+      end;
+
       CPaper := SpectrumColoursBGRA.BGRAColours[Bright, (BAttr shr 3) and %111];
       CInk := SpectrumColoursBGRA.BGRAColours[Bright, BAttr and %111];
 
@@ -76,32 +85,37 @@ begin
       for J := 0 to 7 do begin
         M := (Y shl 3) or J;
         ScreenPixel := SpectrumColoursBGRA.Bmp.ScanLine[M] + N;
-        ScreenPixelF := BmpFlash.ScanLine[M] + N;
         By := (PScreenStart + W)^;
-
-        if HasFlashAttr then begin
-          for I := 7 downto 0 do begin
+                              
+        Spx := ScreenPixel;
+        LastPass := BmpFlash = nil;
+        repeat
+          I := 7;
+          repeat
             if By and (1 shl I) <> 0 then begin
-              ScreenPixel^ := CInk;
-              ScreenPixelF^ := CPaper;
+              Spx^ := CInk;
             end else begin
-              ScreenPixel^ := CPaper;
-              ScreenPixelF^ := CInk;
+              Spx^ := CPaper;
             end;
-            Inc(ScreenPixel);
-            Inc(ScreenPixelF);
+            if I = 0 then
+              Break;
+            Inc(Spx);
+            Dec(I);
+          until False;
+
+          if not HasFlashAttr then begin
+            if Assigned(BmpFlash) then
+              Move(ScreenPixel^, (BmpFlash.ScanLine[M] + N)^, 8 * SizeOf(TBGRAPixel));
+            Break;
           end;
-        end else begin
-          for I := 7 downto 0 do begin
-            if By and (1 shl I) <> 0 then
-              ScreenPixel^ := CInk
-            else
-              ScreenPixel^ := CPaper;
-            ScreenPixelF^ := ScreenPixel^;
-            Inc(ScreenPixel);
-            Inc(ScreenPixelF);
-          end;
-        end;
+
+          if LastPass then
+            Break;
+
+          LastPass := True;
+          Spx := BmpFlash.ScanLine[M] + N;
+          By := not By;
+        until False;
         Inc(WRAdr.Hi);
       end;
     end;
@@ -115,6 +129,7 @@ begin
   inherited Create(AOwner);
 
   FTimer := nil;
+  BmpFlash := nil;
   PScreenStart := nil;
   Self.ClientWidth := 32 * 8; // UnitSpectrum.CentralScreenWidth
   Self.ClientHeight := 24 * 8; // UnitSpectrum.CentralScreenHeight
@@ -125,7 +140,6 @@ constructor TControlScreenBitmap.CreateNewControl(AOwner: TComponent;
 begin
   Create(AOwner);
   SpectrumColoursBGRA.BGRAColours := ABGRAColours;
-  BmpFlash := TBGRABitmap.Create(0, 0);
   PScreenStart := APScreenStart;
 end;
 
@@ -144,12 +158,11 @@ begin
   if SpectrumColoursBGRA.Bmp.Width = 0 then begin
     if Assigned(PScreenStart) then begin
       SpectrumColoursBGRA.Bmp.SetSize(ClientWidth, ClientHeight);
-      BmpFlash.SetSize(ClientWidth, ClientHeight);
       DrawToBgraBitmap();
     end;
   end;
 
-  if Assigned(FTimer) and FTimer.FlashState then
+  if Assigned(BmpFlash) and Assigned(FTimer) and FTimer.FlashState then
     Bmp := BmpFlash
   else
     Bmp := SpectrumColoursBGRA.Bmp;
