@@ -1,6 +1,9 @@
 unit UnitControlScreenBitmap;
+// Copyright 2022 Zoran Vučenović
+// SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
+{$i zxinc.inc}
 
 interface
 
@@ -27,6 +30,7 @@ type
     constructor Create(AOwner: TComponent); override;
     constructor CreateNewControl(AOwner: TComponent;
       const ABGRAColours: TBGRAColours; const APScreenStart: PByte);
+    destructor Destroy; override;
     procedure Paint; override;
     property Timer: TFlashTimer read FTimer write FTimer;
   end;
@@ -123,6 +127,12 @@ begin
   SpectrumColoursBGRA.BGRAColours := ABGRAColours;
   BmpFlash := TBGRABitmap.Create(0, 0);
   PScreenStart := APScreenStart;
+end;
+
+destructor TControlScreenBitmap.Destroy;
+begin
+  BmpFlash.Free;
+  inherited Destroy;
 end;
 
 procedure TControlScreenBitmap.Paint;
