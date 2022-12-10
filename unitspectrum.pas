@@ -664,8 +664,6 @@ procedure TSpectrum.RunSpectrum;
       FSumTicks := FSumTicks + FrameTicks;
       FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame - FrameTicks;
       FIntPinUpCount := FProcessor.TStatesInCurrentFrame + 32;
-      //FIntPinUpCount := FProcessor.TStatesInCurrentFrame + 1;
-      //FIntPinUpCount := 32;
 
       TicksFrom := ScreenStart;
 

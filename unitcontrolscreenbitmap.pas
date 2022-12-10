@@ -53,7 +53,7 @@ end;
 procedure TControlScreenBitmap.DrawToBgraBitmap;
 var
   M, N, I, J, X, Y: Integer;
-  ScreenPixel, ScreenPixelF, Spx: PBGRAPixel;
+  ScreenPixel, Spx: PBGRAPixel;
   CInk, CPaper: TBGRAPixel;
   By, BAttr: Byte;
   HasFlashAttr, Bright, LastPass: Boolean;
@@ -131,8 +131,8 @@ begin
   FTimer := nil;
   BmpFlash := nil;
   PScreenStart := nil;
-  Self.ClientWidth := 32 * 8; // UnitSpectrum.CentralScreenWidth
-  Self.ClientHeight := 24 * 8; // UnitSpectrum.CentralScreenHeight
+  Self.ClientWidth := 32 * 8;
+  Self.ClientHeight := 24 * 8;
 end;
 
 constructor TControlScreenBitmap.CreateNewControl(AOwner: TComponent;

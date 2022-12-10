@@ -251,13 +251,7 @@ begin
       FontHeight := Sign(FontHeight) * 10;
 
     Label2.Font.Height := FontHeight;
-
-    //FontHeight := MulDiv(FD.Height, 6, 5);
-    //if Abs(FontHeight) < 10 then
-    //  FontHeight := Sign(FontHeight) * 10;
-
     Label7.Font.Height := FontHeight;
-
     Label3.Font.Style := Label2.Font.Style + [fsBold];
 
     if CloseButton is TFormAboutCloseButton then begin

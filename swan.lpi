@@ -23,7 +23,7 @@
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="9"/>
       <RevisionNr Value="1"/>
-      <BuildNr Value="5030"/>
+      <BuildNr Value="5042"/>
       <StringTable FileDescription="Swan - ZX Spectrum emulator" LegalCopyright="Copyright 2022 Zoran Vučenović" OriginalFilename="Swan" ProductName="Swan - ZX Spectrum emulator" ProductVersion="0.9.1"/>
     </VersionInfo>
     <BuildModes>

@@ -1259,8 +1259,13 @@ begin
 
           By := RegA - By;
           if (A and 2 <> 0) and (RegBC <> 0) then begin
-            FRegWZ := FRegPC;
-            DecreasePC();
+            if A and 1 = 0 then begin
+              DecreasePC();
+              FRegWZ := FRegPC;
+            end else begin
+              FRegWZ := FRegPC;
+              DecreasePC();
+            end;
             FlagsToSet := FlagsToSet or (TRec16(FRegPC).UByteHi and %00101000);
           end else begin
             { B2 = A - (HL) - H, H as in F after instruction,
