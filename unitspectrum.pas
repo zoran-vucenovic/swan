@@ -86,6 +86,7 @@ type
     FRunning: Boolean;
     FDebuggedOrPaused: Boolean;
     FEar: Byte;
+    FMic: Byte;
     FOnEndRun: TThreadMethod;
     StepInDebugger: Boolean;
     FFrameCount: Int64;
@@ -339,13 +340,11 @@ begin
 
     // sound... byte
     // 1 in bit 4 activates EAR, whilst 0 in bit 3 activates MIC
-    // As currently emulated, Ear represents both EAR and MIC
-    {!!! NOTE: I would excpect the following line to work, but Patrik Rak's tests do not pass! }
-    //Aux := ((Aux or (not Aux shl 1)) and %10000) shl 2;
-    // This passes, though (only 1 in bit 4):
-    Aux := (Aux and %10000) shl 2;
-
-    SetEar(Aux);
+    // Implemented so that EAR state can be read by IN, whereas MIC not, but
+    // MIC is equally taken into account when playing sound.
+    UpdateBeeperBuffer;
+    FEar := (Aux and %10000) shl 2;
+    FMic := (not Aux) and %1000;
   end;
 end;
 
@@ -361,21 +360,26 @@ end;
 
 procedure TSpectrum.UpdateBeeperBuffer;
 var
-  NewLatestFrame: Int64;
-  FramesPassed: Int64;
+  B: Byte;
+  N, M: Integer;
 begin
   if (FSpeed = NormalSpeed) and TBeeper.IsPlaying then begin
-    NewLatestFrame := (FSumTicks + FProcessor.TStatesInCurrentFrame) * 63;
+    N := ((FSumTicks + FProcessor.TStatesInCurrentFrame) * 63 + 2500 - FLatestTickUpdatedBeeper) div 5000;
+    if N < 1 then
+      Exit;
+    FLatestTickUpdatedBeeper := FLatestTickUpdatedBeeper + N * 5000;
 
-    FramesPassed := NewLatestFrame - FLatestTickUpdatedBeeper;
-    while FramesPassed >= 2500 do begin
-      (TBeeper.BeeperBuffer + TBeeper.CurrentPosition)^ := FEar;
-      Inc(TBeeper.CurrentPosition);
-      if TBeeper.CurrentPosition >= TBeeper.BufferLen then
-        TBeeper.CurrentPosition := 0;
-      FramesPassed := FramesPassed - 5000;
+    B := FEar or FMic;
+
+    M := TBeeper.BufferLen - TBeeper.CurrentPosition;
+    if N >= M then begin
+      FillChar((TBeeper.BeeperBuffer + TBeeper.CurrentPosition)^, M, B);
+      N := N - M;
+      TBeeper.CurrentPosition := 0;
     end;
-    FLatestTickUpdatedBeeper := NewLatestFrame - FramesPassed;
+
+    FillChar((TBeeper.BeeperBuffer + TBeeper.CurrentPosition)^, N, B);
+    TBeeper.CurrentPosition := TBeeper.CurrentPosition + N;
   end;
 end;
 
@@ -591,6 +595,7 @@ some bug... This is a workaround, so investigate, see to remove this "stop playi
   FIntPinUpCount := 0;
   FSumTicks := 0;
   FEar := 0;
+  FMic := 0;
   FCodedBorderColour := 0;
   SetCodedBorderColour(7);
   TicksFrom := ScreenStart;
