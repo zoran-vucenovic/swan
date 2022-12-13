@@ -3,7 +3,7 @@ unit AboutBox;
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
-{$i zxinc}
+{$i zxinc.inc}
 {$macro on}
 
 {$define step_by_step_disappear}
@@ -574,21 +574,15 @@ begin
     'Build date:', FBuildDate
     );
 
-  //Image1.Picture.Icon := Application.Icon;
-  //Image1.AutoSize := True;
-  //Image1.AnchorToNeighbour(akRight, 5, WC);
-  //Image1.AnchorParallel(akTop, 0, WC);
   Panel8.BevelOuter := bvNone;
   Panel8.Caption := '';
   Panel8.AutoSize := True;
-  //Image1.BringToFront;
 
   Label3.Caption := 'Author: ';
   Label2.Caption := TCommonSpectrum.AuthorName;
 
   Panel4.BorderStyle := bsNone;
   Panel1.BorderStyle := bsNone;
-  //Panel2.BorderStyle := bsNone;
   Panel2.BevelOuter := bvNone;
   Panel2.AutoSize := True;
   Panel3.BorderStyle := bsNone;
@@ -619,10 +613,8 @@ begin
 
   Panel4.AutoSize := True;
   B.Parent := Panel4;
-  //B.CalculateIconPosition;
 
   CloseButton := B;
-  //B.OnClick := @OnCloseButtonClick;
 end;
 
 procedure TFormAbout.FormDeactivate(Sender: TObject);
@@ -691,7 +683,6 @@ procedure TFormAbout.AfterShow(Data: PtrInt);
 var
   H: Integer;
 begin
-  //TCommonFunctionsLCL.FormToScreenCentre(Self);
   H := WC.Height * 13 div 10;
   Image1.Picture.Icon.Current := Image1.Picture.Icon.GetBestIndexForSize(Size(H, H));
   Image1.BorderSpacing.Right := WC.Height div 5;

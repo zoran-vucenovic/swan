@@ -3,7 +3,7 @@ unit UnitStreamCompression;
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
-{$i zxinc}
+{$i zxinc.inc}
 
 interface
 
@@ -64,7 +64,7 @@ begin
       CS := Tcompressionstream.create(Tcompressionlevel.cldefault, OutStream, False);
       try
         CS.SourceOwner := False;
-        //CS.Position := 0;
+
         Sz := InStream.Size;
         GetMem(Buff, Sz);
         try

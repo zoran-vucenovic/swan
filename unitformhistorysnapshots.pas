@@ -3,7 +3,7 @@ unit UnitFormHistorySnapshots;
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
-{$i zxinc}
+{$i zxinc.inc}
 
 interface
 

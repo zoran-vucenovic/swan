@@ -305,6 +305,8 @@ end;
 
 constructor TJoystick.Create;
 begin
+  inherited Create;
+
   FEnabled := False;
   SetJoystickType(Low(TJoystickType));
 

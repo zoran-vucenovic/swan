@@ -33,7 +33,6 @@ type
 
   strict private
     FActiveKeyMapName: RawByteString;
-    //FActiveKeyMapRecs: TKeyMapRecs;
 
     function SaveToJSON(out JSObj: TJSONObject): Boolean;
     procedure LoadFromJSON(const JSObj: TJSONObject);
@@ -54,7 +53,6 @@ type
     destructor Destroy; override;
 
     function GetKeyMapRecs(const AName: RawByteString; out AKeyMapRecs: TKeyMapRecs): Boolean;
-    //procedure GetActiveKeyMapRecs(out AName: RawByteString; out AKeyMapRecs: TKeyMapRecs);
 
     property ActiveKeyMapName: RawByteString read FActiveKeyMapName write SetActiveKeyMapName;
     class property KMappings: TKeyMappings read FKMappings;
@@ -235,10 +233,8 @@ var
 
   W: Word;
   W2: Word;
-  //WR: WordRec absolute W2;
 
 begin
-  //Result := False;
   Self.Clear;
 
   if Assigned(JSObj) then begin
@@ -291,20 +287,10 @@ begin
     JD := JSObj.Find(cActiveKeyMapName);
     if JD is TJSONString then begin
       S := UTF8Trim(JD.AsString);
-      //Result := SetActiveKeyMapName(S);
     end;
     SetActiveKeyMapName(S);
   end;
 end;
-
-//procedure TKeyMappings.GetActiveKeyMapRecs(out AName: RawByteString; out
-//  AKeyMapRecs: TKeyMapRecs);
-//begin
-//  if GetKeyMapRecs(FActiveKeyMapName, AKeyMapRecs) then
-//    AName := FActiveKeyMapName
-//  else
-//    AName := '';
-//end;
 
 procedure TKeyMappings.SetActiveKeyMapName(const AName: RawByteString);
 begin
