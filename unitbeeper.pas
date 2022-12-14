@@ -48,6 +48,7 @@ type
     class function IsLibLoaded: Boolean; static;
     class function StartBeeper: String; static;
     class function StopBeeper: String; static;
+    class function StopAndTerminate: Boolean; static;
     class function IsPlaying: Boolean; static;
 
     class property LibPath: String read FLibPath write SetLibPath;
@@ -178,7 +179,8 @@ begin
   if InitCnt <= 0 then
     Exit(True);
 
-  StopBeeper;
+  if StopBeeper <> '' then
+    Exit(False);
 
   Err := PortAudioHeader.Pa_Terminate();
   if Err < 0 then
@@ -273,6 +275,13 @@ begin
     FPlaying := False;
   end;
   Result := '';
+end;
+
+class function TBeeper.StopAndTerminate: Boolean;
+var
+  Err: TPaError;
+begin
+  Result := TerminatePortAudio(Err);
 end;
 
 class function TBeeper.IsPlaying: Boolean;

@@ -93,6 +93,7 @@ type
     FIntPinUpCount: Int16Fast;
     FLatestTickUpdatedBeeper: Int64;
 
+    procedure StopBeeper; inline;
     procedure CheckStartBeeper;
     procedure UpdateBeeperBuffer; inline;
     procedure UpdateAskForSpeedCorrection;
@@ -180,10 +181,49 @@ const
 
 { TSpectrum }
 
+procedure TSpectrum.UpdateBeeperBuffer;
+var
+  B: Byte;
+  N, M: Integer;
+begin
+  if (FSpeed = NormalSpeed) and TBeeper.IsPlaying then begin
+    N := ((FSumTicks + FProcessor.TStatesInCurrentFrame) * 63 + 2500 - FLatestTickUpdatedBeeper) div 5000;
+    if N > 0 then begin
+      FLatestTickUpdatedBeeper := FLatestTickUpdatedBeeper + N * 5000;
+
+      B := FEar or FMic;
+
+      M := TBeeper.BufferLen - TBeeper.CurrentPosition;
+      if N >= M then begin
+        FillChar((TBeeper.BeeperBuffer + TBeeper.CurrentPosition)^, M, B);
+        N := N - M;
+        TBeeper.CurrentPosition := 0;
+      end;
+
+      FillChar((TBeeper.BeeperBuffer + TBeeper.CurrentPosition)^, N, B);
+      TBeeper.CurrentPosition := TBeeper.CurrentPosition + N;
+    end;
+  end;
+end;
+
+procedure TSpectrum.StopBeeper;
+begin
+  TBeeper.StopBeeper;
+  //TBeeper.StopAndTerminate;
+end;
+
 procedure TSpectrum.InitTimes;
 begin
   MicrosecondsNeeded := 500; // start with half of millisecond
   PCTicksStart := SysUtils.GetTickCount64;
+end;
+
+procedure TSpectrum.SetCodedBorderColour(AValue: Byte);
+begin
+  if AValue <> FCodedBorderColour then begin
+    FCodedBorderColour := AValue and %111;
+    SpectrumColoursBGRA.BorderColour2 := SpectrumColoursBGRA.BGRAColours[False, FCodedBorderColour];
+  end;
 end;
 
 procedure TSpectrum.AdjustSpectrumColours;
@@ -199,14 +239,6 @@ begin
   SetCodedBorderColour(FCodedBorderColour or $F0);
 end;
 
-procedure TSpectrum.SetCodedBorderColour(AValue: Byte);
-begin
-  if AValue <> FCodedBorderColour then begin
-    FCodedBorderColour := AValue and %111;
-    SpectrumColoursBGRA.BorderColour2 := SpectrumColoursBGRA.BGRAColours[False, FCodedBorderColour];
-  end;
-end;
-
 procedure TSpectrum.SetOnSync(AValue: TThreadMethod);
 begin
   if FOnSync <> AValue then
@@ -218,7 +250,7 @@ procedure TSpectrum.SetSpeed(AValue: Integer);
 begin
   if FSpeed <> AValue then begin
     FSpeed := AValue;
-    TBeeper.StopBeeper;
+    StopBeeper;
 
     // For 20 milliseconds (20.000 microseconds) passes 70.000 ticks.
     // How many microseconds it actually takes for 69888 ticks?
@@ -358,31 +390,6 @@ begin
   end;
 end;
 
-procedure TSpectrum.UpdateBeeperBuffer;
-var
-  B: Byte;
-  N, M: Integer;
-begin
-  if (FSpeed = NormalSpeed) and TBeeper.IsPlaying then begin
-    N := ((FSumTicks + FProcessor.TStatesInCurrentFrame) * 63 + 2500 - FLatestTickUpdatedBeeper) div 5000;
-    if N < 1 then
-      Exit;
-    FLatestTickUpdatedBeeper := FLatestTickUpdatedBeeper + N * 5000;
-
-    B := FEar or FMic;
-
-    M := TBeeper.BufferLen - TBeeper.CurrentPosition;
-    if N >= M then begin
-      FillChar((TBeeper.BeeperBuffer + TBeeper.CurrentPosition)^, M, B);
-      N := N - M;
-      TBeeper.CurrentPosition := 0;
-    end;
-
-    FillChar((TBeeper.BeeperBuffer + TBeeper.CurrentPosition)^, N, B);
-    TBeeper.CurrentPosition := TBeeper.CurrentPosition + N;
-  end;
-end;
-
 procedure TSpectrum.UpdateAskForSpeedCorrection;
 begin
   if AskForSpeedCorrection =
@@ -445,6 +452,7 @@ begin
   FOnEndRun := nil;
   FOnResetSpectrum := nil;
 
+  FSumTicks := 0;
   ResetSpectrum;
 
   FDebuggedOrPaused := False;
@@ -503,7 +511,7 @@ end;
 procedure TSpectrum.UpdateDebuggedOrPaused;
 begin
   if (FPaused or Assigned(FDebugger)) xor FDebuggedOrPaused then begin
-    TBeeper.StopBeeper;
+    StopBeeper;
     FDebuggedOrPaused := not FDebuggedOrPaused;
 
     UpdateAskForSpeedCorrection;
@@ -563,7 +571,7 @@ end;
 procedure TSpectrum.SetWriteScreen(const AValue: Boolean);
 begin
   if AValue xor (FProcessor.OnNeedWriteScreen = @WriteToScreen) then begin
-    TBeeper.StopBeeper;
+    StopBeeper;
     if AValue then
       FProcessor.OnNeedWriteScreen := @WriteToScreen
     else
@@ -581,24 +589,18 @@ end;
 
 procedure TSpectrum.ResetSpectrum;
 begin
-  TBeeper.StopBeeper;
-
-  { #todo : why stop playing?
-when spectrum is reset the tape seems stopped for some time...
-some bug... This is a workaround, so investigate, see to remove this "stop playing"... }
-  if Assigned(FTapePlayer) then
-    FTapePlayer.StopPlaying;
+  StopBeeper;
 
   if Assigned(FOnResetSpectrum) then
     Synchronize(FOnResetSpectrum);
 
   FIntPinUpCount := 0;
-  FSumTicks := 0;
   FEar := 0;
   FMic := 0;
   FCodedBorderColour := 0;
   SetCodedBorderColour(7);
   TicksFrom := ScreenStart;
+  FSumTicks := FSumTicks + FProcessor.TStatesInCurrentFrame;
   FProcessor.ResetCPU;
   FFlashState := 0;
   FProcessor.GetMemory()^.ClearRam;
@@ -639,7 +641,7 @@ end;
 
 procedure TSpectrum.RunSpectrum;
 
-  procedure DoStep; inline;    
+  procedure DoStep; inline;
   const
     FrameTicks = 69888;
   var                        
@@ -723,7 +725,7 @@ begin
       DoSync;
     end;
   end;
-  TBeeper.StopBeeper;
+  StopBeeper;
 
   FSumTicks := FSumTicks + FProcessor.TStatesInCurrentFrame;
 
@@ -737,7 +739,8 @@ procedure TSpectrum.SetSoundMuted(AValue: Boolean);
 begin
   if FSoundMuted = AValue then
     Exit;
-  TBeeper.StopBeeper;
+
+  StopBeeper;
   FSoundMuted := AValue;
   CheckStartBeeper;
 end;

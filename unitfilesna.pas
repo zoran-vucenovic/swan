@@ -274,8 +274,8 @@ begin
 
   WasPaused := FSpectrum.Paused;
   try
-    FSpectrum.ResetSpectrum;
     FSpectrum.Paused := True;
+    FSpectrum.ResetSpectrum;
 
     Stream.Position := 0;
     if Stream.Read(State{%H-}, SizeOf(State)) = SizeOf(State) then begin
@@ -692,10 +692,9 @@ var
 
   function PackBlock: Boolean;
   var
-    A, B: PByte;
+    A: PByte;
     J, L, LL: Integer;
     BlockPos: Integer;
-    BB: Byte;
     Lon, K, KK: Byte;
     ED1, PrevED: Boolean;
     ArrEDED: packed array [0..3] of Byte;

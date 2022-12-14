@@ -531,6 +531,8 @@ end;
 
 constructor TSnapshotSZX.Create;
 begin
+  inherited Create;
+
   State := Default(TSpectrumInternalState);
   Mem := nil;
 end;
