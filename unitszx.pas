@@ -196,7 +196,7 @@ begin
   BlockSize := SizeOf(Rec) + Length(S) + 1;
   Result := WriteBlockSize(Stream)
     and (Stream.Write(Rec, SizeOf(Rec)) = SizeOf(Rec))
-    and (Stream.Write(PChar(S)^, Length(S) + 1) = Length(S) + 1);
+    and (Stream.Write(PAnsiChar(S)^, Length(S) + 1) = Length(S) + 1);
 end;
 
 class function TSnapshotSZX.TZxstCreator.GetBlockIdAsStr: RawByteString;

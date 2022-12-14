@@ -103,7 +103,7 @@ var
   Pa_CloseStream: function(Stream: TPaStream): TPaError; cdecl;
   Pa_IsStreamStopped: function(Stream: TPaStream): TPaError; cdecl;
   Pa_IsStreamActive: function(Stream: TPaStream): TPaError; cdecl;
-  Pa_GetErrorText: function(ErrorCode: TPaError): PChar; cdecl;
+  Pa_GetErrorText: function(ErrorCode: TPaError): PAnsiChar; cdecl;
   Pa_Sleep: procedure(MSec: clong); cdecl;
 
 function TryLoadPortAudioLib(LibraryPath: String): Boolean;
@@ -137,7 +137,7 @@ begin
   Result := 0;
 end;
 
-function EmptyGetErrorText(ErrorCode: TPaError): PChar; cdecl;
+function EmptyGetErrorText(ErrorCode: TPaError): PAnsiChar; cdecl;
 begin
   Result := nil;
 end;

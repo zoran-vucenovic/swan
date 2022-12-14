@@ -84,7 +84,7 @@ function TFormInputPokes.TGridNums.EditorCanAcceptKey(const Ch: TUTF8Char
 begin
   if Length(Ch) = 1 then
     case Ch[1] of
-      '0'..'9', Char(VK_BACK):
+      '0'..'9', AnsiChar(VK_BACK):
         Exit(inherited EditorCanAcceptKey(Ch));
     otherwise
     end;
