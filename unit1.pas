@@ -291,7 +291,7 @@ var
   UnZ: TUnZipper;
   I, II, LE: Integer;
   Entry: TFullZipFileEntry;
-  Extension, S: String;
+  Extension, S: AnsiString;
   SL: TStringList;
   FiUnz: TFileUnzipper;
   ExtFound: Boolean;
@@ -320,7 +320,7 @@ begin
           while (not ExtFound) and (II < LE) do begin
             S := Trim(Extensions[II]);
             if Length(S) > 0 then begin
-              if S[1] <> ExtensionSeparator then
+              if not S.StartsWith(ExtensionSeparator) then
                 S := ExtensionSeparator + S;
               ExtFound := AnsiCompareText(Extension, S) = 0;
             end;
@@ -951,7 +951,7 @@ begin
         for J := Low(Extensions) to High(Extensions) do begin
           S := Extensions[J];
           if S <> '' then begin
-            if S[1] <> ExtensionSeparator then
+            if not S.StartsWith(ExtensionSeparator) then
               S := ExtensionSeparator + S;
             if AnsiCompareText(S, EFN) = 0 then begin
               DoLoad(SnapshotOrTape, Extensions, FN);
@@ -1293,6 +1293,7 @@ procedure TForm1.SaveSnapshot(SnapshotClass: TSnapshotFileClass);
 var
   FileSnapshot: TSnapshotFile;
   WasPaused: Boolean;
+  S: RawByteString;
 begin
   if Spectrum.IsRunning then begin
     WasPaused := Spectrum.Paused;
@@ -1304,11 +1305,19 @@ begin
         + '|*' + ExtensionSeparator + SnapshotClass.GetDefaultExtension
         + '|all files|' + '*';
 
+      if FLastFilePath <> '' then begin
+        S := ExtractFilePath(FLastFilePath);
+        if DirectoryExists(S) then
+          SaveDialog1.InitialDir := S;
+      end;
+      SaveDialog1.FileName := '';
+
       if SaveDialog1.Execute then begin
         FileSnapshot := SnapshotClass.Create;
         try
           FileSnapshot.SetSpectrum(Spectrum);
-          FileSnapshot.SaveToFile(SaveDialog1.FileName);
+          if FileSnapshot.SaveToFile(SaveDialog1.FileName) then
+            FLastFilePath := SaveDialog1.FileName;
         finally
           FileSnapshot.Free;
         end;
@@ -1428,22 +1437,29 @@ begin
       OpenDialog1.FilterIndex := 1;
       OpenDialog1.Filter := MakeExtensionsFilter(Extensions);
 
+      L := False;
       if FLastFilePath <> '' then begin
-        OpenDialog1.InitialDir := ExtractFilePath(FLastFilePath);
-        L := False;
-        S := ExtractFileExt(FLastFilePath);
-        if S <> '' then begin
-          for I := Low(Extensions) to High(Extensions) do begin
-            if AnsiCompareText(S, ExtensionSeparator + Extensions[I]) = 0 then begin
-              OpenDialog1.FileName := ExtractFileName(FLastFilePath);
-              L := True;
-              Break;
+        S := ExtractFilePath(FLastFilePath);
+        if DirectoryExists(S) then begin
+          OpenDialog1.InitialDir := S;
+          if FileExists(FLastFilePath) then begin
+            S := ExtractFileExt(FLastFilePath);
+            if S <> '' then begin
+              if not S.StartsWith(ExtensionSeparator) then
+                S := ExtensionSeparator + S;
+              for I := Low(Extensions) to High(Extensions) do begin
+                if AnsiCompareText(S, ExtensionSeparator + Extensions[I]) = 0 then begin
+                  OpenDialog1.FileName := ExtractFileName(FLastFilePath);
+                  L := True;
+                  Break;
+                end;
+              end;
             end;
           end;
         end;
-        if not L then
-          OpenDialog1.FileName := '';
       end;
+      if not L then
+        OpenDialog1.FileName := '';
 
       if OpenDialog1.Execute then
         DoLoad(SnapshotOrTape, Extensions, OpenDialog1.FileName);
