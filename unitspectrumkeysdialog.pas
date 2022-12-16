@@ -33,6 +33,7 @@ type
     type
       TSpectrumKeyToggleButton = class(TCustomControl)
       strict private
+        FDisplayText: String;
         FChecked: Boolean;
         FOnChange: TNotifyEvent;
         LastMouseInClient: Boolean;
@@ -96,12 +97,14 @@ procedure TFormSpectrumKeysDialog.TSpectrumKeyToggleButton.SetChecked(
 begin
   if AValue then begin
     Self.Color := clWhite;
-    Lab.Font.Color := clNavy;
+    LabCommand.Font.Color := clNavy;
   end else begin
     Self.Color := TColor($9a8b80);
-    Lab.Font.Color := clWhite;
+    LabCommand.Font.Color := clWhite;
   end;
-  LabCommand.Font.Color := Lab.Font.Color;
+  if KeyValue <> $0701 then // symbol shift
+    Lab.Font.Color := LabCommand.Font.Color;
+
   if FChecked xor AValue then begin
     FChecked := AValue;
     Invalidate;
@@ -112,13 +115,14 @@ end;
 
 function TFormSpectrumKeysDialog.TSpectrumKeyToggleButton.GetDisplayText: String;
 begin
-  Result := Lab.Caption;
+  Result := FDisplayText;
 end;
 
 procedure TFormSpectrumKeysDialog.TSpectrumKeyToggleButton.SetDisplayText(
   AValue: String);
 begin
-  Lab.Caption := AValue;
+  FDisplayText := Trim(AValue);
+  Lab.Caption := UpperCase(StringReplace(StringReplace(AValue, ' ', '/', [rfReplaceAll]), '/', LineEnding, [rfReplaceAll]));
 end;
 
 procedure TFormSpectrumKeysDialog.TSpectrumKeyToggleButton.SetOnChange(
@@ -176,6 +180,7 @@ constructor TFormSpectrumKeysDialog.TSpectrumKeyToggleButton.Create(
 begin
   inherited Create(AOwner);
 
+  FDisplayText := '';
   AutoSize := False;
   LastMouseInClient := False;
   FOnChange := nil;
@@ -243,7 +248,7 @@ begin
     R := Self.ClientRect;
     R := Rect(R.Left + 2, R.Top + 2, R.Right - 3, R.Bottom - 3);
 
-    Canvas.Pen.Color := Self.Lab.Font.Color;
+    Canvas.Pen.Color := Self.LabCommand.Font.Color;
 
     Canvas.Polyline([
       R.TopLeft, Point(R.Right, R.Top), R.BottomRight, Point(R.Left, R.Bottom), R.TopLeft
@@ -413,7 +418,7 @@ var
   HTs0, HTs, WTs, WLg: Integer;
   K, L, I, J, M, N, FS: Integer;
   B, B1: TSpectrumKeyToggleButton;
-  CC, CC1, CC2: TCustomControl;
+  CC, CC1, CC2, CCA: TCustomControl;
   KT: TKeyTexts;
   Sz: TSize;
   La, LabAbove, LabBelow: TLabel;
@@ -480,8 +485,24 @@ begin
           end else begin
             if Trim(KT[0]) = '' then begin
               B.Lab.Alignment := TAlignment.taCenter;
-              B.LabSymbol.Hide;
-              B.Lab.AnchorParallel(akRight, 0, B.Control0);
+              B.Lab.Layout := TTextLayout.tlCenter;
+
+              CCA := TCustomControl.Create(B);
+
+              CCA.Parent := B;
+
+              CCA.AnchorParallel(akLeft, 0, B.Control0);
+              CCA.AnchorParallel(akRight, 0, B.Control0);
+              CCA.AnchorParallel(akTop, 0, B.Control0);
+              CCA.AnchorParallel(akBottom, 0, B.LabCommand);
+
+              B.Lab.Parent := CCA;
+              B.Lab.AnchorParallel(akLeft, 0, CCA);
+              B.Lab.AnchorParallel(akRight, 0, CCA);
+              B.Lab.AnchorParallel(akTop, 0, CCA);
+              B.Lab.AnchorParallel(akBottom, 0, CCA);
+
+              CCA.BringToFront;
             end;
           end;
 
@@ -489,7 +510,11 @@ begin
           B.LabCommand.Font := B.Lab.Font;
 
           B.LabSymbol.Font := B.LabCommand.Font;
-          B.LabSymbol.Font.Color := TColor($000099);
+          La := B.LabSymbol;
+          if (I = 3) and (L = 1) and (J = 3) then // symbol shift
+            La := B.Lab;
+
+          La.Font.Color := TColor($000099);
 
           if B.Lab.Alignment <> TAlignment.taCenter then
             B.Lab.Font.Size := FS * 4 div 3;
@@ -522,9 +547,9 @@ begin
           if I = 0 then begin
             LabAbove.Font.Color := clWhite;
           end else begin
-            LabAbove.Font.Color := TColor($00b200); //clGreen;
+            LabAbove.Font.Color := TColor($34b934); //clGreen;
           end;
-          LabBelow.Font.Color := clRed;
+          LabBelow.Font.Color := TColor($4949FF);
 
           LabAbove.Parent := CC;
           B.Parent := CC;
