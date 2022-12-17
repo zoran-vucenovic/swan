@@ -167,8 +167,8 @@ type
     procedure UpdateShowSound;
     procedure LoadFromConf;
     procedure SaveToConf;
-    function GetSoundVolume: Int8;
-    procedure SetSoundVolume(N: Int8);
+    function GetSoundVolume: Integer;
+    procedure SetSoundVolume(N: Integer);
     procedure SetSnapshotHistoryEnabled(const B: Boolean);
 
     procedure DoOnKeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
@@ -1060,8 +1060,7 @@ end;
 procedure TForm1.LoadFromConf;
 var
   JObj: TJSONObject;
-  N: Int8;
-  M: Integer;
+  M, N: Integer;
   S: String;
   SPortaudioLib32, SPortaudioLib64: String;
 begin
@@ -1094,8 +1093,7 @@ begin
       Spectrum.PortAudioLibPath := S;
     end;
 
-    M := N;
-    M := JObj.Get(cSectionSoundVolume, M);
+    M := JObj.Get(cSectionSoundVolume, N);
     if (M >= 0) and (M <= 31) then
       N := M;
   end;
@@ -1154,12 +1152,12 @@ begin
   end;
 end;
 
-function TForm1.GetSoundVolume: Int8;
+function TForm1.GetSoundVolume: Integer;
 begin
   Result := Spectrum.SoundVolume div 4;
 end;
 
-procedure TForm1.SetSoundVolume(N: Int8);
+procedure TForm1.SetSoundVolume(N: Integer);
 begin
   Spectrum.SoundVolume := N * 4;
 end;

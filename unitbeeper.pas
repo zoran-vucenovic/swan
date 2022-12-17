@@ -27,16 +27,16 @@ type
       FLibPath: String;
       InitCnt: Integer;
       FPlaying: Boolean;
+      FBeeperVolume: Integer;
 
     class procedure SetLibPath(const AValue: String); static;
     class function InitPortAudio(out Err: TPaError): Boolean; static;
     class function TerminatePortAudio(out Err: TPaError): Boolean; static;
-    class procedure SetBeeperVolume(AValue: Int8); static;
+    class procedure SetBeeperVolume(AValue: Integer); static;
   private
     class var
       FBufferLen: Integer;
       PlayPosition: Integer;
-      FBeeperVolume: cint8;
 
     class procedure Init; static;
     class procedure Final; static;
@@ -53,7 +53,7 @@ type
 
     class property LibPath: String read FLibPath write SetLibPath;
     class property BufferLen: Integer read FBufferLen write SetBufferLen;
-    class property BeeperVolume: Int8 read FBeeperVolume write SetBeeperVolume;
+    class property BeeperVolume: Integer read FBeeperVolume write SetBeeperVolume;
   end;
 
 implementation
@@ -63,7 +63,7 @@ function PortAudioCallbackFun(constref {%H-}Input: Pointer; Output: Pointer;
       {%H-}StatusFlags: TPaStreamCallbackFlags; UserData: Pointer): cint; cdecl;
 var
   Data: PByte;
-  Out0: pcint8;
+  Out0: PByte;
   N: Integer;
 
   procedure ProcessRange; inline;
@@ -71,10 +71,7 @@ var
     I: Integer;
   begin
     for I := 1 to N do begin
-      if Data^ = 0 then
-        Out0^ := 0
-      else
-        Out0^ := TBeeper.FBeeperVolume;
+      Out0^ := Data^;
       Inc(Out0);
       Inc(Data);
     end;
@@ -82,7 +79,7 @@ var
 
 begin
   Data := PByte(UserData) + TBeeper.PlayPosition;
-  Out0 := pcint8(Output);
+  Out0 := PByte(Output);
   //
   N := FrameCount;
   if TBeeper.PlayPosition + N >= TBeeper.FBufferLen then begin
@@ -133,12 +130,12 @@ begin
   TerminatePortAudio(Err);
 end;
 
-class procedure TBeeper.SetBeeperVolume(AValue: Int8);
+class procedure TBeeper.SetBeeperVolume(AValue: Integer);
 begin
-  if AValue >= 0 then
-    FBeeperVolume := AValue
+  if AValue > 0 then
+    FBeeperVolume := AValue and 127
   else
-    FBeeperVolume := Integer(AValue) + 128;
+    FBeeperVolume := 0;
 end;
 
 class procedure TBeeper.SetLibPath(const AValue: String);

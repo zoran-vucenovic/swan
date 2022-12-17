@@ -118,12 +118,12 @@ type
     function GetFlashState: UInt16;
     function GetPortAudioLibPath: String;
     function GetRemainingIntPinUp: Integer;
-    function GetSoundVolume: Int8;
+    function GetSoundVolume: Integer;
     procedure SetFlashState(AValue: UInt16);
     procedure SetPortAudioLibPath(const AValue: String);
     procedure SetRemainingIntPinUp(AValue: Integer);
     procedure SetSoundMuted(AValue: Boolean);
-    procedure SetSoundVolume(AValue: Int8);
+    procedure SetSoundVolume(AValue: Integer);
     procedure UpdateDebuggedOrPaused;
     procedure SetEar(AValue: Byte);
 
@@ -167,7 +167,7 @@ type
     property Paused: Boolean read FPaused write SetPaused;
     property PortAudioLibPath: String read GetPortAudioLibPath write SetPortAudioLibPath;
     property SoundMuted: Boolean read FSoundMuted write SetSoundMuted;
-    property SoundVolume: Int8 read GetSoundVolume write SetSoundVolume;
+    property SoundVolume: Integer read GetSoundVolume write SetSoundVolume;
     property Ear: Byte read FEar write SetEar;
     property FlashState: UInt16 read GetFlashState write SetFlashState;
   end;
@@ -191,7 +191,7 @@ begin
     if N > 0 then begin
       FLatestTickUpdatedBeeper := FLatestTickUpdatedBeeper + N * 5000;
 
-      B := FEar or FMic;
+      B := (Integer(FEar or FMic) * TBeeper.BeeperVolume) shr 6;
 
       M := TBeeper.BufferLen - TBeeper.CurrentPosition;
       if N >= M then begin
@@ -373,7 +373,7 @@ begin
     // sound... byte
     // 1 in bit 4 activates EAR, whilst 0 in bit 3 activates MIC
     // Implemented so that EAR state can be read by IN, whereas MIC not, but
-    // MIC is equally taken into account when playing sound.
+    // MIC is (to lesser extent) taken into account when playing sound.
     UpdateBeeperBuffer;
     FEar := (Aux and %10000) shl 2;
     FMic := (not Aux) and %1000;
@@ -745,7 +745,7 @@ begin
   CheckStartBeeper;
 end;
 
-function TSpectrum.GetSoundVolume: Int8;
+function TSpectrum.GetSoundVolume: Integer;
 begin
   Result := TBeeper.BeeperVolume;
 end;
@@ -788,7 +788,7 @@ begin
   FProcessor.IntPin := FIntPinUpCount > 0;
 end;
 
-procedure TSpectrum.SetSoundVolume(AValue: Int8);
+procedure TSpectrum.SetSoundVolume(AValue: Integer);
 begin
   TBeeper.BeeperVolume := AValue;
 end;

@@ -22,7 +22,7 @@ type
   private
     FMuted: Boolean;
 
-    function GetLevel: Int8;
+    function GetLevel: Integer;
     function GetMuted: Boolean;
     function GetOnMuteClick: TNotifyEvent;
     function GetOnTrackBarPositionChg: TNotifyEvent;
@@ -31,10 +31,10 @@ type
     procedure SetOnTrackBarPositionChg(AValue: TNotifyEvent);
 
   public
-    class function ShowSoundVolumeTracker(const AMuted: Boolean; const ALevel: Int8): TFormSoundVolume;
+    class function ShowSoundVolumeTracker(const AMuted: Boolean; const ALevel: Integer): TFormSoundVolume;
     property OnTrackBarPositionChg: TNotifyEvent read GetOnTrackBarPositionChg write SetOnTrackBarPositionChg;
     property OnMuteClick: TNotifyEvent read GetOnMuteClick write SetOnMuteClick;
-    property Level: Int8 read GetLevel;
+    property Level: Integer read GetLevel;
     property Muted: Boolean read GetMuted write SetMuted;
   end;
 
@@ -57,7 +57,7 @@ begin
   Handled := True;
 end;
 
-function TFormSoundVolume.GetLevel: Int8;
+function TFormSoundVolume.GetLevel: Integer;
 begin
   Result := TrackBar1.Position;
 end;
@@ -99,7 +99,7 @@ begin
 end;
 
 class function TFormSoundVolume.ShowSoundVolumeTracker(const AMuted: Boolean;
-  const ALevel: Int8): TFormSoundVolume;
+  const ALevel: Integer): TFormSoundVolume;
 begin
   Result := TFormSoundVolume.Create(nil);
   Result.TrackBar1.Position := ALevel;
