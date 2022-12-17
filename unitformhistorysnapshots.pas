@@ -66,13 +66,12 @@ type
     function GetSelectedSnapshotNegOffs: Integer;
     procedure AfterShow(Data: PtrInt);
     procedure OnEditClick(Sender: TObject);
+    procedure UpdateDisplayKeyBack;
     procedure SetKeyBack(AValue: Word);
     procedure UpdateCheckEnabled;
     procedure FillSnapshots;
     procedure TimerOnTimer(Sender: TObject);
     procedure ActiveCtrlChg(Sender: TObject; LastControl: TControl);
-
-    property KeyBack: Word read FKeyBack write SetKeyBack;
   public
     class function ShowFormHistorySnapshots(
       AHistorySnapshots: TSnapshotHistoryQueue;
@@ -188,6 +187,7 @@ begin
   HistorySnapshots := nil;
   Panel1.Enabled := False;
   FTimer := nil;
+  FKeyBack := 0;
 
   Constraints.MinHeight := Height;
   Constraints.MaxHeight := Height;
@@ -196,7 +196,8 @@ begin
   SpinEdit2.Enabled := False;
   SpinEdit2.MaxValue := UnitHistorySnapshots.TSnapshotHistoryOptions.MaxSavePeriodInFrames;
   SpinEdit1.MaxValue := UnitHistorySnapshots.TSnapshotHistoryOptions.MaxMaxNumberOfSnapshotsInMemory;
-  SpinEdit2.MinValue := 50;
+  SpinEdit2.Increment := UnitHistorySnapshots.TSnapshotHistoryOptions.IncrementStep;
+  SpinEdit2.MinValue := SpinEdit2.Increment;
   SpinEdit1.MinValue := 1;
 
   BitBtn1.AutoSize := True;
@@ -205,7 +206,8 @@ begin
   Panel10.BorderStyle := bsNone;
   Panel11.BorderStyle := bsNone;
   Panel14.BorderStyle := bsNone;
-  Label7.Caption := '  ';
+
+  UpdateDisplayKeyBack;
   LabelEdit := TCommonFunctionsLCL.CreateLinkLabel(Panel11, 'Edit');
   LabelEdit.Anchors := [];
   LabelEdit.AnchorParallel(akTop, 0, Panel11);
@@ -284,16 +286,10 @@ begin
 end;
 
 procedure TFormHistorySnapshots.SetKeyBack(AValue: Word);
-var
-  S: String;
 begin
   if FKeyBack <> AValue then begin
     FKeyBack := AValue;
-    S := UnitKeyMaps.DecodePCKey(FKeyBack);
-    if S = '' then begin
-      S := Trim(FKeyBack.ToString);
-    end;
-    Label7.Caption := S;
+    UpdateDisplayKeyBack;
   end;
 end;
 
@@ -501,6 +497,20 @@ begin
   end;
 end;
 
+procedure TFormHistorySnapshots.UpdateDisplayKeyBack;
+var
+  S: String;
+begin
+  if FKeyBack > 0 then begin
+    S := UnitKeyMaps.DecodePCKey(FKeyBack);
+    if S = '' then begin
+      S := Trim(FKeyBack.ToString);
+    end;
+    Label7.Caption := S;
+  end else
+    Label7.Caption := '  ';
+end;
+
 class function TFormHistorySnapshots.ShowFormHistorySnapshots(
   AHistorySnapshots: TSnapshotHistoryQueue;
   var ASnapshotHistoryOptions: TSnapshotHistoryOptions;
@@ -523,7 +533,7 @@ begin
     F.UpdateCheckEnabled;
 
     if F.ShowModal = mrOK then begin
-      ASnapshotHistoryOptions.KeyGoBack := F.KeyBack;
+      ASnapshotHistoryOptions.KeyGoBack := F.FKeyBack;
       ASnapshotHistoryOptions.MaxNumberOfSnapshotsInMemory := F.SpinEdit1.Value;
       ASnapshotHistoryOptions.SavePeriodInFrames := F.SpinEdit2.Value;
       AHistoryEnabled := F.CheckBox1.Checked;
@@ -531,7 +541,7 @@ begin
       if F.CheckBox2.Enabled and F.CheckBox2.Checked then begin
         N := F.GetSelectedSnapshotNegOffs;
         if N <= 0 then
-          F.HistorySnapshots.LoadSnapshot(N);
+          F.HistorySnapshots.LoadSnapshot(N, False);
       end;
       Result := True;
     end;

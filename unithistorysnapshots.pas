@@ -8,7 +8,7 @@ unit UnitHistorySnapshots;
 interface
 
 uses
-  Classes, SysUtils, fpjson, UnitFileSna, UnitSpectrum, UnitConfigs;
+  Classes, SysUtils, LCLType, fpjson, UnitFileSna, UnitSpectrum, UnitConfigs;
 
 type
 
@@ -17,24 +17,35 @@ type
     const
       MaxSavePeriodInFrames = 3000;
       MaxMaxNumberOfSnapshotsInMemory = 120;
-      DefSavePeriodInFrames = 150; // about three seconds
-      DefMaxNumberOfSnapshotsInMemory = 40;
+      IncrementStep = 50;
   strict private
     const
+      DefSavePeriodInFrames = 150; // about three seconds
+      DefMaxNumberOfSnapshotsInMemory = 60;
+      DefKeyGoBack = VK_F5;
+
       cSnapshotHistoryOptions = 'autosaving_snapshots';
       cSavePeriodInFrames = 'save_period_in_frames';
       cMaxNumberOfSnapshotsInMemory = 'max_number_of_snapshots_in_memory';
       cGoBackKey = 'go_back_key';
-  private
+  strict private
+    FSavePeriodInFrames: Integer;
+    FMaxNumberOfSnapshotsInMemory: Integer;
+    FKeyGoBack: Word;
+
+    class operator Initialize(var X: TSnapshotHistoryOptions);
+    class operator Finalize(var X: TSnapshotHistoryOptions);
+
     procedure LoadFromJSonObject(const JSObj: TJSONObject);
     procedure SaveToJSonObject(const JSObj: TJSONObject);
-  public
-    SavePeriodInFrames: Integer;
-    MaxNumberOfSnapshotsInMemory: Integer;
-    KeyGoBack: Word;
-
     procedure LoadFromConf;
     procedure SaveToConf;
+    procedure SetMaxNumberOfSnapshotsInMemory(const AValue: Integer);
+    procedure SetSavePeriodInFrames(const AValue: Integer);
+  public
+    property SavePeriodInFrames: Integer read FSavePeriodInFrames write SetSavePeriodInFrames;
+    property MaxNumberOfSnapshotsInMemory: Integer read FMaxNumberOfSnapshotsInMemory write SetMaxNumberOfSnapshotsInMemory;
+    property KeyGoBack: Word read FKeyGoBack write FKeyGoBack;
   end;
 
   TSnapshotHistoryQueue = class
@@ -75,7 +86,7 @@ type
     destructor Destroy; override;
 
     procedure UpdateOptions(const ASnapshotHistoryOptions: TSnapshotHistoryOptions);
-    function LoadSnapshot(NegativeOffset: Integer): Boolean;
+    function LoadSnapshot(NegativeOffset: Integer; CheckDelay: Boolean): Boolean;
     function GetStream(NegativeOffset: Integer; out Stream: TStream): Boolean;
     procedure CheckSaveHistorySnapshot;
 
@@ -102,21 +113,31 @@ end;
 
 { TSnapshotHistoryOptions }
 
+class operator TSnapshotHistoryOptions.Initialize(var X: TSnapshotHistoryOptions
+  );
+begin
+  X.FMaxNumberOfSnapshotsInMemory := DefMaxNumberOfSnapshotsInMemory;
+  X.FSavePeriodInFrames := DefSavePeriodInFrames;
+  X.FKeyGoBack := DefKeyGoBack;
+  X.LoadFromConf;
+end;
+
+class operator TSnapshotHistoryOptions.Finalize(var X: TSnapshotHistoryOptions);
+begin
+  X.SaveToConf;
+end;
+
 procedure TSnapshotHistoryOptions.LoadFromJSonObject(const JSObj: TJSONObject);
 var
   N: Integer;
 begin
   if Assigned(JSObj) then begin
-    N := JSObj.Get(cSavePeriodInFrames, SavePeriodInFrames);
-    if (N >= 1) and (N <= MaxSavePeriodInFrames) then
-      SavePeriodInFrames := N;
-    N := JSObj.Get(cMaxNumberOfSnapshotsInMemory, MaxNumberOfSnapshotsInMemory);
-    if (N >= 1) and (N <= MaxMaxNumberOfSnapshotsInMemory) then
-      MaxNumberOfSnapshotsInMemory := N;
-    N := KeyGoBack;
+    SetSavePeriodInFrames(JSObj.Get(cSavePeriodInFrames, FSavePeriodInFrames));
+    SetMaxNumberOfSnapshotsInMemory(JSObj.Get(cMaxNumberOfSnapshotsInMemory, FMaxNumberOfSnapshotsInMemory));
+    N := FKeyGoBack;
     N := JSObj.Get(cGoBackKey, N);
-    if (N > 0) and (N <= KeyGoBack.MaxValue) then
-      KeyGoBack := N;
+    if (N > 0) and (N <= FKeyGoBack.MaxValue) then
+      FKeyGoBack := N;
   end;
 end;
 
@@ -125,9 +146,9 @@ var
   N: Integer;
 begin
   if Assigned(JSObj) then begin
-    JSObj.Add(cSavePeriodInFrames, SavePeriodInFrames);
-    JSObj.Add(cMaxNumberOfSnapshotsInMemory, MaxNumberOfSnapshotsInMemory);
-    N := KeyGoBack;
+    JSObj.Add(cSavePeriodInFrames, FSavePeriodInFrames);
+    JSObj.Add(cMaxNumberOfSnapshotsInMemory, FMaxNumberOfSnapshotsInMemory);
+    N := FKeyGoBack;
     JSObj.Add(cGoBackKey, N);
   end;
 end;
@@ -152,6 +173,21 @@ begin
   end;
 end;
 
+procedure TSnapshotHistoryOptions.SetMaxNumberOfSnapshotsInMemory(
+  const AValue: Integer);
+begin
+  if (AValue >= 1) and (AValue <= MaxMaxNumberOfSnapshotsInMemory) then
+    FMaxNumberOfSnapshotsInMemory := AValue;
+end;
+
+procedure TSnapshotHistoryOptions.SetSavePeriodInFrames(const AValue: Integer);
+begin
+  if FSavePeriodInFrames <> AValue then
+    if AValue >= IncrementStep then
+      if AValue <= MaxSavePeriodInFrames then
+        FSavePeriodInFrames := (AValue div IncrementStep) * IncrementStep;
+end;
+
 { TSnapshotHistoryQueue }
 
 function TSnapshotHistoryQueue.GetSnap: TSnapshotInternal48;
@@ -166,10 +202,8 @@ end;
 
 procedure TSnapshotHistoryQueue.SetSavePeriod(AValue: Integer);
 begin
-  if (AValue >= 1) and (AValue <= TSnapshotHistoryOptions.MaxSavePeriodInFrames) then begin
-    FSavePeriod := AValue;
-    //FramesDelay := AValue div 3;
-  end;
+  if (AValue >= TSnapshotHistoryOptions.IncrementStep) and (AValue <= TSnapshotHistoryOptions.MaxSavePeriodInFrames) then
+    FSavePeriod := (AValue div TSnapshotHistoryOptions.IncrementStep) * TSnapshotHistoryOptions.IncrementStep;
 end;
 
 procedure TSnapshotHistoryQueue.SetMaxNumberOfSnapshotsInMemory(
@@ -199,13 +233,14 @@ begin
   end;
 end;
 
-function TSnapshotHistoryQueue.LoadSnapshot(NegativeOffset: Integer): Boolean;
+function TSnapshotHistoryQueue.LoadSnapshot(NegativeOffset: Integer;
+  CheckDelay: Boolean): Boolean;
 var
   Element: TSnapshotsHistoryElement;
 
 begin
-  if (NegativeOffset = 0) and (FramesPassed < FramesDelay) then begin
-    if LoadSnapshot(-1) then
+  if (NegativeOffset = 0) and (FramesPassed < FramesDelay) and CheckDelay then begin
+    if LoadSnapshot(-1, False) then
       Exit(True);
   end;
 
@@ -250,6 +285,10 @@ begin
 
     Inc(FCount);
   end else begin
+    if FMaxNumberOfSnapshotsInMemory = 1 then begin
+      GetSnap.SaveToStream(Last.Stream);
+      Exit;
+    end;
     Element := First;
     First := First.Next;
     Element.Next := nil;

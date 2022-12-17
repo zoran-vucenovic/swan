@@ -380,10 +380,6 @@ begin
   ActionEnableHistory.Hint :=
     'Enable going through emulation back in time step by step';
 
-  SnapshotHistoryOptions.MaxNumberOfSnapshotsInMemory := 12;
-  SnapshotHistoryOptions.SavePeriodInFrames := 150;
-  SnapshotHistoryOptions.KeyGoBack := VK_F5;
-  SnapshotHistoryOptions.LoadFromConf;
   ActionMoveBack.ShortCut := SnapshotHistoryOptions.KeyGoBack;
 
   UpdateActiveSnapshotHistory;
@@ -553,7 +549,7 @@ end;
 
 procedure TForm1.ActionHistorySnapshotsExecute(Sender: TObject);
 var
-  HE: Boolean;
+  ActivateHistory: Boolean;
   WasPaused: Boolean;
 begin
   if Sender <> Spectrum then
@@ -563,11 +559,11 @@ begin
     try
       Spectrum.Paused := True;
       if TFormHistorySnapshots.ShowFormHistorySnapshots(
-        HistoryQueue, SnapshotHistoryOptions, Spectrum.GetBgraColours(), HE)
+        HistoryQueue, SnapshotHistoryOptions, Spectrum.GetBgraColours(), ActivateHistory)
       then begin
         ActionMoveBack.ShortCut := SnapshotHistoryOptions.KeyGoBack;
-        if Assigned(HistoryQueue) xor HE then
-          SetSnapshotHistoryEnabled(HE)
+        if Assigned(HistoryQueue) xor ActivateHistory then
+          SetSnapshotHistoryEnabled(ActivateHistory)
         else
           if Assigned(HistoryQueue) then
             HistoryQueue.UpdateOptions(SnapshotHistoryOptions);
@@ -679,7 +675,7 @@ begin
     if Sender <> Spectrum then begin
       AddEventToQueue(@ActionMoveBackExecute);
     end else begin
-      HistoryQueue.LoadSnapshot(0);
+      HistoryQueue.LoadSnapshot(0, True);
     end;
   end;
 end;
@@ -901,8 +897,6 @@ begin
   FreeAndNil(FormDebug);
   FreeTapePlayer;
   Bmp.Free;
-
-  SnapshotHistoryOptions.SaveToConf;
 end;
 
 procedure TForm1.FormDropFiles(Sender: TObject; const FileNames: array of string
