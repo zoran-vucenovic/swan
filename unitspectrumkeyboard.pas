@@ -60,7 +60,8 @@ type
     procedure ClearKeyboard;
     procedure SetKeyState(const HalfRowIndex: THalfRowIndex; const KeyIndex: TKeyIndex;
       const IsDown: Boolean); inline;
-    procedure SetKeyState(const AKey: Word; const IsDown: Boolean);
+    function CheckKeyMap(const AKey: Word): Integer;
+    procedure SetKeyState(I: Integer; const IsDown: Boolean);
     function LoadFromKeyMappings: Boolean;
 
     property HalfRows: THalfRows read FHalfRows;
@@ -345,20 +346,22 @@ begin
     FHalfRows[HalfRowIndex] := FHalfRows[HalfRowIndex] or B;
 end;
 
-procedure TSpectrumKeyBoard.SetKeyState(const AKey: Word; const IsDown: Boolean
-  );
+function TSpectrumKeyBoard.CheckKeyMap(const AKey: Word): Integer;
+begin
+  if not FKeyMapper.Find(AKey, Result) then
+    Result := -1;
+end;
+
+procedure TSpectrumKeyBoard.SetKeyState(I: Integer; const IsDown: Boolean);
 var
   AKM: TAKeyMaps;
-  I: Integer;
   W: Word;
   WR: WordRec absolute W;
 begin
-  if FKeyMapper.Find(AKey, I) then begin
-    AKM := FKeyMapper.Data[I];
-    for I := 0 to AKM.Count - 1 do begin
-      W := AKM.Items[I];
-      SetKeyState(WR.Hi, WR.Lo, IsDown);
-    end;
+  AKM := FKeyMapper.Data[I];
+  for I := 0 to AKM.Count - 1 do begin
+    W := AKM.Items[I];
+    SetKeyState(WR.Hi, WR.Lo, IsDown);
   end;
 end;
 

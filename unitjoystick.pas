@@ -36,6 +36,7 @@ type
       // Kempston: port 0x1F, 000FUDLR, active bits high
       // Fuller: port 0x7F, F---RLDU, active bits low
       JoystickDirectionMaps: TJoystickMaps = (
+        //    up       down       left      right      fire
         (%00001000, %00000100, %00000010, %00000001, %00010000), // kempston
         (%00000001, %00000010, %00000100, %00001000, %10000000)  // fuller
       );
@@ -81,7 +82,8 @@ type
     constructor Create;
     destructor Destroy; override;
 
-    function SetState(const Key: Word; const IsDown: Boolean; const AKeyBoard: TSpectrumKeyBoard): Boolean;
+    procedure SetState(const I: Integer; const IsDown: Boolean; const AKeyBoard: TSpectrumKeyBoard);
+    function CheckKey(const Key: Word): Integer;
     procedure ResetState;
     class function JoystickTypeToString(AJoystickType: TJoystickType): String;
     class function DirectionToString(ADirection: TJoystickDirection): String;
@@ -321,42 +323,49 @@ begin
   inherited Destroy;
 end;
 
-function TJoystick.SetState(const Key: Word; const IsDown: Boolean;
-  const AKeyBoard: TSpectrumKeyBoard): Boolean;
+procedure TJoystick.SetState(const I: Integer; const IsDown: Boolean;
+  const AKeyBoard: TSpectrumKeyBoard);
 var
   B: Byte;
   W: Word;
   JD: TJoystickDirection;
   WR: WordRec absolute W;
 begin
+  JD := TJoystickDirection(I);
+  case FJoystickType of
+    TJoystickType.jtKempston, TJoystickType.jtFuller:
+      begin
+        B := FJoystickDirectionMap[JD];
+
+        if IsDown xor (FJoystickType = TJoystickType.jtFuller) then
+          FState := FState or B
+        else
+          FState := FState and (not B);
+
+      end;
+
+  otherwise
+    // other joystick types map to keyboard.
+    W := FSpectrumKeyMap[JD];
+    AKeyBoard.SetKeyState(TSpectrumKeyBoard.THalfRowIndex(WR.Hi), TSpectrumKeyBoard.TKeyIndex(WR.Lo), IsDown);
+  end;
+
+end;
+
+function TJoystick.CheckKey(const Key: Word): Integer;
+var
+  JD: TJoystickDirection;
+begin
   if FEnabled then begin
     for JD := Low(TJoystickDirection) to High(TJoystickDirection) do begin
       if Key = FKeys[JD] then begin
-        case FJoystickType of
-          TJoystickType.jtKempston, TJoystickType.jtFuller:
-            begin
-              B := FJoystickDirectionMap[JD];
-
-              if IsDown xor (FJoystickType = TJoystickType.jtFuller) then
-                FState := FState or B
-              else
-                FState := FState and (not B);
-
-            end;
-
-        otherwise
-          // other joystick types map to keyboard.
-          W := FSpectrumKeyMap[JD];
-          AKeyBoard.SetKeyState(TSpectrumKeyBoard.THalfRowIndex(WR.Hi), TSpectrumKeyBoard.TKeyIndex(WR.Lo), IsDown);
-        end;
-
-        Exit(True);
+        Exit(Ord(JD));
       end;
 
     end;
   end;
 
-  Result := False;
+  Result := -1;
 end;
 
 procedure TJoystick.ResetState;

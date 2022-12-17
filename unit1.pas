@@ -191,8 +191,8 @@ type
       TSnapshotOrTape = (stSnapshot, stTape, stBoth);
 
       TKeyEventRec = record
-        Key: Word;
-        Down: Boolean;
+        KeyIndex: Integer;
+        BDown: Integer;
       end;
 
   strict private
@@ -203,6 +203,7 @@ type
 
     EventsQueueCount: Integer;
     EventsQueue: Array of TNotifyEvent;
+
     KeyEventCount: Integer;
     KeyEventQueue: Array of TKeyEventRec;
 
@@ -226,7 +227,7 @@ type
     procedure UpdateTextTapeRunning;
     procedure UpdateWriteScreen;
     procedure UpdateCheckWriteScreen;
-    procedure AddKeyEventToQueue(Key: Word; Down: Boolean);
+    procedure AddKeyEventToQueue(KeyIndex: Integer; BDown: Integer);
     procedure AddEventToQueue(Event: TNotifyEvent);
     procedure PaintScreen(Sender: TObject);
     procedure DoDetachDebugger(Sender: TObject);
@@ -505,6 +506,9 @@ begin
   if Sender <> Spectrum then begin
     AddEventToQueue(@ActionEnableJoystickExecute);
   end else begin
+    KeyEventCount := 0;
+    Spectrum.KeyBoard.ClearKeyboard;
+    TJoystick.Joystick.ResetState;
     TJoystick.Joystick.Enabled := not TJoystick.Joystick.Enabled;
     UpdateShowCurrentlyActiveJoystick;
   end;
@@ -629,6 +633,10 @@ begin
     try
       Spectrum.Paused := True;
 
+      KeyEventCount := 0;
+      Spectrum.KeyBoard.ClearKeyboard;
+      TJoystick.Joystick.ResetState;
+
       AKeys[TJoystick.TJoystickDirection.diUp] := TJoystick.Joystick.KeyUp;
       AKeys[TJoystick.TJoystickDirection.diDown] := TJoystick.Joystick.KeyDown;
       AKeys[TJoystick.TJoystickDirection.diLeft] := TJoystick.Joystick.KeyLeft;
@@ -662,7 +670,9 @@ begin
       if TFormKeyMappings.ShowFormKeyMappings() then begin
         Spectrum.KeyBoard.LoadFromKeyMappings;
       end;
-
+      KeyEventCount := 0;
+      Spectrum.KeyBoard.ClearKeyboard;
+      TJoystick.Joystick.ResetState;
     finally
       Spectrum.Paused := WasPaused;
     end;
@@ -1170,13 +1180,37 @@ end;
 
 procedure TForm1.DoOnKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState
   );
+var
+  I: Integer;
 begin
-  AddKeyEventToQueue(Key, True);
+  I := TJoystick.Joystick.CheckKey(Key);
+  if I >= 0 then begin
+    AddKeyEventToQueue(I, 3);
+    Key := 0;
+  end else begin
+    I := Spectrum.KeyBoard.CheckKeyMap(Key);
+    if I >= 0 then begin
+      AddKeyEventToQueue(I, 1);
+      Key := 0;
+    end;
+  end;
 end;
 
 procedure TForm1.DoOnKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
+var
+  I: Integer;
 begin
-  AddKeyEventToQueue(Key, False);
+  I := TJoystick.Joystick.CheckKey(Key);
+  if I >= 0 then begin
+    AddKeyEventToQueue(I, 2);
+    Key := 0;
+  end else begin
+    I := Spectrum.KeyBoard.CheckKeyMap(Key);
+    if I >= 0 then begin
+      AddKeyEventToQueue(I, 0);
+      Key := 0;
+    end;
+  end;
 end;
 
 procedure TForm1.UpdateActiveSnapshotHistory;
@@ -1253,14 +1287,14 @@ begin
   UpdateWriteScreen;
 end;
 
-procedure TForm1.AddKeyEventToQueue(Key: Word; Down: Boolean);
+procedure TForm1.AddKeyEventToQueue(KeyIndex: Integer; BDown: Integer);
 var
   KeyEventRec: TKeyEventRec;
 begin
   if Length(KeyEventQueue) <= KeyEventCount then
     SetLength(KeyEventQueue, (KeyEventCount * 7) div 5 + 2);
-  KeyEventRec.Key := Key;
-  KeyEventRec.Down := Down;
+  KeyEventRec.KeyIndex := KeyIndex;
+  KeyEventRec.BDown := BDown;
   KeyEventQueue[KeyEventCount] := KeyEventRec;
   Inc(KeyEventCount);
 end;
@@ -1637,6 +1671,7 @@ end;
 procedure TForm1.SyncSpectrum;
 var
   I: Integer;
+  KRec: TKeyEventRec;
   K, Ticks, CurrentPCTicks: Int64;
 
 begin
@@ -1652,8 +1687,12 @@ begin
 
     I := 0;
     while I < KeyEventCount do begin
-      if not TJoystick.Joystick.SetState(KeyEventQueue[I].Key, KeyEventQueue[I].Down, Spectrum.KeyBoard) then
-        Spectrum.KeyBoard.SetKeyState(KeyEventQueue[I].Key, KeyEventQueue[I].Down);
+      KRec := KeyEventQueue[I];
+      if KRec.BDown and 2 = 0 then
+        Spectrum.KeyBoard.SetKeyState(KRec.KeyIndex, KRec.BDown and 1 <> 0)
+      else
+        TJoystick.Joystick.SetState(KRec.KeyIndex, KRec.BDown and 1 <> 0, Spectrum.KeyBoard);
+
       Inc(I);
     end;
     KeyEventCount := 0;
