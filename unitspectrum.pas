@@ -208,8 +208,10 @@ end;
 
 procedure TSpectrum.StopBeeper;
 begin
-  TBeeper.StopBeeper;
-  //TBeeper.StopAndTerminate;
+  //TBeeper.StopBeeper;
+  // Terminate portaudio! After stopping without terminating portaudio, and then
+  // restarting, the sound seems to make bigger and bigger delay.
+  TBeeper.StopAndTerminate;
 end;
 
 procedure TSpectrum.InitTimes;
@@ -704,10 +706,10 @@ begin
   ResetSpectrum;
   FRunning := True;
 
+  TBeeper.BufferLen := 512 * 64; //43;
   if Assigned(FOnStartRun) then
     Synchronize(FOnStartRun);
 
-  TBeeper.BufferLen := 512 * 64; //43;
   CheckStartBeeper;
 
   while FRunning do begin
