@@ -53,6 +53,7 @@ type
     procedure FormShow(Sender: TObject);
     procedure Panel10Paint(Sender: TObject);
     procedure SpinEdit2Change(Sender: TObject);
+    procedure SpinEdit2EditingDone(Sender: TObject);
   strict private
     HistorySnapshots: TSnapshotHistoryQueue;
     FKeyBack: Word;
@@ -267,7 +268,7 @@ begin
     SpinEdit2Changing := True;
     try
       N := SpinEdit2.Value div SpinEdit2.Increment;
-      SpinEdit2.Value := N * SpinEdit2.Increment;
+
       S := IntToStr(N) + ' second';
       if N <> 1 then
         S := S + 's';
@@ -276,6 +277,14 @@ begin
       SpinEdit2Changing := False;
     end;
   end;
+end;
+
+procedure TFormHistorySnapshots.SpinEdit2EditingDone(Sender: TObject);
+var
+  N: Integer;
+begin
+  N := SpinEdit2.Value div SpinEdit2.Increment;
+  SpinEdit2.Value := N * SpinEdit2.Increment;
 end;
 
 function TFormHistorySnapshots.GetSelectedSnapshotNegOffs: Integer;

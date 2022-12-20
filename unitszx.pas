@@ -209,11 +209,11 @@ end;
 class function TSnapshotSZX.TZxstHeadr.GetUMagic: UInt32;
 const
   StrMagic: RawByteString = 'ZXST';
-  {$push}
-  {$J+}
-  const
-    UMagic: UInt32 = 0;
-  {$pop}
+{$push}
+{$J+}
+const
+  UMagic: UInt32 = 0;
+{$pop}
 begin
   if UMagic = 0 then begin
     Move(StrMagic[1], UMagic, 4);

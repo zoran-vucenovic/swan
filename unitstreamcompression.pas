@@ -61,11 +61,15 @@ begin
     try
       OutStream.Size := 0;
       OutStream.Position := 0;
+
+      Sz := InStream.Size;
+      if Sz = 0 then
+        Exit(True);
+
       CS := Tcompressionstream.create(Tcompressionlevel.cldefault, OutStream, False);
       try
         CS.SourceOwner := False;
 
-        Sz := InStream.Size;
         GetMem(Buff, Sz);
         try
           InStream.Position := 0;
