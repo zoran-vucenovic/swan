@@ -2,10 +2,10 @@ object FormHistorySnapshots: TFormHistorySnapshots
   Left = 503
   Height = 686
   Top = 59
-  Width = 621
+  Width = 603
   Caption = 'Auto saving snapshots options'
   ClientHeight = 686
-  ClientWidth = 621
+  ClientWidth = 603
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
@@ -21,11 +21,11 @@ object FormHistorySnapshots: TFormHistorySnapshots
     Left = 0
     Height = 686
     Top = 0
-    Width = 621
+    Width = 603
     Anchors = [akTop, akLeft, akRight, akBottom]
     BevelOuter = bvNone
     ClientHeight = 686
-    ClientWidth = 621
+    ClientWidth = 603
     TabOrder = 0
     object Panel3: TPanel
       AnchorSideLeft.Control = Panel15
@@ -36,18 +36,18 @@ object FormHistorySnapshots: TFormHistorySnapshots
       Left = 6
       Height = 26
       Top = 654
-      Width = 609
+      Width = 591
       Anchors = [akLeft, akRight, akBottom]
       AutoSize = True
       BorderSpacing.Around = 6
       BevelOuter = bvNone
       ClientHeight = 26
-      ClientWidth = 609
+      ClientWidth = 591
       TabOrder = 0
       object BitBtn1: TBitBtn
         AnchorSideTop.Control = Panel3
         AnchorSideRight.Control = BitBtn2
-        Left = 459
+        Left = 441
         Height = 26
         Top = 0
         Width = 62
@@ -64,7 +64,7 @@ object FormHistorySnapshots: TFormHistorySnapshots
         AnchorSideTop.Control = Panel3
         AnchorSideRight.Control = Panel3
         AnchorSideRight.Side = asrBottom
-        Left = 527
+        Left = 509
         Height = 26
         Top = 0
         Width = 82
@@ -86,12 +86,12 @@ object FormHistorySnapshots: TFormHistorySnapshots
       Left = 0
       Height = 648
       Top = 0
-      Width = 621
+      Width = 603
       Anchors = [akTop, akLeft, akRight, akBottom]
       AutoSize = True
       BevelOuter = bvNone
       ClientHeight = 648
-      ClientWidth = 621
+      ClientWidth = 603
       TabOrder = 1
       object Panel2: TPanel
         AnchorSideLeft.Control = Panel1
@@ -348,16 +348,18 @@ object FormHistorySnapshots: TFormHistorySnapshots
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Control = Panel1
         AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = Panel1
+        AnchorSideBottom.Side = asrBottom
         Left = 3
-        Height = 529
+        Height = 564
         Top = 81
-        Width = 615
+        Width = 597
         Anchors = [akTop, akLeft, akRight, akBottom]
         BorderSpacing.Around = 3
         BevelOuter = bvNone
         BorderStyle = bsSingle
-        ClientHeight = 525
-        ClientWidth = 611
+        ClientHeight = 560
+        ClientWidth = 593
         TabOrder = 1
         object Panel7: TPanel
           AnchorSideLeft.Control = Panel6
@@ -367,7 +369,7 @@ object FormHistorySnapshots: TFormHistorySnapshots
           Left = 2
           Height = 15
           Top = 2
-          Width = 609
+          Width = 591
           Anchors = [akTop, akLeft, akRight]
           AutoSize = True
           BorderSpacing.Left = 2
@@ -375,7 +377,7 @@ object FormHistorySnapshots: TFormHistorySnapshots
           BorderSpacing.Bottom = 1
           BevelOuter = bvNone
           ClientHeight = 15
-          ClientWidth = 609
+          ClientWidth = 591
           TabOrder = 0
           object Label5: TLabel
             AnchorSideLeft.Control = Panel7
@@ -383,8 +385,8 @@ object FormHistorySnapshots: TFormHistorySnapshots
             Left = 0
             Height = 15
             Top = 0
-            Width = 146
-            Caption = 'Currently saved in memory:'
+            Width = 34
+            Caption = 'Label5'
             ParentColor = False
           end
         end
@@ -397,7 +399,7 @@ object FormHistorySnapshots: TFormHistorySnapshots
           Left = 1
           Height = 3
           Top = 18
-          Width = 609
+          Width = 591
           Anchors = [akTop, akLeft, akRight]
           BorderSpacing.Left = 1
           BorderSpacing.Right = 1
@@ -411,8 +413,8 @@ object FormHistorySnapshots: TFormHistorySnapshots
           AnchorSideBottom.Side = asrBottom
           Left = 0
           Height = 19
-          Top = 504
-          Width = 609
+          Top = 539
+          Width = 591
           Anchors = [akLeft, akRight, akBottom]
           AutoSize = True
           BorderSpacing.Top = 1
@@ -420,18 +422,18 @@ object FormHistorySnapshots: TFormHistorySnapshots
           BorderSpacing.Bottom = 2
           BevelOuter = bvNone
           ClientHeight = 19
-          ClientWidth = 609
+          ClientWidth = 591
           TabOrder = 2
           object CheckBox2: TCheckBox
             AnchorSideTop.Control = Panel12
             AnchorSideRight.Control = Panel12
             AnchorSideRight.Side = asrBottom
-            Left = 458
+            Left = 435
             Height = 19
             Top = 0
-            Width = 151
+            Width = 156
             Anchors = [akTop, akRight]
-            Caption = 'Restore chosen snapshot'
+            Caption = 'Restore selected snapshot'
             TabOrder = 0
           end
         end
@@ -442,8 +444,8 @@ object FormHistorySnapshots: TFormHistorySnapshots
           AnchorSideBottom.Control = Panel12
           Left = 1
           Height = 3
-          Top = 500
-          Width = 609
+          Top = 535
+          Width = 591
           Anchors = [akLeft, akRight, akBottom]
           BorderSpacing.Left = 1
           BorderSpacing.Right = 1
@@ -457,9 +459,9 @@ object FormHistorySnapshots: TFormHistorySnapshots
           AnchorSideRight.Side = asrBottom
           AnchorSideBottom.Control = Bevel2
           Left = 0
-          Height = 478
+          Height = 513
           Top = 22
-          Width = 611
+          Width = 593
           Anchors = [akTop, akLeft, akRight, akBottom]
           BorderSpacing.Top = 1
           BevelOuter = bvNone

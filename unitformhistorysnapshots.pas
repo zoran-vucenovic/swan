@@ -325,6 +325,7 @@ var
   C, CC, CC2: TCustomControl;
   St: TStream;
   Sz: TSize;
+  S: String;
 
 begin
   if Assigned(HistorySnapshots) xor Assigned(ScrollBox) then begin
@@ -411,11 +412,15 @@ begin
     end;
 
     if J <= 0 then
-      ScrollBox.Free;
+      FreeAndNil(ScrollBox);
 
     if Assigned(ScrollBox) then begin
+      if J = 1 then
+        S := ''
+      else
+        S := 's, most recent on top';
       Label5.Caption := Format(
-        'Currently saved in memory (%d snapshots):', [J]);
+        'Currently saved in memory (%d snapshot%s):', [J, S]);
       ScrollBox.Anchors := [];
       ScrollBox.AnchorParallel(akTop, 0, Panel13);
       ScrollBox.AnchorParallel(akLeft, 0, Panel13);
@@ -428,7 +433,8 @@ begin
       FTimer.Enabled := True;
     end;
   end;
-
+  if ScrollBox = nil then
+    Label5.Caption := 'No snapshots saved.';
 end;
 
 procedure TFormHistorySnapshots.TimerOnTimer(Sender: TObject);
