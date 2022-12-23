@@ -18,8 +18,8 @@ type
     constructor Create(AOwner: TComponent); override;
   end;
 
-  TControlScreenBitmap = class(TCustomControl)
-  private
+  TControlScreenBitmap = class(TGraphicControl)
+  strict private
     SpectrumColoursBGRA: TSpectrumColoursBGRA;
     PScreenStart: PByte;
     BmpFlash: TBGRABitmap;
@@ -32,7 +32,7 @@ type
       const ABGRAColours: TBGRAColours; const APScreenStart: PByte);
     destructor Destroy; override;
     procedure Paint; override;
-    property Timer: TFlashTimer read FTimer write FTimer;
+    property Timer: TFlashTimer write FTimer;
   end;
 
 implementation
@@ -122,6 +122,9 @@ begin
   end;
 
   SpectrumColoursBGRA.Bmp.InvalidateBitmap;
+  if Assigned(BmpFlash) then
+    BmpFlash.InvalidateBitmap;
+
 end;
 
 constructor TControlScreenBitmap.Create(AOwner: TComponent);
