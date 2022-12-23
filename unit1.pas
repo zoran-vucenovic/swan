@@ -222,7 +222,7 @@ type
     HistoryQueue: TSnapshotHistoryQueue;
     SnapshotHistoryOptions: TSnapshotHistoryOptions;
 
-    procedure TryLoadFromFiles(const SnapshotOrTape: TSnapshotOrTape; AFileNames: Array of String);
+    procedure TryLoadFromFiles(const SnapshotOrTape: TSnapshotOrTape; const AFileNames: Array of String);
     procedure UpdateActiveSnapshotHistory;
     procedure UpdateTextTapeRunning;
     procedure UpdateWriteScreen;
@@ -414,14 +414,11 @@ begin
   ScreenSizeFactor := 2;
   SetScreenSizeFactor(1);
 
-  //
-  RunSpectrum;
-  UpdateShowSound;
-
+  DestroySpectrum;
+  Spectrum := TSpectrum.Create;
+  LoadFromConf;
   //
   TCommonFunctionsLCL.FormToScreenCentre(Self);
-  PaintBox1.OnPaint := @PaintScreen;
-  Application.AddOnDeactivateHandler(@FormDeactivate);
 end;
 
 procedure TForm1.FormDeactivate(Sender: TObject);
@@ -940,7 +937,7 @@ begin
 end;
 
 procedure TForm1.TryLoadFromFiles(const SnapshotOrTape: TSnapshotOrTape;
-  AFileNames: array of String);
+  const AFileNames: array of String);
 var
   I, J: Integer;
   Extensions: TStringDynArray;
@@ -1032,7 +1029,9 @@ begin
     UpdateScreenSizeFactor;
     Self.AutoSize := True;
     Application.QueueAsyncCall(@AfterShow, Data - 1);
-  end;
+  end else
+    RunSpectrum;
+
 end;
 
 procedure TForm1.UpdateShowCurrentlyActiveJoystick;
@@ -1604,10 +1603,6 @@ end;
 
 procedure TForm1.RunSpectrum;
 begin
-  DestroySpectrum;
-
-  Spectrum := TSpectrum.Create;
-
   Spectrum.OnResetSpectrum := @DoOnResetSpectrum;
   Spectrum.OnEndRun := @SpectrumEndRun;
   Spectrum.OnStartRun := @SpectrumStartRun;
@@ -1625,6 +1620,10 @@ begin
   Self.OnKeyDown := @DoOnKeyDown;
   UpdateShowCurrentlyActiveJoystick;
   Spectrum.Start;
+
+  UpdateShowSound;
+  PaintBox1.OnPaint := @PaintScreen;
+  Application.AddOnDeactivateHandler(@FormDeactivate);
 end;
 
 procedure TForm1.DoOnResetSpectrum;
@@ -1722,7 +1721,7 @@ begin
         Label1.Caption := 'paused';
 
       PrevTicks := Ticks;
-      Label1.Invalidate;
+      Label1.Update;
     end;
   end;
 
@@ -1740,8 +1739,6 @@ var
   I: Integer;
   Arr: TStringDynArray;
 begin
-  LoadFromConf;
-
   SetLength(Arr{%H-}, ParamCount);
   for I := 1 to ParamCount do
     Arr[I - 1] := ParamStr(I);
