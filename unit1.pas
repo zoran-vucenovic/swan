@@ -882,7 +882,7 @@ begin
   if Assigned(Spectrum) then begin
     CanClose := False;
     Spectrum.OnSync := nil;
-    Application.ProcessMessages;
+    //Application.ProcessMessages;
     DestroySpectrum;
     CanClose := True;
   end;
@@ -1694,7 +1694,7 @@ begin
     end;
     KeyEventCount := 0;
 
-    Application.ProcessMessages;
+    //Application.ProcessMessages;
   end;
 
   if FWriteScreen then begin

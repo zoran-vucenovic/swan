@@ -290,7 +290,7 @@ begin
     EnableAlign;
   end;
 
-  Application.ProcessMessages;
+  //Application.ProcessMessages;
 end;
 
 procedure TControlKeyMappings.SaveToKeyMapRecs(out KMRecs: TKeyMapRecs);
