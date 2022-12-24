@@ -411,12 +411,15 @@ begin
 
   AutoSize := False;
   Bmp := TBitmap.Create;
-  ScreenSizeFactor := 2;
-  SetScreenSizeFactor(1);
 
   DestroySpectrum;
   Spectrum := TSpectrum.Create;
+  ScreenSizeFactor := 1;
   LoadFromConf;
+  if ScreenSizeFactor = 1 then begin
+    ScreenSizeFactor := 2;
+    SetScreenSizeFactor(1);
+  end;
   //
   TCommonFunctionsLCL.FormToScreenCentre(Self);
 end;
