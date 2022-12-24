@@ -149,12 +149,11 @@ end;
 
 procedure TFormKeyMappings.FillKeyMappingsNames;
 var
-  I, N, K: Integer;
+  I, N: Integer;
   S: RawByteString;
   KM: TKeyMapRecs;
 begin
   ClearCombo;
-  K := -1;
   N := -1;
   if TKeyMappings.KMappings.Count > 0 then begin
     for I := 0 to TKeyMappings.KMappings.Count - 1 do begin
@@ -167,7 +166,6 @@ begin
         if N < 0 then
           if TKeyMappings.KMappings.ActiveKeyMapName = S then
             N := ComboBox1.Items.Count - 1;
-        Inc(K);
       end;
     end;
   end;
@@ -256,6 +254,7 @@ var
   J: Integer;
   KMObj: TKeyMapsObj;
 begin
+  Result := -1;
   AMappingName := UTF8Trim(AMappingName);
   if AMappingName <> '' then begin
     KMObj := TKeyMapsObj.Create;
