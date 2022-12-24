@@ -1398,10 +1398,10 @@ begin
   FIff2 := False;
   FTStatesInCurrentFrame := 0;
 
-  FillChar(GPRegs, SizeOf(GPRegs), 0); //??
-  FillChar(GPRegs1, SizeOf(GPRegs1), 0); //??
-  //FillChar(GPRegs, SizeOf(GPRegs), $FF);
-  //FillChar(GPRegs1, SizeOf(GPRegs1), $FF);
+  //FillChar(GPRegs, SizeOf(GPRegs), 0); //??
+  //FillChar(GPRegs1, SizeOf(GPRegs1), 0); //??
+  FillChar(GPRegs, SizeOf(GPRegs), $FF);
+  FillChar(GPRegs1, SizeOf(GPRegs1), $FF);
 
   FRegWZ := $FFFF;
 
@@ -1418,8 +1418,8 @@ begin
   //FRegIx.U16bit := 0;
   //FRegIy.U16bit := 0;
 
-  //FRegIR.U16bit := 0;
-  FRegIR.U16bit := $FFFF;
+  FRegIR.U16bit := 0;
+  //FRegIR.U16bit := $FFFF;
 
   { TODO : zero or ff?: }   
   FDataBus := 0; // ff?
