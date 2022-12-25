@@ -1504,7 +1504,7 @@ procedure TForm1.DoLoad(const SnapshotOrTape: TSnapshotOrTape;
 
   procedure LoadingFailed;
   begin
-    MessageDlg('Loading failed.' + LineEnding + '%s' + LineEnding + 'Bad file?', mtError, [mbClose], 0);
+    MessageDlg('Loading failed.' + LineEnding + 'Bad file?', mtError, [mbClose], 0);
   end;
 
 var
