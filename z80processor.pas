@@ -1374,7 +1374,6 @@ end;
 procedure TProcessor.RefreshMem;
 begin
   RegR := ((RegR + 1) and %01111111) or (RegR and %10000000);
-  FAddressBus := FRegIR.U16bit;
 end;
 
 constructor TProcessor.Create;
@@ -1600,17 +1599,6 @@ var
     FRegWZ := Result;
   end;
         
-  function FetchOpCode: Byte; inline;
-  begin
-    FAddressBus := FRegPC;
-
-    Contention;
-    Result := FMemory.ReadByte(FAddressBus);
-    //FDataBus := OpCode;
-    Inc(FTStatesInCurrentFrame, 4);
-    RefreshMem;
-  end;
-
   procedure Add16(const W: Word);
   const
     Bit12 = 1 shl 12;
@@ -2248,22 +2236,6 @@ var
     end;
   end;
 
-  procedure EnterInterruptMode2;
-  var
-    Re: TRec16;
-  begin
-    Inc(FTStatesInCurrentFrame, 7);
-    PushToStack(FRegPC);
-    Re.UByteHi := RegI;
-
-    { TODO : make this clear }
-    //Re.UByteLo := FDataBus {and $FE}; // the interrupting device has put the lower byte of the address on data bus
-    // That just doesn't work (thrust2, willow pattern)...
-    // This seems to work (force lower byte to FF ?! -- I still don't understand this well):
-    Re.UByteLo := $FF;
-    FRegPC := ReadMem16(Re.U16bit);
-  end;
-
 begin
   if not FSkipInterruptCheck then begin
     // check interrupts
@@ -2276,16 +2248,19 @@ begin
       if FHalt then begin
         FHalt := False;
         Inc(FRegPC);
-        //Inc(FTStatesInCurrentFrame);
       end;
+      FAddressBus := FRegPC;
+      Contention;
+      Inc(FTStatesInCurrentFrame, 4);
 
-      FetchOpCode; // fetch op code, but ignore it
+      RefreshMem;
+      FAddressBus := FRegIR.U16bit;
       ContentionAndIncTStates;
       PushToStack(FRegPC);
 
       FRegPC := NMIStartAdr;
       FFlagsModified := False;
-      //Exit(FTStatesInCurrentFrame);
+
       Exit;
     end;
 
@@ -2300,8 +2275,10 @@ begin
         if FHalt then begin
           FHalt := False;
           Inc(FRegPC);
-          //Inc(FTStatesInCurrentFrame);
         end;
+
+        Inc(FTStatesInCurrentFrame, 7);
+        PushToStack(FRegPC);
 
         case FInterruptMode of
           //0:  NOT IMPLEMENTED (for now...?)
@@ -2311,10 +2288,8 @@ begin
           //    // ?
           //  end;
           2:
-            EnterInterruptMode2;
+            FRegPC := ReadMem16(FRegIR.U16bit or $00FF);
         otherwise
-          Inc(FTStatesInCurrentFrame, 7);
-          PushToStack(FRegPC);
 
           FRegPC := IntMode1StartAdr;
         end;
@@ -2325,6 +2300,8 @@ begin
   end;
                            
   if FHalt then begin
+    FAddressBus := FRegPC + 1;
+    Contention;
     Inc(FTStatesInCurrentFrame, 4);
     RefreshMem;
 
@@ -2335,7 +2312,13 @@ begin
   Pref := FPrefixByte;
   FPrefixByte := 0;
 
-  OpCode := FetchOpCode;
+  FAddressBus := FRegPC;
+  Contention;
+  Inc(FTStatesInCurrentFrame, 4);
+
+  OpCode := FMemory.ReadByte(FAddressBus);
+  RefreshMem;
+  FAddressBus := FRegIR.U16bit;
   Inc(FRegPC);
 
   x := OpCode shr 6;
