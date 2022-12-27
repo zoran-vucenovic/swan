@@ -19,6 +19,9 @@ type
   { TProcessor }
 
   TProcessor = class(TObject)
+  public const
+    FrameTicks = 69888;
+
   strict private
 
     type
@@ -2086,8 +2089,14 @@ var
     FlagsToSet := RegF and 1; // carry flag not affected
 
     // PV set according to value of Iff2
-    if FIff2 then
-      FlagsToSet := FlagsToSet or %100;
+    if FIff2 then begin
+      // there is a bug when interrupt is accepted at this point
+      // https://worldofspectrum.org/faq/reference/z80reference.htm#Interrupts
+      // https://worldofspectrum.org/forums/discussion/4971/
+      // hence this following condition (are we not about to enter interrupt?)
+      if not (FIff1 and (FIntPin or (FTStatesInCurrentFrame >= FrameTicks))) then
+        FlagsToSet := FlagsToSet or %100;
+    end;
 
     if B = 0 then
       RegF := FlagsToSet or %01000000 // Z

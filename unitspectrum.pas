@@ -644,8 +644,6 @@ end;
 procedure TSpectrum.RunSpectrum;
 
   procedure DoStep; inline;
-  const
-    FrameTicks = 69888;
   var                        
     MilliSecondsPassed: Int64;
     MilliSecondsToWait: Int64;
@@ -655,23 +653,21 @@ procedure TSpectrum.RunSpectrum;
     FProcessor.DoProcess;
 
     if FIntPinUpCount <> 0 then begin
-      if FProcessor.IntPin then begin
-        if FProcessor.TStatesInCurrentFrame >= FIntPinUpCount then begin
-          FProcessor.IntPin := False;
-          FIntPinUpCount := 0;
-        end;
+      if FProcessor.TStatesInCurrentFrame >= FIntPinUpCount then begin
+        FProcessor.IntPin := False;
+        FIntPinUpCount := 0;
       end;
     end;
 
-    if FProcessor.TStatesInCurrentFrame >= FrameTicks then begin
+    if FProcessor.TStatesInCurrentFrame >= TProcessor.FrameTicks then begin
       FProcessor.IntPin := True;
 
       Inc(FFrameCount);
       //WriteToScreen(ScreenEnd);
       FProcessor.OnNeedWriteScreen(ScreenEnd);
 
-      FSumTicks := FSumTicks + FrameTicks;
-      FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame - FrameTicks;
+      FSumTicks := FSumTicks + TProcessor.FrameTicks;
+      FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame - TProcessor.FrameTicks;
       FIntPinUpCount := FProcessor.TStatesInCurrentFrame + 32;
 
       TicksFrom := ScreenStart;
