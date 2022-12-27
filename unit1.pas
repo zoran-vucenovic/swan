@@ -403,7 +403,7 @@ begin
   Caption := ApplicationName;
   Spectrum := nil;
 
-  FSkipWriteScreen := False;
+  FSkipWriteScreen := True;
   FWriteScreen := True;
 
   Label1.Constraints.MinWidth := PanelStatus.Canvas.GetTextWidth('Wspeed 100.99%W');
@@ -420,6 +420,7 @@ begin
     ScreenSizeFactor := 2;
     SetScreenSizeFactor(1);
   end;
+  UpdateCheckWriteScreen;
   //
   TCommonFunctionsLCL.FormToScreenCentre(Self);
 end;
