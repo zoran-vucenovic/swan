@@ -2169,26 +2169,12 @@ var
             end;
           5:
             begin
-              case y of
-                1: // RETI
-                  begin
-                    FRegPC := PopFromStack;
-                    FRegWZ := FRegPC;
-                    // ?
-                    FIff1 := FIff2; // ?
-                  end;
-              otherwise
-                // RETN
-                FRegPC := PopFromStack;
-                //FRegWZ := FRegPC; // I don't know.
-                                    // memptr.txt states:
-                                    //JR/DJNZ/RET/RETI/RST (jumping to addr)
-	                            //        MEMPTR = addr
-                                    // So, retn is not explicitely listed, but it is in "jumping to addr"
-                                    // and Patrik Rak's memptr test passes whether set here or not.
-                                    // So... I just don't know.
-                FIff1 := FIff2;
-              end;
+              // y = 1 -- RETI
+              // otherwise -- RETN
+              // but functionally identical, same code for both:
+              FRegPC := PopFromStack;
+              FRegWZ := FRegPC;
+              FIff1 := FIff2;
               FFlagsModified := False;
             end;
           6: // IM im[y]
