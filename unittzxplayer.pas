@@ -398,7 +398,7 @@ begin
   FCurrentBlock := nil;
   ActiveBit := 0;
   if Assigned(FSpectrum) then
-    FSpectrum.Ear := 0;
+    FSpectrum.SetEarFromTape(0);
   DoOnChangeBlock;
 end;
 
@@ -551,7 +551,7 @@ end;
 procedure TTzxPlayer.GetNextPulse();
 begin
   if InternalNextPulse() then begin
-    FSpectrum.Ear := ActiveBit;
+    FSpectrum.SetEarFromTape(ActiveBit);
 
   end;
 end;

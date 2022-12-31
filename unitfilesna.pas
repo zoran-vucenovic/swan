@@ -187,7 +187,7 @@ begin
       RemainingIntPinUp := ASpectrum.RemainingIntPinUp;
       BorderColour := ASpectrum.CodedBorderColour;
       FlashState := ASpectrum.FlashState;
-      Ear := ASpectrum.Ear;
+      Ear := ASpectrum.InternalEar;
       Exit(True);
     end;
   end;
@@ -227,7 +227,7 @@ begin
       ASpectrum.RemainingIntPinUp := RemainingIntPinUp;
       ASpectrum.CodedBorderColour := BorderColour;
       ASpectrum.FlashState := FlashState;
-      ASpectrum.Ear := Ear;
+      ASpectrum.InternalEar := Ear;
 
       Exit(True);
     end;

@@ -86,6 +86,8 @@ type
     FRunning: Boolean;
     FDebuggedOrPaused: Boolean;
     FEar: Byte;
+    FInternalEar: Byte;
+    FEarFromTape: Byte;
     FMic: Byte;
     FOnEndRun: TThreadMethod;
     StepInDebugger: Boolean;
@@ -125,7 +127,7 @@ type
     procedure SetSoundMuted(AValue: Boolean);
     procedure SetSoundVolume(AValue: Integer);
     procedure UpdateDebuggedOrPaused;
-    procedure SetEar(AValue: Byte);
+    procedure SetInternalEar(AValue: Byte);
 
   protected
     procedure Execute; override;
@@ -146,6 +148,7 @@ type
     procedure SetSpectrumColours(const Colours: TLCLColourMap);
     procedure GetSpectrumColours(out Colours: TLCLColourMap);
     procedure SetWriteScreen(const AValue: Boolean);
+    procedure SetEarFromTape(AValue: Byte);
 
     procedure StopRunning;
     procedure ResetSpectrum;
@@ -168,7 +171,7 @@ type
     property PortAudioLibPath: String read GetPortAudioLibPath write SetPortAudioLibPath;
     property SoundMuted: Boolean read FSoundMuted write SetSoundMuted;
     property SoundVolume: Integer read GetSoundVolume write SetSoundVolume;
-    property Ear: Byte read FEar write SetEar;
+    property InternalEar: Byte read FInternalEar write SetInternalEar;
     property FlashState: UInt16 read GetFlashState write SetFlashState;
   end;
 
@@ -377,8 +380,9 @@ begin
     // Implemented so that EAR state can be read by IN, whereas MIC not, but
     // MIC is (to lesser extent) taken into account when playing sound.
     UpdateBeeperBuffer;
-    FEar := (Aux and %10000) shl 2;
+    FInternalEar := (Aux and %10000) shl 2;
     FMic := (not Aux) and %1000;
+    FEar := FInternalEar or FEarFromTape;
   end;
 end;
 
@@ -597,6 +601,8 @@ begin
     Synchronize(FOnResetSpectrum);
 
   FIntPinUpCount := 0;
+  FInternalEar := 0;
+  FEarFromTape := 0;
   FEar := 0;
   FMic := 0;
   FCodedBorderColour := 0;
@@ -891,12 +897,21 @@ begin
   end;
 end;
 
-procedure TSpectrum.SetEar(AValue: Byte);
+procedure TSpectrum.SetInternalEar(AValue: Byte);
 begin
-  //if FEar <> AValue then begin
-    UpdateBeeperBuffer;
-    FEar := AValue;
-  //end;
+  UpdateBeeperBuffer;
+  FInternalEar := AValue;
+  FEarFromTape := 0;
+  FEar := AValue;
+end;
+
+procedure TSpectrum.SetEarFromTape(AValue: Byte);
+begin
+  UpdateBeeperBuffer;
+  if AValue <> FEarFromTape then begin
+    FEarFromTape := AValue;
+    FEar := FInternalEar or AValue;
+  end;
 end;
 
 end.
