@@ -22,6 +22,8 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionResetCPU: TAction;
+    ActionNMI: TAction;
     ActionHistorySnapshots: TAction;
     ActionSaveSzx: TAction;
     ActionEnableHistory: TAction;
@@ -95,6 +97,9 @@ type
     MenuItem39: TMenuItem;
     MenuItem4: TMenuItem;
     MenuItem40: TMenuItem;
+    MenuItem41: TMenuItem;
+    MenuItem42: TMenuItem;
+    MenuItem43: TMenuItem;
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
@@ -125,11 +130,13 @@ type
     procedure ActionKeyMappingsExecute(Sender: TObject);
     procedure ActionMoveBackExecute(Sender: TObject);
     procedure ActionMuteSoundExecute(Sender: TObject);
+    procedure ActionNMIExecute(Sender: TObject);
     procedure ActionNormalSpeedExecute(Sender: TObject);
     procedure ActionOpenExecute(Sender: TObject);
     procedure ActionPauseExecute(Sender: TObject);
     procedure ActionPlayExecute(Sender: TObject);
     procedure ActionPortAudioLibPathExecute(Sender: TObject);
+    procedure ActionResetCPUExecute(Sender: TObject);
     procedure ActionResetExecute(Sender: TObject);
     procedure ActionRewindExecute(Sender: TObject);
     procedure ActionSaveSnaExecute(Sender: TObject);
@@ -701,6 +708,15 @@ begin
   end;
 end;
 
+procedure TForm1.ActionNMIExecute(Sender: TObject);
+begin
+  if Sender <> Spectrum then begin
+    AddEventToQueue(@ActionNMIExecute);
+  end else begin
+    Spectrum.GetProcessor.NMI := True;
+  end;
+end;
+
 procedure TForm1.ActionNormalSpeedExecute(Sender: TObject);
 begin
   if Sender <> Spectrum then begin
@@ -757,6 +773,15 @@ begin
     finally
       Spectrum.Paused := WasPaused;
     end;
+  end;
+end;
+
+procedure TForm1.ActionResetCPUExecute(Sender: TObject);
+begin
+  if Sender <> Spectrum then begin
+    AddEventToQueue(@ActionResetCPUExecute)
+  end else begin
+    Spectrum.GetProcessor.ResetPin();
   end;
 end;
 

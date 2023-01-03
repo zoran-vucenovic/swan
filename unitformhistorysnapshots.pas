@@ -47,7 +47,6 @@ type
     SpinEdit1: TSpinEdit;
     SpinEdit2: TSpinEdit;
     procedure CheckBox1Change(Sender: TObject);
-    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -217,12 +216,6 @@ begin
   LabelEdit.Parent := Panel11;
   LabelEdit.OnClick := @OnEditClick;
   Panel11.AutoSize := True;
-end;
-
-procedure TFormHistorySnapshots.FormCloseQuery(Sender: TObject;
-  var CanClose: Boolean);
-begin
-  //
 end;
 
 procedure TFormHistorySnapshots.CheckBox1Change(Sender: TObject);

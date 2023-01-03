@@ -178,6 +178,7 @@ object Form1: TForm1
     object ActionReset: TAction
       Category = 'Emulation'
       Caption = 'Reset Spectrum'
+      Hint = 'Reset the computer ("hard reset" — as if'#13#10'Spectrum is switched off and then back on)'
       ImageIndex = 11
       OnExecute = ActionResetExecute
     end
@@ -331,6 +332,18 @@ object Form1: TForm1
       ImageIndex = 15
       OnExecute = ActionSaveSnaExecute
     end
+    object ActionNMI: TAction
+      Category = 'Emulation'
+      Caption = 'NMI'
+      Hint = 'Send NMI signal to processor'
+      OnExecute = ActionNMIExecute
+    end
+    object ActionResetCPU: TAction
+      Category = 'Emulation'
+      Caption = 'Reset CPU'
+      Hint = 'Send RESET signal to processor ("soft reset")'
+      OnExecute = ActionResetCPUExecute
+    end
   end
   object MainMenu1: TMainMenu
     Images = DataModuleImages.ImageList1
@@ -364,6 +377,15 @@ object Form1: TForm1
       end
       object MenuItem12: TMenuItem
         Action = ActionReset
+      end
+      object MenuItem41: TMenuItem
+        Caption = 'Signal processor'
+        object MenuItem42: TMenuItem
+          Action = ActionNMI
+        end
+        object MenuItem43: TMenuItem
+          Action = ActionResetCPU
+        end
       end
       object MenuItem5: TMenuItem
         Action = ActionSpeedDecrease

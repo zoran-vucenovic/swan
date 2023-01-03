@@ -6,7 +6,6 @@ object FormHistorySnapshots: TFormHistorySnapshots
   Caption = 'Auto saving snapshots options'
   ClientHeight = 686
   ClientWidth = 603
-  OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow

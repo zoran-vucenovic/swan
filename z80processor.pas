@@ -161,6 +161,7 @@ type
     procedure SetOnOutputRequest(AValue: TProcessorEvent);
 
     procedure RefreshMem; inline;
+    procedure SoftReset;
 
     procedure CheckContention; inline;
     procedure Contention; inline;
@@ -273,6 +274,7 @@ type
     property IntPin: Boolean read FIntPin write FIntPin;
     property NMI: Boolean write FNMI;
     //property Reset: Boolean write FReset;
+    procedure ResetPin();
 
     // CPU Bus control (two pins, one input, one output)
     //property BusRQ: Boolean write FBusRQ;
@@ -987,6 +989,12 @@ begin
   RequestOutput;
 end;
 
+procedure TProcessor.ResetPin;
+begin
+  SoftReset;
+  Inc(FTStatesInCurrentFrame, 3);
+end;
+
 procedure TProcessor.SetOnInputRequest(AValue: TProcessorEvent);
 begin
   if AValue = nil then
@@ -1379,53 +1387,15 @@ begin
   RegR := ((RegR + 1) and %01111111) or (RegR and %10000000);
 end;
 
-constructor TProcessor.Create;
+procedure TProcessor.SoftReset;
 begin
-  inherited Create;
-
-  FOnInputRequest := @EmptyProcessorEvent;
-  FOnOutputRequest := @EmptyProcessorEvent;
-  FOnNeedWriteScreen := @EmptyWriteScrEvent;
-  InitRegPointers;
-  ResetCPU;
-end;
-
-procedure TProcessor.ResetCPU;
-begin
-  FFlagsModified := False;
   FInterruptMode := 0;
   FSkipInterruptCheck := False;
   FPrefixByte := 0;
   FIff1 := False;
   FIff2 := False;
-  FTStatesInCurrentFrame := 0;
-
-  //FillChar(GPRegs, SizeOf(GPRegs), 0); //??
-  //FillChar(GPRegs1, SizeOf(GPRegs1), 0); //??
-  FillChar(GPRegs, SizeOf(GPRegs), $FF);
-  FillChar(GPRegs1, SizeOf(GPRegs1), $FF);
-
-  FRegWZ := $FFFF;
-
-  FRegSP := $FFFF;
   FRegPC := 0;
-  //FRegSP := 0;
-  FRegAF.U16bit := $FFFF;
-  FRegAF1.U16bit := $FFFF;
-  //FRegAF.U16bit := 0;
-  //FRegAF1.U16bit := 0;
-
-  FRegIx.U16bit := $FFFF;
-  FRegIy.U16bit := $FFFF;
-  //FRegIx.U16bit := 0;
-  //FRegIy.U16bit := 0;
-
   FRegIR.U16bit := 0;
-  //FRegIR.U16bit := $FFFF;
-
-  { TODO : zero or ff?: }   
-  FDataBus := 0; // ff?
-  FAddressBus := 0; // ffff?
 
   //FBusAck := False;
   //FBusRQ := False;
@@ -1440,6 +1410,49 @@ begin
   //FRFSH := False;
   //FWait := False;
   //FWR := False;
+end;
+
+constructor TProcessor.Create;
+begin
+  inherited Create;
+
+  FOnInputRequest := @EmptyProcessorEvent;
+  FOnOutputRequest := @EmptyProcessorEvent;
+  FOnNeedWriteScreen := @EmptyWriteScrEvent;
+  InitRegPointers;
+  ResetCPU;
+end;
+
+procedure TProcessor.ResetCPU;
+begin
+  SoftReset;
+
+  FFlagsModified := False;
+
+  FTStatesInCurrentFrame := 0;
+
+  //FillChar(GPRegs, SizeOf(GPRegs), 0); //??
+  //FillChar(GPRegs1, SizeOf(GPRegs1), 0); //??
+  FillChar(GPRegs, SizeOf(GPRegs), $FF);
+  FillChar(GPRegs1, SizeOf(GPRegs1), $FF);
+
+  FRegWZ := $FFFF;
+
+  FRegSP := $FFFF;
+  //FRegSP := 0;
+  FRegAF.U16bit := $FFFF;
+  FRegAF1.U16bit := $FFFF;
+  //FRegAF.U16bit := 0;
+  //FRegAF1.U16bit := 0;
+
+  FRegIx.U16bit := $FFFF;
+  FRegIy.U16bit := $FFFF;
+  //FRegIx.U16bit := 0;
+  //FRegIy.U16bit := 0;
+
+  { TODO : zero or ff?: }
+  FDataBus := 0; // ff?
+  FAddressBus := 0; // ffff?
 end;
 
 procedure TProcessor.DoProcess;
