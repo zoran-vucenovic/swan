@@ -34,21 +34,16 @@ type
 
   TSpectrum = class(TThread)
   public type
-    ISpectrumDevice = interface ['{9B450A9B-DA25-4144-9E8C-085001BE9CAC}']
-      procedure SetSpectrum(Spectrum: TSpectrum);
-    end;
 
-    IDebugger = interface(ISpectrumDevice) ['{5B8746EF-84D0-4549-98FE-AE2AE4687912}']
+    IDebugger = interface ['{5B8746EF-84D0-4549-98FE-AE2AE4687912}']
+      procedure SetSpectrum(Spectrum: TSpectrum);
       procedure OnStep(out DoContinue: Boolean);
       procedure AfterStep;
       function CheckBreakPoints: Boolean; // should return true when breakpoint is reached.
     end;
 
-    ITapePlayer = interface(ISpectrumDevice) ['{B7E9C019-71C1-43A9-88D7-F794B1A1984B}']
-      procedure Continue;
-      procedure Rewind;
-      procedure StopPlaying;
-      procedure GetNextPulse();
+    TAbstractTapePlayer = class abstract (TObject)
+      procedure GetNextPulse(); virtual; abstract;
     end;
 
   public const
@@ -68,7 +63,7 @@ type
     FProcessor: TProcessor;
     FMemory: PMemory;
     FDebugger: IDebugger;
-    FTapePlayer: ITapePlayer;
+    FTapePlayer: TAbstractTapePlayer;
 
     // screen processing
     FCodedBorderColour: Byte;
@@ -143,8 +138,7 @@ type
 
     procedure AttachDebugger(ADebugger: IDebugger);
     procedure DettachDebugger;
-    procedure AttachTapePlayer(ATapePlayer: ITapePlayer);
-    procedure DettachTapePlayer;
+    procedure SetTapePlayer(ATapePlayer: TAbstractTapePlayer);
     procedure SetSpectrumColours(const Colours: TLCLColourMap);
     procedure GetSpectrumColours(out Colours: TLCLColourMap);
     procedure SetWriteScreen(const AValue: Boolean);
@@ -541,26 +535,9 @@ begin
   UpdateDebuggedOrPaused;
 end;
 
-procedure TSpectrum.AttachTapePlayer(ATapePlayer: ITapePlayer);
+procedure TSpectrum.SetTapePlayer(ATapePlayer: TAbstractTapePlayer);
 begin
-  if ATapePlayer <> FTapePlayer then begin
-    DettachTapePlayer;
-
-    if ATapePlayer <> nil then begin
-      ATapePlayer.SetSpectrum(Self);
-      FTapePlayer := ATapePlayer;
-      FTapePlayer.Rewind;
-    end;
-  end;
-
-end;
-
-procedure TSpectrum.DettachTapePlayer;
-begin
-  if FTapePlayer <> nil then begin
-    FTapePlayer.SetSpectrum(nil);
-    FTapePlayer := nil;
-  end;
+  FTapePlayer := ATapePlayer;
 end;
 
 procedure TSpectrum.SetSpectrumColours(const Colours: TLCLColourMap);

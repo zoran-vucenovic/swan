@@ -1,5 +1,5 @@
 unit UnitTzxPlayer;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
@@ -50,7 +50,7 @@ type
     procedure Details(out S: String); virtual;
   end;
 
-  TTzxPlayer = class(TObject, TSpectrum.ITapePlayer)
+  TTzxPlayer = class(TSpectrum.TAbstractTapePlayer)
   strict private
     type
       TTzxBlockClass = class of TTzxBlock;
@@ -60,11 +60,11 @@ type
         constructor Create;
       end;
 
-      TLoopPair = record
+      TLoopRec = record
         StartBlockNumber: Integer;
         LoopCount: Integer;
       end;
-      TLoopArray = array of TLoopPair;
+      TLoopArray = array of TLoopRec;
 
       TCallSeq = array of Integer;
 
@@ -87,7 +87,7 @@ type
     FPauseBlock: TTzxBlock;
 
     procedure ClearBlocks;
-    function InternalNextPulse(): Boolean;
+    procedure CheckNextBlock();
 
     procedure DoOnChangeBlock inline;
     procedure SetOnChangeBlock(AValue: TProcedureOfObject);
@@ -113,7 +113,7 @@ type
     procedure Rewind;
     procedure StopPlaying();
 
-    procedure GetNextPulse(); inline;
+    procedure GetNextPulse(); override;
     function GetBlockCount: Integer;
     function GetCurrentBlockNumber: Integer;
     function IsPlaying: Boolean;
@@ -278,7 +278,7 @@ begin
   end;
 end;
 
-function TTzxPlayer.InternalNextPulse: Boolean;
+procedure TTzxPlayer.CheckNextBlock;
 
   function JumpToBlock: Boolean;
   var
@@ -327,12 +327,12 @@ function TTzxPlayer.InternalNextPulse: Boolean;
 
   procedure LoopCheck;
   var
-    LoopRec: ^TLoopPair;
+    LoopRec: ^TLoopRec;
     N: Integer;
   begin 
     if FCurrentBlock.CheckLoopEnd then begin
       // Loop end
-      if (FLoopArrayCount > 0) then begin
+      if FLoopArrayCount > 0 then begin
         LoopRec := @(FLoopArray[FLoopArrayCount - 1]);
         if LoopRec^.LoopCount > 0 then begin
           LoopRec^.LoopCount := LoopRec^.LoopCount - 1;
@@ -356,27 +356,25 @@ function TTzxPlayer.InternalNextPulse: Boolean;
   end;
 
 begin
-  while Assigned(FCurrentBlock) do begin
-    if FCurrentBlock.GetNextPulse() then
-      Exit(True);
-
-    if FCurrentBlock.GetStopPlaying then begin
-      StopPlaying();
-    end else if not (
-       JumptoBlock
-       or AddCallSeq
-       or ReturnFromSequence
-       )
-    then begin
-      LoopCheck;
-      StartBlock(FCurrentBlockNumber + 1);
-    end;
-
-    if (FCurrentBlock = nil) and (ActiveBit <> 0) then
-      StartPauseBlock(0);
+  if FCurrentBlock.GetStopPlaying then begin
+    StopPlaying();
+  end else if not (
+     JumptoBlock
+     or AddCallSeq
+     or ReturnFromSequence
+     )
+  then begin
+    LoopCheck;
+    StartBlock(FCurrentBlockNumber + 1);
   end;
 
-  Result := False;
+  if (FCurrentBlock = nil) and (ActiveBit <> 0) then
+    StartPauseBlock(0);
+end;
+
+procedure TTzxPlayer.DoOnChangeBlock;
+begin
+  FOnChangeBlock();
 end;
 
 procedure TTzxPlayer.StartPauseBlock(const APauseLength: Integer);
@@ -386,11 +384,7 @@ begin
   TTzxBlock20(FPauseBlock).SetPauseLen(APauseLength);
   FCurrentBlock := FPauseBlock;
   FPauseBlock.Start;
-end;
-
-procedure TTzxPlayer.DoOnChangeBlock;
-begin
-  FOnChangeBlock();
+  DoOnChangeBlock;
 end;
 
 procedure TTzxPlayer.StopPlaying();
@@ -412,6 +406,8 @@ end;
 
 constructor TTzxPlayer.Create;
 begin                    
+  inherited Create;
+
   FTapeType := ttTzx;
   FSpectrum := nil;
   SetOnChangeBlock(nil);
@@ -451,7 +447,7 @@ function TTzxPlayer.LoadFromStream(const Stream: TStream): Boolean;
   begin
     Result := False;
     //
-    if (Stream.Size > Stream.Position) then begin
+    if Stream.Size > Stream.Position then begin
       C := nil;
       if FTapeType = ttTap then
         C := TTzxTapBlock
@@ -529,11 +525,16 @@ end;
 
 procedure TTzxPlayer.Continue;
 begin
+  if FSpectrum = nil then begin
+    StopPlaying();
+    Exit;
+  end;
   if IsPlaying then
     Exit;
   if FCurrentBlockNumber >= FBlockCount then
     Rewind;
   ActiveBit := 0;
+
   StartBlock(FCurrentBlockNumber);
   if Assigned(FCurrentBlock) and FCurrentBlock.GetStopPlaying then
     StartBlock(FCurrentBlockNumber + 1);
@@ -541,18 +542,20 @@ end;
 
 procedure TTzxPlayer.Rewind;
 begin
-  StopPlaying();
   FCallSeqCount := 0;
   FLoopArrayCount := 0;
   FCurrentBlockNumber := -1;
-  DoOnChangeBlock;
+  StopPlaying();
 end;
 
 procedure TTzxPlayer.GetNextPulse();
 begin
-  if InternalNextPulse() then begin
-    FSpectrum.SetEarFromTape(ActiveBit);
-
+  while Assigned(FCurrentBlock) do begin
+    if FCurrentBlock.GetNextPulse() then begin
+      FSpectrum.SetEarFromTape(ActiveBit);
+      Exit;
+    end;
+    CheckNextBlock();
   end;
 end;
 

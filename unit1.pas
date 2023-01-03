@@ -1,5 +1,5 @@
 unit unit1;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode objfpc}{$H+}
@@ -1397,6 +1397,11 @@ end;
 
 procedure TForm1.EventPlayerOnChangeBlock(Sender: TObject);
 begin
+  if Assigned(TzxPlayer) and TzxPlayer.IsPlaying then
+    Spectrum.SetTapePlayer(TzxPlayer)
+  else
+    Spectrum.SetTapePlayer(nil);
+
   if Assigned(FTapeBrowser) then begin
     FTapeBrowser.UpdateCurrentBlockNumber;
   end;
@@ -1579,7 +1584,9 @@ begin
 
             try
               if TzxPlayer.LoadFromStream(Stream) then begin
-                Spectrum.AttachTapePlayer(TzxPlayer);
+                TzxPlayer.SetSpectrum(Spectrum);
+                TzxPlayer.Rewind;
+
                 TapeBrowserAttachTape;
                 L := True;
               end else
@@ -1857,14 +1864,14 @@ procedure TForm1.FreeTapePlayer;
 begin
   if Assigned(FTapeBrowser) then
     FTapeBrowser.SetTzxPlayer(nil);
-  
+
+  if Assigned(Spectrum) then
+    Spectrum.SetTapePlayer(nil);
+
   if Assigned(TzxPlayer) then begin
     TzxPlayer.OnChangeBlock := nil;
     TzxPlayer.StopPlaying();
   end;
-
-  if Assigned(Spectrum) then
-    Spectrum.DettachTapePlayer;
 
   FreeAndNil(TzxPlayer);
 end;

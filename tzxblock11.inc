@@ -1,5 +1,5 @@
 
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$ifdef tzx_header_section}
@@ -36,7 +36,7 @@ begin
   Result := False;
 
   if Stream.Size - Stream.Position >= $12 then begin
-    if Stream.Read(W, 2) = 2 then begin
+    if Stream.Read(W{%H-}, 2) = 2 then begin
       W := LEtoN(W);
       PilotTicksNeeded := W;
       if Stream.Read(W, 2) = 2 then begin
@@ -54,7 +54,7 @@ begin
               if Stream.Read(W, 2) = 2 then begin
                 W := LEtoN(W);
                 PilotPulsesNeeded := W;
-                if Stream.Read(B, 1) = 1 then begin
+                if Stream.Read(B{%H-}, 1) = 1 then begin
 
                   if Stream.Read(W, 2) = 2 then begin
                     W := LEtoN(W);
