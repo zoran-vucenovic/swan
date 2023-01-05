@@ -43,7 +43,7 @@ type
     end;
 
     TAbstractTapePlayer = class abstract (TObject)
-    protected
+    public
       procedure GetNextPulse(); virtual; abstract;
     end;
 

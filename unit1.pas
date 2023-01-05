@@ -713,7 +713,7 @@ begin
   if Sender <> Spectrum then begin
     AddEventToQueue(@ActionNMIExecute);
   end else begin
-    Spectrum.GetProcessor.NMI := True;
+    Spectrum.GetProcessor.NMI();
   end;
 end;
 

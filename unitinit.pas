@@ -18,7 +18,7 @@ implementation
 
 function GetAppName: String;
 begin
-  Result := 'Swan'; // Still without a name...
+  Result := 'Swan';
 end;
 
 { This is for config path }

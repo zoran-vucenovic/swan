@@ -161,7 +161,6 @@ type
     procedure SetOnOutputRequest(AValue: TProcessorEvent);
 
     procedure RefreshMem; inline;
-    procedure SoftReset;
 
     procedure CheckContention; inline;
     procedure Contention; inline;
@@ -232,20 +231,10 @@ type
 
   strict private
     FAddressBus: Word;
-    //FBusAck: Boolean;
-    //FBusRQ: Boolean;
     FDataBus: Byte;
     FHalt: Boolean;
     FIntPin: Boolean;
-    //FIORQ: Boolean;
-    //FM1: Boolean;
-    //FMREQ: Boolean;
     FNMI: Boolean;
-    //FRD: Boolean;
-    //FReset: Boolean;
-    //FRFSH: Boolean;
-    //FWait: Boolean;
-    //FWR: Boolean;
     //
   public
     // Pins
@@ -261,6 +250,7 @@ type
     property DataBus: Byte read FDataBus write FDataBus;
 
     // System control pins (6 pins, all output)
+    // not emulated directly
     //property M1: Boolean read FM1;
     //property MREQ: Boolean read FMREQ;
     //property IORQ: Boolean read FIORQ;
@@ -272,18 +262,19 @@ type
     property Halt: Boolean read FHalt write FHalt; {write, because of szx}
     //property Wait: Boolean write FWait;
     property IntPin: Boolean read FIntPin write FIntPin;
-    property NMI: Boolean write FNMI;
-    //property Reset: Boolean write FReset;
-    procedure ResetPin();
+    // NMI and RESET implemented as procedures
+    procedure NMI();
+    procedure ResetPin(); // "soft" reset
 
     // CPU Bus control (two pins, one input, one output)
+    // not emulated directly
     //property BusRQ: Boolean write FBusRQ;
     //property BusAck: Boolean read FBusAck;
 
   public
     constructor Create;
 
-    procedure ResetCPU;
+    procedure ResetCPU; // "hard" reset, full initialization
 
     procedure DoProcess;
 
@@ -989,10 +980,9 @@ begin
   RequestOutput;
 end;
 
-procedure TProcessor.ResetPin;
+procedure TProcessor.NMI;
 begin
-  SoftReset;
-  Inc(FTStatesInCurrentFrame, 3);
+  FNMI := True;
 end;
 
 procedure TProcessor.SetOnInputRequest(AValue: TProcessorEvent);
@@ -1387,7 +1377,7 @@ begin
   RegR := ((RegR + 1) and %01111111) or (RegR and %10000000);
 end;
 
-procedure TProcessor.SoftReset;
+procedure TProcessor.ResetPin();
 begin
   FInterruptMode := 0;
   FSkipInterruptCheck := False;
@@ -1397,19 +1387,12 @@ begin
   FRegPC := 0;
   FRegIR.U16bit := 0;
 
-  //FBusAck := False;
-  //FBusRQ := False;
   FHalt := False;
   FIntPin:= False;
-  //FIORQ:= False;
-  //FM1 := False;
-  //FMREQ := False;
   FNMI := False;
-  //FRD := False;
-  //FReset := False;
-  //FRFSH := False;
-  //FWait := False;
-  //FWR := False;
+
+  // All pins are set to inactive state,
+  // but other pins are not emulated
 end;
 
 constructor TProcessor.Create;
@@ -1425,7 +1408,7 @@ end;
 
 procedure TProcessor.ResetCPU;
 begin
-  SoftReset;
+  ResetPin();
 
   FFlagsModified := False;
 
