@@ -346,8 +346,11 @@ begin
       ;
     //
   end else begin
-    if ((FProcessor.AddressBus and $FF = $1F) and (TJoystick.Joystick.JoystickType = TJoystick.TJoystickType.jtKempston))
-      or ((FProcessor.AddressBus and $FF = $7F) and (TJoystick.Joystick.JoystickType = TJoystick.TJoystickType.jtFuller))
+    if TJoystick.Joystick.Enabled and
+      (
+        ((FProcessor.AddressBus and $FF = $1F) and (TJoystick.Joystick.JoystickType = TJoystick.TJoystickType.jtKempston))
+          or ((FProcessor.AddressBus and $FF = $7F) and (TJoystick.Joystick.JoystickType = TJoystick.TJoystickType.jtFuller))
+      )
     then begin
       FProcessor.DataBus := TJoystick.Joystick.State;
     end else begin
@@ -355,7 +358,6 @@ begin
       CheckFloatingBus;
     end;
   end;
-
 end;
 
 procedure TSpectrum.ProcessorOutput;
