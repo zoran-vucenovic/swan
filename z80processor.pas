@@ -1,5 +1,5 @@
 unit Z80Processor;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode objfpc}{$H+}
@@ -145,7 +145,6 @@ type
     FFlagsModified: Boolean;
     FTStatesInCurrentFrame: Int32Fast;
     FPrefixByte: Byte;
-    FSkipInterruptCheck: Boolean;
     FMemory: UnitMemory.TMemory;
     FOnInputRequest: TProcessorEvent;
     FOnOutputRequest: TProcessorEvent;
@@ -280,11 +279,11 @@ type
 
     function GetMemory: PMemory;
 
-    property SkipInterruptCheck: Boolean read FSkipInterruptCheck write FSkipInterruptCheck;
     property FlagsModified: Boolean read FFlagsModified write FFlagsModified;
+    property PrefixByte: Byte read FPrefixByte write FPrefixByte;
 
     property TStatesInCurrentFrame: Int32Fast read FTStatesInCurrentFrame write FTStatesInCurrentFrame;
-    //property PrefixByte: Byte read FPrefixByte;
+
     property OnInputRequest: TProcessorEvent read FOnInputRequest write SetOnInputRequest;
     property OnOutputRequest: TProcessorEvent read FOnOutputRequest write SetOnOutputRequest;
     property OnNeedWriteScreen: TWriteScrEvent read FOnNeedWriteScreen write SetOnNeedWriteScreen;
@@ -1380,7 +1379,6 @@ end;
 procedure TProcessor.ResetPin();
 begin
   FInterruptMode := 0;
-  FSkipInterruptCheck := False;
   FPrefixByte := 0;
   FIff1 := False;
   FIff2 := False;
@@ -1950,10 +1948,7 @@ var
               FRegWZ := FRegPC;
             end;
           1: // (CB prefix)
-            begin
-              FPrefixByte := $CB;
-              FSkipInterruptCheck := True;
-            end;
+            FPrefixByte := $CB;
           2: // OUT (n), A
             OUTnA;
           3: // IN A, (n)
@@ -1987,8 +1982,8 @@ var
             end;
           7: // EI
             begin
-              //if not FIff1 then
-                FSkipInterruptCheck := True; // one more instruction will go before the interrupt check
+              FPrefixByte := $FB; // opcode of EI
+                     // one more instruction will pass before the interrupt check
               FIff1 := True;
               FIff2 := True;
             end;
@@ -2009,7 +2004,6 @@ var
             otherwise
               // for p in [1, 2, 3], we have DD, ED or FD prefixes:
               FPrefixByte := OpCode;
-              FSkipInterruptCheck := True;
             end;
         end;
       6: // alu[y] n
@@ -2217,18 +2211,16 @@ var
           Bli(y, z)
         else begin
           // NONI + NOP
-          FSkipInterruptCheck := True;
           FFlagsModified := False;
         end;
     otherwise
       //0, 3: // NONI + NOP
-      FSkipInterruptCheck := True;
       FFlagsModified := False;
     end;
   end;
 
 begin
-  if not FSkipInterruptCheck then begin
+  if FPrefixByte = 0 then begin
     // check interrupts
     if FNMI then begin
       //FTStates0 := FTStatesInCurrentFrame;
@@ -2299,7 +2291,6 @@ begin
     Exit;
   end;
 
-  FSkipInterruptCheck := False;
   Pref := FPrefixByte;
   FPrefixByte := 0;
 
@@ -2353,7 +2344,6 @@ begin
           begin
             // NONI
             FPrefixByte := OpCode;
-            FSkipInterruptCheck := True;
             FFlagsModified := False;
             Exit;
           end;

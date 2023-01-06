@@ -1,5 +1,5 @@
 unit UnitHistorySnapshots;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
@@ -306,7 +306,7 @@ end;
 procedure TSnapshotHistoryQueue.CheckSaveHistorySnapshot;
 begin
   Inc(FramesPassed);
-  if (FramesPassed >= FSavePeriod) and (not FSpectrum.GetProcessor.SkipInterruptCheck) then begin
+  if FramesPassed >= FSavePeriod then begin
     FramesPassed := 0;
     SaveSnapshot;
   end;

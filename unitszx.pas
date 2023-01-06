@@ -1,5 +1,5 @@
 unit UnitSZX;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 { This is implementation of zx-state file format.
@@ -436,7 +436,10 @@ begin
     Szx.State.InterruptMode := Rec.IM;
     Szx.State.T_States := LEtoN(Rec.DwCyclesStart);
     Szx.State.RemainingIntPinUp := Rec.ChHoldIntReqCycles;
-    Szx.State.SkipInterruptCheck := (Rec.ChFlags and ZXSTZF_EILAST) <> 0;
+    if (Rec.ChFlags and ZXSTZF_EILAST) <> 0 then
+      Szx.State.PrefixByte := $FB // EI opcode
+    else
+      Szx.State.PrefixByte := 0;
     Szx.State.Halt := (Rec.ChFlags and ZXSTZF_HALTED) <> 0;
     Szx.State.FlagsModified := (Rec.ChFlags and ZXSTZF_FSET) <> 0;
     Szx.State.WZ := LEtoN(Rec.MemPtr);
@@ -478,7 +481,7 @@ begin
 
   Rec.ChHoldIntReqCycles := Byte(Szx.State.RemainingIntPinUp and $FF);
   Rec.ChFlags := 0;
-  if Szx.State.SkipInterruptCheck then
+  if Szx.State.PrefixByte = $FB then
     Rec.ChFlags := Rec.ChFlags or ZXSTZF_EILAST;
   if Szx.State.Halt then
     Rec.ChFlags := Rec.ChFlags or ZXSTZF_HALTED;

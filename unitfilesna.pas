@@ -1,5 +1,5 @@
 unit UnitFileSna;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode objfpc}{$H+}
@@ -29,7 +29,7 @@ type
     InterruptMode: Byte; // 0, 1, or 2
     Halt: Boolean;
     FlagsModified: Boolean;
-    SkipInterruptCheck: Boolean;
+    PrefixByte: Byte;
     RemainingIntPinUp: UInt16;
     BorderColour: Byte;
     FlashState: UInt16;
@@ -182,7 +182,7 @@ begin
       InterruptMode := Proc.InterruptMode;
       Halt := Proc.Halt;
       FlagsModified := Proc.FlagsModified;
-      SkipInterruptCheck := Proc.SkipInterruptCheck;
+      PrefixByte := Proc.PrefixByte;
 
       RemainingIntPinUp := ASpectrum.RemainingIntPinUp;
       BorderColour := ASpectrum.CodedBorderColour;
@@ -222,7 +222,7 @@ begin
       Proc.InterruptMode := InterruptMode;
       Proc.Halt := Halt;
       Proc.FlagsModified := FlagsModified;
-      Proc.SkipInterruptCheck := SkipInterruptCheck;
+      Proc.PrefixByte := PrefixByte;
 
       ASpectrum.RemainingIntPinUp := RemainingIntPinUp;
       ASpectrum.CodedBorderColour := BorderColour;
