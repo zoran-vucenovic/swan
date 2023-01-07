@@ -1,5 +1,5 @@
 program swan;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode objfpc}{$H+}
@@ -11,7 +11,7 @@ uses
   SysUtils,
   Interfaces, // this includes the LCL widgetset
   Forms,
-  UnitInit, // keep this at the top (abore other our units; rtl, fcl and lcl units can be above, of course)
+  UnitInit, // keep this at the top (above other our units; rtl, fcl and lcl units can be above, of course)
   DebugForm, UnitFrameWordDisplay, UnitFileSna, UnitSpectrumKeyboard, unit1,
   UnitSpectrum, UnitVer, UnitConfigs, UnitTzxPlayer, UnitFormBrowser,
   UnitColourPalette, UnitSpectrumColourMap, UnitKeyMaps,
