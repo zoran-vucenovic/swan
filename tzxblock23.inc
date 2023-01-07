@@ -1,5 +1,5 @@
 
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$ifdef tzx_header_section}
@@ -82,7 +82,7 @@ begin
     N := RelativeJumpValue;
   end;
 
-  S := Format('jump %s %n blocks', [S, N]);
+  S := Format('jump %s %d blocks', [S, N]);
 end;
 
 {$endif}
