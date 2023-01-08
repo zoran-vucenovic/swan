@@ -261,7 +261,7 @@ type
     procedure ShowSoundVolumeForm();
     procedure DestroySoundVolumeForm();
     procedure FreeTapePlayer;
-    procedure SetNewAutoSize(Data: PtrInt);
+    procedure SetNewAutoSize(Sender: TObject);
 
   protected
     procedure Notification(AComponent: TComponent; Operation: TOperation);
@@ -1080,9 +1080,11 @@ begin
   else
     SpeedButton1.ImageIndex := 18;
   if Assigned(FSoundVolumeForm) then begin
-    FSoundVolumeForm.Muted := Spectrum.SoundMuted;
     FSoundVolumeForm.SpeedButton1.ImageIndex := SpeedButton1.ImageIndex;
+    FSoundVolumeForm.Muted := Spectrum.SoundMuted;
+    FSoundVolumeForm.SpeedButton1.Update;
   end;
+  SpeedButton1.Update;
 end;
 
 procedure TForm1.LoadFromConf;
@@ -1665,7 +1667,7 @@ end;
 procedure TForm1.DoOnResetSpectrum;
 begin
   PrevTimeStop := 0;
-  PrevTicks := 0;
+  PrevTicks := Spectrum.SumTicks;
   PrevPCTicks := GetTickCount64;
   KeyEventCount := 0;
 end;
@@ -1729,8 +1731,6 @@ begin
       Inc(I);
     end;
     KeyEventCount := 0;
-
-    //Application.ProcessMessages;
   end;
 
   if FWriteScreen then begin
@@ -1803,7 +1803,7 @@ begin
 
     UpdateScreenSizeFactor;
 
-    SetNewAutoSize(2);
+    SetNewAutoSize(nil);
   end;
 end;
 
@@ -1901,13 +1901,14 @@ begin
   FreeAndNil(TzxPlayer);
 end;
 
-procedure TForm1.SetNewAutoSize(Data: PtrInt);
+procedure TForm1.SetNewAutoSize(Sender: TObject);
 begin
   AutoSize := False;
-  if Data > 0 then begin
+  if Sender <> Spectrum then begin
     AutoSize := True;
-    Application.QueueAsyncCall(@SetNewAutoSize, Data - 1);
-  end;
+    AddEventToQueue(@SetNewAutoSize);
+  end else
+    PanelStatus.Update;
 end;
 
 procedure TForm1.Notification(AComponent: TComponent; Operation: TOperation);

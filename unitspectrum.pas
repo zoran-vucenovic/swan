@@ -576,6 +576,7 @@ end;
 procedure TSpectrum.ResetSpectrum;
 begin
   StopBeeper;
+  FSumTicks := FSumTicks + FProcessor.TStatesInCurrentFrame;
 
   if Assigned(FOnResetSpectrum) then
     Synchronize(FOnResetSpectrum);
@@ -588,7 +589,6 @@ begin
   FCodedBorderColour := 0;
   SetCodedBorderColour(7);
   TicksFrom := ScreenStart;
-  FSumTicks := FSumTicks + FProcessor.TStatesInCurrentFrame;
   FProcessor.ResetCPU;
   FFlashState := 0;
   FProcessor.GetMemory()^.ClearRam;
