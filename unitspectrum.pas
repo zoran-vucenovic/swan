@@ -25,7 +25,7 @@ const
   WholeScreenWidth = LeftBorder + CentralScreenWidth + RightBorder; // 352
 
 type
-  TSpectrumModel = (smNone, sm48K); // one day, more models... maybe.
+  TSpectrumModel = (smNone, sm48K_issue_2, sm48K_issue_3); // one day, more models... maybe.
 
   TSpectrumColour = Integer;
   TSpectrumColours = array [False..True, 0..7] of TSpectrumColour;
@@ -124,6 +124,7 @@ type
     procedure SetSoundVolume(AValue: Integer);
     procedure UpdateDebuggedOrPaused;
     procedure SetInternalEar(AValue: Byte);
+    procedure SetSpectrumModel(ASpectrumModel: TSpectrumModel);
 
   protected
     procedure Execute; override;
@@ -135,7 +136,6 @@ type
     destructor Destroy; override;
 
     class function DefaultSpectrumModel: TSpectrumModel; static;
-    procedure SetSpectrumModel(ASpectrumModel: TSpectrumModel);
 
     procedure AttachDebugger(ADebugger: IDebugger);
     procedure DettachDebugger;
@@ -168,6 +168,7 @@ type
     property SoundVolume: Integer read GetSoundVolume write SetSoundVolume;
     property InternalEar: Byte read FInternalEar write SetInternalEar;
     property FlashState: UInt16 read GetFlashState write SetFlashState;
+    property SpectrumModel: TSpectrumModel read FSpectrumModel write SetSpectrumModel;
   end;
 
 implementation
@@ -337,7 +338,9 @@ begin
     end;
 
     if Assigned(FTapePlayer) then
-      FTapePlayer.GetNextPulse();
+      FTapePlayer.GetNextPulse()
+    else if FSpectrumModel = TSpectrumModel.sm48K_issue_2 then
+      B := B or ((not FMic shl 3) and %01000000);
 
     FProcessor.DataBus :=
       B // KeyBoard can set LOW bits 0-4
@@ -473,7 +476,7 @@ end;
 
 class function TSpectrum.DefaultSpectrumModel: TSpectrumModel;
 begin
-  Result := sm48K;
+  Result := sm48K_issue_3;
 end;
 
 procedure TSpectrum.SetSpectrumModel(ASpectrumModel: TSpectrumModel);
@@ -483,10 +486,9 @@ begin
   if ASpectrumModel = FSpectrumModel then
     Exit;
 
-  FSpectrumModel := ASpectrumModel;
   try
-    case FSpectrumModel of
-      sm48K:
+    case ASpectrumModel of
+      sm48K_issue_2, sm48K_issue_3:
         begin
           RomStream := nil;
           try
@@ -505,8 +507,9 @@ begin
     end;
 
   except
-    FSpectrumModel := smNone;
+    ASpectrumModel := smNone;
   end;
+  FSpectrumModel := ASpectrumModel;
 
   ResetSpectrum;
 end;

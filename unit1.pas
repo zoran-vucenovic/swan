@@ -166,6 +166,7 @@ type
       cSectionPortAudioLibPath32 = 'portaudio_lib_path32';
       cSectionPortAudioLibPath64 = 'portaudio_lib_path64';
       cSectionLastFilePath = 'last_file_path';
+      cSectionSpectrumModel = 'spectrum_model';
 
   strict private
     function MakeExtensionsFilter(ArSt: Array of String): String;
@@ -422,7 +423,10 @@ begin
   DestroySpectrum;
   Spectrum := TSpectrum.Create;
   ScreenSizeFactor := 1;
+
   LoadFromConf;
+  if Spectrum.SpectrumModel = TSpectrumModel.smNone then
+    Spectrum.SpectrumModel := TSpectrum.DefaultSpectrumModel;
   if ScreenSizeFactor = 1 then begin
     ScreenSizeFactor := 2;
     SetScreenSizeFactor(1);
@@ -1091,13 +1095,28 @@ procedure TForm1.LoadFromConf;
 var
   JObj: TJSONObject;
   M, N: Integer;
-  S: String;
+  SModel: TSpectrumModel;
+  S, S1: String;
   SPortaudioLib32, SPortaudioLib64: String;
 begin
   JObj := TConfJSON.GetJSONObject(cSection0);
   N := GetSoundVolume;
   if Assigned(JObj) then begin
     SetScreenSizeFactor(JObj.Get(cSectionScreenSizeFactor, Integer(1)));
+
+    S := '';
+    S := Trim(JObj.Get(cSectionSpectrumModel, S));
+    if S <> '' then begin
+      S := 'sm' + StringReplace(S, ' ', '_', [rfReplaceAll]);
+      for SModel := Low(TSpectrumModel) to High(TSpectrumModel) do begin
+        WriteStr(S1, SModel);
+        if AnsiCompareText(S1, S) = 0 then begin
+          Spectrum.SpectrumModel := SModel;
+          Break;
+        end;
+      end;
+    end;
+
     FLastFilePath := '';
     FLastFilePath := JObj.Get(cSectionLastFilePath, FLastFilePath);
     FSkipWriteScreen := JObj.Get(cSectionSkipWriteScr, Integer(0)) <> 0;
@@ -1135,6 +1154,7 @@ var
   JObj: TJSONObject;
   N: Integer;
   SPortaudioLib32, SPortaudioLib64: String;
+  S: String;
 begin
   if FSkipWriteScreen then
     N := 1
@@ -1153,6 +1173,12 @@ begin
     else
       N := 0;
     JObj.Add(cSectionSoundMuted, N);
+
+    WriteStr(S, Spectrum.SpectrumModel);
+    if (Length(S) > 2) and (AnsiCompareText('sm', Copy(S, 1, 2)) = 0) then begin
+      S := StringReplace(Copy(S, 3), '_', ' ', [rfReplaceAll]);
+      JObj.Add(cSectionSpectrumModel, S);
+    end;
 
     {$if SizeOf(SizeInt) = 4}
       SPortaudioLib64 := FPortaudioLibPathOtherBitness;
@@ -1645,7 +1671,6 @@ begin
   Spectrum.OnEndRun := @SpectrumEndRun;
   Spectrum.OnStartRun := @SpectrumStartRun;
 
-  Spectrum.SetSpectrumModel(sm48K);
   Spectrum.OnSync := @SyncSpectrum;
   SetSpectrumSpeed(512);
 
