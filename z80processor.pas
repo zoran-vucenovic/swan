@@ -59,7 +59,7 @@ type
     FRegAF1: TRec16;
     FInterruptMode: Byte;
 
-    // internal register WZ, also called memptr, is implemented,
+    // internal register WZ, also called memptr, is implemented
     // because its state affects flags in some special cases
     // (see https://faqwiki.zxnet.co.uk/wiki/Z80#Bits_3_and_5_of_the_F_register)
     FRegWZ: Word;
@@ -261,7 +261,7 @@ type
     property Halt: Boolean read FHalt write FHalt; {write, because of szx}
     //property Wait: Boolean write FWait;
     property IntPin: Boolean read FIntPin write FIntPin;
-    // NMI and RESET implemented as procedures
+    // Pins NMI and RESET implemented as procedures
     procedure NMI();
     procedure ResetPin(); // "soft" reset
 
@@ -280,6 +280,9 @@ type
     function GetMemory: PMemory;
 
     property FlagsModified: Boolean read FFlagsModified write FFlagsModified;
+
+    // PrefixByte might be $CB, $DD, $ED, $FD and $FB
+    // ($FB is not a real opcode prefix, but it is opcode for EI instruction — used just to skip interrupt check)
     property PrefixByte: Byte read FPrefixByte write FPrefixByte;
 
     property TStatesInCurrentFrame: Int32Fast read FTStatesInCurrentFrame write FTStatesInCurrentFrame;

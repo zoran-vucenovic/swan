@@ -129,7 +129,22 @@ implementation
 
 const
   TicksPerMilliSecond = Int64(3500);
-  TicksBeforePause = 8 * TicksPerMilliSecond;
+  //
+  // What is the correct duration of oposite level before going to low when entering pause?
+  // According to tzx specification, when pause is non-zero, going to pause should be
+  // emulated by making an edge, wait AT LEAST one millisecond with the oposite
+  // level and then go to low for the rest of the pause period.
+  // Quote from https://worldofspectrum.net/TZXformat.html:
+  //   To ensure that the last edge produced is properly finished there should be
+  //   at least 1 ms. pause of the opposite level and only after that the pulse should go to 'low'
+  // For the majority of tzx files I tried (acutally, all I tested, except one),
+  // one millisecond (3500 ticks) of oposite level is enough, but not in one case I found:
+  //   Pheenix.tzx by Megadodo, original release (https://spectrumcomputing.co.uk/entry/3690/ZX-Spectrum/Pheenix)
+  // This tzx file works when inverted level is kept for at least 4214 (does not work with 4213) ticks.
+  //
+  // Let's put it on 4250 ticks, don't go much higher though, as it might make
+  // other tzx files not play well.
+  TicksBeforePause = Int64(4250);
 
 type
 
