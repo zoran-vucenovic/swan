@@ -1,5 +1,5 @@
 
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$ifdef tzx_header_section}
@@ -10,7 +10,6 @@ strict protected
 public
   class function GetBlockId: Integer; override;
   class function GetBlockDescription: String; override;
-  function GetNextPulse: Boolean; override;
   function GetStopPlaying: Boolean; override;
 end;
 
@@ -24,14 +23,6 @@ end;
 class function {TTzxPlayer.}TTzxBlock2A.GetBlockDescription: String;
 begin
   Result := 'Stop the tape if in 48K mode';
-end;
-
-function {TTzxPlayer.}TTzxBlock2A.GetNextPulse: Boolean;
-begin
-  if State = TPlayState.psFinished then
-    Exit(False);
-  State := TPlayState.psFinished;
-  Result := True;
 end;
 
 function TTzxBlock2A.GetStopPlaying: Boolean;

@@ -1,5 +1,5 @@
 
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$ifdef tzx_header_section}
@@ -17,7 +17,6 @@ public
   function GetBlockLength: Integer; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
   class function GetBlockDescription: String; override;
-  function GetNextPulse(): Boolean; override;
   function GetNumOfCalls: Integer; override;
   function GetCallBlockNumber(const I: Integer): Integer; override;
   procedure Details(out S: String); override;
@@ -69,12 +68,6 @@ end;
 class function {TTzxPlayer.}TTzxBlock26.GetBlockDescription: String;
 begin
   Result := 'Call sequence';
-end;
-
-function {TTzxPlayer.}TTzxBlock26.GetNextPulse: Boolean;
-begin
-  Result := False;
-  State := TPlayState.psFinished;
 end;
 
 function {TTzxPlayer.}TTzxBlock26.GetNumOfCalls: Integer;

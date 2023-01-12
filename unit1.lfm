@@ -344,6 +344,16 @@ object Form1: TForm1
       Hint = 'Send RESET signal to processor ("soft reset")'
       OnExecute = ActionResetCPUExecute
     end
+    object ActionModel48KIssue2: TAction
+      Category = 'SpectrumModel'
+      Caption = 'Spectrum 48K issue 2'
+      OnExecute = ActionModel48KIssue2Execute
+    end
+    object ActionModel48KIssue3: TAction
+      Category = 'SpectrumModel'
+      Caption = 'Spectrum 48K issue 3'
+      OnExecute = ActionModel48KIssue3Execute
+    end
   end
   object MainMenu1: TMainMenu
     Images = DataModuleImages.ImageList1
@@ -419,6 +429,15 @@ object Form1: TForm1
       end
       object MenuItem37: TMenuItem
         Action = ActionPortAudioLibPath
+      end
+      object MenuItem44: TMenuItem
+        Caption = 'Machine'
+        object MenuItem45: TMenuItem
+          Action = ActionModel48KIssue2
+        end
+        object MenuItem46: TMenuItem
+          Action = ActionModel48KIssue3
+        end
       end
       object MenuItem11: TMenuItem
         Action = ActionJoystick

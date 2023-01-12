@@ -16,7 +16,6 @@ public
   function GetBlockLength: Integer; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
   class function GetBlockDescription: String; override;
-  function GetNextPulse(): Boolean; override;
   function GetRelativeJumpValue: Integer; override;
   procedure Details(out S: String); override;
 end;
@@ -57,12 +56,6 @@ end;
 class function {TTzxPlayer.}TTzxBlock23.GetBlockDescription: String;
 begin
   Result := 'Jump to block';
-end;
-
-function {TTzxPlayer.}TTzxBlock23.GetNextPulse: Boolean;
-begin
-  Result := False;
-  State := TPlayState.psFinished;
 end;
 
 function {TTzxPlayer.}TTzxBlock23.GetRelativeJumpValue: Integer;

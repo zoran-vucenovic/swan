@@ -37,7 +37,7 @@ type
     function CheckLoopEnd: Boolean; virtual;
 
     function LoadBlock(const Stream: TStream): Boolean; virtual; abstract;
-    function GetNextPulse(): Boolean; virtual; abstract;
+    function GetNextPulse(): Boolean; virtual;
     procedure Start; virtual;
   public
     constructor Create(ATzxPlayer: TTzxPlayer); virtual;
@@ -188,7 +188,8 @@ end;
 
 procedure {TTzxPlayer.}TTzxBlock.Start;
 begin
-  State := TPlayState.psStart;
+  State := TPlayState.psFinished;
+  FTzxPlayer.InPause := False;
 end;
 
 function {TTzxPlayer.}TTzxBlock.GetStopPlaying: Boolean;
@@ -222,6 +223,11 @@ begin
 end;
 
 function {TTzxPlayer.}TTzxBlock.CheckLoopEnd: Boolean;
+begin
+  Result := False;
+end;
+
+function TTzxBlock.GetNextPulse: Boolean;
 begin
   Result := False;
 end;
@@ -395,8 +401,8 @@ end;
 procedure TTzxPlayer.StartPauseBlock(const APauseLength: Integer);
 begin
   if FPauseBlock = nil then
-    FPauseBlock := TTzxBlock20.Create(Self);
-  TTzxBlock20(FPauseBlock).SetPauseLen(APauseLength);
+    FPauseBlock := TTzxBlockPause.Create(Self);
+  TTzxBlockPause(FPauseBlock).SetPauseLen(APauseLength);
   FCurrentBlock := FPauseBlock;
   FPauseBlock.Start;
   DoOnChangeBlock;

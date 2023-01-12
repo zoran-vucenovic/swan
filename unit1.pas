@@ -22,6 +22,8 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionModel48KIssue3: TAction;
+    ActionModel48KIssue2: TAction;
     ActionResetCPU: TAction;
     ActionNMI: TAction;
     ActionHistorySnapshots: TAction;
@@ -100,6 +102,9 @@ type
     MenuItem41: TMenuItem;
     MenuItem42: TMenuItem;
     MenuItem43: TMenuItem;
+    MenuItem44: TMenuItem;
+    MenuItem45: TMenuItem;
+    MenuItem46: TMenuItem;
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
@@ -128,6 +133,8 @@ type
     procedure ActionInputPokesExecute(Sender: TObject);
     procedure ActionJoystickExecute(Sender: TObject);
     procedure ActionKeyMappingsExecute(Sender: TObject);
+    procedure ActionModel48KIssue2Execute(Sender: TObject);
+    procedure ActionModel48KIssue3Execute(Sender: TObject);
     procedure ActionMoveBackExecute(Sender: TObject);
     procedure ActionMuteSoundExecute(Sender: TObject);
     procedure ActionNMIExecute(Sender: TObject);
@@ -169,8 +176,12 @@ type
       cSectionSpectrumModel = 'spectrum_model';
 
   strict private
+    FNewModel: TSpectrumModel;
+
+    procedure DoChangeModel(Sender: TObject);
     function MakeExtensionsFilter(ArSt: Array of String): String;
     procedure AfterShow(Data: PtrInt);
+    procedure UpdateActionsModel();
     procedure UpdateShowCurrentlyActiveJoystick;
     procedure UpdateShowSound;
     procedure LoadFromConf;
@@ -384,12 +395,17 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  FNewModel := TSpectrumModel.smNone;
   HistoryQueue := nil;
+
   ActionAbout.Caption := 'About ' + ApplicationName + '...';
   ActionEnableHistory.Hint :=
     'Enable going through emulation back in time step by step';
 
   ActionMoveBack.ShortCut := SnapshotHistoryOptions.KeyGoBack;
+
+  ActionModel48KIssue2.Tag := Ord(TSpectrumModel.sm48K_issue_2);
+  ActionModel48KIssue3.Tag := Ord(TSpectrumModel.sm48K_issue_3);
 
   UpdateActiveSnapshotHistory;
 
@@ -425,8 +441,9 @@ begin
   ScreenSizeFactor := 1;
 
   LoadFromConf;
-  if Spectrum.SpectrumModel = TSpectrumModel.smNone then
-    Spectrum.SpectrumModel := TSpectrum.DefaultSpectrumModel;
+  if FNewModel = TSpectrumModel.smNone then
+    FNewModel := TSpectrum.DefaultSpectrumModel;
+  DoChangeModel(nil);
   if ScreenSizeFactor = 1 then begin
     ScreenSizeFactor := 2;
     SetScreenSizeFactor(1);
@@ -689,6 +706,18 @@ begin
       Spectrum.Paused := WasPaused;
     end;
   end;
+end;
+
+procedure TForm1.ActionModel48KIssue2Execute(Sender: TObject);
+begin
+  FNewModel := TSpectrumModel.sm48K_issue_2;
+  AddEventToQueue(@DoChangeModel);
+end;
+
+procedure TForm1.ActionModel48KIssue3Execute(Sender: TObject);
+begin
+  FNewModel := TSpectrumModel.sm48K_issue_3;
+  AddEventToQueue(@DoChangeModel);
 end;
 
 procedure TForm1.ActionMoveBackExecute(Sender: TObject);
@@ -969,6 +998,17 @@ begin
   end;
 end;
 
+procedure TForm1.DoChangeModel(Sender: TObject);
+begin
+  if FNewModel <> TSpectrumModel.smNone then begin
+    if FNewModel <> Spectrum.SpectrumModel then begin
+      Spectrum.SpectrumModel := FNewModel;
+      UpdateActionsModel();
+    end;
+    FNewModel := TSpectrumModel.smNone;
+  end;
+end;
+
 procedure TForm1.TryLoadFromFiles(const SnapshotOrTape: TSnapshotOrTape;
   const AFileNames: array of String);
 var
@@ -1067,6 +1107,21 @@ begin
 
 end;
 
+procedure TForm1.UpdateActionsModel;
+var
+  A: TContainedAction;
+  I: Integer;
+begin
+  for I := 0 to ActionList1.ActionCount - 1 do begin
+    A := ActionList1.Actions[I];
+    if AnsiCompareText(A.Category, 'SpectrumModel') = 0 then begin
+      if A is TCustomAction then begin
+        TCustomAction(A).Checked := Ord(Spectrum.SpectrumModel) = A.Tag;
+      end;
+    end;
+  end;
+end;
+
 procedure TForm1.UpdateShowCurrentlyActiveJoystick;
 begin
   if TJoystick.Joystick.Enabled then
@@ -1111,7 +1166,7 @@ begin
       for SModel := Low(TSpectrumModel) to High(TSpectrumModel) do begin
         WriteStr(S1, SModel);
         if AnsiCompareText(S1, S) = 0 then begin
-          Spectrum.SpectrumModel := SModel;
+          FNewModel := SModel;
           Break;
         end;
       end;

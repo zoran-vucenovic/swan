@@ -1,11 +1,11 @@
 
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$ifdef tzx_header_section}
 
-TTzxBlock20 = class (TTzxBlock)
-strict private
+TTzxBlockPause = class (TTzxBlock)
+private
   FPauseLength: Integer;
   TicksNeeded: Int64;
 
@@ -18,31 +18,35 @@ public
   class function GetBlockDescription: String; override;
   function GetNextPulse(): Boolean; override;
   procedure Start; override;
-  procedure Details(out S: String); override;
   procedure SetPauseLen(const APauseLength: Integer);
+end;
+
+TTzxBlock20 = class (TTzxBlockPause)
+public
+  procedure Details(out S: String); override;
   function GetStopPlaying: Boolean; override;
 end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlock20.Create(ATzxPlayer: TTzxPlayer);
+constructor {TTzxPlayer.}TTzxBlockPause.Create(ATzxPlayer: TTzxPlayer);
 begin
   inherited Create(ATzxPlayer);
 
   FPauseLength := 0;
 end;
 
-class function {TTzxPlayer.}TTzxBlock20.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlockPause.GetBlockId: Integer;
 begin
   Result := $20;
 end;
 
-function {TTzxPlayer.}TTzxBlock20.GetBlockLength: Integer;
+function {TTzxPlayer.}TTzxBlockPause.GetBlockLength: Integer;
 begin
   Result := 2;
 end;
 
-function {TTzxPlayer.}TTzxBlock20.LoadBlock(const Stream: TStream): Boolean;
+function {TTzxPlayer.}TTzxBlockPause.LoadBlock(const Stream: TStream): Boolean;
 var
   W: Word;
 begin
@@ -57,12 +61,12 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock20.GetBlockDescription: String;
+class function {TTzxPlayer.}TTzxBlockPause.GetBlockDescription: String;
 begin
   Result := 'Pause (silence) or ''Stop the Tape'' command';
 end;
 
-function {TTzxPlayer.}TTzxBlock20.GetNextPulse: Boolean;
+function {TTzxPlayer.}TTzxBlockPause.GetNextPulse: Boolean;
 var
   ProcTicks: Int64;
 
@@ -83,6 +87,7 @@ begin
         begin
           TicksNeeded := ProcTicks + FPauseLength * TicksPerMilliSecond;
           FTzxPlayer.ActiveBit := 0;
+          FTzxPlayer.InPause := True;
           State := TPlayState.psPause;
         end;
 
@@ -94,13 +99,22 @@ begin
   Result := True;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock20.Start;
+procedure {TTzxPlayer.}TTzxBlockPause.Start;
 begin                
   inherited Start;
+  State := TPlayState.psStart;
+
   TicksNeeded := TicksNeeded.MinValue;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock20.Details(out S: String);
+procedure {TTzxPlayer.}TTzxBlockPause.SetPauseLen(const APauseLength: Integer);
+begin
+  FPauseLength := APauseLength;
+end;
+
+{ TTzxBlock20 }
+
+procedure TTzxBlock20.Details(out S: String);
 begin
   if GetStopPlaying then
     S := 'stop playing'
@@ -108,15 +122,11 @@ begin
     S := 'Pause ' + FPauseLength.ToString + ' ms';
 end;
 
-procedure {TTzxPlayer.}TTzxBlock20.SetPauseLen(const APauseLength: Integer);
-begin
-  FPauseLength := APauseLength;
-end;
-
 function TTzxBlock20.GetStopPlaying: Boolean;
 begin
   Result := FPauseLength = 0;
 end;
+
 
 {$endif}
 

@@ -1,5 +1,5 @@
 
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$ifdef tzx_header_section}
@@ -398,6 +398,7 @@ end;
 procedure {TTzxPlayer.}TTzxBlock19.Start;
 begin
   inherited Start;
+  State := TPlayState.psStart;
 
   Start1 := True;
   TicksNeeded0 := 0;

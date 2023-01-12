@@ -44,6 +44,7 @@ type
 
     TAbstractTapePlayer = class abstract (TObject)
     public
+      InPause: Boolean;
       procedure GetNextPulse(); virtual; abstract;
     end;
 
@@ -338,8 +339,8 @@ begin
     end;
 
     if Assigned(FTapePlayer) then
-      FTapePlayer.GetNextPulse()
-    else if FSpectrumModel = TSpectrumModel.sm48K_issue_2 then
+      FTapePlayer.GetNextPulse();
+    if (FSpectrumModel = TSpectrumModel.sm48K_issue_2) and ((FTapePlayer = nil) or FTapePlayer.InPause) then
       B := B or ((not FMic shl 3) and %01000000);
 
     FProcessor.DataBus :=

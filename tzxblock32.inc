@@ -1,5 +1,5 @@
 
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$ifdef tzx_header_section}
@@ -24,7 +24,6 @@ public
   class function GetBlockId: Integer; override;
   class function GetBlockDescription: String; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
-  function GetNextPulse: Boolean; override;
   function GetBlockLength: Integer; override;
   procedure Details(out S: String); override;
 end;
@@ -118,11 +117,6 @@ begin
       end;
     end;
   end;
-  Result := False;
-end;
-
-function {TTzxPlayer.}TTzxBlock32.GetNextPulse: Boolean;
-begin
   Result := False;
 end;
 
