@@ -142,7 +142,7 @@ type
       TIncDecProc = procedure(const PB: PByte) of object;
 
   strict private
-    FFlagsModified: Boolean;
+    FFlagsModified: Boolean; // register "Q"
     FTStatesInCurrentFrame: Int32Fast;
     FPrefixByte: Byte;
     FMemory: UnitMemory.TMemory;
@@ -366,7 +366,7 @@ procedure TProcessor.CheckContention;
 var
   N: Int32Fast;
 begin
-   // ULA contention (conditionally add t-states)
+  // ULA contention (conditionally add t-states)
   if (FTStatesInCurrentFrame < 57247) and (FTStatesInCurrentFrame >= 14335) then begin
     N := ((FTStatesInCurrentFrame - 14335) mod 224) and $87;
     //N := (FProcessor.TStatesInCurrentFrame - 14335) mod 224;
@@ -1295,7 +1295,6 @@ begin
       end;
 
   otherwise
-    //FOnNeedWriteScreen(FTStates0);
     ContentionAndIncTStates;
     if B = 2 then begin
      // INI, IND, INIR, INDR
@@ -1559,10 +1558,10 @@ var
         Result := ResolveHL;
     otherwise
     //  3:
-        if x <> 3 then
-          Result := PRegSP
-        else
-          Result := PRegAF;
+      if x <> 3 then
+        Result := PRegSP
+      else
+        Result := PRegAF;
     end;
   end;
 
@@ -1719,12 +1718,11 @@ var
               ResolveTableRP()^ := ReadNextWord;
               FFlagsModified := False;
             end;
-          1: // ADD HL, rp[p]
-            begin
-              Contention2Times;
-              Contention5Times;
-              Add16(ResolveTableRP()^);
-            end;
+        otherwise //1:
+          // ADD HL, rp[p]
+          Contention2Times;
+          Contention5Times;
+          Add16(ResolveTableRP()^);
         end;
       2:
         begin
@@ -1770,12 +1768,11 @@ var
                 FRegWZ := Adr + 1;
                 TRec16(FRegWZ).UByteHi := RegA;
               end;
-            7: // LD A, (nn)
-              begin
-                Adr := ReadNextWord;
-                RegA := ReadMem(Adr);
-                FRegWZ := Adr + 1;
-              end;
+          otherwise // 7:
+            // LD A, (nn)
+            Adr := ReadNextWord;
+            RegA := ReadMem(Adr);
+            FRegWZ := Adr + 1;
           end;
           FFlagsModified := False;
         end;
@@ -1809,29 +1806,28 @@ var
 
           FFlagsModified := False;
         end;
-      7:
-        begin
-          case y of
-            0: // RLCA
-              RLCA;
-            1: // RRCA
-              RRCA;
-            2: // RLA
-              RLA;
-            3: // RRA
-              RRA;
-            4: // DAA
-              DAA;
-            5: // CPL
-              NotAccumulator;
-            6: // SCF
-              SCF;
-            7: // CCF
-              CCF;
-          end;
-          
-          FFlagsModified := True;
-        end;
+    otherwise // 7:
+      case y of
+        0: // RLCA
+          RLCA;
+        1: // RRCA
+          RRCA;
+        2: // RLA
+          RLA;
+        3: // RRA
+          RRA;
+        4: // DAA
+          DAA;
+        5: // CPL
+          NotAccumulator;
+        6: // SCF
+          SCF;
+      otherwise // 7:
+        // CCF
+        CCF;
+      end;
+
+      FFlagsModified := True;
     end;
   end;
 
@@ -1893,7 +1889,7 @@ var
 
             Contention5Times;
           end
-      else
+      otherwise
         Adr := RegHL;
       end;
       Alu(y, ReadMem(Adr));
@@ -1916,27 +1912,25 @@ var
           end;
         end;
       1:
-        case y and 1 of
-          0: // POP rp2[p]
-            ResolveTableRP()^ := PopFromStack;
-          1:
-            case y shr 1 of
-              0: // RET
-                begin
-                  FRegPC := PopFromStack;
-                  FRegWZ := FRegPC;
-                end;
-              1: // EXX
-                Exx;
-              2: // JP HL
-                FRegPC := ResolveHL^;
-              3: // LD SP, HL
-                begin
-                  Contention2Times;
-                  FRegSP := ResolveHL^;
-                end;
-            end;
-        end;
+        if y and 1 = 0 then begin
+          // POP rp2[p]
+          ResolveTableRP()^ := PopFromStack;
+        end else
+          case y shr 1 of
+            0: // RET
+              begin
+                FRegPC := PopFromStack;
+                FRegWZ := FRegPC;
+              end;
+            1: // EXX
+              Exx;
+            2: // JP HL
+              FRegPC := ResolveHL^;
+          otherwise // 3: // LD SP, HL
+            Contention2Times;
+            FRegSP := ResolveHL^;
+          end;
+
       2: // JP cc[y], nn
         begin
           FRegWZ := ReadNextWord;
@@ -1983,41 +1977,43 @@ var
               FIff1 := False;
               FIff2 := False;
             end;
-          7: // EI
-            begin
-              FPrefixByte := $FB; // opcode of EI
-                     // one more instruction will pass before the interrupt check
-              FIff1 := True;
-              FIff2 := True;
-            end;
+
+        otherwise // 7:
+          // EI
+          FPrefixByte := $FB; // opcode of EI
+                 // one more instruction will pass before the interrupt check
+          FIff1 := True;
+          FIff2 := True;
         end;
       4: // CALL cc[y], nn
         CALL(IfCc(y));
       5:
         case y and 1 of
-          0: // PUSH rp2[p]
+          0:
             begin
+              // PUSH rp2[p]
               ContentionAndIncTStates;
               PushToStack(ResolveTableRP()^);
             end;
-          1:
-            case y shr 1 of
-              0: // CALL nn
-                CALL(True);
-            otherwise
-              // for p in [1, 2, 3], we have DD, ED or FD prefixes:
-              FPrefixByte := OpCode;
-            end;
+        otherwise
+          case y shr 1 of
+            0:
+              // CALL nn
+              CALL(True);
+          otherwise
+            // for p in [1, 2, 3], we have DD, ED or FD prefixes:
+            FPrefixByte := OpCode;
+          end;
         end;
       6: // alu[y] n
         Alu(y, ReadNextByte);
-      7: // RST y*8
-        begin
-          ContentionAndIncTStates;
-          PushToStack(FRegPC);
-          FRegPC := y shl 3;
-          FRegWZ := FRegPC;
-        end;
+
+    otherwise // 7:
+      // RST y*8
+      ContentionAndIncTStates;
+      PushToStack(FRegPC);
+      FRegPC := y shl 3;
+      FRegWZ := FRegPC;
     end;
   end;
 
@@ -2056,19 +2052,18 @@ var
           TestBit(y, B);
           // Here, memptr (WZ register) affects flags!
           RegF := RegF or (TRec16(FRegWZ).UByteHi and %00101000);
+          Exit;
         end;
       2: // RES y, r[z]
         ResetBit(y, B);
-      3: // SET y, r[z]
-        SetBit(y, B);
-    otherwise
+    otherwise // 3:
+      // SET y, r[z]
+      SetBit(y, B);
     end;
 
-    if x <> 1 then begin
-      WriteMem(Adr, B);
-      if z <> 6 then
-        ResolveRegSimple(z)^ := B;
-    end;
+    WriteMem(Adr, B);
+    if z <> 6 then
+      ResolveRegSimple(z)^ := B;
   end;
 
   // LD A, R or LD A, I:
@@ -2134,9 +2129,9 @@ var
               case y and 1 of
                 0: // SBC HL, rp[p]
                   SbcHLss(ResolveTableRP()^);
-                1: // ADC HL, rp[p]
-                  AdcHLss(ResolveTableRP()^);
-              otherwise
+              otherwise // 1:
+                // ADC HL, rp[p]
+                AdcHLss(ResolveTableRP()^);
               end;
               FFlagsModified := True;
             end;
@@ -2146,9 +2141,9 @@ var
               case y and 1 of
                 0: // LD (nn), rp[p]
                   WriteMem16(FRegWZ, ResolveTableRP()^);
-                1: // LD rp[p], (nn)
-                  ResolveTableRP()^ := ReadMem16(FRegWZ);
-              otherwise
+              otherwise // 1:
+                // LD rp[p], (nn)
+                ResolveTableRP()^ := ReadMem16(FRegWZ);
               end;
               Inc(FRegWZ);
               FFlagsModified := False;
@@ -2182,31 +2177,31 @@ var
               end;
               FFlagsModified := False;
             end;
-          7:
-            case y of
-              0: // LD I, A
-                begin
-                  ContentionAndIncTStates;
-                  RegI := RegA;
-                  FFlagsModified := False;
-                end;
-              1: // LD R, A
-                begin
-                  ContentionAndIncTStates;
-                  RegR := RegA;
-                  FFlagsModified := False;
-                end;
-              2: // LD A, I
-                LDAri(RegI);
-              3: // LD A, R
-                LDAri(RegR);
-              4: // RRD
-                RldOrRrd(True);
-              5: // RLD
-                RldOrRrd(False);
-              6, 7: // NOP
+        otherwise // 7:
+          case y of
+            0: // LD I, A
+              begin
+                ContentionAndIncTStates;
+                RegI := RegA;
                 FFlagsModified := False;
-            end;
+              end;
+            1: // LD R, A
+              begin
+                ContentionAndIncTStates;
+                RegR := RegA;
+                FFlagsModified := False;
+              end;
+            2: // LD A, I
+              LDAri(RegI);
+            3: // LD A, R
+              LDAri(RegR);
+            4: // RRD
+              RldOrRrd(True);
+            5: // RLD
+              RldOrRrd(False);
+          otherwise // 6, 7: // NOP
+            FFlagsModified := False;
+          end;
         end;
       2:
         if (z and %100 = 0) and (y and %100 <> 0) then
@@ -2226,7 +2221,6 @@ begin
   if FPrefixByte = 0 then begin
     // check interrupts
     if FNMI then begin
-      //FTStates0 := FTStatesInCurrentFrame;
       FNMI := False;
       //FIff2 := FIff1; // NO! (page 20-21 - http://www.myquest.nl/z80undocumented/z80-documented-v0.91.pdf)
 
