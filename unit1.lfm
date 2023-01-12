@@ -138,12 +138,14 @@ object Form1: TForm1
     object ActionSpeedIncrease: TAction
       Category = 'Emulation'
       Caption = 'Increase speed'
+      ImageIndex = 21
       OnExecute = ActionSpeedIncreaseExecute
       ShortCut = 121
     end
     object ActionSpeedDecrease: TAction
       Category = 'Emulation'
       Caption = 'Decrease speed'
+      ImageIndex = 22
       OnExecute = ActionSpeedDecreaseExecute
       ShortCut = 120
     end
