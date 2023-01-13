@@ -1,11 +1,11 @@
 object FormInputLibraryPath: TFormInputLibraryPath
   Left = 256
-  Height = 130
+  Height = 109
   Top = 127
   Width = 362
   BorderStyle = bsDialog
   Caption = 'FormInputLibraryPath'
-  ClientHeight = 130
+  ClientHeight = 109
   ClientWidth = 362
   OnCreate = FormCreate
   LCLVersion = '2.2.5.0'

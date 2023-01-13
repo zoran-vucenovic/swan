@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, CommonFunctionsLCL, Forms, Controls, Graphics, Dialogs,
-  Grids, LCLType, ExtCtrls, Buttons;
+  Grids, LCLType, ExtCtrls, ButtonPanel;
 
 type
   TPokeEntry = record
@@ -17,11 +17,9 @@ type
   TPokesArray = Array of TPokeEntry;
 
   TFormInputPokes = class(TForm)
-    BitBtn1: TBitBtn;
-    BitBtn2: TBitBtn;
+    ButtonPanel1: TButtonPanel;
     Panel1: TPanel;
     Panel2: TPanel;
-    Panel3: TPanel;
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -209,14 +207,8 @@ end;
 
 procedure TFormInputPokes.AfterShow(Data: PtrInt);
 var
-  I, N: Integer;
+  I: Integer;
 begin
-  if BitBtn2.Width > BitBtn1.Width then
-    N := BitBtn2.Width
-  else
-    N := BitBtn1.Width;
-  BitBtn1.Constraints.MinWidth := N;
-  BitBtn2.Constraints.MinWidth := N;
   CommonFunctionsLCL.TCommonFunctionsLCL.AdjustFormPos(Self);
   if Data >= 0 then begin
     for I := GridNums.FixedCols to GridNums.FixedCols + 1 do

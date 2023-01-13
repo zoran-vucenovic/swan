@@ -26,62 +26,12 @@ object FormHistorySnapshots: TFormHistorySnapshots
     ClientHeight = 686
     ClientWidth = 603
     TabOrder = 0
-    object Panel3: TPanel
-      AnchorSideLeft.Control = Panel15
-      AnchorSideRight.Control = Panel15
-      AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = Panel15
-      AnchorSideBottom.Side = asrBottom
-      Left = 6
-      Height = 26
-      Top = 654
-      Width = 591
-      Anchors = [akLeft, akRight, akBottom]
-      AutoSize = True
-      BorderSpacing.Around = 6
-      BevelOuter = bvNone
-      ClientHeight = 26
-      ClientWidth = 591
-      TabOrder = 0
-      object BitBtn1: TBitBtn
-        AnchorSideTop.Control = Panel3
-        AnchorSideRight.Control = BitBtn2
-        Left = 441
-        Height = 26
-        Top = 0
-        Width = 62
-        Anchors = [akTop, akRight]
-        AutoSize = True
-        BorderSpacing.Right = 6
-        Default = True
-        DefaultCaption = True
-        Kind = bkOK
-        ModalResult = 1
-        TabOrder = 0
-      end
-      object BitBtn2: TBitBtn
-        AnchorSideTop.Control = Panel3
-        AnchorSideRight.Control = Panel3
-        AnchorSideRight.Side = asrBottom
-        Left = 509
-        Height = 26
-        Top = 0
-        Width = 82
-        Anchors = [akTop, akRight]
-        AutoSize = True
-        Cancel = True
-        DefaultCaption = True
-        Kind = bkCancel
-        ModalResult = 2
-        TabOrder = 1
-      end
-    end
     object Panel1: TPanel
       AnchorSideLeft.Control = Panel15
       AnchorSideTop.Control = Panel15
       AnchorSideRight.Control = Panel15
       AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = Panel3
+      AnchorSideBottom.Control = ButtonPanel1
       Left = 0
       Height = 648
       Top = 0
@@ -91,7 +41,7 @@ object FormHistorySnapshots: TFormHistorySnapshots
       BevelOuter = bvNone
       ClientHeight = 648
       ClientWidth = 603
-      TabOrder = 1
+      TabOrder = 0
       object Panel2: TPanel
         AnchorSideLeft.Control = Panel1
         AnchorSideTop.Control = Panel1
@@ -467,6 +417,31 @@ object FormHistorySnapshots: TFormHistorySnapshots
           TabOrder = 1
         end
       end
+    end
+    object ButtonPanel1: TButtonPanel
+      AnchorSideLeft.Control = Panel15
+      AnchorSideRight.Control = Panel15
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = Panel15
+      AnchorSideBottom.Side = asrBottom
+      Left = 6
+      Height = 26
+      Top = 654
+      Width = 591
+      Align = alNone
+      Anchors = [akLeft, akRight, akBottom]
+      OKButton.Name = 'OKButton'
+      OKButton.DefaultCaption = True
+      HelpButton.Name = 'HelpButton'
+      HelpButton.DefaultCaption = True
+      CloseButton.Name = 'CloseButton'
+      CloseButton.DefaultCaption = True
+      CancelButton.Name = 'CancelButton'
+      CancelButton.DefaultCaption = True
+      TabOrder = 1
+      DefaultButton = pbClose
+      ShowButtons = [pbOK, pbCancel]
+      ShowBevel = False
     end
   end
 end

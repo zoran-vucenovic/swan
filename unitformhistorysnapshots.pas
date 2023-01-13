@@ -11,14 +11,13 @@ uses
   Classes, SysUtils, Types, UnitFileSna, UnitHistorySnapshots,
   CommonFunctionsLCL, UnitKeyMaps, UnitFormPressAKey, UnitControlScreenBitmap,
   UnitSpectrumColoursBGRA, Forms, Controls, Graphics, Dialogs, ExtCtrls,
-  StdCtrls, Spin, Buttons, LMessages;
+  StdCtrls, Spin, LMessages, ButtonPanel;
 
 type
   TFormHistorySnapshots = class(TForm)
     Bevel1: TBevel;
     Bevel2: TBevel;
-    BitBtn1: TBitBtn;
-    BitBtn2: TBitBtn;
+    ButtonPanel1: TButtonPanel;
     CheckBox1: TCheckBox;
     CheckBox2: TCheckBox;
     Label1: TLabel;
@@ -37,7 +36,6 @@ type
     Panel14: TPanel;
     Panel15: TPanel;
     Panel2: TPanel;
-    Panel3: TPanel;
     Panel4: TPanel;
     Panel5: TPanel;
     Panel6: TPanel;
@@ -200,8 +198,6 @@ begin
   SpinEdit2.MinValue := SpinEdit2.Increment;
   SpinEdit1.MinValue := 1;
 
-  BitBtn1.AutoSize := True;
-  BitBtn2.AutoSize := True;
   Panel9.BorderStyle := bsNone;
   Panel10.BorderStyle := bsNone;
   Panel11.BorderStyle := bsNone;
@@ -468,16 +464,8 @@ begin
 end;
 
 procedure TFormHistorySnapshots.AfterShow(Data: PtrInt);
-var
-  N: Integer;
 begin
   AutoSize := False;
-  if BitBtn1.Width > BitBtn2.Width then
-    N := BitBtn1.Width
-  else
-    N := BitBtn2.Width;
-  BitBtn1.Constraints.MinWidth := N;
-  BitBtn2.Constraints.MinWidth := N;
 
   CommonFunctionsLCL.TCommonFunctionsLCL.AdjustFormPos(Self);
   if Data > 0 then begin
@@ -486,8 +474,6 @@ begin
   end else begin
     Constraints.MinHeight := 0;
     Constraints.MaxHeight := 0;
-    BitBtn1.AutoSize := False;
-    BitBtn2.AutoSize := False;
     FillSnapshots;
     SpinEdit2.Enabled := True;
     Panel1.Enabled := True;

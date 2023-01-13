@@ -31,7 +31,7 @@ object FormInputPokes: TFormInputPokes
       AnchorSideTop.Control = Panel1
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = Panel3
+      AnchorSideBottom.Control = ButtonPanel1
       Left = 6
       Height = 516
       Top = 6
@@ -41,51 +41,29 @@ object FormInputPokes: TFormInputPokes
       BevelOuter = bvNone
       TabOrder = 0
     end
-    object Panel3: TPanel
+    object ButtonPanel1: TButtonPanel
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
-      Left = 274
+      Left = 261
       Height = 26
       Top = 528
-      Width = 150
+      Width = 163
+      Align = alNone
       Anchors = [akRight, akBottom]
-      AutoSize = True
-      BorderSpacing.Around = 6
-      BevelOuter = bvNone
-      ClientHeight = 26
-      ClientWidth = 150
+      OKButton.Name = 'OKButton'
+      OKButton.DefaultCaption = True
+      HelpButton.Name = 'HelpButton'
+      HelpButton.DefaultCaption = True
+      CloseButton.Name = 'CloseButton'
+      CloseButton.DefaultCaption = True
+      CancelButton.Name = 'CancelButton'
+      CancelButton.DefaultCaption = True
       TabOrder = 1
-      object BitBtn1: TBitBtn
-        AnchorSideLeft.Control = Panel3
-        AnchorSideTop.Control = Panel3
-        Left = 0
-        Height = 26
-        Top = 0
-        Width = 62
-        AutoSize = True
-        DefaultCaption = True
-        Kind = bkOK
-        ModalResult = 1
-        TabOrder = 0
-      end
-      object BitBtn2: TBitBtn
-        AnchorSideLeft.Control = BitBtn1
-        AnchorSideLeft.Side = asrBottom
-        AnchorSideTop.Control = Panel3
-        Left = 68
-        Height = 26
-        Top = 0
-        Width = 82
-        AutoSize = True
-        BorderSpacing.Left = 6
-        Cancel = True
-        DefaultCaption = True
-        Kind = bkCancel
-        ModalResult = 2
-        TabOrder = 1
-      end
+      DefaultButton = pbClose
+      ShowButtons = [pbOK, pbCancel]
+      ShowBevel = False
     end
   end
 end
