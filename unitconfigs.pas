@@ -195,8 +195,12 @@ var
 begin
   if Assigned(GetConf) then begin
     JD := GetConf.Extract(R.RemapFrom);
-    if Assigned(JD) then
-      GetConf.Add(R.RemapTo, JD);
+    if Assigned(JD) then begin
+      if GetConf.IndexOfName(R.RemapTo) <> -1 then
+        JD.Free
+      else
+        GetConf.Add(R.RemapTo, JD);
+    end;
   end;
 end;
 
