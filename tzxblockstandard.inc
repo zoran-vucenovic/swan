@@ -9,7 +9,7 @@ strict protected
   FLen: Integer;
   function Load2(const Stream: TStream; L: Integer): Boolean; virtual; abstract;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
@@ -17,9 +17,9 @@ end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlockStandard.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlockStandard.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
   FLen := 0;
 end;
 

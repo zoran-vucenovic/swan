@@ -21,7 +21,7 @@ strict private
   PEnd: PByte;
   BitPosition: Integer;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   destructor Destroy; override;
   class function GetBlockId: Integer; override;
   {returns whole block length, without id byte}
@@ -34,9 +34,9 @@ end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlock15.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock15.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
 
   P := nil;
   FLen := 0;
@@ -121,7 +121,7 @@ var
   procedure ToPause;
   begin
     if PauseAfterBlock > 0 then
-      FTzxPlayer.StartPauseBlock(PauseAfterBlock);
+      FTapePlayer.StartPauseBlock(PauseAfterBlock);
     State := TPlayState.psFinished;
   end;
 
@@ -129,9 +129,9 @@ var
   begin
     if (P < PEnd) or ((P = PEnd) and (BitPosition >= UnusedBitsInLastByte)) then begin
       if ((P^ shr BitPosition) and 1) = 0 then
-        FTzxPlayer.ActiveBit := 0
+        FTapePlayer.ActiveBit := 0
       else
-        FTzxPlayer.ActiveBit := %01000000;
+        FTapePlayer.ActiveBit := %01000000;
 
       TicksNeeded := ProcTicks + PulseLen;
 
@@ -152,7 +152,7 @@ begin
   if State = TPlayState.psFinished then
     Exit(False);
 
-  ProcTicks := FTzxPlayer.FSpectrum.SumTicks + FTzxPlayer.FSpectrum.GetProcessor.TStatesInCurrentFrame;
+  ProcTicks := GetCurrentTotalSpectrumTicks;
 
   if ProcTicks >= TicksNeeded then begin
     // set active bit here

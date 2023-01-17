@@ -6,7 +6,7 @@
 
 TTzxBlock11 = class (TTzxBlock11abstract)
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: Integer; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
   class function GetBlockDescription: String; override;
@@ -15,9 +15,9 @@ end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlock11.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock11.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
 
   PilotTicksNeeded := 0;
 end;

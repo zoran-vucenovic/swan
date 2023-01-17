@@ -21,7 +21,7 @@ uses
   UnitColourFunctions, UnitDataModuleImages, PortAudioHeader, UnitBeeper,
   unitSoundVolume, FastIntegers, UnitInputLibraryPathDialog, UnitFormInputPokes,
   UnitSZX, UnitStreamCompression, UnitFormHistorySnapshots,
-UnitControlScreenBitmap;
+UnitControlScreenBitmap, UnitTapePlayer, UnitPzxPlayer;
 
 {$R *.res}
 
@@ -46,7 +46,7 @@ begin
   RequireDerivedFormResource := True;
   InitBuildDateString;
   SetApplicationTitle;
-                                                                 
+
   Application.Scaled := True;
   Application.Initialize;
   Application.ShowButtonGlyphs := TApplicationShowGlyphs.sbgAlways;

@@ -10,7 +10,7 @@ TTzxBlock23 = class (TTzxBlock)
 strict private
   RelativeJumpValue: Integer;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: Integer; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
@@ -22,9 +22,9 @@ end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlock23.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock23.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
   RelativeJumpValue := 0;
 end;
 

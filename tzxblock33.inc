@@ -18,7 +18,7 @@ strict private
   FLen: Integer;
   FHWInfo: PHWInfo;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   destructor Destroy; override;
   class function GetBlockId: Integer; override;
   {returns whole block length, without id byte}
@@ -29,9 +29,9 @@ end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlock33.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock33.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
 
   FHWInfo := nil;
   FLen := 0;

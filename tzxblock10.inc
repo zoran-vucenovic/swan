@@ -30,7 +30,7 @@ strict protected
   function AddUsedBitsDetails: String; override;
 
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: Integer; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
   class function GetBlockDescription: String; override;
@@ -99,9 +99,9 @@ begin
   Result := '';
 end;
 
-constructor {TTzxPlayer.}TTzxTapBlock.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxTapBlock.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
 
   HeaderWD.IsValid := False;
 end;

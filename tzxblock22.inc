@@ -6,7 +6,6 @@
 
 TTzxBlock22 = class (TTzxBlock)
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
   class function GetBlockId: Integer; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
@@ -15,11 +14,6 @@ public
 end;
 
 {$else}
-
-constructor {TTzxPlayer.}TTzxBlock22.Create(ATzxPlayer: TTzxPlayer);
-begin
-  inherited Create(ATzxPlayer);
-end;
 
 class function {TTzxPlayer.}TTzxBlock22.GetBlockId: Integer;
 begin

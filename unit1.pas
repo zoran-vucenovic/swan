@@ -10,12 +10,12 @@ interface
 uses
   Classes, SysUtils, Types, Forms, Controls, Graphics, Dialogs, ActnList, Menus,
   ComCtrls, LCLType, Buttons, StdCtrls, ExtCtrls, zipper, fpjson, UnitSpectrum,
-  UnitFileSna, AboutBox, DebugForm, UnitTzxPlayer, UnitFormBrowser,
+  UnitFileSna, AboutBox, DebugForm, UnitFormBrowser,
   UnitColourPalette, UnitSpectrumColourMap, CommonFunctionsLCL,
   UnitFormKeyMappings, UnitJoystick, UnitFormJoystickSetup,
   UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
-  UnitFormHistorySnapshots;
+  UnitFormHistorySnapshots, UnitTapePlayer;
 
 type
 
@@ -232,7 +232,7 @@ type
     DrawingRect: TRect;
 
     FormDebug: TFormDebug;
-    TzxPlayer: TTzxPlayer;
+    TapePlayer: TTapePlayer;
     FWriteScreen: Boolean;
     FSkipWriteScreen: Boolean;
     FSoundVolumeForm: TFormSoundVolume;
@@ -257,9 +257,9 @@ type
     procedure EventPlayerOnChangeBlock(Sender: TObject);
     procedure PlayerOnChangeBlock;
     procedure TapeBrowserAttachTape;
-    procedure GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape; out Extensions: TStringDynArray);
+    procedure GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape; const IncludeZip: Boolean; out Extensions: TStringDynArray);
     procedure LoadAsk(const SnapshotOrTape: TSnapshotOrTape);
-    procedure DoLoad(const SnapshotOrTape: TSnapshotOrTape; const AcceptedExtensions: TStringDynArray; ASourceFile: String);
+    procedure DoLoad(const SnapshotOrTape: TSnapshotOrTape; ASourceFile: String);
     procedure RunSpectrum;
     procedure DoOnResetSpectrum;
     procedure DestroySpectrum;
@@ -417,7 +417,7 @@ begin
   FSoundVolumeForm := nil;
   FTapeBrowser := nil;
   FormDebug := nil;
-  TzxPlayer := nil;
+  TapePlayer := nil;
 
   EventsQueueCount := 0;
   SetLength(EventsQueue, 0);
@@ -491,11 +491,11 @@ end;
 
 procedure TForm1.ActionDecTapeBlockExecute(Sender: TObject);
 begin
-  if Assigned(TzxPlayer) then begin
+  if Assigned(TapePlayer) then begin
     if Sender <> Spectrum then
       AddEventToQueue(@ActionDecTapeBlockExecute)
     else begin
-      TzxPlayer.IncBlock(-1);
+      TapePlayer.IncBlock(-1);
     end;
   end;
 end;
@@ -512,7 +512,7 @@ end;
 
 procedure TForm1.ActionEjectTapeExecute(Sender: TObject);
 begin
-  if Assigned(TzxPlayer) then begin
+  if Assigned(TapePlayer) then begin
     if Sender <> Spectrum then begin
       AddEventToQueue(@ActionEjectTapeExecute)
     end else begin
@@ -610,11 +610,11 @@ end;
 
 procedure TForm1.ActionIncTapeBlockExecute(Sender: TObject);
 begin
-  if Assigned(TzxPlayer) then begin
+  if Assigned(TapePlayer) then begin
     if Sender <> Spectrum then
       AddEventToQueue(@ActionIncTapeBlockExecute)
     else begin
-      TzxPlayer.IncBlock(1);
+      TapePlayer.IncBlock(1);
     end;
   end;
 end;
@@ -779,11 +779,11 @@ end;
 
 procedure TForm1.ActionPlayExecute(Sender: TObject);
 begin
-  if Assigned(TzxPlayer) then begin
+  if Assigned(TapePlayer) then begin
     if Sender <> Spectrum then
       AddEventToQueue(@ActionPlayExecute)
     else begin
-      TzxPlayer.Continue();
+      TapePlayer.Continue();
     end;
   end;
 end;
@@ -829,11 +829,11 @@ end;
 
 procedure TForm1.ActionRewindExecute(Sender: TObject);
 begin
-  if Assigned(TzxPlayer) then begin
+  if Assigned(TapePlayer) then begin
     if Sender <> Spectrum then
       AddEventToQueue(@ActionRewindExecute)
     else begin
-      TzxPlayer.Rewind;
+      TapePlayer.Rewind;
     end;
   end;
 end;
@@ -930,11 +930,11 @@ end;
 
 procedure TForm1.ActionStopExecute(Sender: TObject);
 begin
-  if Assigned(TzxPlayer) then begin
+  if Assigned(TapePlayer) then begin
     if Sender <> Spectrum then
       AddEventToQueue(@ActionStopExecute)
     else begin
-      TzxPlayer.StopPlaying();
+      TapePlayer.StopPlaying();
     end;
   end;
 end;
@@ -1017,7 +1017,7 @@ var
   S, FN, EFN: AnsiString;
 begin
   if Length(AFileNames) > 0 then begin
-    GetAcceptableExtensions(SnapshotOrTape, Extensions);
+    GetAcceptableExtensions(SnapshotOrTape, True, Extensions);
     for I := Low(AFileNames) to High(AFileNames) do begin
       FN := AFileNames[I];
       EFN := ExtractFileExt(FN);
@@ -1028,7 +1028,7 @@ begin
             if not S.StartsWith(ExtensionSeparator) then
               S := ExtensionSeparator + S;
             if AnsiCompareText(S, EFN) = 0 then begin
-              DoLoad(SnapshotOrTape, Extensions, FN);
+              DoLoad(SnapshotOrTape, FN);
               Exit;
             end;
           end;
@@ -1382,7 +1382,7 @@ end;
 
 procedure TForm1.UpdateWriteScreen;
 begin
-  if FWriteScreen = (FSkipWriteScreen and Assigned(TzxPlayer) and TzxPlayer.IsPlaying) then begin
+  if FWriteScreen = (FSkipWriteScreen and Assigned(TapePlayer) and TapePlayer.IsPlaying) then begin
     FWriteScreen := not FWriteScreen;
 
     Spectrum.SetWriteScreen(FWriteScreen);
@@ -1505,8 +1505,8 @@ end;
 
 procedure TForm1.EventPlayerOnChangeBlock(Sender: TObject);
 begin
-  if Assigned(TzxPlayer) and TzxPlayer.IsPlaying then
-    Spectrum.SetTapePlayer(TzxPlayer)
+  if Assigned(TapePlayer) and TapePlayer.IsPlaying then
+    Spectrum.SetTapePlayer(TapePlayer)
   else
     Spectrum.SetTapePlayer(nil);
 
@@ -1524,16 +1524,16 @@ end;
 procedure TForm1.TapeBrowserAttachTape;
 begin
   if Assigned(FTapeBrowser) then
-    FTapeBrowser.SetTzxPlayer(TzxPlayer);
-  if Assigned(TzxPlayer) then
-    TzxPlayer.OnChangeBlock := @PlayerOnChangeBlock;
+    FTapeBrowser.SetTapePlayer(TapePlayer);
+  if Assigned(TapePlayer) then
+    TapePlayer.OnChangeBlock := @PlayerOnChangeBlock;
 end;
 
 procedure TForm1.GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape;
-  out Extensions: TStringDynArray);
+  const IncludeZip: Boolean; out Extensions: TStringDynArray);
 const
   SnapshotExtensions: array[0..2] of String = ('szx', 'z80', 'sna');
-  TapeExtensions: array[0..1] of String = ('tap', 'tzx');
+  TapeExtensions: array[0..2] of String = ('tap', 'tzx', 'pzx');
 var
   I, L: Integer;
 begin
@@ -1545,7 +1545,9 @@ begin
   otherwise
     L := Length(SnapshotExtensions) + Length(TapeExtensions);
   end;
-  SetLength(Extensions{%H-}, L + 1);
+  if IncludeZip then
+    Inc(L);
+  SetLength(Extensions{%H-}, L);
 
   L := 0;
   if SnapshotOrTape in [stSnapshot, stBoth] then
@@ -1558,7 +1560,8 @@ begin
       Extensions[L] := TapeExtensions[I];
       Inc(L);
     end;
-  Extensions[L] := 'zip';
+  if IncludeZip then
+    Extensions[L] := 'zip';
 end;
 
 procedure TForm1.LoadAsk(const SnapshotOrTape: TSnapshotOrTape);
@@ -1575,7 +1578,7 @@ begin
     try
       Spectrum.Paused := True;
 
-      GetAcceptableExtensions(SnapshotOrTape, Extensions);
+      GetAcceptableExtensions(SnapshotOrTape, True, Extensions);
       OpenDialog1.FilterIndex := 1;
       OpenDialog1.Filter := MakeExtensionsFilter(Extensions);
 
@@ -1604,7 +1607,7 @@ begin
         OpenDialog1.FileName := '';
 
       if OpenDialog1.Execute then
-        DoLoad(SnapshotOrTape, Extensions, OpenDialog1.FileName);
+        DoLoad(SnapshotOrTape, OpenDialog1.FileName);
 
     finally
       Spectrum.Paused := WasPaused;
@@ -1614,7 +1617,7 @@ begin
 end;
 
 procedure TForm1.DoLoad(const SnapshotOrTape: TSnapshotOrTape;
-  const AcceptedExtensions: TStringDynArray; ASourceFile: String);
+  ASourceFile: String);
 
   procedure LoadingFailed;
   begin
@@ -1628,6 +1631,9 @@ var
   Stream: TStream;
   SnapshotFile: TSnapshotFile;
   L: Boolean;
+  TapeType: TTapeType;
+  TapePlayerClass: TTapePlayerClass;
+  AcceptedExtensions: TStringDynArray;
 
 begin
   Stream := nil;
@@ -1639,6 +1645,7 @@ begin
       Extension := ExtractFileExt(ASourceFile);
       
       if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
+        GetAcceptableExtensions(SnapshotOrTape, False, AcceptedExtensions);
         if not TFileUnzipper.GetFileFromZipFile(ASourceFile, AcceptedExtensions, Stream, FileName) then begin
           Stream := nil;
         end else begin
@@ -1682,29 +1689,38 @@ begin
             end;
           end else if SnapshotOrTape in [stTape, stBoth] then begin
             FreeTapePlayer;
-            TzxPlayer := TTzxPlayer.Create;
-            TzxPlayer.FileName := FileName;
 
-            if AnsiCompareText(Extension, ExtensionSeparator + 'tap') = 0 then
-              TzxPlayer.TapeType := UnitTzxPlayer.TTapeType.ttTap
-            else
-              TzxPlayer.TapeType := UnitTzxPlayer.TTapeType.ttTzx;
+            TapePlayerClass := TTapePlayer.CheckRealTapePlayerClass(Stream);
+            if TapePlayerClass = nil then begin
+              TapeType := UnitTapePlayer.TTapeType.ttTap;
+              if AnsiCompareText(Extension, ExtensionSeparator + 'tzx') = 0 then
+                TapeType := UnitTapePlayer.TTapeType.ttTzx
+              else if AnsiCompareText(Extension, ExtensionSeparator + 'pzx') = 0 then
+                TapeType := UnitTapePlayer.TTapeType.ttPzx;
 
-            try
-              if TzxPlayer.LoadFromStream(Stream) then begin
-                TzxPlayer.SetSpectrum(Spectrum);
-                TzxPlayer.Rewind;
+              TapePlayerClass := TTapePlayer.GetTapePlayerClassFromType(TapeType);
+            end;
+            if Assigned(TapePlayerClass) then begin
+              TapePlayer := TapePlayerClass.Create;
+              TapePlayer.FileName := FileName;
 
-                TapeBrowserAttachTape;
-                L := True;
-              end else
-                LoadingFailed;
+              try
+                if TapePlayer.LoadFromStream(Stream) then begin
+                  TapePlayer.SetSpectrum(Spectrum);
+                  TapePlayer.Rewind;
 
-            finally
-              if not L then begin
-                FreeTapePlayer;
+                  TapeBrowserAttachTape;
+                  L := True;
+                end;
+
+              finally
+                if not L then begin
+                  FreeTapePlayer;
+                end;
               end;
             end;
+            if not L then
+              LoadingFailed;
           end;
 
           if L then
@@ -1968,17 +1984,17 @@ end;
 procedure TForm1.FreeTapePlayer;
 begin
   if Assigned(FTapeBrowser) then
-    FTapeBrowser.SetTzxPlayer(nil);
+    FTapeBrowser.SetTapePlayer(nil);
 
   if Assigned(Spectrum) then
     Spectrum.SetTapePlayer(nil);
 
-  if Assigned(TzxPlayer) then begin
-    TzxPlayer.OnChangeBlock := nil;
-    TzxPlayer.StopPlaying();
+  if Assigned(TapePlayer) then begin
+    TapePlayer.OnChangeBlock := nil;
+    TapePlayer.StopPlaying();
   end;
 
-  FreeAndNil(TzxPlayer);
+  FreeAndNil(TapePlayer);
 end;
 
 procedure TForm1.SetNewAutoSize(Sender: TObject);

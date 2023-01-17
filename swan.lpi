@@ -57,6 +57,9 @@
           </Linking>
           <Other>
             <CustomOptions Value="-dUseCThreads"/>
+            <OtherDefines Count="1">
+              <Define0 Value="UseCThreads"/>
+            </OtherDefines>
           </Other>
         </CompilerOptions>
       </Item>
@@ -129,8 +132,12 @@
             </Options>
           </Linking>
           <Other>
-            <CustomOptions Value="-dDebugging
--dUseCThreads"/>
+            <CustomOptions Value="-dUseCThreads
+-dDebugging"/>
+            <OtherDefines Count="2">
+              <Define0 Value="UseCThreads"/>
+              <Define1 Value="Debugging"/>
+            </OtherDefines>
           </Other>
         </CompilerOptions>
       </Item>
@@ -547,6 +554,16 @@
         <Filename Value="unitcontrolscreenbitmap.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitControlScreenBitmap"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unittapeplayer.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitTapePlayer"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitpzxplayer.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitPzxPlayer"/>
       </Unit>
     </Units>
   </ProjectOptions>

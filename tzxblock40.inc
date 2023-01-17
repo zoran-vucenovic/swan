@@ -13,7 +13,7 @@ strict private
   FSnapStream: TMemoryStream;
   FSnapLen: Integer;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   destructor Destroy; override;
   class function GetBlockId: Integer; override;
   {returns whole block length, without id byte}
@@ -27,9 +27,9 @@ end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlock40.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock40.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
 
   FSnapStream := nil;
   FLen := 0;
@@ -97,15 +97,15 @@ var
 begin
   Result := False;
   if State <> TPlayState.psFinished then begin
-    if Assigned(FTzxPlayer.FSpectrum) then begin
+    if Assigned(FTapePlayer.GetSpectrum) then begin
       if FSnapshotType = 0 then
         S := TSnapshotZ80.Create
       else
         S := TSnapshotSNA.Create;
 
       try
-        S.SetSpectrum(FTzxPlayer.FSpectrum);
-        FTzxPlayer.FSpectrum.ResetSpectrum;
+        S.SetSpectrum(FTapePlayer.GetSpectrum);
+        FTapePlayer.GetSpectrum.ResetSpectrum;
         Result := S.LoadFromStream(FSnapStream);
       finally
         S.Free;

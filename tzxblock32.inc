@@ -20,7 +20,7 @@ strict private
 
   class function DecodeTextIdByte(TextIdByte: Byte): String;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: Integer; override;
   class function GetBlockDescription: String; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
@@ -51,9 +51,9 @@ begin
   Result := '0x' + IntToHex(TextIdByte) + Result;
 end;
 
-constructor {TTzxPlayer.}TTzxBlock32.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock32.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
   FLen := 0;
   SetLength(TextStructures, 0);
 end;

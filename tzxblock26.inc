@@ -11,7 +11,7 @@ strict private
   CallBlockNumbers: array of Int16;
   NumOfCalls: Integer;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: Integer; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
@@ -24,9 +24,9 @@ end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlock26.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock26.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
 
   NumOfCalls := 0;
   SetLength(CallBlockNumbers, 0);

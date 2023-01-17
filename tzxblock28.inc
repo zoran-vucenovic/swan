@@ -8,7 +8,7 @@ TTzxBlock28 = class (TTzxBlock)
 strict private
   FLen: Integer;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
 
   class function GetBlockId: Integer; override;
   class function GetBlockDescription: String; override;
@@ -18,9 +18,9 @@ end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlock28.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock28.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
   FLen := 0;
 end;
 

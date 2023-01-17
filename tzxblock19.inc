@@ -61,7 +61,7 @@ strict protected
   function Load2(const Stream: TStream; L: Integer): Boolean; override;
 
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   destructor Destroy; override;
 
   class function GetBlockId: Integer; override;
@@ -234,9 +234,9 @@ begin
   end;
 end;
 
-constructor {TTzxPlayer.}TTzxBlock19.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock19.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
 
   FDetails := '';
   PauseAfterBlock := 0;
@@ -277,9 +277,9 @@ function {TTzxPlayer.}TTzxBlock19.GetNextPulse: Boolean;
 
   procedure ToPause;
   begin
-    FTzxPlayer.ActiveBit := FTzxPlayer.ActiveBit xor %01000000;
+    FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
     if PauseAfterBlock > 0 then
-      FTzxPlayer.StartPauseBlock(PauseAfterBlock);
+      FTapePlayer.StartPauseBlock(PauseAfterBlock);
 
     State := TPlayState.psFinished;
     TicksNeeded0 := 0;
@@ -290,11 +290,11 @@ function {TTzxPlayer.}TTzxBlock19.GetNextPulse: Boolean;
     case SymDef.SymbolFlag of
       0, 1:
         if (SymDef.SymbolFlag = 0) xor Start1 then
-          FTzxPlayer.ActiveBit := FTzxPlayer.ActiveBit xor %01000000;
+          FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
       2:
-        FTzxPlayer.ActiveBit := 0;
+        FTapePlayer.ActiveBit := 0;
       3:
-        FTzxPlayer.ActiveBit := %01000000;
+        FTapePlayer.ActiveBit := %01000000;
     end;
     Start1 := False;
     SymLen := SymDef.Len;
@@ -333,7 +333,7 @@ function {TTzxPlayer.}TTzxBlock19.GetNextPulse: Boolean;
       end;
 
     end else
-      FTzxPlayer.ActiveBit := FTzxPlayer.ActiveBit xor %01000000;
+      FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
 
     TicksNeeded0 := SymDef.PulseLengths[SymPos];
     PulsesNeeded := 1;
@@ -346,7 +346,7 @@ begin
   if State = TPlayState.psFinished then
     Exit(False);
 
-  ProcTicks := FTzxPlayer.FSpectrum.SumTicks + FTzxPlayer.FSpectrum.GetProcessor.TStatesInCurrentFrame;
+  ProcTicks := GetCurrentTotalSpectrumTicks;
   if ProcTicks >= TicksNeeded then begin
     Dec(PulsesNeeded);
     if PulsesNeeded = 0 then begin
@@ -375,7 +375,7 @@ begin
                 SymDef := SymDefsPilot[Prle.SymbolToBeRepresented];
                 NewSymDef;
               end else
-                FTzxPlayer.ActiveBit := FTzxPlayer.ActiveBit xor %01000000;
+                FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
 
               PulsesNeeded := Prle.NumberOfRepetitions;
               TicksNeeded0 := SymDef.PulseLengths[SymPos];
@@ -388,7 +388,7 @@ begin
       until True;
 
     end else
-      FTzxPlayer.ActiveBit := FTzxPlayer.ActiveBit xor %01000000;
+      FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
     TicksNeeded := ProcTicks + TicksNeeded0;
   end;
 

@@ -10,7 +10,7 @@ private
   TicksNeeded: Int64;
 
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: Integer; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
@@ -29,9 +29,9 @@ end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlockPause.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlockPause.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
 
   FPauseLength := 0;
 end;
@@ -74,7 +74,7 @@ begin
   if State = TPlayState.psFinished then
     Exit(False);
 
-  ProcTicks := FTzxPlayer.FSpectrum.SumTicks + FTzxPlayer.FSpectrum.GetProcessor.TStatesInCurrentFrame;
+  ProcTicks := GetCurrentTotalSpectrumTicks;
   if ProcTicks >= TicksNeeded then begin
 
     case State of
@@ -86,8 +86,8 @@ begin
       TPlayState.psData:
         begin
           TicksNeeded := ProcTicks + FPauseLength * TicksPerMilliSecond;
-          FTzxPlayer.ActiveBit := 0;
-          FTzxPlayer.InPause := True;
+          FTapePlayer.ActiveBit := 0;
+          FTapePlayer.InPause := True;
           State := TPlayState.psPause;
         end;
 

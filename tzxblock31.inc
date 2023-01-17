@@ -12,7 +12,7 @@ strict private
   FTextDescription: AnsiString;
   FTime: Integer;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: Integer; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
@@ -23,9 +23,9 @@ end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlock31.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock31.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
 
   FTime := 0;
   FLen := 0;

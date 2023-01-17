@@ -12,7 +12,7 @@ private
   FIdentificationString: AnsiString;
   FCustomInfo: PByte;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   destructor Destroy; override;
   class function GetBlockId: Integer; override;
   {returns whole block length, without id byte}
@@ -24,9 +24,9 @@ end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlock35.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock35.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
 
   FCustomInfo := nil;
   FIdentificationString := '';

@@ -9,7 +9,7 @@ strict private
   FLen: Integer;
   FTextDescription: AnsiString;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: Integer; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
@@ -20,9 +20,9 @@ end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlock30.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock30.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
 
   FLen := 0;
   FTextDescription := '';

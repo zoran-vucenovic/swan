@@ -8,7 +8,6 @@ TTzxBlock27 = class (TTzxBlock)
 protected
   function CheckReturnFromCallSequence: Boolean; override;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
   class function GetBlockId: Integer; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
@@ -21,11 +20,6 @@ end;
 function TTzxBlock27.CheckReturnFromCallSequence: Boolean;
 begin
   Result := True;
-end;
-
-constructor {TTzxPlayer.}TTzxBlock27.Create(ATzxPlayer: TTzxPlayer);
-begin
-  inherited Create(ATzxPlayer);
 end;
 
 class function {TTzxPlayer.}TTzxBlock27.GetBlockId: Integer;

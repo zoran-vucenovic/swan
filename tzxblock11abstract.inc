@@ -44,7 +44,7 @@ strict protected
   function AddUsedBitsDetails: String; virtual;
 
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   destructor Destroy; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
@@ -60,9 +60,9 @@ begin
   Result := #13 + 'Used bits in last byte: ' + IntToStr(UsedBitsInLastByte)
 end;
 
-constructor {TTzxPlayer.}TTzxBlock11abstract.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock11abstract.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
 
   PilotTicksNeeded := DefaultPilotTicksNeeded;
   Sync1TicksNeeded := DefaultSync1TicksNeeded;
@@ -101,7 +101,7 @@ function {TTzxPlayer.}TTzxBlock11abstract.GetNextPulse: Boolean;
   procedure ToPause;
   begin
     if PauseAfterBlock > 0 then
-      FTzxPlayer.StartPauseBlock(PauseAfterBlock);
+      FTapePlayer.StartPauseBlock(PauseAfterBlock);
 
     State := TPlayState.psFinished;
     TicksNeeded0 := 0;
@@ -135,10 +135,10 @@ begin
   if State = TPlayState.psFinished then
     Exit(False);
 
-  ProcTicks := FTzxPlayer.FSpectrum.SumTicks + FTzxPlayer.FSpectrum.GetProcessor.TStatesInCurrentFrame;
+  ProcTicks := GetCurrentTotalSpectrumTicks;
   if ProcTicks >= TicksNeeded then begin
     if State <> TPlayState.psStart then
-      FTzxPlayer.ActiveBit := FTzxPlayer.ActiveBit xor %01000000;
+      FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
     Dec(PulsesNeeded);
     if PulsesNeeded = 0 then begin
       case State of

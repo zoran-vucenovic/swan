@@ -10,7 +10,7 @@ strict private
   ScreenRefreshDelay: Byte;
   InteruptFrequency: Word;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
+  constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: Integer; override;
   {returns whole block length, but without id byte}
   function GetBlockLength: Integer; override;
@@ -20,9 +20,9 @@ end;
 
 {$else}
 
-constructor {TTzxPlayer.}TTzxBlock34.Create(ATzxPlayer: TTzxPlayer);
+constructor TTzxBlock34.Create(ATapePlayer: TTapePlayer);
 begin
-  inherited Create(ATzxPlayer);
+  inherited Create(ATapePlayer);
 
   ScreenRefreshDelay := 1;
   FGeneralEmulationFlags := Word(%0000000011100111);

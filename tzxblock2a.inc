@@ -27,7 +27,7 @@ end;
 
 function TTzxBlock2A.GetStopPlaying: Boolean;
 begin
-  Result := FTzxPlayer.FSpectrum.GetProcessor.GetMemory^.RamSize <= 48 * 1024;
+  Result := FTapePlayer.GetSpectrum.GetProcessor.GetMemory^.RamSize <= 48 * 1024;
 end;
 
 function {TTzxPlayer.}TTzxBlock2A.Load2(const Stream: TStream; L: Integer

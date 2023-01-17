@@ -8,7 +8,6 @@ TTzxBlock25 = class (TTzxBlock)
 protected
   function CheckLoopEnd: Boolean; override;
 public
-  constructor Create(ATzxPlayer: TTzxPlayer); override;
   class function GetBlockId: Integer; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
@@ -21,11 +20,6 @@ end;
 function TTzxBlock25.CheckLoopEnd: Boolean;
 begin
   Result := True;
-end;
-
-constructor {TTzxPlayer.}TTzxBlock25.Create(ATzxPlayer: TTzxPlayer);
-begin
-  inherited Create(ATzxPlayer);
 end;
 
 class function {TTzxPlayer.}TTzxBlock25.GetBlockId: Integer;

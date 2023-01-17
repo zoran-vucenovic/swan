@@ -41,7 +41,7 @@ end;
 function {TTzxPlayer.}TTzxBlock2B.GetNextPulse: Boolean;
 begin
   Result := False;
-  FTzxPlayer.ActiveBit := SignalLevel;
+  FTapePlayer.ActiveBit := SignalLevel;
 end;
 
 procedure {TTzxPlayer.}TTzxBlock2B.Details(out S: String);

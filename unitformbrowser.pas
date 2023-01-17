@@ -9,7 +9,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Grids, ExtCtrls,
-  StdCtrls, ActnList, Menus, Buttons, Types, UnitTzxPlayer, CommonFunctionsLCL,
+  StdCtrls, ActnList, Menus, Buttons, Types, UnitTapePlayer, CommonFunctionsLCL,
   UnitConfigs, StrUtils, fpjson;
 
 type
@@ -51,7 +51,7 @@ type
 
   private
     FCurrentBlockNumber: Integer;
-    FTzxPlayer: TTzxPlayer;
+    FTapePlayer: TTapePlayer;
     CellContents: TCellContents;
     TextRowHeight: Integer;
     TextSpcHeight: Integer;
@@ -66,7 +66,7 @@ type
           aRect: TRect; aState: TGridDrawState);
     procedure AfterShow(Data: PtrInt);
   public
-    procedure SetTzxPlayer(const ATzxPlayer: TTzxPlayer);
+    procedure SetTapePlayer(const ATapePlayer: TTapePlayer);
     procedure UpdateCurrentBlockNumber; inline;
     procedure AddButtonActions(AImageWidth: Integer;
           AActions: Array of TCustomAction);
@@ -127,8 +127,8 @@ end;
   
 procedure TFormBrowseTape.UpdateCurrentBlockNumber;
 begin
-  if Assigned(FTzxPlayer) and (not FClosing) then begin
-    FCurrentBlockNumber := FTzxPlayer.GetCurrentBlockNumber;
+  if Assigned(FTapePlayer) and (not FClosing) then begin
+    FCurrentBlockNumber := FTapePlayer.GetCurrentBlockNumber;
     if CheckBox1.Checked then begin
       Grid.RowInView(Grid.FixedRows + FCurrentBlockNumber);
     end;
@@ -177,7 +177,7 @@ begin
   if (aCol >= Grid.FixedCols) and (aRow >= Grid.FixedRows) then begin
     IsCurrentBlock := aRow = Grid.FixedRows + FCurrentBlockNumber;
     if IsCurrentBlock then begin
-      if FTzxPlayer.IsPlaying then
+      if FTapePlayer.IsPlaying then
         Grid.Canvas.Brush.Color := $d9FFd9
       else
         Grid.Canvas.Brush.Color :=  $d5f5FF;
@@ -208,7 +208,7 @@ begin
         Grid.Canvas.Font := Grid.Font;
 
         if IsCurrentBlock then begin
-          if FTzxPlayer.IsPlaying then begin
+          if FTapePlayer.IsPlaying then begin
             P1 := Point(aRect.Left + 5, (aRect.Bottom + aRect.Top - 1) div 2 - 9);
             P2 := Point(P1.X + 9, P1.Y + 9);
             P3 := Point(P1.X, P1.Y + 18);
@@ -283,7 +283,7 @@ begin
       FreeWorkingCanvas(TempCanvas);
   end;
   SetLength(CellContents, 0);
-  SetTzxPlayer(nil);
+  SetTapePlayer(nil);
   Grid.OnDrawCell := @GridDrawCell;
   LoadFromConf;
 
@@ -386,23 +386,23 @@ var
 var
   K, N, I, J, TxtW, NN, M: Integer;
   CC: TCellContent;
-  BL: TTzxBlock;
+  BL: TTapeBlock;
   S1: String;
 begin
   Grid.BeginUpdate;
   try
     ClearGrid;
 
-    if Assigned(FTzxPlayer) then begin
-      S1 := ExtractFileName(FTzxPlayer.FileName);
+    if Assigned(FTapePlayer) then begin
+      S1 := ExtractFileName(FTapePlayer.FileName);
       Label1.Caption := S1;
-      Label2.Caption := '  ' + FTzxPlayer.FileName;
-      Panel1.Hint := FTzxPlayer.FileName;
+      Label2.Caption := '  ' + FTapePlayer.FileName;
+      Panel1.Hint := FTapePlayer.FileName;
       Panel1.ShowHint := True;
 
       M := Grid.ColCount - Grid.FixedCols;
-      Grid.RowCount := Grid.FixedRows + FTzxPlayer.GetBlockCount;
-      N := FTzxPlayer.GetBlockCount * M;
+      Grid.RowCount := Grid.FixedRows + FTapePlayer.GetBlockCount;
+      N := FTapePlayer.GetBlockCount * M;
 
       if N > 0 then begin
         for J := Grid.FixedCols + 1 to Grid.ColCount - 1 do begin
@@ -413,8 +413,8 @@ begin
         TempCanvas := GetWorkingCanvas(Grid.Canvas);
         try
           TempCanvas.Font := Grid.Font;
-          for I := 0 to FTzxPlayer.GetBlockCount - 1 do begin
-            BL := FTzxPlayer.GetBlock(I);
+          for I := 0 to FTapePlayer.GetBlockCount - 1 do begin
+            BL := FTapePlayer.GetBlock(I);
 
             for J := 0 to M - 1 do begin
               TxtW := 0;
@@ -427,8 +427,11 @@ begin
                   CC.Details := ' ' + IntToStr(I + 1) + '. ';
                 1:
                   begin
-                    CC.Details := Format(' 0x%s — %s (%d) ', [
-                      IntToHex(BL.GetBlockId, 2),
+                    CC.Details := BL.GetBlockIdAsString;
+                    if CC.Details <> '' then
+                      CC.Details := CC.Details + ' — ';
+                    CC.Details := Format(' %s%s (%d) ', [
+                      CC.Details,
                       BL.GetBlockDescription,
                       BL.GetBlockLength
                       ]);
@@ -473,15 +476,15 @@ begin
   end;
 end;
 
-procedure TFormBrowseTape.SetTzxPlayer(const ATzxPlayer: TTzxPlayer);
+procedure TFormBrowseTape.SetTapePlayer(const ATapePlayer: TTapePlayer);
 begin
-  if Assigned(FTzxPlayer) then
-    FTzxPlayer.OnChangeBlock := nil;
+  if Assigned(FTapePlayer) then
+    FTapePlayer.OnChangeBlock := nil;
 
-  if Assigned(ATzxPlayer) and (ATzxPlayer.GetBlockCount = 0) then
-    FTzxPlayer := nil
+  if Assigned(ATapePlayer) and (ATapePlayer.GetBlockCount = 0) then
+    FTapePlayer := nil
   else
-    FTzxPlayer := ATzxPlayer;
+    FTapePlayer := ATapePlayer;
   FillGrid;
 end;
 
