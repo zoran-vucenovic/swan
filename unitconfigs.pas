@@ -16,10 +16,18 @@ type
 
   TConfJSON = class(TObject)
   strict private
+    type
+      TRemapping = record
+        RemapFrom: String;
+        RemapTo: String;
+      end;
+      TRemappings = Array of TRemapping;
+  strict private
     class var
       FConf: TJSONObject;
       FFileName: String;
       FConfDirectory: String;
+      FRemappings: TRemappings;
   private
     class procedure Init;
     class procedure Final;
@@ -31,6 +39,8 @@ type
     class function SaveToStream(Stream: TStream): Boolean;
     class function LoadFromFile(): Boolean;
     class function SaveToFile(): Boolean;
+    class procedure Remap(R: TRemapping);
+    class procedure AddRemapping(RemapFrom, RemapTo: String);
   public
     class function AddToConf(const Section: String; Data: TJSONData): Boolean;
     class function GetJSONObject(const Section: String): TJSONObject;
@@ -47,6 +57,9 @@ begin
   FConf := nil;
   FConfDirectory := '';
   FFileName := '';
+
+  SetLength(FRemappings, 0);
+  AddRemapping('f1', 'general');
 end;
 
 class procedure TConfJSON.Final;
@@ -96,6 +109,8 @@ class function TConfJSON.LoadFromStream(Stream: TStream): Boolean;
 var
   Parser: TJSONParser;
   JSData: TJSONData;
+
+  I: Integer;
 begin
   Result := False;
   FreeAndNil(FConf);
@@ -107,6 +122,10 @@ begin
 
       if JSData is TJSONObject then begin
         FConf := TJSONObject(JSData);
+
+        for I := Low(FRemappings) to High(FRemappings) do begin
+          Remap(FRemappings[I]);
+        end;
         Result := True;
       end else
         JSData.Free;
@@ -168,6 +187,27 @@ begin
     end;
   except
   end;
+end;
+
+class procedure TConfJSON.Remap(R: TRemapping);
+var
+  JD: TJSONData;
+begin
+  if Assigned(GetConf) then begin
+    JD := GetConf.Extract(R.RemapFrom);
+    if Assigned(JD) then
+      GetConf.Add(R.RemapTo, JD);
+  end;
+end;
+
+class procedure TConfJSON.AddRemapping(RemapFrom, RemapTo: String);
+var
+  L: Integer;
+begin
+  L := Length(FRemappings);
+  SetLength(FRemappings, L + 1);
+  FRemappings[L].RemapFrom := RemapFrom;
+  FRemappings[L].RemapTo := RemapTo;
 end;
 
 class function TConfJSON.AddToConf(const Section: String; Data: TJSONData

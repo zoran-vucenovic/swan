@@ -15,7 +15,7 @@ uses
   UnitFormKeyMappings, UnitJoystick, UnitFormJoystickSetup,
   UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
-  UnitFormHistorySnapshots, UnitTapePlayer;
+  UnitFormHistorySnapshots, UnitTapePlayer, UnitVer;
 
 type
 
@@ -165,7 +165,7 @@ type
     procedure SpeedButton1Click(Sender: TObject);
   strict private
     const
-      cSection0 = 'f1';
+      cSection0 = 'general';
       cSectionSkipWriteScr = 'skip_scr_upd_when_tape_playing';
       cSectionScreenSizeFactor = 'screen_size_factor';
       cSectionSoundVolume = 'sound_volume';
@@ -174,6 +174,7 @@ type
       cSectionPortAudioLibPath64 = 'portaudio_lib_path64';
       cSectionLastFilePath = 'last_file_path';
       cSectionSpectrumModel = 'spectrum_model';
+      cSectionSwanVersion = 'swan_version';
 
   strict private
     FNewModel: TSpectrumModel;
@@ -1217,6 +1218,7 @@ begin
     N := 0;
   JObj := TJSONObject.Create;
   try
+    JObj.Add(cSectionSwanVersion, UnitVer.TVersion.FullVersionString);
     JObj.Add(cSectionScreenSizeFactor, ScreenSizeFactor);
     JObj.Add(cSectionSkipWriteScr, N);
 
