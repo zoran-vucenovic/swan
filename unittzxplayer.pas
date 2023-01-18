@@ -112,8 +112,6 @@ type
     class function GetBlockIdAsString: String; override;
   end;
 
-  TTzxBlockClass = class of TTzxBlock;
-
 {$define tzx_header_section}
 {$i tzxblocks.inc}
 {$undef tzx_header_section}
@@ -193,7 +191,7 @@ end;
 
 class procedure TTzxPlayer.Init;
 
-  procedure AddBlockClass(BlockClass: TTzxBlockClass);
+  procedure AddBlockClass(BlockClass: TTapeBlockClass);
   begin
     TzxBlocksMap.Add(BlockClass.GetBlockId, BlockClass);
   end;
