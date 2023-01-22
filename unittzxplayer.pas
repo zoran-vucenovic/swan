@@ -346,6 +346,13 @@ begin
     SetLength(S{%H-}, 10);
     if (Stream.Read(S[1], 10) = 10)
        and (Copy(S, 1, 8) = 'ZXTape!' + #$1A)
+       // This is followed by tzx version (two bytes), but we will just skip it.
+       // That is because tzx specification says that all blocks possibly added
+       // in future must have the length of the block in first 4 bytes after the
+       // block id (so we can "implement" these blocks by just skipping them).
+       // So tzx specification can (and does) say that the reader must handle
+       // the file, even if it cannot handle all the data in the file.
+       // Therefore, we have nothing meaningful to do with the version here.
     then
       Result := True;
   end;

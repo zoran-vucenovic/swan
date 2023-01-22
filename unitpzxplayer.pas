@@ -76,7 +76,7 @@ type
   private
     VerMajor: Byte;
     VerMinor: Byte;
-    FDetails: String;
+    FDetails: AnsiString;
 
     function FillDetails(N: Integer; const Stream: TStream): Boolean;
   protected
@@ -376,17 +376,52 @@ begin
   M := PauseLen;
   M := (M + 1750) div 3500;
 
-  S := Format('Initial pulse level: %d%sPause length: %d ticks (%d ms)',
-    [InitialPulseLevel, #13, PauseLen, M]);
+  if InitialPulseLevel <> 0 then
+    S := 'high'
+  else
+    S := 'low';
+  S := Format('Initial pulse level: %s%sPause length: %d ticks (%d ms)',
+    [S, #13, PauseLen, M]);
 end;
 
 { TPzxBlockDATA }
 
 procedure TPzxBlockDATA.FillDetails;
+
+  function GetSArr(SArr: TArrUInt16): String;
+  var
+    I, N: Integer;
+    MaybeComma, Tail: String;
+  begin
+    N := Length(SArr);
+    if N = 0 then
+      Result := ' <empty>'
+    else begin
+      if N > 26 then begin
+        N := 22;
+        Tail := '... (' + IntToStr(Length(SArr) - N) + ' more)';
+      end else
+        Tail := '';
+
+      MaybeComma := ' ';
+      for I := 0 to N - 1 do begin
+        Result := Result + MaybeComma + IntToStr(SArr[I]);
+        MaybeComma := ', ';
+      end;
+      Result := Result + Tail;
+    end;
+  end;
+
+var
+  S: String;
 begin
+  if InitialPulseLevel <> 0 then
+    S := 'high'
+  else
+    S := 'low';
   FDetails :=
-    Format('Count (bits): %d%sInitial pulse level: %d%sTail: %d%sP0: %d%sP1: %d',
-      [TotalBits, #13, InitialPulseLevel, #13, Tail, #13, P0, #13, P1]);
+    Format('Count (bits): %d%sInitial pulse level: %s%sTail: %d%sP0: %d%sP1: %d%s%s%s%s%s%s',
+      [TotalBits, #13, S, #13, Tail, #13, P0, #13, P1, #13, 'S0:', GetSArr(S0), #13, 'S1:', GetSArr(S1)]);
 end;
 
 function TPzxBlockDATA.LoadBlock2(const Stream: TStream): Boolean;
@@ -728,16 +763,6 @@ begin
           P := N + 1;
         S0 := Copy(S, I, P - I);
 
-        // Unilike tzx, pzx specification says that texts should be utf8 encoded.
-        // However, this rule is immediately broken there by the files provided
-        // for testing, which have text encoded in iso-8859-1.
-        // see the pound character in header block of these games:
-        //   - World Cup Carnival
-        //   - Super Scramble
-        //   - Atlantis
-        //   - Myth
-        // So, let's treat text as iso-8859-1, as we do with tzx files:
-        UnitCommon.ConvertCodePageFromISO8859_1_to_Utf8(S0);
         if J and 1 = 0 then begin
           S0 := #13 + UTF8Trim(S0);
           if S0[Length(S0)] <> ':' then
@@ -751,17 +776,36 @@ begin
         Inc(J);          
       end;
 
+      // Unilike tzx, pzx specification says that texts should be utf8 encoded.
+      // However, this rule is immediately broken there by the files provided
+      // for testing, which have text encoded in iso-8859-1.
+      // see the pound character in header block of these games:
+      //   - World Cup Carnival
+      //   - Super Scramble
+      //   - Atlantis
+      //   - Myth
+      // So, let's treat text as iso-8859-1, as we do with tzx files:
+      UnitCommon.ConvertCodePageFromISO8859_1_to_Utf8(FDetails);
+
       Result := True;
     end;
   end;
 
   if Result then begin
+    // Unilike tzx specification, the pzx specification says that any
+    // implementation should accept only files whose major version it implements
+    // and reject anything else. An implementation may report a warning in case
+    // it encounters minor greater than it implements for given major, if the
+    // implementor finds it convenient to do so.
+    // We will show WARNING when major version is higher than what we implement,
+    // and NOTE when only minor version is higher.
+    // We will try to load the file anyway.
     S0 := '';
     if VerMajor > SupportedPZXVersionMajor then begin
       S0 := 'WARNING: %sTape loading might not%s!';
     end else if VerMajor = SupportedPZXVersionMajor then begin
       if VerMinor > SupportedPZXVersionMinor then
-        S0 := 'Note: %sTape loading should still%s.';
+        S0 := 'NOTE: %sTape loading should still%s.';
     end;
     if S0 <> '' then begin
       S0 := #13 + Format(S0, [Format('Swan supports PZX ver %d.%d%s', [SupportedPZXVersionMajor, SupportedPZXVersionMinor, #13]), ' work correctly']);
@@ -885,10 +929,13 @@ end;
 class function TPzxPlayer.CheckHeader(const Stream: TStream): Boolean;
 var
   P: Int64;
+  C: TTapeBlockClass;
 begin
   Result := False;
   P := Stream.Position;
-  Result := GetNextBlockClass(Stream).InheritsFrom(TPzxBlockPZXT.ClassType);
+  // the pzx specification says that the first block must be PZXT:
+  C := GetNextBlockClass(Stream);
+  Result := Assigned(C) and C.InheritsFrom(TPzxBlockPZXT.ClassType);
   Result := (Stream.Seek(P - Stream.Position, TSeekOrigin.soCurrent) = P) and Result;
 end;
 
@@ -901,11 +948,9 @@ begin
   Result := nil;
   if Stream.Size >= Stream.Position + 8 then begin
     if Stream.Read(D{%H-}, 4) = 4 then begin
-      if PzxBlocksMap.TryGetData(D, C) then begin
-        // the pzx specification says that the first block must be PZXT:
-        //if (GetBlockCount > 0) or C.InheritsFrom(TPzxBlockPZXT.ClassType) then
-          Result := C;
-      end else
+      if PzxBlocksMap.TryGetData(D, C) then
+        Result := C
+      else
         Result := TPzxBlockUnsuported;
     end;
   end;
