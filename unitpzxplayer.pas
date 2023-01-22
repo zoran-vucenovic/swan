@@ -10,6 +10,8 @@ interface
 uses
   Classes, SysUtils, fgl, LazUTF8, UnitTapePlayer, UnitSpectrum, UnitCommon;
 
+implementation
+
 type
 
   TPzxPlayer = class(TTapePlayer)
@@ -32,10 +34,6 @@ type
   public
     procedure Rewind; override;
   end;
-
-implementation
-
-type
 
   TPzxBlock = class abstract (TTapeBlock)
   strict private
