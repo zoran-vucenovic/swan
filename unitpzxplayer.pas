@@ -8,7 +8,7 @@ unit UnitPzxPlayer;
 interface
 
 uses
-  Classes, SysUtils, fgl, LazUTF8, UnitTapePlayer, UnitSpectrum, UnitCommon;
+  Classes, SysUtils, LazUTF8, UnitTapePlayer, UnitSpectrum, UnitCommon;
 
 implementation
 
@@ -242,13 +242,17 @@ begin
   if GetBlockLength = 0 then
     Exit(True);
   Result := Stream.Read(BrwsText[1], GetBlockLength) = GetBlockLength;
-  if Result then
+  if Result then begin
     BrwsText :=
        StringReplace(
          StringReplace(
             StringReplace(BrwsText, #13#10, #13, [rfReplaceAll])
             , #10, #13, [rfReplaceAll])
          , #0, #13, [rfReplaceAll]);
+
+    // See the comment inside TPzxBlockPZXT.FillDetails method
+    UnitCommon.ConvertCodePageFromISO8859_1_to_Utf8(BrwsText);
+  end;
 end;
 
 class function TPzxBlockBRWS.GetBlockDescription: String;
@@ -723,6 +727,16 @@ begin
         if P = 0 then
           P := N + 1;
         S0 := Copy(S, I, P - I);
+
+        // Unilike tzx, pzx specification says that texts should be utf8 encoded.
+        // However, this rule is immediately broken there by the files provided
+        // for testing, which have text encoded in iso-8859-1.
+        // see the pound character in header block of these games:
+        //   - World Cup Carnival
+        //   - Super Scramble
+        //   - Atlantis
+        //   - Myth
+        // So, let's treat text as iso-8859-1, as we do with tzx files:
         UnitCommon.ConvertCodePageFromISO8859_1_to_Utf8(S0);
         if J and 1 = 0 then begin
           S0 := #13 + UTF8Trim(S0);
