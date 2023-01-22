@@ -11,24 +11,6 @@ uses
   Classes, SysUtils, fgl, LazUTF8, UnitTapePlayer, UnitSpectrum, UnitCommon;
 
 type
-  TPzxBlock = class abstract (TTapeBlock)
-  strict private
-    FLen: Integer;
-  strict protected
-    type
-      TPzxPlayState = (ppsStart, ppsPlaying, ppsFinished);
-  strict protected
-    State: TPzxPlayState;
-
-  protected
-    function LoadBlock2(const Stream: TStream): Boolean; virtual; abstract;
-  public
-    constructor Create(ATapePlayer: TTapePlayer); override;
-    function GetBlockLength: Integer; override;
-    function LoadBlock(const Stream: TStream): Boolean; override;
-    class function GetBlockId: Integer; override;
-    procedure Start; override;
-  end;
 
   TPzxPlayer = class(TTapePlayer)
   public
@@ -54,6 +36,25 @@ type
 implementation
 
 type
+
+  TPzxBlock = class abstract (TTapeBlock)
+  strict private
+    FLen: Integer;
+  strict protected
+    type
+      TPzxPlayState = (ppsStart, ppsPlaying, ppsFinished);
+  strict protected
+    State: TPzxPlayState;
+
+  protected
+    function LoadBlock2(const Stream: TStream): Boolean; virtual; abstract;
+  public
+    constructor Create(ATapePlayer: TTapePlayer); override;
+    function GetBlockLength: Integer; override;
+    function LoadBlock(const Stream: TStream): Boolean; override;
+    class function GetBlockId: Integer; override;
+    procedure Start; override;
+  end;
 
   TPzxBlockUnsuported = class(TPzxBlock)
   private
