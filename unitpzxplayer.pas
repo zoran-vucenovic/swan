@@ -72,11 +72,16 @@ type
 
   TPzxBlockPZXT = class(TPzxBlock)
   private
+    const
+      SupportedPZXVersionMajor = 1;
+      SupportedPZXVersionMinor = 0;
+
+  private
     VerMajor: Byte;
     VerMinor: Byte;
     FDetails: String;
 
-    function GetDetails(N: Integer; const Stream: TStream): Boolean;
+    function FillDetails(N: Integer; const Stream: TStream): Boolean;
   protected
     function LoadBlock2(const Stream: TStream): Boolean; override;
   public
@@ -203,7 +208,7 @@ var
 begin
   if GetBlockLength = 2 then begin
     if Stream.Read(Flags, 2) = 2 then begin
-      FlagStopOnlyIf48K := Flags = 1;
+      FlagStopOnlyIf48K := (Flags and 1) = 1;
       Exit(True);
     end;
   end;
@@ -237,6 +242,8 @@ end;
 function TPzxBlockBRWS.LoadBlock2(const Stream: TStream): Boolean;
 begin
   SetLength(BrwsText, GetBlockLength);
+  if GetBlockLength = 0 then
+    Exit(True);
   Result := Stream.Read(BrwsText[1], GetBlockLength) = GetBlockLength;
   if Result then
     BrwsText :=
@@ -564,7 +571,7 @@ begin
   end else
     S := '';
   for I := 0 to N - 1 do begin
-    FDetails := FDetails + #13 + Format('%3d. duration %d ticks', [I + 1, Pulses[I].Duration]);
+    FDetails := FDetails + #13 + Format('%3d. %d ticks', [I + 1, Pulses[I].Duration]);
     if Pulses[I].RepeatCount > 1 then
       FDetails := FDetails + ', repeted ' + Pulses[I].RepeatCount.ToString + ' times';
   end;
@@ -576,7 +583,7 @@ var
   N, Count: Integer;
   D: UInt16;
 
-  function FetchUint16(): Boolean;
+  function ReadNextWord(): Boolean;
   begin
     Inc(N, 2);
     if (N <= GetBlockLength) and (Stream.Read(D, 2) = 2) then begin
@@ -596,17 +603,16 @@ begin
   N := 0;
   SetLength(Pulses, GetBlockLength div 6 + 2);
 
-  while FetchUInt16 do begin
+  while ReadNextWord do begin
     Pulse.RepeatCount := 1;
     if D > $8000 then begin
       Pulse.RepeatCount := D and $7FFF;
-      if not FetchUint16() then
+      if not ReadNextWord() then
         Break;
     end;
     Pulse.Duration := D and $7FFF;
     if D >= $8000 then begin
-      //Pulse.Duration := D and $7FFF;
-      if not FetchUint16() then
+      if not ReadNextWord() then
         Break;
       Pulse.Duration := (Pulse.Duration shl 16) or D;
     end;
@@ -627,6 +633,8 @@ begin
       Break;
     end;
   end;
+
+  SetLength(Pulses, Count);
 end;
 
 constructor TPzxBlockPULS.Create(ATapePlayer: TTapePlayer);
@@ -701,7 +709,7 @@ end;
 
 { TPzxBlockPZXT }
 
-function TPzxBlockPZXT.GetDetails(N: Integer; const Stream: TStream): Boolean;
+function TPzxBlockPZXT.FillDetails(N: Integer; const Stream: TStream): Boolean;
 var
   S, S0: String;
   I, J, P: Integer;
@@ -736,6 +744,25 @@ begin
       Result := True;
     end;
   end;
+
+  if Result then begin
+    S0 := '';
+    if VerMajor > SupportedPZXVersionMajor then begin
+      S0 := 'WARNING: %sTape loading might not%s!';
+    end else if VerMajor = SupportedPZXVersionMajor then begin
+      if VerMinor > SupportedPZXVersionMinor then
+        S0 := 'Note: %sTape loading should still%s.';
+    end;
+    if S0 <> '' then begin
+      S0 := #13 + Format(S0, [Format('Swan supports PZX ver %d.%d%s', [SupportedPZXVersionMajor, SupportedPZXVersionMinor, #13]), ' work correctly']);
+      if FDetails <> '' then
+        S0 := S0 + #13 + ' ';
+    end;
+    if FDetails <> '' then
+      S0 := S0 + #13;
+
+    FDetails := Format('PZX ver. %d.%d', [VerMajor, VerMinor]) + S0 + FDetails;
+  end;
 end;
 
 function TPzxBlockPZXT.LoadBlock2(const Stream: TStream): Boolean;
@@ -745,15 +772,11 @@ begin
   if GetBlockLength >= 2 then begin
     if (Stream.Read(VerMajor, 1) = 1) and (Stream.Read(VerMinor, 1) = 1) then begin
       N := GetBlockLength - 2;
-      //SetLength(TapeInfo, N);
-      if GetDetails(N, Stream) then begin //(N < 1) or (Stream.Read(TapeInfo[1], N) = N) then begin
-        { #todo : fill details! -- see tzx block 32, move details decoding out and unify! }
-        // fill details
-
-        Result := True;
-      end;
+      if FillDetails(N, Stream) then
+        Exit(True);
     end;
   end;
+  Result := False;
 end;
 
 constructor TPzxBlockPZXT.Create(ATapePlayer: TTapePlayer);
