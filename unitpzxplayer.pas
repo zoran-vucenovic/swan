@@ -55,8 +55,6 @@ implementation
 
 type
 
-  TPzxBlockClass = class of TPzxBlock;
-
   TPzxBlockUnsuported = class(TPzxBlock)
   private
     BlockIdentifier: String;
@@ -908,7 +906,7 @@ end;
 
 class procedure TPzxPlayer.Init;
 
-  procedure AddBlockClass(BlockClass: TPzxBlockClass);
+  procedure AddBlockClass(BlockClass: TTapeBlockClass);
   begin
     PzxBlocksMap.Add(BlockClass.GetBlockId, BlockClass);
   end;
