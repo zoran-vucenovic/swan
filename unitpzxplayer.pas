@@ -270,7 +270,6 @@ end;
 
 function TPzxBlockUnsuported.LoadBlock2(const Stream: TStream): Boolean;
 var
-  N: Int64;
   P: Int64;
 begin
   Stream.Seek(Int64(-8), TSeekOrigin.soCurrent);
