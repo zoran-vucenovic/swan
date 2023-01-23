@@ -20,19 +20,17 @@ type
   strict protected
     FTapePlayer: TTapePlayer;
 
-  public
-    function GetStopPlaying: Boolean; virtual;
-
-    function LoadBlock(const Stream: TStream): Boolean; virtual; abstract;
-    function GetNextPulse(): Boolean; virtual;
-
+    function GetCurrentTotalSpectrumTicks: Int64; inline;
   public
     constructor Create(ATapePlayer: TTapePlayer); virtual;
     {returns whole block length, without id byte}
     function GetBlockLength: Integer; virtual; abstract;
-
     class function GetBlockDescription: String; virtual; abstract;
-    function GetCurrentTotalSpectrumTicks: Int64; inline;
+
+    function LoadBlock(const Stream: TStream): Boolean; virtual; abstract;
+    function GetNextPulse(): Boolean; virtual;
+    function GetStopPlaying: Boolean; virtual;
+
     procedure Start; virtual;
     procedure Details(out S: String); virtual;
     class function GetBlockId: Integer; virtual; abstract;
