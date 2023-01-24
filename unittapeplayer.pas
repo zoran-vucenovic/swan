@@ -134,16 +134,6 @@ begin
   Duplicates := TDuplicates.dupIgnore;
 end;
 
-{ TTapePlayer.TTapeBlocksMap }
-
-//constructor TTapePlayer.TTapeBlocksMap.Create;
-//begin
-//  inherited Create;
-//
-//  Sorted := True;
-//  Duplicates := TDuplicates.dupIgnore;
-//end;
-
 { TTapeBlock }
 
 function TTapeBlock.GetStopPlaying: Boolean;
