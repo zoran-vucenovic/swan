@@ -15,7 +15,6 @@ implementation
 type
 
   TPzxPlayer = class(TTapePlayer)
-  public
   protected
     procedure CheckNextBlock(); override;
     class function CheckHeader(const Stream: TStream): Boolean; override;
@@ -31,8 +30,6 @@ type
   private
     class procedure Init;
     class procedure Final;
-  public
-    procedure Rewind; override;
   end;
 
   TPzxBlock = class abstract (TTapeBlock)
@@ -60,6 +57,8 @@ type
   protected
     function LoadBlock2(const Stream: TStream): Boolean; override;
   public
+    constructor Create(ATapePlayer: TTapePlayer); override;
+
     class function GetBlockDescription: String; override;
     procedure Start; override;
     class function GetBlockIdAsString: String; override;
@@ -287,6 +286,12 @@ begin
     Result := True;
 end;
 
+constructor TPzxBlockUnsuported.Create(ATapePlayer: TTapePlayer);
+begin
+  inherited Create(ATapePlayer);
+  BlockIdentifier := '';
+end;
+
 class function TPzxBlockUnsuported.GetBlockDescription: String;
 begin
   Result := 'Block not supported';
@@ -310,7 +315,6 @@ end;
 
 procedure TPzxBlockUnsuported.Details(out S: String);
 begin
-  //inherited Details(S);
   S := 'Unknown block "' + BlockIdentifier + '"';
 end;
 
@@ -702,6 +706,7 @@ var
 begin
   if State = ppsFinished then
     Exit(False);
+
   ProcTicks := GetCurrentTotalSpectrumTicks;
   if ProcTicks >= TicksNeeded then begin
     if State = ppsPlaying then
@@ -837,6 +842,8 @@ constructor TPzxBlockPZXT.Create(ATapePlayer: TTapePlayer);
 begin
   inherited Create(ATapePlayer);
   FDetails := '';
+  VerMajor := 0;
+  VerMinor := 0;
 end;
 
 destructor TPzxBlockPZXT.Destroy;
@@ -984,11 +991,6 @@ end;
 class procedure TPzxPlayer.Final;
 begin
   PzxBlocksMap.Free;
-end;
-
-procedure TPzxPlayer.Rewind;
-begin
-  inherited Rewind;
 end;
 
 class function TPzxPlayer.CheckIsMyClass(const Stream: TStream): Boolean;

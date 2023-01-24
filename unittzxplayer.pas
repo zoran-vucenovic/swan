@@ -152,7 +152,10 @@ end;
 
 class function TTzxBlock.GetBlockIdAsString: String;
 begin
-  Result := '0x' + IntToHex(GetBlockId, 2);
+  if GetBlockId = 0 then
+    Result := ''
+  else
+    Result := '0x' + IntToHex(GetBlockId, 2);
 end;
 
 function {TTzxPlayer.}TTzxBlock.GetRelativeJumpValue: Integer;
