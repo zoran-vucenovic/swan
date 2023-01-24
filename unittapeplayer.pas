@@ -37,7 +37,7 @@ type
     class function GetBlockIdAsString: String; virtual; abstract;
   end;
 
-  TTapePlayer = class(TSpectrum.TAbstractTapePlayer)
+  TTapePlayer = class abstract (TSpectrum.TAbstractTapePlayer)
   strict private
     procedure EmptyProcedure;
     procedure SetOnChangeBlock(AValue: TProcedureOfObject);
