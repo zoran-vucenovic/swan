@@ -73,7 +73,7 @@ type
 
     class function GetTapeType: TTapeType; virtual; abstract;
 
-    class procedure RegisterTapePlayerClass(TapePlayerClass: TTapePlayerClass);
+    class procedure RegisterTapePlayerClass(TapePlayerClass: TTapePlayerClass); static;
     class function GetNextBlockClass(const Stream: TStream): TTapeBlockClass; virtual;
     class function CheckIsMyClass(const Stream: TStream): Boolean; virtual; abstract;
 
@@ -404,7 +404,7 @@ end;
 class function TTapePlayer.GetTapePlayerClassFromType(const TapeType: TTapeType
   ): TTapePlayerClass;
 begin
-  if not TapePlayerMap.TryGetData(TapeType, Result) then
+  if (TapePlayerMap = nil) or (not TapePlayerMap.TryGetData(TapeType, Result)) then
     Result := nil;
 end;
 
@@ -412,13 +412,14 @@ class function TTapePlayer.CheckRealTapePlayerClass(const Stream: TStream
   ): TTapePlayerClass;
 var
   I: Integer;
-  C: TTapePlayerClass;
 begin
-  for I := 0 to TapePlayerMap.Count - 1 do begin
-    C := TapePlayerMap.Data[I];
-    if C.CheckIsMyClass(Stream) then
-      Exit(C);
-  end;
+  if Assigned(TapePlayerMap) then
+    for I := 0 to TapePlayerMap.Count - 1 do begin
+      Result := TapePlayerMap.Data[I];
+      if Result.CheckIsMyClass(Stream) then
+        Exit;
+    end;
+
   Result := nil;
 end;
 
