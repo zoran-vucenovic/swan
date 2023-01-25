@@ -53,7 +53,7 @@ type
     MaxSpeed = NormalSpeed div 16;
     MinSpeed = NormalSpeed * 8;
 
-  private
+  strict private
     // processor events
     procedure ProcessorInput;
     procedure ProcessorOutput;

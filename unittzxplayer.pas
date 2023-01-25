@@ -81,11 +81,11 @@ type
   private
     class procedure Init;
   protected
-    class function CheckHeader(const Stream: TStream): Boolean; override;
-    class function GetNextBlockClass(const Stream: TStream): TTapeBlockClass;
+    class function CheckHeader(const {%H-}Stream: TStream): Boolean; override;
+    class function GetNextBlockClass(const {%H-}Stream: TStream): TTapeBlockClass;
       override;
     class function GetTapeType: TTapeType; override;
-    class function CheckIsMyClass(const Stream: TStream): Boolean; override;
+    class function CheckIsMyClass(const {%H-}Stream: TStream): Boolean; override;
   end;
 
   TTzxBlock = class abstract (TTapeBlock)

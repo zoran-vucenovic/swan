@@ -1,5 +1,5 @@
 unit PortAudioHeader;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 {
   Some declarations from file portaudio.h, translated from C to Free Pascal.
@@ -177,15 +177,18 @@ const
   {$endif}
                     
 {$ifdef mswindows}
-  procedure TryWithBitness(const S: String); inline;
+  procedure TryWithBitness(S: String); inline;
+  var
+    Ext: String;
   begin
+    S := S + IntToStr(SizeOf(Pointer) * 8);
+    Ext := ExtractFileExt(DefaultLibraryName);
+    LibHandle := SafeLoadLibrary(S + Ext);
     if LibHandle = NilHandle then begin
-      LibHandle := SafeLoadLibrary(S + IntToStr(SizeOf(Pointer) * 8) + ExtractFileExt(DefaultLibraryName));
-      if LibHandle = NilHandle then begin
-        LibHandle := SafeLoadLibrary('lib' + S + IntToStr(SizeOf(Pointer) * 8) + ExtractFileExt(DefaultLibraryName));
-        if LibHandle = NilHandle then
-          LibHandle := SafeLoadLibrary('lib' + S + IntToStr(SizeOf(Pointer) * 8) + 'bit' + ExtractFileExt(DefaultLibraryName));
-      end;
+      S := 'lib' + S;
+      LibHandle := SafeLoadLibrary(S + Ext);
+      if LibHandle = NilHandle then
+        LibHandle := SafeLoadLibrary(S + 'bit' + Ext);
     end;
   end;
 
@@ -199,12 +202,14 @@ begin
     if Trim(LibraryPath) = '' then begin
       LibHandle := SafeLoadLibrary(DefaultLibraryName);
       {$ifdef mswindows}
-      LibAux := ExtractFileNameOnly(DefaultLibraryName);
-      TryWithBitness(LibAux);
       if LibHandle = NilHandle then begin
-        TryWithBitness(LibAux + '-');
-        if LibHandle = NilHandle then
-          TryWithBitness(LibAux + '_');
+        LibAux := ExtractFileNameOnly(DefaultLibraryName);
+        TryWithBitness(LibAux);
+        if LibHandle = NilHandle then begin
+          TryWithBitness(LibAux + '-');
+          if LibHandle = NilHandle then
+            TryWithBitness(LibAux + '_');
+        end;
       end;
       {$endif}
     end else
@@ -214,6 +219,7 @@ begin
       SetToEmptyProcedures;
       Exit;
     end;
+
     Pointer(Pa_Initialize) := GetProcAddress(LibHandle, 'Pa_Initialize');
     Pointer(Pa_Terminate) := GetProcAddress(LibHandle, 'Pa_Terminate');
     Pointer(Pa_OpenDefaultStream) := GetProcAddress(LibHandle, 'Pa_OpenDefaultStream');
