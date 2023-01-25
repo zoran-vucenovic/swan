@@ -1,5 +1,5 @@
 
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$ifdef tzx_header_section}
@@ -39,10 +39,16 @@ end;
 
 TTzxBlock10 = class (TTzxTapBlock)
 public
+  class function GetBlockId: Integer; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
 end;
 
 {$else}
+
+class function TTzxBlock10.GetBlockId: Integer;
+begin
+  Result := $10;
+end;
 
 function {TTzxPlayer.}TTzxBlock10.LoadBlock(const Stream: TStream): Boolean;
 var
@@ -106,9 +112,9 @@ begin
   HeaderWD.IsValid := False;
 end;
 
-class function {TTzxPlayer.}TTzxTapBlock.GetBlockId: Integer;
+class function TTzxTapBlock.GetBlockId: Integer;
 begin
-  Result := $10;
+  Result := 0;
 end;
 
 function {TTzxPlayer.}TTzxTapBlock.LoadBlock(const Stream: TStream): Boolean;
