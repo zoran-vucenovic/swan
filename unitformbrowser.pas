@@ -470,10 +470,11 @@ begin
     end;
     Caption := Format('Tape player (%s)', [S1]);
 
-    UpdateCurrentBlockNumber;
   finally
     Grid.EndUpdate();
   end;
+
+  UpdateCurrentBlockNumber;
 end;
 
 procedure TFormBrowseTape.SetTapePlayer(const ATapePlayer: TTapePlayer);
