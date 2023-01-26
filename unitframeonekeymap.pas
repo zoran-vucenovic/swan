@@ -27,6 +27,7 @@ type
     PanelSpectrumKeys: TPanel;
     Shape1: TShape;
     procedure FrameResize(Sender: TObject);
+    procedure PanelPCKeyResize(Sender: TObject);
   private
     type
       TOneSpectrumKeyControl = class(TCustomControl)
@@ -104,6 +105,7 @@ type
     ScrollBox: TScrollBox;
     PrevCtrl: TControl;
 
+    function InternalAddPCKey(AValue: Word; WithFocus: Boolean): Integer;
     procedure RemovePCKey(AValue: Word);
     procedure OnClickRemovePCKey(Sender: TObject);
     procedure ActiveCtrlChg(Sender: TObject; LastControl: TControl);
@@ -112,7 +114,8 @@ type
     destructor Destroy; override;
 
     procedure Clear;
-    function AddPCKey(AValue: Word): Integer;
+    procedure AddPCKey(AValue: Word);
+
     procedure LoadFromKeyMapRecs(const KMRecs: TKeyMapRecs);
     procedure SaveToKeyMapRecs(out KMRecs: TKeyMapRecs);
   end;
@@ -210,7 +213,8 @@ begin
   FrameMappingsMap.Clear;
 end;
 
-function TControlKeyMappings.AddPCKey(AValue: Word): Integer;
+function TControlKeyMappings.InternalAddPCKey(AValue: Word; WithFocus: Boolean
+  ): Integer;
 var
   F, F1: TFrameOnePCKeyMapping;
 begin
@@ -246,11 +250,16 @@ begin
     F.OnRemoveClick := @OnClickRemovePCKey;
   end;
 
-  if Assigned(F) and F.CanSetFocus then begin
+  if WithFocus and Assigned(F) and F.CanSetFocus then begin
     F.SetFocus;
     ScrollBox.ScrollInView(F);
   end;
 
+end;
+
+procedure TControlKeyMappings.AddPCKey(AValue: Word);
+begin
+  InternalAddPCKey(AValue, True);
 end;
 
 procedure TControlKeyMappings.RemovePCKey(AValue: Word);
@@ -278,7 +287,7 @@ begin
   try
     Clear;
     for I := 0 to High(KMRecs) do begin
-      N := Self.AddPCKey(KMRecs[I].Key);
+      N := Self.InternalAddPCKey(KMRecs[I].Key, False);
 
       FrameMappingsMap.Data[N].AddSpectrumKey(KMRecs[I].SpectrumKey);
     end;
@@ -289,8 +298,6 @@ begin
   finally
     EnableAlign;
   end;
-
-  //Application.ProcessMessages;
 end;
 
 procedure TControlKeyMappings.SaveToKeyMapRecs(out KMRecs: TKeyMapRecs);
@@ -458,6 +465,11 @@ begin
   UpdateSpectrumKeysLayout;
 end;
 
+procedure TFrameOnePCKeyMapping.PanelPCKeyResize(Sender: TObject);
+begin
+  PanelSpectrumKeys.Constraints.MinHeight := PanelPCKey.Height;
+end;
+
 function TFrameOnePCKeyMapping.GetOnRemoveClick: TNotifyEvent;
 begin
   Result := LabRemovePCKey.OnClick;
@@ -561,9 +573,14 @@ begin
 
   TCommonSpectrum.SortSpectrumKeys(AW);
 
-  ClearSpectrumKeys;
-  for I := 0 to High(AW) do
-    AddSpectrumKey(AW[I]);
+  PanelSpectrumKeys.DisableAutoSizing;
+  try
+    ClearSpectrumKeys;
+    for I := 0 to High(AW) do
+      AddSpectrumKey(AW[I]);
+  finally
+    PanelSpectrumKeys.EnableAutoSizing;
+  end;
 end;
 
 constructor TFrameOnePCKeyMapping.Create(TheOwner: TComponent; Sz: TSize);
@@ -623,6 +640,7 @@ begin
   LabRemovePCKey.Parent := PanelRemovePCKey;
   PanelRemovePCKey.AutoSize := True;
   PanelPCKey.AutoSize := True;
+  PanelSpectrumKeys.Constraints.MinHeight := PanelPCKey.Height;
   PanelSpectrumKeys.AutoSize := True;
   PanelEditSpectrumKeys.AutoSize := True;
   Panel2.AutoSize := True;
@@ -655,35 +673,28 @@ var
   OSC: TOneSpectrumKeyControl;
 begin
   OSC := FindSpectrumKeyControl(AValue);
-  if OSC <> nil then begin
-    // highlight this key somehow?
-    Exit;
+  if OSC = nil then begin
+    OSC := TOneSpectrumKeyControl.Create(PanelSpectrumKeys);
+    OSC.SpectrumKey := AValue;
+    OSC.SetHasPlus(Length(SpectrumKeys) > 0);
+
+    SetLength(SpectrumKeys, Length(SpectrumKeys) + 1);
+    SpectrumKeys[High(SpectrumKeys)] := OSC;
+
+    OSC.Parent := PanelSpectrumKeys;
   end;
-
-  OSC := TOneSpectrumKeyControl.Create(PanelSpectrumKeys);
-  OSC.SpectrumKey := AValue;
-  OSC.SetHasPlus(Length(SpectrumKeys) > 0);
-
-  SetLength(SpectrumKeys, Length(SpectrumKeys) + 1);
-  SpectrumKeys[High(SpectrumKeys)] := OSC;
-
-  OSC.Parent := PanelSpectrumKeys;
 end;
 
 procedure TFrameOnePCKeyMapping.ClearSpectrumKeys;
 var
   I: Integer;
-  C: TOneSpectrumKeyControl;
 begin
   PanelSpectrumKeys.DisableAutoSizing;
   try
-    for I := High(SpectrumKeys) downto Low(SpectrumKeys) do begin
-      C := SpectrumKeys[I];
+    for I := High(SpectrumKeys) downto Low(SpectrumKeys) do
+      SpectrumKeys[I].Free;
 
-      SetLength(SpectrumKeys, I);
-      Application.ReleaseComponent(C);
-    end;
-
+    SetLength(SpectrumKeys, 0);
   finally
     PanelSpectrumKeys.EnableAutoSizing;
   end;

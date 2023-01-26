@@ -32,6 +32,7 @@ object FrameOnePCKeyMapping: TFrameOnePCKeyMapping
       ClientHeight = 47
       ClientWidth = 224
       TabOrder = 0
+      OnResize = PanelPCKeyResize
       object Panel2: TPanel
         AnchorSideLeft.Control = PanelPCKey
         AnchorSideTop.Control = PanelPCKey
