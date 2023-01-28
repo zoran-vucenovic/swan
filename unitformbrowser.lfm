@@ -54,6 +54,7 @@ object FormBrowseTape: TFormBrowseTape
         BorderSpacing.Around = 3
         Caption = 'Label1'
         ParentColor = False
+        ShowAccelChar = False
       end
       object Label2: TLabel
         AnchorSideLeft.Control = Label1
@@ -66,6 +67,7 @@ object FormBrowseTape: TFormBrowseTape
         Width = 34
         Caption = 'Label2'
         ParentColor = False
+        ShowAccelChar = False
       end
     end
     object Panel2: TPanel

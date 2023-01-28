@@ -410,7 +410,7 @@ end;
 
 procedure TFormDebug.ActionGotoSPExecute(Sender: TObject);
 begin                                                        
-  FocusAddressInGrid(StringGrid1.FixedRows + StackPointer);
+  FocusAddressInGrid(StackPointer);
 end;
 
 procedure TFormDebug.FormDestroy(Sender: TObject);
@@ -635,29 +635,13 @@ begin
 end;
 
 procedure TFormDebug.FocusAddressInGrid(const Address: Word);
-var
-  P, N: Integer;
 begin
-  StringGrid1.BeginUpdate;
-  try
-    P := Address;
-    N := P - 2;
-    while ((N < P) and (not TAccessStringGrid(StringGrid1).MoveExtend(False, StringGrid1.Col, N, False))) do begin
-      Inc(N);
-    end;
-    N := P + 2;
-    while ((N > P) and (not TAccessStringGrid(StringGrid1).MoveExtend(False, StringGrid1.Col, N, False))) do begin
-      Dec(N);
-    end;
-    TAccessStringGrid(StringGrid1).MoveExtend(False, StringGrid1.Col, P, True);
-  finally
-    StringGrid1.EndUpdate;
-  end;
+  TCommonFunctionsLCL.RowInView(StringGrid1, StringGrid1.FixedRows + Address);
 end;
 
 procedure TFormDebug.GotoPC;
 begin
-  FocusAddressInGrid(StringGrid1.FixedRows + ProgrCounter);
+  FocusAddressInGrid(ProgrCounter);
 end;
 
 procedure TFormDebug.SetSpectrum(Spectrum: TSpectrum);

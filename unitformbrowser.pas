@@ -38,7 +38,6 @@ type
         function MouseButtonAllowed({%H-}Button: TMouseButton): Boolean; override;
       public
         constructor Create(AOwner: TComponent); override;
-        procedure RowInView(ARow: Integer);
       end;
 
       TCellContent = class(TObject)
@@ -67,7 +66,7 @@ type
     procedure AfterShow(Data: PtrInt);
   public
     procedure SetTapePlayer(const ATapePlayer: TTapePlayer);
-    procedure UpdateCurrentBlockNumber; inline;
+    procedure UpdateCurrentBlockNumber(const UncoditionallyPositionGrid: Boolean); inline;
     procedure AddButtonActions(AImageWidth: Integer;
           AActions: Array of TCustomAction);
   end;
@@ -97,26 +96,6 @@ begin
     ;
 end;
 
-procedure TFormBrowseTape.TTapeGrid.RowInView(ARow: Integer);
-var
-  N: Integer;
-begin
-  BeginUpdate;
-  try
-    N := ARow - 2;
-    while ((N < ARow) and (not MoveExtend(False, Col, N, False))) do begin
-      Inc(N);
-    end;
-    N := ARow + 2;
-    while ((N > ARow) and (not MoveExtend(False, Col, N, False))) do begin
-      Dec(N);
-    end;
-    MoveExtend(False, Col, ARow, True);
-  finally
-    EndUpdate;
-  end;
-end;
-
 function TFormBrowseTape.TTapeGrid.MouseButtonAllowed(Button: TMouseButton
   ): Boolean;
 begin
@@ -125,13 +104,13 @@ end;
 
 { TFormBrowseTape }
   
-procedure TFormBrowseTape.UpdateCurrentBlockNumber;
+procedure TFormBrowseTape.UpdateCurrentBlockNumber(
+  const UncoditionallyPositionGrid: Boolean);
 begin
   if Assigned(FTapePlayer) and (not FClosing) then begin
     FCurrentBlockNumber := FTapePlayer.GetCurrentBlockNumber;
-    if CheckBox1.Checked then begin
-      Grid.RowInView(Grid.FixedRows + FCurrentBlockNumber);
-    end;
+    if UncoditionallyPositionGrid or CheckBox1.Checked then
+      TCommonFunctionsLCL.RowInView(Grid, Grid.FixedRows + FCurrentBlockNumber);
   end else
     FCurrentBlockNumber := -1;
   Grid.Invalidate;
@@ -163,10 +142,9 @@ var
       Grid.Canvas.TextRect(aRect, aRect.Left, YY, Copy(CC.Details, P0, P - P0));
       if P >= L then
         Break;
-      P0 := P + 1;  
+      P0 := P + 1;
       YY := YY + TextRowHeight;
     until False;
-
   end;
 
 var
@@ -255,7 +233,7 @@ procedure TFormBrowseTape.CheckBox1Change(Sender: TObject);
 begin
   if CheckBox1.Checked then begin
     FCurrentBlockNumber := -1;
-    UpdateCurrentBlockNumber;
+    UpdateCurrentBlockNumber(True);
   end;
 end;
 
@@ -474,7 +452,7 @@ begin
     Grid.EndUpdate();
   end;
 
-  UpdateCurrentBlockNumber;
+  UpdateCurrentBlockNumber(True);
 end;
 
 procedure TFormBrowseTape.SetTapePlayer(const ATapePlayer: TTapePlayer);
@@ -486,6 +464,7 @@ begin
     FTapePlayer := nil
   else
     FTapePlayer := ATapePlayer;
+
   FillGrid;
 end;
 

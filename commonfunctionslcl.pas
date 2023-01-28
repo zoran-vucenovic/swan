@@ -1,5 +1,5 @@
 unit CommonFunctionsLCL;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
@@ -8,7 +8,7 @@ interface
 
 uses
   Classes, SysUtils, Types, Forms, LCLIntf, Graphics, Controls,
-  StdCtrls;
+  StdCtrls, Grids;
 
 type
 
@@ -43,6 +43,7 @@ type
     class procedure AdjustFormPos(Form: TCustomForm); static;
     class procedure CalculateTextSize(const F: TFont;
         const S: String; out ATextSize: TSize); static;
+    class procedure RowInView(AGrid: TCustomGrid; ARow: Integer); static;
   end;
 
 implementation
@@ -105,6 +106,32 @@ begin
   end;
   Canv.Font := F;
   ATextSize := Canv.TextExtent(S);
+end;
+
+type
+  TGridAccessProtected = class(TCustomGrid);
+
+class procedure TCommonFunctionsLCL.RowInView(AGrid: TCustomGrid; ARow: Integer
+  );
+var
+  N: Integer;
+  G: TGridAccessProtected;
+begin
+  G := TGridAccessProtected(AGrid);
+  G.BeginUpdate;
+  try
+    N := ARow - 2;
+    while ((N < ARow) and (not G.MoveExtend(False, G.Col, N, False))) do begin
+      Inc(N);
+    end;
+    N := ARow + 2;
+    while ((N > ARow) and (not G.MoveExtend(False, G.Col, N, False))) do begin
+      Dec(N);
+    end;
+    G.MoveExtend(False, G.Col, ARow, True);
+  finally
+    G.EndUpdate;
+  end;
 end;
 
 class procedure TCommonFunctionsLCL.Init;

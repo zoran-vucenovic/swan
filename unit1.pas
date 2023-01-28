@@ -1513,7 +1513,7 @@ begin
     Spectrum.SetTapePlayer(nil);
 
   if Assigned(FTapeBrowser) then begin
-    FTapeBrowser.UpdateCurrentBlockNumber;
+    FTapeBrowser.UpdateCurrentBlockNumber(False);
   end;
   UpdateWriteScreen;
 end;
