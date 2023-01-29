@@ -324,9 +324,11 @@ begin
   N := Length(AW);
   ControlSpectrumKeysText.Free;
   if N = 0 then begin
+    Label3.Font.Style := Label3.Font.Style + [fsItalic];
     ControlSpectrumKeysText := nil;
-    Label3.Caption := '';
+    Label3.Caption := ' (click on Spectrum keys to map)';
   end else begin
+    Label3.Font.Style := Label3.Font.Style - [fsItalic];
     ControlSpectrumKeysText := TCustomControl.Create(Panel2);
     ControlSpectrumKeysText.AutoSize := True;
     ControlSpectrumKeysText.Anchors := [];
@@ -363,7 +365,6 @@ procedure TFormSpectrumKeysDialog.SetKeyStates(const SpectrumKeys: TArrayOfWord
   );
 begin
   SpectrumKeysControl.SetKeyStates(SpectrumKeys);
-  UpdateKeysText;
 end;
 
 procedure TFormSpectrumKeysDialog.OnChangeSpectrumKey(Sender: TObject);
@@ -609,6 +610,7 @@ begin
     B.Checked := L;
   end;
 
+  DoOnChgSpectrumKey(Self);
 end;
 
 procedure TFormSpectrumKeysDialog.TSpectrumKeysControl.GetKeyStates(out
