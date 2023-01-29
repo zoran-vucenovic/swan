@@ -1,13 +1,13 @@
 object FormSpectrumKeysDialog: TFormSpectrumKeysDialog
-  Left = 424
-  Height = 330
-  Top = 50
-  Width = 591
+  Left = 259
+  Height = 280
+  Top = 120
+  Width = 490
   AutoSize = True
   BorderStyle = bsDialog
   Caption = 'FormSpectrumKeysDialog'
-  ClientHeight = 330
-  ClientWidth = 591
+  ClientHeight = 280
+  ClientWidth = 490
   Color = 1973790
   OnCreate = FormCreate
   OnDestroy = FormDestroy

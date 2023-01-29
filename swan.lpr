@@ -21,7 +21,8 @@ uses
   UnitColourFunctions, UnitDataModuleImages, PortAudioHeader, UnitBeeper,
   unitSoundVolume, FastIntegers, UnitInputLibraryPathDialog, UnitFormInputPokes,
   UnitSZX, UnitStreamCompression, UnitFormHistorySnapshots,
-UnitControlScreenBitmap, UnitTapePlayer, UnitPzxPlayer;
+  UnitControlScreenBitmap, UnitTapePlayer, UnitPzxPlayer,
+  UnitSpectrumKeysControl;
 
 {$R *.res}
 

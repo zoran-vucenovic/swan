@@ -565,6 +565,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitPzxPlayer"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitspectrumkeyscontrol.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitSpectrumKeysControl"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
