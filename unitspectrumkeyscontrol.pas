@@ -1,6 +1,9 @@
 unit UnitSpectrumKeysControl;
+// Copyright 2022 Zoran Vučenović
+// SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
+{$i zxinc.inc}
 
 interface
 
