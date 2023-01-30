@@ -66,17 +66,6 @@ var
   Out0: PByte;
   N: Integer;
 
-  procedure ProcessRange; inline;
-  var
-    I: Integer;
-  begin
-    for I := 1 to N do begin
-      Out0^ := Data^;
-      Inc(Out0);
-      Inc(Data);
-    end;
-  end;
-
 begin
   Data := PByte(UserData) + TBeeper.PlayPosition;
   Out0 := PByte(Output);
@@ -84,12 +73,13 @@ begin
   N := FrameCount;
   if TBeeper.PlayPosition + N >= TBeeper.FBufferLen then begin
     N := TBeeper.BufferLen - TBeeper.PlayPosition;
-    ProcessRange;
+    Move(Data^, Out0^, N);
+    Inc(Out0, N);
     Data := PByte(UserData);
     N := FrameCount - N;
     TBeeper.PlayPosition := 0;
   end;
-  ProcessRange;
+  Move(Data^, Out0^, N);
   Inc(TBeeper.PlayPosition, N);
 
   Result := paContinue;

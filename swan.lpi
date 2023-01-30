@@ -574,6 +574,7 @@
         <Filename Value="unitkeyboardonscreen.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FormKeyboardOnScreen"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="UnitKeyboardOnScreen"/>
       </Unit>
