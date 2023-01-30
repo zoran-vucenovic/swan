@@ -356,6 +356,11 @@ object Form1: TForm1
       Caption = 'Spectrum 48K issue 3'
       OnExecute = ActionModel48KIssue3Execute
     end
+    object ActionShowKeyboardOnScreen: TAction
+      Category = 'Options'
+      Caption = 'On-screen keyboard'
+      OnExecute = ActionShowKeyboardOnScreenExecute
+    end
   end
   object MainMenu1: TMainMenu
     Images = DataModuleImages.ImageList1
@@ -446,6 +451,9 @@ object Form1: TForm1
       end
       object MenuItem33: TMenuItem
         Action = ActionEnableJoystick
+      end
+      object MenuItem47: TMenuItem
+        Action = ActionShowKeyboardOnScreen
       end
       object MenuItem35: TMenuItem
         Action = ActionDontDrawScreenWhenLoading

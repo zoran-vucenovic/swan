@@ -8,7 +8,6 @@ object FormSpectrumKeysDialog: TFormSpectrumKeysDialog
   Caption = 'FormSpectrumKeysDialog'
   ClientHeight = 280
   ClientWidth = 490
-  Color = 1973790
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow

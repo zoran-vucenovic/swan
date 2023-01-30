@@ -1,0 +1,30 @@
+object FormKeyboardOnScreen: TFormKeyboardOnScreen
+  Left = 250
+  Height = 240
+  Top = 127
+  Width = 320
+  Caption = 'Spectrum keyboard'
+  ClientHeight = 240
+  ClientWidth = 320
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  LCLVersion = '2.2.5.0'
+  object Panel1: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 0
+    Height = 240
+    Top = 0
+    Width = 320
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    AutoSize = True
+    BevelOuter = bvNone
+    TabOrder = 0
+  end
+end

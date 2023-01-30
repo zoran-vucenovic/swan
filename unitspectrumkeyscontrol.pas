@@ -15,29 +15,42 @@ type
 
   TArrayOfWord = array of Word;
 
+  TChgSpectrumKeyEx = procedure(AKeyValue: Word; IsDown: Boolean; NeedReleaseShifts: Boolean) of object;
+
   TSpectrumKeysControl = class(TCustomControl)
   strict private
+    const
+      BackgroundColour = TColor($001E1E1E);
+  strict private
     type
-      TToggleButtons = array [1..40] of TCustomControl;
+      TSpectrumKeyButtons = array [1..40] of TCustomControl;
 
   strict private
-    Keys: TToggleButtons;
-    procedure DoOnChgSpectrumKey(Sender: TObject);
-    procedure CreateKeyButtons;
-  public
     FOnChgSpectrumKey: TNotifyEvent;
+    FOnChgSpectrumKeyEx: TChgSpectrumKeyEx;
+    FButtonCapsShift: TCustomControl;
+    FButtonSymbolShift: TCustomControl;
+    Keys: TSpectrumKeyButtons;
+    procedure DoOnChgSpectrumKey(Sender: TObject);
+    procedure CreateKeyButtons(ButtonsToggle: Boolean);
+  protected
+    procedure SetParent(NewParent: TWinControl); override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    constructor Create(AOwner: TComponent; ButtonsToggle: Boolean);
+    procedure ReleaseShifts;
     procedure SetKeyStates(const SpectrumKeys: TArrayOfWord);
     procedure GetKeyStates(out SpectrumKeys: TArrayOfWord);
     function GetKeysString(out NumberOfPressedKeys: Integer): String;
-    constructor Create(AOwner: TComponent); override;
+    property OnChgSpectrumKey: TNotifyEvent read FOnChgSpectrumKey write FOnChgSpectrumKey;
+    property OnChgSpectrumKeyEx: TChgSpectrumKeyEx read FOnChgSpectrumKeyEx write FOnChgSpectrumKeyEx;
   end;
-
 
 implementation
 
 type
 
-  TSpectrumKeyToggleButton = class(TCustomControl)
+  TSpectrumKeyButtonControl = class(TCustomControl)
   strict private
     FDisplayText: String;
     FChecked: Boolean;
@@ -46,7 +59,11 @@ type
     function GetDisplayText: String;
     procedure SetDisplayText(AValue: String);
     procedure SetOnChange(AValue: TNotifyEvent);
-    procedure MouseUpEvent(Sender: TObject; {%H-}Button: TMouseButton;
+    procedure MouseEventToggle(Sender: TObject; {%H-}Button: TMouseButton;
+                      {%H-}Shift: TShiftState; {%H-}X, {%H-}Y: Integer);
+    procedure MouseEventPush(Sender: TObject; {%H-}Button: TMouseButton;
+                      {%H-}Shift: TShiftState; {%H-}X, {%H-}Y: Integer);
+    procedure MouseEventRelease(Sender: TObject; {%H-}Button: TMouseButton;
                       {%H-}Shift: TShiftState; {%H-}X, {%H-}Y: Integer);
     procedure UserInputEvent(Sender: TObject; Msg: Cardinal);
   private
@@ -55,11 +72,13 @@ type
     LabCommand: TLabel;
     LabSymbol: TLabel;
     Control0: TCustomControl;
+    Toggle: Boolean;
   protected
     procedure SetChecked(AValue: Boolean);
     function GetChecked: Boolean;
     property DisplayText: String read GetDisplayText write SetDisplayText;
     property OnChange: TNotifyEvent read FOnChange write SetOnChange;
+    procedure SetMouseEvents(AToggle: Boolean);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -70,16 +89,38 @@ type
 { TSpectrumKeysControl }
 
 procedure TSpectrumKeysControl.DoOnChgSpectrumKey(Sender: TObject);
+var
+  B: TSpectrumKeyButtonControl;
+  NeedUncheck: Boolean;
 begin
   if Assigned(FOnChgSpectrumKey) then
     FOnChgSpectrumKey(Sender);
+
+  if Assigned(FOnChgSpectrumKeyEx) then begin
+    if Sender is TSpectrumKeyButtonControl then begin
+      NeedUncheck := False;
+      B := TSpectrumKeyButtonControl(Sender);
+      if B.GetChecked then begin
+        if B <> FButtonCapsShift then begin
+          if TSpectrumKeyButtonControl(FButtonCapsShift).GetChecked then
+            NeedUncheck := True;
+        end;
+        if B <> FButtonSymbolShift then begin
+          if TSpectrumKeyButtonControl(FButtonSymbolShift).GetChecked then
+            NeedUncheck := True;
+        end;
+      end;
+
+      FOnChgSpectrumKeyEx(B.KeyValue, B.GetChecked, NeedUncheck);
+    end;
+  end;
 end;
 
-procedure TSpectrumKeysControl.CreateKeyButtons;
+procedure TSpectrumKeysControl.CreateKeyButtons(ButtonsToggle: Boolean);
 var
   HTs0, HTs, WTs, WLg: Integer;
   K, L, I, J, M, N, FS: Integer;
-  B, B1: TSpectrumKeyToggleButton;
+  B, B1: TSpectrumKeyButtonControl;
   CC, CC1, CC2, CCA: TCustomControl;
   KT: TKeyTexts;
   Sz: TSize;
@@ -126,7 +167,7 @@ begin
           LabAbove.AnchorParallel(akTop, 2, CC);
 
           B1 := B;
-          B := TSpectrumKeyToggleButton.Create(CC);
+          B := TSpectrumKeyButtonControl.Create(CC);
 
           B.Anchors := [];
           if Assigned(B1) then
@@ -139,6 +180,13 @@ begin
           LabBelow.AnchorParallel(akLeft, 6, B);
           LabBelow.AnchorToNeighbour(akTop, 1, B);
           B.KeyValue := W;
+          case W of
+            0:
+              FButtonCapsShift := B;
+            $0701:
+              FButtonSymbolShift := B;
+          end;
+          B.SetMouseEvents(ButtonsToggle);
 
           if I = 0 then begin
             La := B.LabSymbol;
@@ -173,7 +221,8 @@ begin
 
           B.LabSymbol.Font := B.LabCommand.Font;
           La := B.LabSymbol;
-          if (I = 3) and (L = 1) and (J = 3) then // symbol shift
+
+          if B = FButtonSymbolShift then // symbol shift
             La := B.Lab;
 
           La.Font.Color := TColor($000099);
@@ -243,7 +292,7 @@ begin
     end;
 
     for I := Low(Keys) to High(Keys) do begin
-      B := TSpectrumKeyToggleButton(Keys[I]);
+      B := TSpectrumKeyButtonControl(Keys[I]);
       B.Control0.Width := WLg + 3;
       B.Control0.Height := HTs + 2;
       B.AutoSize := True;
@@ -253,15 +302,30 @@ begin
   end;
 end;
 
+procedure TSpectrumKeysControl.SetParent(NewParent: TWinControl);
+var
+  F: TCustomForm;
+begin
+  inherited SetParent(NewParent);
+  F := GetParentForm(Self);
+  if Assigned(F) then
+    F.Color := BackgroundColour;
+end;
+
+constructor TSpectrumKeysControl.Create(AOwner: TComponent);
+begin
+  Create(AOwner, True);
+end;
+
 procedure TSpectrumKeysControl.SetKeyStates(const SpectrumKeys: TArrayOfWord);
 var
   I, J: Integer;
-  B: TSpectrumKeyToggleButton;
+  B: TSpectrumKeyButtonControl;
   L: Boolean;
 begin
   for J := 1 to 40 do begin
     L := False;
-    B := TSpectrumKeyToggleButton(Keys[J]);
+    B := TSpectrumKeyButtonControl(Keys[J]);
     for I := Low(SpectrumKeys) to High(SpectrumKeys) do begin
       if B.KeyValue = SpectrumKeys[I] then begin
         L := True;
@@ -277,12 +341,12 @@ end;
 procedure TSpectrumKeysControl.GetKeyStates(out SpectrumKeys: TArrayOfWord);
 var
   I, K: Integer;
-  B: TSpectrumKeyToggleButton;
+  B: TSpectrumKeyButtonControl;
 begin
   K := 0;
   SetLength(SpectrumKeys{%H-}, 3);
   for I := 1 to 40 do begin
-    B := TSpectrumKeyToggleButton(Keys[I]);
+    B := TSpectrumKeyButtonControl(Keys[I]);
     if B.GetChecked then begin
       if K >= Length(SpectrumKeys) then
         SetLength(SpectrumKeys, (K * 7) div 5 + 2);
@@ -311,23 +375,44 @@ begin
   end;
 end;
 
-constructor TSpectrumKeysControl.Create(AOwner: TComponent);
+constructor TSpectrumKeysControl.Create(AOwner: TComponent;
+  ButtonsToggle: Boolean);
 begin
   inherited Create(AOwner);
+
+  FButtonCapsShift := nil;
+  FButtonSymbolShift := nil;
   FOnChgSpectrumKey := nil;
-  CreateKeyButtons;
+  FOnChgSpectrumKeyEx := nil;
+  CreateKeyButtons(ButtonsToggle);
   SetKeyStates([]);
   AutoSize := True;
 end;
 
+procedure TSpectrumKeysControl.ReleaseShifts;
+
+  procedure ReleaseButton(C: TCustomControl);
+  var
+    B: TSpectrumKeyButtonControl;
+  begin
+    B := TSpectrumKeyButtonControl(C);
+    if B.GetChecked then
+      B.SetChecked(False);
+  end;
+
+begin
+  ReleaseButton(FButtonCapsShift);
+  ReleaseButton(FButtonSymbolShift);
+end;
+
 { TSpectrumKeyToggleButton }
 
-function TSpectrumKeyToggleButton.GetDisplayText: String;
+function TSpectrumKeyButtonControl.GetDisplayText: String;
 begin
   Result := FDisplayText;
 end;
 
-procedure TSpectrumKeyToggleButton.SetChecked(AValue: Boolean);
+procedure TSpectrumKeyButtonControl.SetChecked(AValue: Boolean);
 begin
   if AValue then begin
     Self.Color := clWhite;
@@ -347,30 +432,84 @@ begin
   end;
 end;
 
-function TSpectrumKeyToggleButton.GetChecked: Boolean;
+function TSpectrumKeyButtonControl.GetChecked: Boolean;
 begin
   Result := FChecked;
 end;
 
-procedure TSpectrumKeyToggleButton.SetDisplayText(AValue: String);
+type
+  TAuxControl = class(TControl);
+
+procedure TSpectrumKeyButtonControl.SetMouseEvents(AToggle: Boolean);
+type
+  TMouseEventType = (metDown, metUp);
+
+  procedure SetMouseEvent(const C: TControl; AEvent: TMouseEvent; AType: TMouseEventType);
+  var
+    I: Integer;
+    WC: TWinControl;
+  begin
+    if AType = metUp then
+      TAuxControl(C).OnMouseUp := AEvent
+    else
+      TAuxControl(C).OnMouseDown := AEvent;
+
+    if C is TWinControl then begin
+      WC := TWinControl(C);
+      for I := 0 to WC.ControlCount - 1 do begin
+        SetMouseEvent(WC.Controls[I], AEvent, AType);
+      end;
+    end;
+  end;
+
 begin
-  FDisplayText := Trim(AValue);
-  Lab.Caption := UpperCase(StringReplace(StringReplace(AValue, ' ', '/', [rfReplaceAll]), '/', LineEnding, [rfReplaceAll]));
+  Toggle := AToggle;
+  if AToggle then
+    SetMouseEvent(Self, @MouseEventToggle, metDown)
+  else
+    case KeyValue of
+      0, $0701: // caps shift or symbol shift
+        SetMouseEvent(Self, @MouseEventToggle, metDown);
+    otherwise
+      SetMouseEvent(Self, @MouseEventPush, metDown);
+      SetMouseEvent(Self, @MouseEventRelease, metUp);
+    end;
+
+  Application.AddOnUserInputHandler(@UserInputEvent);
 end;
 
-procedure TSpectrumKeyToggleButton.SetOnChange(AValue: TNotifyEvent);
+procedure TSpectrumKeyButtonControl.SetDisplayText(AValue: String);
+begin
+  FDisplayText := Trim(AValue);
+  AValue := StringReplace(AValue, ' ', LineEnding, [rfReplaceAll]);
+  Lab.Caption := UpperCase(StringReplace(AValue, '/', LineEnding, [rfReplaceAll]));
+end;
+
+procedure TSpectrumKeyButtonControl.SetOnChange(AValue: TNotifyEvent);
 begin
   if FOnChange <> AValue then
     FOnChange := AValue;
 end;
 
-procedure TSpectrumKeyToggleButton.MouseUpEvent(Sender: TObject;
+procedure TSpectrumKeyButtonControl.MouseEventToggle(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   SetChecked(not GetChecked);
 end;
 
-procedure TSpectrumKeyToggleButton.UserInputEvent(Sender: TObject; Msg: Cardinal
+procedure TSpectrumKeyButtonControl.MouseEventPush(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  SetChecked(True);
+end;
+
+procedure TSpectrumKeyButtonControl.MouseEventRelease(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  SetChecked(False);
+end;
+
+procedure TSpectrumKeyButtonControl.UserInputEvent(Sender: TObject; Msg: Cardinal
   );
 var
   B: boolean;
@@ -381,36 +520,28 @@ begin
         B := CanSetFocus and MouseInClient;
         if B xor LastMouseInClient then begin
           LastMouseInClient := B;
+
+          if not (Toggle or B) then begin
+            case KeyValue of
+              0, $0701: // caps shift or symbol shift
+                ;
+            otherwise
+              SetChecked(False);
+            end;
+          end;
+
           Invalidate;
         end;
-
       end;
   otherwise
   end;
 end;
 
-type
-  TAuxControl = class(TControl);
-
-constructor TSpectrumKeyToggleButton.Create(AOwner: TComponent);
-
-  procedure SetOnMouseUp(const C: TControl);
-  var
-    I: Integer;
-    WC: TWinControl;
-  begin
-    TAuxControl(C).OnMouseUp := @MouseUpEvent;
-    if C is TWinControl then begin
-      WC := TWinControl(C);
-      for I := 0 to WC.ControlCount - 1 do begin
-        SetOnMouseUp(WC.Controls[I]);
-      end;
-    end;
-  end;
-
+constructor TSpectrumKeyButtonControl.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
+  Toggle := False;
   FDisplayText := '';
   AutoSize := False;
   LastMouseInClient := False;
@@ -457,19 +588,15 @@ begin
 
   BorderWidth := 1;
   BorderStyle := bsSingle;
-
-  SetOnMouseUp(Self);
-
-  Application.AddOnUserInputHandler(@UserInputEvent);
 end;
 
-destructor TSpectrumKeyToggleButton.Destroy;
+destructor TSpectrumKeyButtonControl.Destroy;
 begin
   Application.RemoveAllHandlersOfObject(Self);
   inherited Destroy;
 end;
 
-procedure TSpectrumKeyToggleButton.Paint;
+procedure TSpectrumKeyButtonControl.Paint;
 var
   R: TRect;
 begin

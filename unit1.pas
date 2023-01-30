@@ -15,13 +15,14 @@ uses
   UnitFormKeyMappings, UnitJoystick, UnitFormJoystickSetup,
   UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
-  UnitFormHistorySnapshots, UnitTapePlayer, UnitVer;
+  UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen;
 
 type
 
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionShowKeyboardOnScreen: TAction;
     ActionModel48KIssue3: TAction;
     ActionModel48KIssue2: TAction;
     ActionResetCPU: TAction;
@@ -105,6 +106,7 @@ type
     MenuItem44: TMenuItem;
     MenuItem45: TMenuItem;
     MenuItem46: TMenuItem;
+    MenuItem47: TMenuItem;
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
@@ -150,6 +152,7 @@ type
     procedure ActionSaveSzxExecute(Sender: TObject);
     procedure ActionSaveZ80Execute(Sender: TObject);
     procedure ActionShowDebuggerExecute(Sender: TObject);
+    procedure ActionShowKeyboardOnScreenExecute(Sender: TObject);
     procedure ActionShowTapePlayerExecute(Sender: TObject);
     procedure ActionSizeDecreaseExecute(Sender: TObject);
     procedure ActionSizeIncreaseExecute(Sender: TObject);
@@ -191,6 +194,8 @@ type
     procedure SetSoundVolume(N: Integer);
     procedure SetSnapshotHistoryEnabled(const B: Boolean);
 
+    procedure KeyFromFormKeyboardOnScreen(AKeyValue: Word; IsDown: Boolean; NeedReleaseShifts: Boolean);
+    procedure ReleaseShifts(Sender: TObject);
     procedure DoOnKeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
     procedure DoOnKeyUp(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
   strict private
@@ -217,6 +222,7 @@ type
 
   strict private
     FTapeBrowser: TFormBrowseTape;
+    FKeyboardOnScreen: UnitKeyboardOnScreen.TFormKeyboardOnScreen;
     PrevTicks: Int64;
     PrevPCTicks: Int64;
     PrevTimeStop: Integer;
@@ -271,6 +277,7 @@ type
     procedure SetScreenSizeFactor(NewFactor: Integer);
     procedure SetSpectrumSpeed(NewSpeed: Integer);
     procedure ShowTapeBrowser();
+    procedure ShowKeyboardOnScreen();
     procedure ShowSoundVolumeForm();
     procedure DestroySoundVolumeForm();
     procedure FreeTapePlayer;
@@ -417,6 +424,7 @@ begin
 
   FSoundVolumeForm := nil;
   FTapeBrowser := nil;
+  FKeyboardOnScreen := nil;
   FormDebug := nil;
   TapePlayer := nil;
 
@@ -878,6 +886,14 @@ begin
   end;
 end;
 
+procedure TForm1.ActionShowKeyboardOnScreenExecute(Sender: TObject);
+begin
+  if Sender <> Spectrum then
+    AddEventToQueue(@ActionShowKeyboardOnScreenExecute)
+  else
+    ShowKeyboardOnScreen();
+end;
+
 procedure TForm1.ActionShowTapePlayerExecute(Sender: TObject);
 begin
   if Sender <> Spectrum then
@@ -955,6 +971,10 @@ procedure TForm1.FormDestroy(Sender: TObject);
 begin
   Application.RemoveAsyncCalls(Self);
   Application.RemoveAllHandlersOfObject(Self);
+  if Assigned(FKeyboardOnScreen) then begin
+    FKeyboardOnScreen.RemoveFreeNotification(Self);
+    FreeAndNil(FKeyboardOnScreen);
+  end;
   if Assigned(FTapeBrowser) then begin
     FTapeBrowser.RemoveFreeNotification(Self);
     FreeAndNil(FTapeBrowser);
@@ -1287,6 +1307,31 @@ begin
     end;
     UpdateActiveSnapshotHistory();
   end;
+end;
+
+procedure TForm1.KeyFromFormKeyboardOnScreen(AKeyValue: Word; IsDown: Boolean;
+  NeedReleaseShifts: Boolean);
+var
+  N: Integer;
+begin
+  if IsDown then begin
+    if not NeedReleaseShifts then
+      N := 7
+    else
+      N := 15;
+  end else begin
+    if not NeedReleaseShifts then
+      N := 6
+    else
+      N := 14;
+  end;
+  AddKeyEventToQueue(AKeyValue, N);
+end;
+
+procedure TForm1.ReleaseShifts(Sender: TObject);
+begin
+  if Assigned(FKeyboardOnScreen) then
+    FKeyboardOnScreen.ReleaseShifts;
 end;
 
 procedure TForm1.DoOnKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState
@@ -1806,7 +1851,7 @@ var
   I: Integer;
   KRec: TKeyEventRec;
   K, Ticks, CurrentPCTicks: Int64;
-
+  LR: LongRec;
 begin
   if (EventsQueueCount > 0) or (KeyEventCount > 0) then begin
     // EventsQueueCount can change (to zero?) inside some action
@@ -1823,8 +1868,13 @@ begin
       KRec := KeyEventQueue[I];
       if KRec.BDown and 2 = 0 then
         Spectrum.KeyBoard.SetKeyState(KRec.KeyIndex, KRec.BDown and 1 <> 0)
-      else
-        TJoystick.Joystick.SetState(KRec.KeyIndex, KRec.BDown and 1 <> 0, Spectrum.KeyBoard);
+      else if KRec.BDown and 4 = 0 then
+        TJoystick.Joystick.SetState(KRec.KeyIndex, KRec.BDown and 1 <> 0, Spectrum.KeyBoard)
+      else begin
+        Spectrum.KeyBoard.SetKeyState(WordRec(LongRec(KRec.KeyIndex).Lo).Hi, WordRec(LongRec(KRec.KeyIndex).Lo).Lo, KRec.BDown and 1 <> 0);
+        if KRec.BDown and 8 <> 0 then
+          AddEventToQueue(@ReleaseShifts);
+      end;
 
       Inc(I);
     end;
@@ -1952,6 +2002,17 @@ begin
   FTapeBrowser.Show;
 end;
 
+procedure TForm1.ShowKeyboardOnScreen;
+begin
+  if FKeyboardOnScreen = nil then begin
+    FKeyboardOnScreen := TFormKeyboardOnScreen.ShowSpectrumKeyboardOnScreen();
+    FKeyboardOnScreen.FreeNotification(Self);
+    FKeyboardOnScreen.OnChgSpectrumKeyEx := @KeyFromFormKeyboardOnScreen;
+    FKeyboardOnScreen.Show;
+  end;
+  FKeyboardOnScreen.BringToFront;
+end;
+
 procedure TForm1.ShowSoundVolumeForm;
 begin
   if FSoundVolumeForm = nil then begin
@@ -2012,9 +2073,14 @@ end;
 procedure TForm1.Notification(AComponent: TComponent; Operation: TOperation);
 begin
   inherited Notification(AComponent, Operation);
+
   if Operation = TOperation.opRemove then begin
     if AComponent = FTapeBrowser then begin
       FTapeBrowser := nil;
+    end else if AComponent = FKeyboardOnScreen then begin
+      FKeyboardOnScreen := nil;
+      Spectrum.KeyBoard.ClearKeyboard;
+      TJoystick.Joystick.ResetState;
     end else if AComponent = FSoundVolumeForm then begin
       FSoundVolumeForm := nil;
       SpeedButton1.Enabled := True;

@@ -40,7 +40,7 @@ type
     class function CreateLinkLabel(AOwner: TComponent; const ACaption: String = ''): TCustomLabel;
     class procedure FormToScreenCentre(Form: TCustomForm); static;
     class procedure GrowFormHeight(F: TCustomForm); static;
-    class procedure AdjustFormPos(Form: TCustomForm); static;
+    class procedure AdjustFormPos(Form: TCustomForm; Horisontal: Boolean = False); static;
     class procedure CalculateTextSize(const F: TFont;
         const S: String; out ATextSize: TSize); static;
     class procedure RowInView(AGrid: TCustomGrid; ARow: Integer); static;
@@ -212,7 +212,8 @@ begin
     F.Height := H;
 end;
 
-class procedure TCommonFunctionsLCL.AdjustFormPos(Form: TCustomForm);
+class procedure TCommonFunctionsLCL.AdjustFormPos(Form: TCustomForm;
+  Horisontal: Boolean);
 var
   M: TMonitor;
   R: TRect;
@@ -238,33 +239,63 @@ begin
         H := R.Height;
 
       N := 6;
-      P.X := (R.Width - SpectrumForm.Width) div 2;
-      if SpectrumForm.Left < P.X then begin
-        P.X := SpectrumForm.BoundsRect.Right + N;
+      if not Horisontal then begin
+        P.X := (R.Width - SpectrumForm.Width) div 2;
+        if SpectrumForm.Left < P.X then begin
+          P.X := SpectrumForm.BoundsRect.Right + N;
+        end else begin
+          P.X := SpectrumForm.Left - W - N;
+          if Form.BorderStyle <> bsNone then
+            P.X := P.X - N;
+        end;
+
+        K := R.Width - W;
+
+        if Form.BorderStyle <> bsNone then begin
+          R.Bottom := R.Bottom - 27 - N;
+          K := K - N - 3;
+        end;
+        if P.X > K then
+          P.X := K;
+        if P.X < 0 then
+          P.X := 0;
+
+        P.Y := SpectrumForm.BoundsRect.Top;
+        if P.Y + H > R.Bottom then begin
+          P.Y := R.Bottom - H; // - N;
+        end;
+        if P.Y < 0 then
+          P.Y := 0;
+
       end else begin
-        P.X := SpectrumForm.Left - W - N;
-        if Form.BorderStyle <> bsNone then
-          P.X := P.X - N;
+        P.Y := (R.Height - SpectrumForm.Height) div 2;
+        if SpectrumForm.Top < P.Y then begin
+          P.Y := SpectrumForm.BoundsRect.Bottom + N;
+        end else begin
+          P.Y := SpectrumForm.Top - H - N;
+          if Form.BorderStyle <> bsNone then
+            P.Y := P.Y - N;
+        end;
+
+        K := R.Height - H;
+
+        if Form.BorderStyle <> bsNone then begin
+          R.Right := R.Right - 27 - N;
+          K := K - N - 3;
+        end;
+        if P.Y > K then
+          P.Y := K;
+        if P.Y < 0 then
+          P.Y := 0;
+
+        P.X := SpectrumForm.BoundsRect.Left;
+        if P.X + W > R.Right then begin
+          P.X := R.Right - W; // - N;
+        end;
+        if P.X < 0 then
+          P.X := 0;
+
       end;
-
-      K := R.Width - W;
-
-      if Form.BorderStyle <> bsNone then begin
-        R.Bottom := R.Bottom - 27 - N;
-        K := K - N - 3;
-      end;
-
-      if P.X > K then
-        P.X := K;
-      if P.X < 0 then
-        P.X := 0;
-
-      P.Y := SpectrumForm.BoundsRect.Top;
-      if P.Y + H > R.Bottom then begin
-        P.Y := R.Bottom - H; // - N;
-      end;
-      if P.Y < 0 then
-        P.Y := 0;
 
       Form.SetBounds(P.X, P.Y, W, H);
     end;

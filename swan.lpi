@@ -570,6 +570,13 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitSpectrumKeysControl"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitkeyboardonscreen.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormKeyboardOnScreen"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitKeyboardOnScreen"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

@@ -53,14 +53,14 @@ begin
   Label2.ShowAccelChar := False;
   Label3.ShowAccelChar := False;
 
-  SpectrumKeysControl := TSpectrumKeysControl.Create(PanelSpectrumKeys);
+  SpectrumKeysControl := TSpectrumKeysControl.Create(PanelSpectrumKeys, True);
   SpectrumKeysControl.Anchors := [];
   SpectrumKeysControl.AnchorParallel(akTop, 0, PanelSpectrumKeys);
   SpectrumKeysControl.AnchorParallel(akLeft, 0, PanelSpectrumKeys);
   SpectrumKeysControl.Parent := PanelSpectrumKeys;
   PanelSpectrumKeys.BorderStyle := bsNone;
   PanelSpectrumKeys.AutoSize := True;
-  SpectrumKeysControl.FOnChgSpectrumKey := @OnChangeSpectrumKey;
+  SpectrumKeysControl.OnChgSpectrumKey := @OnChangeSpectrumKey;
   CommonFunctionsLCL.TCommonFunctionsLCL.FormToScreenCentre(Self);
   Label1.Caption := 'PC key';
 

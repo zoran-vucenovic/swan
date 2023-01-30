@@ -22,7 +22,7 @@ uses
   unitSoundVolume, FastIntegers, UnitInputLibraryPathDialog, UnitFormInputPokes,
   UnitSZX, UnitStreamCompression, UnitFormHistorySnapshots,
   UnitControlScreenBitmap, UnitTapePlayer, UnitPzxPlayer,
-  UnitSpectrumKeysControl;
+  UnitSpectrumKeysControl, UnitKeyboardOnScreen;
 
 {$R *.res}
 
