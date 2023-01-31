@@ -8,8 +8,8 @@ unit UnitKeyboardOnScreen;
 interface
 
 uses
-  Classes, SysUtils, UnitSpectrum, CommonFunctionsLCL, UnitSpectrumKeysControl,
-  Forms, Controls, Graphics, Dialogs, ExtCtrls, Buttons;
+  SysUtils, CommonFunctionsLCL, UnitSpectrumKeysControl,
+  Forms, Controls, Dialogs, ExtCtrls;
 
 type
   TFormKeyboardOnScreen = class(TForm)

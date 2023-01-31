@@ -3,6 +3,7 @@ object FormKeyboardOnScreen: TFormKeyboardOnScreen
   Height = 240
   Top = 127
   Width = 320
+  BorderStyle = bsDialog
   Caption = 'Spectrum keyboard'
   ClientHeight = 240
   ClientWidth = 320

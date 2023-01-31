@@ -13,9 +13,7 @@ uses
 
 type
 
-  TArrayOfWord = array of Word;
-
-  TChgSpectrumKeyEx = procedure(AKeyValue: Word; IsDown: Boolean; NeedReleaseShifts: Boolean) of object;
+  TChgSpectrumKeyEx = procedure(AKeyValue: Word; Flags: Integer) of object;
 
   TSpectrumKeysControl = class(TCustomControl)
   strict private
@@ -39,8 +37,8 @@ type
     constructor Create(AOwner: TComponent); override;
     constructor Create(AOwner: TComponent; ButtonsToggle: Boolean);
     procedure ReleaseShifts;
-    procedure SetKeyStates(const SpectrumKeys: TArrayOfWord);
-    procedure GetKeyStates(out SpectrumKeys: TArrayOfWord);
+    procedure SetKeyStates(const SpectrumKeys: TWordDynArray);
+    procedure GetKeyStates(out SpectrumKeys: TWordDynArray);
     function GetKeysString(out NumberOfPressedKeys: Integer): String;
     property OnChgSpectrumKey: TNotifyEvent read FOnChgSpectrumKey write FOnChgSpectrumKey;
     property OnChgSpectrumKeyEx: TChgSpectrumKeyEx read FOnChgSpectrumKeyEx write FOnChgSpectrumKeyEx;
@@ -91,27 +89,30 @@ type
 procedure TSpectrumKeysControl.DoOnChgSpectrumKey(Sender: TObject);
 var
   B: TSpectrumKeyButtonControl;
-  NeedUncheck: Boolean;
+  //NeedUncheck: Boolean;
+  Flags: Integer;
 begin
   if Assigned(FOnChgSpectrumKey) then
     FOnChgSpectrumKey(Sender);
 
   if Assigned(FOnChgSpectrumKeyEx) then begin
     if Sender is TSpectrumKeyButtonControl then begin
-      NeedUncheck := False;
       B := TSpectrumKeyButtonControl(Sender);
       if B.GetChecked then begin
-        if B <> FButtonCapsShift then begin
-          if TSpectrumKeyButtonControl(FButtonCapsShift).GetChecked then
-            NeedUncheck := True;
-        end;
-        if B <> FButtonSymbolShift then begin
-          if TSpectrumKeyButtonControl(FButtonSymbolShift).GetChecked then
-            NeedUncheck := True;
-        end;
-      end;
+        Flags := 7;
+        if (B <> FButtonCapsShift)
+          and TSpectrumKeyButtonControl(FButtonCapsShift).GetChecked
+        then begin
+          Flags := 15;
+        end else
+          if B <> FButtonSymbolShift then begin
+            if TSpectrumKeyButtonControl(FButtonSymbolShift).GetChecked then
+              Flags := 15;
+          end;
+      end else
+        Flags := 6;
 
-      FOnChgSpectrumKeyEx(B.KeyValue, B.GetChecked, NeedUncheck);
+      FOnChgSpectrumKeyEx(B.KeyValue, Flags);
     end;
   end;
 end;
@@ -317,7 +318,7 @@ begin
   Create(AOwner, True);
 end;
 
-procedure TSpectrumKeysControl.SetKeyStates(const SpectrumKeys: TArrayOfWord);
+procedure TSpectrumKeysControl.SetKeyStates(const SpectrumKeys: TWordDynArray);
 var
   I, J: Integer;
   B: TSpectrumKeyButtonControl;
@@ -338,7 +339,7 @@ begin
   DoOnChgSpectrumKey(Self);
 end;
 
-procedure TSpectrumKeysControl.GetKeyStates(out SpectrumKeys: TArrayOfWord);
+procedure TSpectrumKeysControl.GetKeyStates(out SpectrumKeys: TWordDynArray);
 var
   I, K: Integer;
   B: TSpectrumKeyButtonControl;
@@ -363,7 +364,7 @@ function TSpectrumKeysControl.GetKeysString(out NumberOfPressedKeys: Integer
 var
   I: Integer;
   MaybePlus: String;
-  AW: TArrayOfWord;
+  AW: TWordDynArray;
 begin
   Result := '';
   MaybePlus := '';
@@ -511,17 +512,14 @@ end;
 
 procedure TSpectrumKeyButtonControl.UserInputEvent(Sender: TObject; Msg: Cardinal
   );
-var
-  B: boolean;
 begin
   case Msg of
-    LM_MOUSEMOVE:
+    LM_MOUSEMOVE, LM_MOUSEENTER, LM_MOUSELEAVE:
       begin
-        B := CanSetFocus and MouseInClient;
-        if B xor LastMouseInClient then begin
-          LastMouseInClient := B;
+        if (CanSetFocus and MouseInClient) xor LastMouseInClient then begin
+          LastMouseInClient := not LastMouseInClient;
 
-          if not (Toggle or B) then begin
+          if not (Toggle or LastMouseInClient) then begin
             case KeyValue of
               0, $0701: // caps shift or symbol shift
                 ;

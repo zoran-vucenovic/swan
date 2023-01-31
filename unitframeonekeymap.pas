@@ -10,7 +10,7 @@ interface
 uses
   Classes, SysUtils, Types, fgl, UnitKeyMaps, CommonFunctionsLCL,
   UnitKeyMapRecords, UnitSpectrumKeysDialog, UnitCommonSpectrum,
-  UnitSpectrumKeysControl, Forms, Controls, ExtCtrls, StdCtrls, LCLType,
+  Forms, Controls, ExtCtrls, StdCtrls, LCLType,
   Graphics, LMessages;
 
 type
@@ -495,10 +495,10 @@ end;
 
 procedure TFrameOnePCKeyMapping.OnClickLabEditSpectrumKeys(Sender: TObject);
 var
-  AW: UnitSpectrumKeysControl.TArrayOfWord;
+  AW: TWordDynArray;
   I: Integer;
 begin
-  SetLength(AW, Length(SpectrumKeys));
+  SetLength(AW{%H-}, Length(SpectrumKeys));
   for I := 0 to High(SpectrumKeys) do begin
     AW[I] := SpectrumKeys[I].SpectrumKey;
   end;
@@ -564,7 +564,7 @@ end;
 
 procedure TFrameOnePCKeyMapping.SortSpectrumKeys;
 var
-  AW: UnitSpectrumKeysControl.TArrayOfWord;
+  AW: TWordDynArray;
   I: Integer;
 begin
   SetLength(AW, Length(SpectrumKeys));

@@ -8,7 +8,7 @@ unit UnitSpectrumKeysDialog;
 interface
 
 uses
-  Classes, SysUtils, UnitKeyMaps, CommonFunctionsLCL,
+  Classes, SysUtils, Types, UnitKeyMaps, CommonFunctionsLCL,
   UnitSpectrumKeysControl, Forms, Controls, Graphics, Dialogs, ExtCtrls,
   StdCtrls, ButtonPanel;
 
@@ -36,7 +36,7 @@ type
     procedure OnChangeSpectrumKey(Sender: TObject);
     procedure AfterShow(Data: PtrInt);
   public
-    class function EditKeyMappings(const PCKey: Word; var SpectrumKeys: TArrayOfWord): Boolean;
+    class function EditKeyMappings(const PCKey: Word; var SpectrumKeys: TWordDynArray): Boolean;
   end;
 
 implementation
@@ -97,7 +97,7 @@ var
   I, N: Integer;
   L: TLabel;
   C: TControl;
-  AW: TArrayOfWord;
+  AW: TWordDynArray;
 
 begin
   Label2.Caption := PCKeyText;
@@ -156,7 +156,7 @@ begin
 end;
 
 class function TFormSpectrumKeysDialog.EditKeyMappings(const PCKey: Word;
-  var SpectrumKeys: TArrayOfWord): Boolean;
+  var SpectrumKeys: TWordDynArray): Boolean;
 var
   F: TFormSpectrumKeysDialog;
   S: String;

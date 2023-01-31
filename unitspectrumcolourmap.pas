@@ -300,13 +300,13 @@ begin
   Cl.Name := ClName;
 
   Cl.Colours[True, 0] := $000000; // black
-  Cl.Colours[True, 1] := $FF0000;  // blue
+  Cl.Colours[True, 1] := $FF0000; // blue
   Cl.Colours[True, 2] := $0000FF; // red
   Cl.Colours[True, 3] := $FF00FF; // magenta
   Cl.Colours[True, 4] := $00FF00; // green
   Cl.Colours[True, 5] := $FFFF00; // cyan
   Cl.Colours[True, 6] := $00FFFF; // yellow
-  Cl.Colours[True, 7] := $FFFFFF; //white
+  Cl.Colours[True, 7] := $FFFFFF; // white
 
   for I := 0 to 7 do
     Cl.Colours[False, I] := Cl.Colours[True, I] and ClrChanels;

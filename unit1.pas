@@ -194,7 +194,7 @@ type
     procedure SetSoundVolume(N: Integer);
     procedure SetSnapshotHistoryEnabled(const B: Boolean);
 
-    procedure KeyFromFormKeyboardOnScreen(AKeyValue: Word; IsDown: Boolean; NeedReleaseShifts: Boolean);
+    procedure KeyFromFormKeyboardOnScreen(AKeyValue: Word; Flags: Integer);
     procedure ReleaseShifts(Sender: TObject);
     procedure DoOnKeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
     procedure DoOnKeyUp(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
@@ -1309,23 +1309,9 @@ begin
   end;
 end;
 
-procedure TForm1.KeyFromFormKeyboardOnScreen(AKeyValue: Word; IsDown: Boolean;
-  NeedReleaseShifts: Boolean);
-var
-  N: Integer;
+procedure TForm1.KeyFromFormKeyboardOnScreen(AKeyValue: Word; Flags: Integer);
 begin
-  if IsDown then begin
-    if not NeedReleaseShifts then
-      N := 7
-    else
-      N := 15;
-  end else begin
-    if not NeedReleaseShifts then
-      N := 6
-    else
-      N := 14;
-  end;
-  AddKeyEventToQueue(AKeyValue, N);
+  AddKeyEventToQueue(AKeyValue, Flags);
 end;
 
 procedure TForm1.ReleaseShifts(Sender: TObject);
