@@ -83,6 +83,62 @@ type
     procedure Paint; override;
   end;
 
+  TKeyGraphicShape = class(TGraphicControl)
+  protected
+    procedure DoOnResize; override;
+  public
+    Flags: Byte;
+    procedure Paint; override;
+  end;
+
+{ TKeyGraphicShape }
+
+procedure TKeyGraphicShape.DoOnResize;
+begin
+  inherited DoOnResize;
+  Width := Height;
+end;
+
+procedure TKeyGraphicShape.Paint;
+var
+  B: TSpectrumKeyButtonControl;
+  C: TWinControl;
+  R: TRect;
+  W: Integer;
+  I: Integer;
+begin
+  inherited Paint;
+
+  B := nil;
+  C := Self.Parent;
+  while (C <> nil) and (B = nil) do begin
+    if C is TSpectrumKeyButtonControl then begin
+      B := TSpectrumKeyButtonControl(C);
+      Canvas.Pen.Color := B.Lab.Font.Color;
+      Canvas.Brush.Color := B.Lab.Font.Color;
+
+      W := Self.ClientWidth div 2 - 1;
+      R := Bounds(1, 1, 2 * W - 1, 2 * W - 1);
+
+      for I := 0 to 3 do begin
+        if (1 shl I) and Flags <> 0 then begin
+          Canvas.Rectangle(
+            Bounds(
+              R.Left + (1 - ((I mod 3) + 1) div 2) * W,
+              R.Top + (I div 2) * W,
+              W,
+              W
+            )
+          );
+        end;
+      end;
+      Canvas.Polyline([R.TopLeft, Point(R.Right, R.Top), R.BottomRight,
+        Point(R.Left, R.Bottom), R.TopLeft]);
+    end;
+    C := C.Parent;
+  end;
+end;
+
 
 { TSpectrumKeysControl }
 
@@ -120,7 +176,7 @@ end;
 procedure TSpectrumKeysControl.CreateKeyButtons(ButtonsToggle: Boolean);
 var
   HTs0, HTs, WTs, WLg: Integer;
-  K, L, I, J, M, N, FS: Integer;
+  K, L, I, J, M, N, FS, Q: Integer;
   B, B1: TSpectrumKeyButtonControl;
   CC, CC1, CC2, CCA: TCustomControl;
   KT: TKeyTexts;
@@ -128,6 +184,7 @@ var
   La, LabAbove, LabBelow: TLabel;
   S: String;
   W: Word;
+  G: TKeyGraphicShape;
   WR: WordRec absolute W;
 begin
   DisableAutoSizing;
@@ -193,6 +250,20 @@ begin
             La := B.LabSymbol;
             B.LabSymbol := B.LabCommand;
             B.LabCommand := La;
+
+            Q := L * 5 + J;
+            if Q <= 7 then begin
+              KT[0] := ' ';
+              G := TKeyGraphicShape.Create(B);
+              G.Flags := ($F - ((Q + 1) and 7));
+              if G.Flags and 4 = 0 then
+                G.Flags := G.Flags xor $C;
+              G.Anchors := [];
+              G.AnchorParallel(akTop, 0, La);
+              G.AnchorParallel(akRight, 0, La);
+              G.AnchorParallel(akBottom, 0, La);
+              G.Parent := La.Parent;
+            end;
           end else begin
             if Trim(KT[0]) = '' then begin
               B.Lab.Alignment := TAlignment.taCenter;
