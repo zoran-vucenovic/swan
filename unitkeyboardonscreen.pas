@@ -43,7 +43,7 @@ end;
 
 procedure TFormKeyboardOnScreen.FormCreate(Sender: TObject);
 begin
-  Caption := 'Spectrum keyboard - click keys with mouse';
+  Caption := 'Spectrum keyboard - click on the keys';
   FSpectrumKeysControl := TSpectrumKeysControl.Create(Self, False);
   FSpectrumKeysControl.Anchors := [];
   FSpectrumKeysControl.AnchorParallel(akLeft, 0, Panel1);

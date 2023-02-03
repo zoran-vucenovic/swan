@@ -9,7 +9,7 @@ interface
 
 uses
   Classes, SysUtils, Types, UnitKeyMaps, CommonFunctionsLCL, UnitCommonSpectrum,
-  Controls, StdCtrls, Graphics, LMessages, Forms;
+  Controls, StdCtrls, Graphics, LMessages, Forms, LCLType;
 
 type
 
@@ -175,10 +175,10 @@ end;
 
 procedure TSpectrumKeysControl.CreateKeyButtons(ButtonsToggle: Boolean);
 var
-  HTs0, HTs, WTs, WLg: Integer;
+  H0, W0, Hb, Wb: Integer;
   K, L, I, J, M, N, FS, Q: Integer;
   B, B1: TSpectrumKeyButtonControl;
-  CC, CC1, CC2, CCA: TCustomControl;
+  CC, CC1, CC2: TCustomControl;
   KT: TKeyTexts;
   Sz: TSize;
   La, LabAbove, LabBelow: TLabel;
@@ -189,11 +189,10 @@ var
 begin
   DisableAutoSizing;
   try
-    FS := GetFontData(Self.Font.Reference.Handle).Height;
+    FS := MulDiv(GetFontData(Self.Font.Reference.Handle).Height, 10, 7);
 
-    WLg := 0;
-    HTs := 0;
-    WTs := 0;
+    W0 := 0;
+    Hb := 0;
     K := 0;
     for I := 0 to 3 do begin
       for L := 0 to 1 do begin
@@ -269,22 +268,14 @@ begin
               B.Lab.Alignment := TAlignment.taCenter;
               B.Lab.Layout := TTextLayout.tlCenter;
 
-              CCA := TCustomControl.Create(B);
+              B.Lab.AnchorParallel(akLeft, 0, B.Control0);
+              B.Lab.AnchorParallel(akRight, 0, B.Control0);
+              B.Lab.AnchorParallel(akTop, 0, B.Control0);
+              B.Lab.AnchorParallel(akBottom, 0, B.Control0);
 
-              CCA.Parent := B;
-
-              CCA.AnchorParallel(akLeft, 0, B.Control0);
-              CCA.AnchorParallel(akRight, 0, B.Control0);
-              CCA.AnchorParallel(akTop, 0, B.Control0);
-              CCA.AnchorParallel(akBottom, 0, B.LabCommand);
-
-              B.Lab.Parent := CCA;
-              B.Lab.AnchorParallel(akLeft, 0, CCA);
-              B.Lab.AnchorParallel(akRight, 0, CCA);
-              B.Lab.AnchorParallel(akTop, 0, CCA);
-              B.Lab.AnchorParallel(akBottom, 0, CCA);
-
-              CCA.BringToFront;
+              if I = 3 then
+                if N = 0 then
+                  B.Tag := 2 * L + 13;
             end;
           end;
 
@@ -297,33 +288,32 @@ begin
           if B = FButtonSymbolShift then // symbol shift
             La := B.Lab;
 
-          La.Font.Color := TColor($000099);
+          La.Font.Color := TColor($0b0ba9);
 
           if B.Lab.Alignment <> TAlignment.taCenter then
-            B.Lab.Font.Size := FS * 4 div 3;
+            B.Lab.Font.Height := FS;
 
-          TCommonFunctionsLCL.CalculateTextSize(B.Lab.Font, S, Sz);
-          B.DisplayText := S;
-
-          WTs := Sz.cx;
-          HTs0 := Sz.cy;
-
-          TCommonFunctionsLCL.CalculateTextSize(B.LabSymbol.Font, KT[1], Sz);
+          TCommonFunctionsLCL.CalculateTextSize(B.LabCommand.Font, KT[1], Sz);
           B.LabSymbol.Caption := KT[1]; // symbol text on button
+          Wb := Sz.cx;
+          H0 := Sz.cy;
 
-          WTs := WTs + 2 + Sz.cx;
-          if WLg < WTs then
-            WLg := WTs;
-          if HTs0 < Sz.cy then
-            HTs0 := Sz.cy;
-          if HTs < HTs0 then
-            HTs := HTs0;
-
-          TCommonFunctionsLCL.CalculateTextSize(B.LabSymbol.Font, KT[0], Sz);
+          TCommonFunctionsLCL.CalculateTextSize(B.LabCommand.Font, KT[0], Sz);
           B.LabCommand.Caption := KT[0]; // command text on button
+          if Sz.cx > Wb then
+            Wb := Sz.cx;
+          H0 := H0 + Sz.cy;
 
-          if WLg < Sz.cx then
-            WLg := Sz.cx;
+          B.DisplayText := S;
+          TCommonFunctionsLCL.CalculateTextSize(B.Lab.Font, B.DisplayText, Sz);
+          Wb := Wb + Sz.cx;
+          if H0 < Sz.cy then
+            H0 := Sz.cy;
+
+          if W0 < Wb then
+            W0 := Wb;
+          if Hb < H0 then
+            Hb := H0;
 
           LabBelow.Font := B.LabSymbol.Font;
           LabAbove.Font := B.LabSymbol.Font;
@@ -363,10 +353,17 @@ begin
       end;
     end;
 
+    Wb := W0 * 5 div 6;
+    Hb := Hb + 1;
+
     for I := Low(Keys) to High(Keys) do begin
       B := TSpectrumKeyButtonControl(Keys[I]);
-      B.Control0.Width := WLg + 3;
-      B.Control0.Height := HTs + 2;
+      if B.Tag = 0 then
+        B.Control0.Width := Wb
+      else
+        B.Control0.Width := MulDiv(W0, B.Tag, 12);
+
+      B.Control0.Height := Hb;
       B.AutoSize := True;
     end;
   finally
@@ -621,6 +618,7 @@ begin
   Control0.AnchorParallel(akLeft, 6, Self);
   Control0.AnchorParallel(akTop, 5, Self);
   Control0.BorderSpacing.Right := 6;
+  Control0.BorderSpacing.Bottom := 5;
   Control0.AutoSize := False;
 
   Lab := TLabel.Create(Control0);
@@ -634,23 +632,20 @@ begin
   LabSymbol.Anchors := [];
 
   LabSymbol.AnchorParallel(akRight, 0, Control0);
-  LabSymbol.AnchorVerticalCenterTo(Lab);
+  LabSymbol.AnchorParallel(akTop, 0, Control0);
   LabSymbol.Alignment := TAlignment.taCenter;
   LabSymbol.Layout := TTextLayout.tlCenter;
 
-  LabCommand := TLabel.Create(Self);
+  LabCommand := TLabel.Create(Control0);
   LabCommand.ShowAccelChar := False;
   LabCommand.Anchors := [];
   LabCommand.AnchorParallel(akRight, 0, Control0);
-  LabCommand.AnchorToNeighbour(akTop, 1, Control0);
-
-  LabCommand.BorderSpacing.Bottom := 5;
-  LabCommand.BorderSpacing.Left := 6;
+  LabCommand.AnchorParallel(akBottom, 0, Control0);
 
   Lab.Parent := Control0;
   LabSymbol.Parent := Control0;
+  LabCommand.Parent := Control0;
   Control0.Parent := Self;
-  LabCommand.Parent := Self;
 
   Width := 80;
   Height := 40;
