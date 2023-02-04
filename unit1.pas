@@ -1837,7 +1837,7 @@ var
   I: Integer;
   KRec: TKeyEventRec;
   K, Ticks, CurrentPCTicks: Int64;
-  LR: LongRec;
+
 begin
   if (EventsQueueCount > 0) or (KeyEventCount > 0) then begin
     // EventsQueueCount can change (to zero?) inside some action

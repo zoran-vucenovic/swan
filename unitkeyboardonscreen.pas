@@ -18,7 +18,6 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure ReleaseShifts;
   private
     FSpectrumKeysControl: TSpectrumKeysControl;
     function GetOnChgSpectrumKeyEx: TChgSpectrumKeyEx;
@@ -26,6 +25,8 @@ type
     procedure AfterShow(Data: PtrInt);
   public
     class function ShowSpectrumKeyboardOnScreen(): TFormKeyboardOnScreen;
+    procedure ReleaseShifts;
+
     property OnChgSpectrumKeyEx: TChgSpectrumKeyEx read GetOnChgSpectrumKeyEx write SetOnChgSpectrumKeyEx;
   end;
 
