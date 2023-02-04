@@ -218,7 +218,7 @@ var
   M: TMonitor;
   R: TRect;
   P: TPoint;
-  N, K: Integer;
+  N, K, Nn: Integer;
   W, H: Integer;
   SpectrumForm: TCustomForm;
 begin
@@ -239,6 +239,7 @@ begin
         H := R.Height;
 
       N := 6;
+      Nn := N;
       if not Horizontal then begin
         P.X := (R.Width - SpectrumForm.Width) div 2;
         if SpectrumForm.Left < P.X then begin
@@ -264,21 +265,21 @@ begin
         end;
 
       end else begin
-        P.Y := (R.Height - SpectrumForm.Height) div 2;
-        if SpectrumForm.Top < P.Y then begin
-          P.Y := SpectrumForm.BoundsRect.Bottom + N;
-        end else begin
-          P.Y := SpectrumForm.Top - H - N;
-          if Form.BorderStyle <> bsNone then
-            P.Y := P.Y - 27 - N;
-        end;
-
         K := R.Height - H;
 
         if Form.BorderStyle <> bsNone then begin
+          Nn := N + 27;
           R.Right := R.Right - N;
-          K := K - N - 27;
+          K := K - 27;
         end;
+
+        P.Y := (R.Height - SpectrumForm.Height) div 2;
+        if SpectrumForm.Top < P.Y then begin
+          P.Y := SpectrumForm.BoundsRect.Bottom + Nn + N;
+        end else begin
+          P.Y := SpectrumForm.Top - H - Nn;
+        end;
+
         if P.Y > K then
           P.Y := K;
 
