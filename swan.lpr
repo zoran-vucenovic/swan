@@ -49,6 +49,7 @@ begin
   SetApplicationTitle;
 
   Application.Scaled := True;
+  Application.TaskBarBehavior := TTaskBarBehavior.tbSingleButton;
   Application.Initialize;
   Application.ShowButtonGlyphs := TApplicationShowGlyphs.sbgAlways;
   Application.ShowMenuGlyphs := TApplicationShowGlyphs.sbgAlways;
