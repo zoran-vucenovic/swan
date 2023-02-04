@@ -243,7 +243,6 @@ begin
             $0701:
               FButtonSymbolShift := B;
           end;
-          B.SetMouseEvents(ButtonsToggle);
 
           if I = 0 then begin
             La := B.LabSymbol;
@@ -331,6 +330,7 @@ begin
           Inc(K);
           Keys[K] := B;
           B.OnChange := @DoOnChgSpectrumKey;
+          B.SetMouseEvents(ButtonsToggle);
         end;
         CC.AutoSize := True;
         CC.Anchors := [];
