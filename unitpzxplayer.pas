@@ -90,13 +90,13 @@ type
   end;
 
   TPzxBlockPULS = class(TPzxBlock)
-  private
+  strict private
     type
       TPulse = record
         RepeatCount: Int16;
         Duration: Int32;
       end;
-  private
+  strict private
     Pulses: Array of TPulse;
     
     TicksNeeded: Int64;
@@ -629,7 +629,7 @@ var
       D := LEtoN(D);
       Exit(True);
     end;
-    Count := 0;
+
     Result := False;
   end;                              
 
@@ -667,13 +667,14 @@ begin
     end;
 
     if N = GetBlockLength then begin
-      Result := True;
+      SetLength(Pulses, Count);
       FillDetails;
-      Break;
+      Exit(True);
     end;
   end;
 
-  SetLength(Pulses, Count);
+  SetLength(Pulses, 0);
+  Result := False;
 end;
 
 constructor TPzxBlockPULS.Create(ATapePlayer: TTapePlayer);
