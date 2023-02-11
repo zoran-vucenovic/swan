@@ -3,6 +3,8 @@
 ### ZX Spectrum emulator
 For Windows and Linux. Might compile and run on Mac, but not tested.
 
+The latest released version can be downloaded here: https://github.com/zoran-vucenovic/swan/releases/latest
+
 To have sound in Swan you need free portaudio library (http://www.portaudio.com/).
 Without portaudio library Swan will work, but will not produce any sound.
 - In **Windows**, you can put the portaudio dll in the same folder where Swan.exe is. You can find prebuild dll for example here: https://github.com/spatialaudio/portaudio-binaries
