@@ -138,7 +138,6 @@ type
     BitPosition: Integer;
     PulsesNeeded: Integer;
     TicksNeeded: Int64;
-    //TailStarted: Boolean;
     STail: TArrUInt16;
     SPulses: TArrUInt16;
     SPulsesPos: Integer;
@@ -203,7 +202,7 @@ var
   Flags: UInt16;
 begin
   if GetBlockLength = 2 then begin
-    if Stream.Read(Flags, 2) = 2 then begin
+    if Stream.Read(Flags{%H-}, 2) = 2 then begin
       FlagStopOnlyIf48K := (Flags and 1) = 1;
       Exit(True);
     end;
@@ -327,7 +326,7 @@ begin
   Result := False;
 
   if GetBlockLength >= 4 then begin
-    if Stream.Read(N, 4) = 4 then begin
+    if Stream.Read(N{%H-}, 4) = 4 then begin
       N := LEtoN(N);
       InitialPulseLevel := 0;
       if N shr 31 <> 0 then begin
@@ -452,7 +451,7 @@ begin
   Result := False;
 
   if GetBlockLength > 8 then begin
-    if Stream.Read(N, 4) = 4 then begin
+    if Stream.Read(N{%H-}, 4) = 4 then begin
       N := LEtoN(N);
       InitialPulseLevel := 0;
       if N shr 31 <> 0 then begin
@@ -462,7 +461,7 @@ begin
       TotalBits := N;
       if Stream.Read(Tail, 2) = 2 then begin
         Tail := LEtoN(Tail);
-        if Stream.Read(B, 1) = 1 then begin
+        if Stream.Read(B{%H-}, 1) = 1 then begin
           P0 := B;
           if Stream.Read(B, 1) = 1 then begin
             P1 := B;
@@ -636,8 +635,6 @@ var
 var
   Pulse: TPulse;
 begin
-  Result := False;
-
   Count := 0;
   N := 0;
   SetLength(Pulses, GetBlockLength div 6 + 2);
@@ -692,7 +689,6 @@ end;
 
 procedure TPzxBlockPULS.Details(out S: String);
 begin
-  inherited Details(S);
   S := FDetails;
 end;
 
@@ -752,14 +748,14 @@ end;
 
 function TPzxBlockPZXT.FillDetails(N: Integer; const Stream: TStream): Boolean;
 var
-  S, S0: String;
+  S, S0: RawByteString;
   I, J, P: Integer;
 
 begin
   Result := N <= 0;
   FDetails := '';
   if not Result then begin
-    SetLength(S, N);
+    SetLength(S{%H-}, N);
     if Stream.Read(S[1], N) = N then begin
       J := 1;
       I := 1;
@@ -907,7 +903,7 @@ end;
 
 class function TPzxBlock.GetBlockId: Integer;
 var
-  S: String;
+  S: AnsiString;
 begin
   Result := 0;
   S := GetBlockIdAsString;
