@@ -1958,31 +1958,31 @@ begin
     FTapeBrowser.FreeNotification(Self);
     FTapeBrowser.AllowDropFiles := True;
     FTapeBrowser.OnDropFiles := Self.OnDropFiles;
-  end;
 
-  W := 24;
-  I := 0;
-  while I < DataModuleImages.ImageList1.ResolutionCount do begin
-    if DataModuleImages.ImageList1.ResolutionByIndex[I].Width + 3 >= W then begin
-      W := DataModuleImages.ImageList1.ResolutionByIndex[I].Width;
-      Break;
+    W := 24;
+    I := 0;
+    while I < DataModuleImages.ImageList1.ResolutionCount do begin
+      if DataModuleImages.ImageList1.ResolutionByIndex[I].Width + 3 >= W then begin
+        W := DataModuleImages.ImageList1.ResolutionByIndex[I].Width;
+        Break;
+      end;
+
+      Inc(I);
     end;
 
-    Inc(I);
+    FTapeBrowser.AddButtonActions(
+      W,
+      [
+        ActionAttachTap,
+        ActionEjectTape,
+        nil, // divider
+        ActionPlay,
+        ActionStop,
+        ActionRewind,
+        ActionDecTapeBlock,
+        ActionIncTapeBlock
+      ]);
   end;
-
-  FTapeBrowser.AddButtonActions(
-    W,
-    [
-      ActionAttachTap,
-      ActionEjectTape,
-      nil, // divider
-      ActionPlay,
-      ActionStop,
-      ActionRewind,
-      ActionDecTapeBlock,
-      ActionIncTapeBlock
-    ]);
 
   TapeBrowserAttachTape;
   FTapeBrowser.Show;
