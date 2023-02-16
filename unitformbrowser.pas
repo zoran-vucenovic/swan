@@ -10,7 +10,7 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Grids, ExtCtrls,
   StdCtrls, ActnList, Menus, Buttons, Types, UnitTapePlayer, CommonFunctionsLCL,
-  UnitConfigs, StrUtils, fpjson;
+  UnitConfigs, fpjson;
 
 type
   TFormBrowseTape = class(TForm)
@@ -133,7 +133,7 @@ var
     YY := aRect.Top + (aRect.Height - CC.TextHeightDetails) div 2;
     P0 := 1;
     repeat
-      P := PosEx(#13, CC.Details, P0);
+      P := Pos(#13, CC.Details, P0);
       if P = 0 then begin
         Grid.Canvas.TextRect(aRect, aRect.Left, YY, Copy(CC.Details, P0));
         Break;
@@ -331,20 +331,21 @@ var
   function AdjustText(CC: TCellContent): Integer;
   var
     S1, S2: String;
-    P, L, K: Integer;
+    P, L, K, P0: Integer;
   begin
     Result := 0;
     K := 1;
     S2 := AdjustLineBreaks(CC.Details, TTextLineBreakStyle.tlbsCR);
     CC.Details := '';
+    P0 := 1;
     repeat
-      P := Pos(#13, S2);
+      P := Pos(#13, S2, P0);
 
       if P = 0 then
-        S1 := S2
+        S1 := Copy(S2, P0)
       else begin
-        S1 := Copy(S2, 1, P - 1);
-        Delete(S2, 1, P);
+        S1 := Copy(S2, P0, P - P0);
+        P0 := P + 1;
       end;
       if S1 <> '' then begin
         S1 := ' ' + S1 + ' ';

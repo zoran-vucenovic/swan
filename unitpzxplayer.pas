@@ -82,7 +82,6 @@ type
     function LoadBlock2(const Stream: TStream): Boolean; override;
   public
     constructor Create(ATapePlayer: TTapePlayer); override;
-    destructor Destroy; override;
     class function GetBlockDescription: String; override;
     procedure Start; override;
     procedure Details(out S: String); override;
@@ -841,12 +840,6 @@ begin
   FDetails := '';
   VerMajor := 0;
   VerMinor := 0;
-end;
-
-destructor TPzxBlockPZXT.Destroy;
-begin
-
-  inherited Destroy;
 end;
 
 class function TPzxBlockPZXT.GetBlockDescription: String;
