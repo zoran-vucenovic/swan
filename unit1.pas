@@ -1995,6 +1995,10 @@ begin
     FKeyboardOnScreen.FreeNotification(Self);
     FKeyboardOnScreen.OnChgSpectrumKeyEx := @KeyFromFormKeyboardOnScreen;
     FKeyboardOnScreen.Show;
+    FKeyboardOnScreen.OnKeyDown := @DoOnKeyDown;
+    FKeyboardOnScreen.OnKeyUp := @DoOnKeyUp;
+    FKeyboardOnScreen.OnDeactivate := @FormDeactivate;
+    FKeyboardOnScreen.KeyPreview := True;
   end;
   FKeyboardOnScreen.BringToFront;
 end;
@@ -2064,6 +2068,9 @@ begin
     if AComponent = FTapeBrowser then begin
       FTapeBrowser := nil;
     end else if AComponent = FKeyboardOnScreen then begin
+      FKeyboardOnScreen.OnKeyUp := nil;
+      FKeyboardOnScreen.OnKeyDown := nil;
+      FKeyboardOnScreen.OnDeactivate := nil;
       FKeyboardOnScreen := nil;
       Spectrum.KeyBoard.ClearKeyboard;
       TJoystick.Joystick.ResetState;
