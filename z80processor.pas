@@ -138,6 +138,9 @@ type
       NMIStartAdr = Word($0066);
       IntMode1StartAdr = Word($0038);
 
+      Bit12 = 1 shl 12;
+      Mask12 = Bit12 - 1;
+
     type
       TIncDecProc = procedure(const PB: PByte) of object;
 
@@ -568,9 +571,6 @@ begin
 end;
 
 procedure TProcessor.AdcHLss(const W: Word);
-const               
-  Bit12 = 1 shl 12;
-  Mask12 = $0FFF;
 var
   Flags: Int16Fast;
   Aux, IWReg, IW: Int32Fast;
@@ -581,7 +581,7 @@ begin
 
   IW := W;
   // H flag:
-  if ((IWReg and Mask12) + (IW and Mask12) + Aux) and Bit12 <> 0 then
+  if (((IWReg and Mask12) + (IW and Mask12) + Aux) and Bit12) <> 0 then
     Flags := %00010000 // H
   else
     Flags := 0;
@@ -610,8 +610,6 @@ begin
 end;
 
 procedure TProcessor.SbcHLss(const W: Word);
-const
-  Mask12 = $0FFF;
 var
   Flags: Int16Fast;
   Aux, IWReg, IW: Int32Fast;
@@ -1013,10 +1011,14 @@ end;
 
 procedure TProcessor.Alu(const I: Integer; const B: Byte);
 
-  procedure AddOrAdc2(const B1: Int16Fast); inline;
+  // ADD A, s
+  // ADC A, s
+  procedure AddOrAdcAs(); inline;
   var
     A1, Aux: Int16Fast;
+    B1: Int16Fast;
   begin
+    B1 := B;
     A1 := RegA;
     Aux := A1 + B1 + RegF and 1;
     RegA := Aux and $FF;
@@ -1038,21 +1040,8 @@ procedure TProcessor.Alu(const I: Integer; const B: Byte);
     ;
   end;
 
-  // ADD A,
-  procedure AddA(const B: Byte); inline;
-  begin
-    RegF := 0;
-    AddOrAdc2(B);
-  end;
-
-  // ADC A,
-  procedure AdcA(const B: Byte); inline;
-  begin
-    AddOrAdc2(B);
-  end;
-
-  // SBC A,
-  procedure SbcA(const B: Byte); inline;
+  // SBC A, s
+  procedure SbcA(); inline;
   var
     Flags: Int16Fast;
   begin
@@ -1061,8 +1050,8 @@ procedure TProcessor.Alu(const I: Integer; const B: Byte);
     RegF := Flags or (RegA and %00101000); // 5, 3
   end;
 
-  // CP
-  procedure CP(const B: Byte); inline;
+  // CP s
+  procedure CP(); inline;
   var
     Flags: Int16Fast;
   begin
@@ -1085,43 +1074,37 @@ procedure TProcessor.Alu(const I: Integer; const B: Byte);
     end;
   end;
 
-  procedure AndA(const B: Byte); inline;
-  begin
-    RegA := RegA and B;
-    SetAndOrXorFlags();
-    RegF := RegF or %10000; // H
-  end;
-
-  procedure OrA(const B: Byte); inline;
-  begin
-    RegA := RegA or B;
-    SetAndOrXorFlags();
-  end;
-
-  procedure XorA(const B: Byte); inline;
-  begin
-    RegA := RegA xor B;
-    SetAndOrXorFlags();
-  end;
-
 begin
   case I of
-    0:
-      AddA(B);
-    1:
-      AdcA(B);
-    2:
+    0: // ADD A, s
+      begin
+        RegF := 0;
+        AddOrAdcAs();
+      end;
+    1: // ADC A, s
+      AddOrAdcAs();
+    2: // SUB A, s
       SubA(B);
-    3:
-      SbcA(B);
-    4:
-      AndA(B);
-    5:
-      XorA(B);
-    6:
-      OrA(B);
-    7:
-      CP(B);
+    3: // SBC A, s
+      SbcA();
+    4: // AND s
+      begin
+        RegA := RegA and B;
+        SetAndOrXorFlags();
+        RegF := RegF or %10000; // H
+      end;
+    5: // XOR s
+      begin
+        RegA := RegA xor B;
+        SetAndOrXorFlags();
+      end;
+    6: // OR s
+      begin
+        RegA := RegA or B;
+        SetAndOrXorFlags();
+      end;
+    7: // CP s
+      CP();
   otherwise
   end;
 
@@ -1197,7 +1180,7 @@ procedure TProcessor.Bli(const A, B: Byte);
  
   { decrease PC if (already decreased) BC is not zero -- the same instruction
     will be executed again, until BC becomes zero. }
-  procedure DecreasePC(); inline;
+  procedure DecreasePC();
   begin
     Dec(FRegPC, 2);
     Contention5Times;
@@ -1239,9 +1222,9 @@ begin
         end else begin
           By := By + RegA; // (transferred byte + A) -- affects F3 and F5
           FlagsToSet := FlagsToSet                                    
-           or Byte((By and %10) shl 4) //F5 is bit 1 of (transferred byte + A)
-           or (By and %1000) //F3 is bit 3 of (transferred byte + A)
-           ;
+            or Byte((By and %10) shl 4) //F5 is bit 1 of (transferred byte + A)
+            or (By and %1000) //F3 is bit 3 of (transferred byte + A)
+            ;
 
           if RegBC <> 0 then
             FlagsToSet := FlagsToSet or %100; // PV
@@ -1597,11 +1580,8 @@ var
     ResultAsInt16 := ResultAsInt16 + D;
     FRegWZ := Result;
   end;
-        
+
   procedure Add16(const W: Word);
-  const
-    Bit12 = 1 shl 12;
-    MaskH = Bit12 - 1;
   var
     Flags: Int16Fast;
     Aux: Int32Fast;
@@ -1615,7 +1595,7 @@ var
 
     Flags := (RegF and %11000100) // S, Z, PV not affected
       or ((Aux shr 16) and 1) // C
-      or ((((PWReg^ and MaskH) + (W and MaskH)) shr 8) and $10) // H
+      or ((((PWReg^ and Mask12) + (W and Mask12)) shr 8) and $10) // H
     ;
 
     PWReg^ := Aux and $FFFF;
