@@ -9,7 +9,8 @@ interface
 
 uses
   Classes, SysUtils, Types, UnitKeyMaps, CommonFunctionsLCL, UnitCommonSpectrum,
-  Controls, StdCtrls, Graphics, LMessages, Forms, LCLType;
+  UnitSpectrumColourMap, Controls, StdCtrls, Graphics, LMessages, Forms,
+  LCLType;
 
 type
 
@@ -22,15 +23,21 @@ type
   strict private
     type
       TSpectrumKeyButtons = array [1..40] of TCustomControl;
-
+  strict private
+    class var
+      ColoursArr: array of TColor;
   strict private
     FOnChgSpectrumKey: TNotifyEvent;
     FOnChgSpectrumKeyEx: TChgSpectrumKeyEx;
     FButtonCapsShift: TCustomControl;
     FButtonSymbolShift: TCustomControl;
     Keys: TSpectrumKeyButtons;
+
     procedure DoOnChgSpectrumKey(Sender: TObject);
     procedure CreateKeyButtons(ButtonsToggle: Boolean);
+  private
+    class procedure Init(); static;
+    class procedure InitColoursArr(); static;
   protected
     procedure SetParent(NewParent: TWinControl); override;
   public
@@ -181,12 +188,13 @@ var
   CC, CC1, CC2: TCustomControl;
   KT: TKeyTexts;
   Sz: TSize;
-  La, LabAbove, LabBelow: TLabel;
+  La, LabAbove, LabBelow, LabColour: TLabel;
   S: String;
   W: Word;
   G: TKeyGraphicShape;
   WR: WordRec absolute W;
 begin
+  InitColoursArr();
   DisableAutoSizing;
   try
     FS := MulDiv(GetFontData(Self.Font.Reference.Handle).Height, 10, 7);
@@ -220,8 +228,6 @@ begin
           LabBelow.Caption := KT[3];
           LabAbove.Anchors := [];
           LabBelow.Anchors := [];
-
-          LabAbove.AnchorParallel(akTop, 2, CC);
 
           B1 := B;
           B := TSpectrumKeyButtonControl.Create(CC);
@@ -262,7 +268,28 @@ begin
               G.AnchorParallel(akBottom, 0, La);
               G.Parent := La.Parent;
             end;
+
+            LabColour := TLabel.Create(CC);
+            LabColour.Font := Self.Font;
+
+            Q := (Q + 1) mod 10;
+            if Q <= 7 then begin
+              LabColour.Caption := AnsiUpperCase(TCommonSpectrum.SpectrumColourNames[Q]);
+              LabColour.Font.Color := ColoursArr[Q];
+              if Q = 0 then begin
+                LabColour.Color := ColoursArr[7];
+                LabColour.Caption := ' ' + LabColour.Caption + ' ';
+              end;
+            end else
+              LabColour.Caption := ' ';
+
+            LabColour.AnchorParallel(akLeft, 0, LabAbove);
+            LabAbove.AnchorToNeighbour(akTop, 1, LabColour);
+            LabColour.AnchorParallel(akTop, 2, CC);
+            LabColour.Parent := CC;
           end else begin
+            LabAbove.AnchorParallel(akTop, 2, CC);
+
             if Trim(KT[0]) = '' then begin
               B.Lab.Alignment := TAlignment.taCenter;
               B.Lab.Layout := TTextLayout.tlCenter;
@@ -368,6 +395,25 @@ begin
     end;
   finally
     EnableAutoSizing;
+  end;
+end;
+
+class procedure TSpectrumKeysControl.Init;
+begin
+  SetLength(ColoursArr, 0);
+end;
+
+class procedure TSpectrumKeysControl.InitColoursArr;
+var
+  C: UnitSpectrumColourMap.TLCLColourMap;
+  I: Integer;
+begin
+  if Length(ColoursArr) = 0 then begin
+    UnitSpectrumColourMap.GetDefaultSpectrumColoursD7(C);
+    SetLength(ColoursArr, 8);
+    for I := Low(ColoursArr) to High(ColoursArr) do begin
+      ColoursArr[I] := C.Colours[False, I];
+    end;
   end;
 end;
 
@@ -682,6 +728,9 @@ begin
 
   end;
 end;
+
+initialization
+  TSpectrumKeysControl.Init();
 
 end.
 

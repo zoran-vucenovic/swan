@@ -19,6 +19,9 @@ type
     class procedure Init;
     class procedure Final;
   public
+    const
+      SpectrumColourNames: Array of String = ('black', 'blue', 'red', 'magenta', 'green', 'cyan', 'yellow', 'white');
+  public
     class procedure SortSpectrumKeys(var AKeys: Array of Word); static;
 
     class property AuthorName: String read FAuthorName;

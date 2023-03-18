@@ -9,7 +9,7 @@ interface
 
 uses
   Classes, SysUtils, Types, UnitSpectrumColourMap, CommonFunctionsLCL,
-  Forms, Controls, ExtCtrls, Graphics, StdCtrls, Dialogs,
+  UnitCommonSpectrum, Forms, Controls, ExtCtrls, Graphics, StdCtrls, Dialogs,
   Buttons, ButtonPanel, LCLType, LCLIntf, LazUTF8;
 
 type
@@ -60,9 +60,6 @@ type
       public
         LCLColourMap: TLCLColourMap;
       end;
-  strict private
-    const
-      Colours: Array of String = ('black', 'blue', 'red', 'magenta', 'green', 'cyan', 'yellow', 'white');
   strict private
     ColourPanels: Array[0..15] of TColourArea;
     LabColour: Array [0..7] of TLabel;
@@ -363,7 +360,7 @@ begin
     else
       S := '';
 
-    S := Format('Spectrum colour%s %s', [S, Colours[CA.Tag mod 8]]);
+    S := Format('Spectrum colour%s %s', [S, TCommonSpectrum.SpectrumColourNames[CA.Tag mod 8]]);
     ColorDialog1.Title := S;
     ColorDialog1.Color := CA.Color;
     if ColorDialog1.Execute then begin
@@ -618,7 +615,7 @@ begin
 
           Lab.AnchorVerticalCenterTo(CA);
           Lab.AnchorToNeighbour(akRight, 4, CA);
-          Lab.Caption := Colours[I] + ':';
+          Lab.Caption := TCommonSpectrum.SpectrumColourNames[I] + ':';
           Lab.AutoSize := True;
           Lab.Parent := Pan;
 
