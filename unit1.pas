@@ -1877,17 +1877,15 @@ begin
     CurrentPCTicks := GetTickCount64;
     K := CurrentPCTicks - PrevPCTicks;
     if K > 1000 then begin
-      K := K * 35;
-
       Ticks := Spectrum.SumTicks;
-
-      K := (Ticks - PrevTicks + (K shr 1)) div K;
 
       PrevPCTicks := CurrentPCTicks;
       PrevTimeStop := 0;
-      if not Spectrum.Paused then
-        Label1.Caption := 'speed ' + IntToStr(K) + '%'
-      else
+      if not Spectrum.Paused then begin
+        K := K * 35;
+        K := (Ticks - PrevTicks + (K shr 1)) div K;
+        Label1.Caption := 'speed ' + IntToStr(K) + '%';
+      end else
         Label1.Caption := 'paused';
 
       PrevTicks := Ticks;
@@ -1896,7 +1894,8 @@ begin
   end;
 
   if Assigned(HistoryQueue) then
-    HistoryQueue.CheckSaveHistorySnapshot;
+    if not Spectrum.Paused then
+      HistoryQueue.CheckSaveHistorySnapshot;
 end;
 
 procedure TForm1.SpectrumEndRun;

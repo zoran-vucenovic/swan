@@ -353,10 +353,9 @@ begin
     FSpectrum := ASpectrum;
         
     FramesPassed := 0;
-    if Assigned(ASpectrum) then begin
-      FramesPassed := FSavePeriod;
-      CheckSaveHistorySnapshot;
-    end;
+    if Assigned(ASpectrum) then
+      SaveSnapshot();
+
   end;
 end;
 
