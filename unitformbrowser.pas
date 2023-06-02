@@ -239,7 +239,8 @@ end;
 
 procedure TFormBrowseTape.FormCreate(Sender: TObject);
 var
-  TempCanvas: TCanvas;
+  F: TFont;
+  Sz: TSize;
 begin
   FClosing := False;
   Grid := TTapeGrid.Create(Panel2);
@@ -249,17 +250,19 @@ begin
   Grid.AnchorParallel(akRight, 0, Panel2);
 
   Grid.Parent := Panel2;
-  TempCanvas := GetWorkingCanvas(Grid.Canvas);
+
+  F := TFont.Create;
   try
-    TempCanvas.Font := Grid.Font;
-    TempCanvas.Font.Style := TempCanvas.Font.Style + [fsBold];
-    TextSpcHeight := TempCanvas.TextHeight('Fg');
-    TextRowHeight := (TextSpcHeight * 7) div 6 + 1;
-    TextSpcHeight := ((TextRowHeight - TextSpcHeight) * 3) div 2;
+    F.Assign(Grid.Font);
+    F.Style := F.Style + [fsBold];
+    TCommonFunctionsLCL.CalculateTextSize(F, 'Fg', Sz);
   finally
-    if TempCanvas <> Grid.Canvas then
-      FreeWorkingCanvas(TempCanvas);
+    F.Free;
   end;
+  TextSpcHeight := Sz.cy;
+  TextRowHeight := (TextSpcHeight * 7) div 6 + 1;
+  TextSpcHeight := ((TextRowHeight - TextSpcHeight) * 3) div 2;
+
   SetLength(CellContents, 0);
   SetTapePlayer(nil);
   Grid.OnDrawCell := @GridDrawCell;

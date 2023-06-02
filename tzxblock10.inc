@@ -6,25 +6,7 @@
 
 TTzxTapBlock = class (TTzxBlock11abstract)
 strict private
-  type
-    THeader = packed record
-      DataType: Byte;
-      FileName: packed array [1..10] of Byte;
-      DataLenght: Word;
-      Param1: Word;
-      Param2: Word;
-    end;
-
-    THeaderWithDescription = record
-      Header: THeader;
-      IsValid: Boolean;
-      Description: String;
-    end;
-
-strict private
-  HeaderWD: THeaderWithDescription;
-
-  procedure DecodeHeader();
+  FHeaderDetails: String;
 
 strict protected
   function AddUsedBitsDetails: String; override;
@@ -66,40 +48,6 @@ begin
 
 end;
 
-procedure {TTzxPlayer.}TTzxTapBlock.DecodeHeader;
-var
-  FileName: RawByteString;
-begin
-  if HeaderWD.IsValid then begin
-    HeaderWD.Header.Param1 := LEtoN(HeaderWD.Header.Param1);
-    HeaderWD.Header.Param2 := LEtoN(HeaderWD.Header.Param2);
-    case HeaderWD.Header.DataType of
-      0:
-        HeaderWD.Description := 'Program%s';
-      1:
-        HeaderWD.Description := 'Number array%s';
-      2:
-        HeaderWD.Description := 'Character array%svariable name: ' + AnsiChar(WordRec(HeaderWD.Header.Param1).Hi) + #13;
-      3:
-        HeaderWD.Description := 'Code file%s';
-    otherwise
-      HeaderWD.IsValid := False;
-      Exit;
-    end;
-
-    SetLength(FileName{%H-}, 10);
-    Move(HeaderWD.Header.FileName[1], FileName[1], 10);
-    FileName := SpectrumCharToUtf8(FileName);
-
-    HeaderWD.Description := Format(HeaderWD.Description, [': ' + FileName + #13]);
-
-    HeaderWD.Header.DataLenght := LEtoN(HeaderWD.Header.DataLenght);
-    HeaderWD.Description := HeaderWD.Description + 'Length of data block: ' + IntToStr(HeaderWD.Header.DataLenght)
-      + #13 + Format('Param1: %d%sParam2: %d', [HeaderWD.Header.Param1, #13, HeaderWD.Header.Param2])
-      ;
-  end;
-end;
-
 function {TTzxPlayer.}TTzxTapBlock.AddUsedBitsDetails: String;
 begin
   Result := '';
@@ -109,7 +57,7 @@ constructor TTzxTapBlock.Create(ATapePlayer: TTapePlayer);
 begin
   inherited Create(ATapePlayer);
 
-  HeaderWD.IsValid := False;
+  FHeaderDetails := '';
 end;
 
 class function TTzxTapBlock.GetBlockId: Integer;
@@ -118,12 +66,55 @@ begin
 end;
 
 function {TTzxPlayer.}TTzxTapBlock.LoadBlock(const Stream: TStream): Boolean;
+
+type
+  THeader = packed record
+    DataType: Byte;
+    FileName: packed array [1..10] of Byte;
+    DataLenght: Word;
+    Param1: Word;
+    Param2: Word;
+  end;
+
+var
+  Header: THeader;
+
+  procedure DecodeHeader();
+  var
+    FileName: RawByteString;
+  begin
+    Header.Param1 := LEtoN(Header.Param1);
+    Header.Param2 := LEtoN(Header.Param2);
+    Header.DataLenght := LEtoN(Header.DataLenght);
+    case Header.DataType and %11 of
+      0:
+        FHeaderDetails := 'Program%s';
+      1:
+        FHeaderDetails := 'Number array%s';
+      2:
+        FHeaderDetails := 'Character array%svariable name: ' + AnsiChar(WordRec(Header.Param1).Hi) + #13;
+    otherwise //3:
+        FHeaderDetails := 'Code file%s';
+    end;
+
+    SetLength(FileName{%H-}, 10);
+    Move(Header.FileName[1], FileName[1], 10);
+    FileName := SpectrumCharToUtf8(FileName);
+
+    FHeaderDetails :=
+      Format(FHeaderDetails, [': ' + FileName + #13])
+      + Format('Length of data block: %d%sParam1: %d%sParam2: %d%s',
+                [Header.DataLenght, #13, Header.Param1, #13, Header.Param2, #13])
+      ;
+  end;
+
 var
   L: Integer;
   W: Word;
+
 begin
   Result := False;
-  HeaderWD.IsValid := False;
+  FHeaderDetails := '';
   L := Stream.Size - Stream.Position - 2;
   if L >= 0 then begin
     if Stream.Read(W{%H-}, 2) = 2 then begin
@@ -140,8 +131,7 @@ begin
             if (Data^ and $80) = 0 then begin
               PilotPulsesNeeded := DefaultPilotHeaderPulsesNeeded;
               if DataLen > SizeOf(THeader) then begin
-                Move((Data + 1)^, HeaderWD.Header, SizeOf(THeader));
-                HeaderWD.IsValid := True;
+                Move((Data + 1)^, Header, SizeOf(THeader));
                 DecodeHeader();
               end;
             end else
@@ -163,8 +153,7 @@ end;
 procedure {TTzxPlayer.}TTzxTapBlock.Details(out S: String);
 begin
   inherited Details(S);
-  if HeaderWD.IsValid then
-    S := HeaderWD.Description + #13 + S;
+  S := FHeaderDetails + S;
 end;
 
 {$endif}

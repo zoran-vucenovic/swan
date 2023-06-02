@@ -124,7 +124,7 @@ class function TNumArraySorter.DefaultSortCompareProc(X, Y: T): Integer;
 begin
   if X < Y then
     Result := -1
-  else if X > Y then
+  else if Y < X then
     Result := 1
   else
     Result := 0;

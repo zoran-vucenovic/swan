@@ -42,7 +42,7 @@ var
 begin
   if GetBlockId = 0 then begin
     Stream.Seek(-5, TSeekOrigin.soCurrent);
-    if Stream.Read(B, 1) <> 1 then
+    if Stream.Read(B{%H-}, 1) <> 1 then
       Exit(False);
 
     N := B;

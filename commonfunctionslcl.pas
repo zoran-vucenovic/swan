@@ -34,6 +34,7 @@ type
         constructor Create(AOwner: TComponent; const ACaption: String); virtual;
         constructor Create(AOwner: TComponent); override;
         property ShowAccelChar default False;
+        property Cursor default crHandPoint;
       end;
 
   public

@@ -104,6 +104,7 @@ begin
   LabelAddPCKey.Anchors := [];
   LabelAddPCKey.AnchorParallel(akLeft, 0, Panel6);
   LabelAddPCKey.AnchorParallel(akTop, 0, Panel6);
+  LabelAddPCKey.Hint := 'Add (or find existing) key mapping';
 
   LabelAddScheme := TCommonFunctionsLCL.CreateLinkLabel(PanelAddRemoveScheme, 'Save as...');
   LabelAddScheme.Anchors := [];
