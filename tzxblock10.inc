@@ -79,6 +79,22 @@ type
 var
   Header: THeader;
 
+  function DecodeVariableName(): RawByteString;
+  var
+    C: AnsiChar;
+  begin
+    if (Header.DataType in [1, 2]) then begin
+      C := AnsiChar((WordRec(Header.Param1).Hi and $1F) + $60);
+      if C in ['a'..'z'] then begin
+        Result := #13 + 'variable name: ' + C;
+        if Header.DataType = 2 then
+          Result := Result + '$';
+        Exit;
+      end;
+    end;
+    Result := '';
+  end;
+
   procedure DecodeHeader();
   var
     FileName: RawByteString;
@@ -86,15 +102,17 @@ var
     Header.Param1 := LEtoN(Header.Param1);
     Header.Param2 := LEtoN(Header.Param2);
     Header.DataLenght := LEtoN(Header.DataLenght);
-    case Header.DataType and %11 of
+    case Header.DataType of
       0:
-        FHeaderDetails := 'Program%s';
+        FHeaderDetails := 'Program';
       1:
-        FHeaderDetails := 'Number array%s';
+        FHeaderDetails := 'Number array';
       2:
-        FHeaderDetails := 'Character array%svariable name: ' + AnsiChar(WordRec(Header.Param1).Hi) + #13;
-    otherwise //3:
-        FHeaderDetails := 'Code file%s';
+        FHeaderDetails := 'Character array';
+      3:
+        FHeaderDetails := 'Code file';
+    otherwise
+      Exit;
     end;
 
     SetLength(FileName{%H-}, 10);
@@ -102,7 +120,7 @@ var
     FileName := SpectrumCharToUtf8(FileName);
 
     FHeaderDetails :=
-      Format(FHeaderDetails, [': ' + FileName + #13])
+      FHeaderDetails + ': ' + FileName + DecodeVariableName() + #13
       + Format('Length of data block: %d%sParam1: %d%sParam2: %d%s',
                 [Header.DataLenght, #13, Header.Param1, #13, Header.Param2, #13])
       ;
@@ -126,8 +144,8 @@ begin
         if not Result then begin
           Getmem(Data, DataLen);
           if Stream.Read(Data^, DataLen) = DataLen then begin
-            Result := True;
             PEnd := Data + (DataLen - 1);
+            Result := True;
             if (Data^ and $80) = 0 then begin
               PilotPulsesNeeded := DefaultPilotHeaderPulsesNeeded;
               if DataLen > SizeOf(THeader) then begin
