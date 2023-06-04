@@ -14,14 +14,19 @@ uses
 
 type
   TFormBrowseTape = class(TForm)
+    ActionGoToBlock: TAction;
+    ActionList1: TActionList;
     CheckBox1: TCheckBox;
     Label1: TLabel;
     Label2: TLabel;
+    MenuItem1: TMenuItem;
     Panel1: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
     Panel4: TPanel;
     Panel5: TPanel;
+    PopupMenu1: TPopupMenu;
+    procedure ActionGoToBlockExecute(Sender: TObject);
     procedure CheckBox1Change(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -38,6 +43,8 @@ type
         function MouseButtonAllowed({%H-}Button: TMouseButton): Boolean; override;
       public
         constructor Create(AOwner: TComponent); override;
+        function MouseToCellRegular(const MousePos: TPoint; out GridCoordinates: TPoint
+          ): Boolean;
       end;
 
       TCellContent = class(TObject)
@@ -50,12 +57,14 @@ type
 
   private
     FCurrentBlockNumber: Integer;
+    FOnGoToBlock: TProcedureOfObject;
     FTapePlayer: TTapePlayer;
     CellContents: TCellContents;
     TextRowHeight: Integer;
     TextSpcHeight: Integer;
     Grid: TTapeGrid;
     FClosing: Boolean;
+    FBlockToGoTo: Integer;
 
     procedure LoadFromConf;
     procedure SaveToConf;
@@ -63,12 +72,15 @@ type
     procedure FillGrid();
     procedure GridDrawCell(Sender: TObject; aCol, aRow: Integer;
           aRect: TRect; aState: TGridDrawState);
+    procedure GridOnContextPopup(Sender: TObject; MousePos: TPoint; var Handled: Boolean);
     procedure AfterShow(Data: PtrInt);
   public
+    function GetBlockToGoTo(): Integer;
     procedure SetTapePlayer(const ATapePlayer: TTapePlayer);
     procedure UpdateCurrentBlockNumber(const UncoditionallyPositionGrid: Boolean); inline;
     procedure AddButtonActions(AImageWidth: Integer;
           AActions: Array of TCustomAction);
+    property OnGoToBlock: TProcedureOfObject read FOnGoToBlock write FOnGoToBlock;
   end;
 
 implementation
@@ -92,14 +104,47 @@ begin
   TitleStyle := tsNative;
   Options := Options
     + [goColSizing]
-    //- []
+    - [goRangeSelect]
     ;
+end;
+
+function TFormBrowseTape.TTapeGrid.MouseToCellRegular(const MousePos: TPoint;
+      out GridCoordinates: TPoint): Boolean;
+var
+  Rest: Integer;
+begin
+  Result :=
+    OffsetToColRow(
+      False, // IsCol
+      True,  // Physical, I have no idea what it means...
+      MousePos.Y,
+      GridCoordinates.Y,
+      Rest
+    )
+    and OffsetToColRow(
+      True, // IsCol
+      True,  // Physical, I have no idea what it means...
+      MousePos.X,
+      GridCoordinates.X,
+      Rest
+    );
+
+  if not Result then
+    GridCoordinates := Point(-1, -1);
 end;
 
 function TFormBrowseTape.TTapeGrid.MouseButtonAllowed(Button: TMouseButton
   ): Boolean;
+var
+  P, GC: TPoint;
 begin
-  Result := Button in [TMouseButton.mbLeft, TMouseButton.mbRight, TMouseButton.mbMiddle];
+  Result := Button = TMouseButton.mbLeft;
+  if not Result then begin
+    if Button in [TMouseButton.mbRight, TMouseButton.mbMiddle] then begin
+      P := ScreenToClient(Mouse.CursorPos);
+      Result := MouseToCellRegular(P, GC);
+    end;
+  end;
 end;
 
 { TFormBrowseTape }
@@ -213,6 +258,19 @@ begin
   end;
 end;
 
+procedure TFormBrowseTape.GridOnContextPopup(Sender: TObject; MousePos: TPoint;
+  var Handled: Boolean);
+var
+  P: TPoint;
+begin
+  Handled := not (Grid.MouseToCellRegular(MousePos, P) and (P.Y >= Grid.FixedRows));
+  if not Handled then begin
+    P.Y := P.Y - Grid.FixedRows;
+    FBlockToGoTo := P.Y;
+    ActionGoToBlock.Enabled := P.Y <> FCurrentBlockNumber;
+  end;
+end;
+
 procedure TFormBrowseTape.AfterShow(Data: PtrInt);
 begin
   TCommonFunctionsLCL.AdjustFormPos(Self);
@@ -220,6 +278,11 @@ begin
     Panel4.AutoSize := True;
     Application.QueueAsyncCall(@AfterShow, Data - 1);
   end;
+end;
+
+function TFormBrowseTape.GetBlockToGoTo: Integer;
+begin
+  Result := FBlockToGoTo;
 end;
 
 procedure TFormBrowseTape.FormClose(Sender: TObject; var CloseAction: TCloseAction);
@@ -237,18 +300,29 @@ begin
   end;
 end;
 
+procedure TFormBrowseTape.ActionGoToBlockExecute(Sender: TObject);
+begin
+  if Assigned(FOnGoToBlock) and (Grid.RowCount > 1) then
+    if FBlockToGoTo <> FCurrentBlockNumber then
+      FOnGoToBlock();
+end;
+
 procedure TFormBrowseTape.FormCreate(Sender: TObject);
 var
   F: TFont;
   Sz: TSize;
 begin
   FClosing := False;
+  OnGoToBlock := nil;
+  FBlockToGoTo := -1;
   Grid := TTapeGrid.Create(Panel2);
   Grid.AnchorParallel(akTop, 0, Panel2);
   Grid.AnchorParallel(akLeft, 0, Panel2);
   Grid.AnchorParallel(akBottom, 0, Panel2);
   Grid.AnchorParallel(akRight, 0, Panel2);
 
+  Grid.OnContextPopup := @GridOnContextPopup;
+  Grid.PopupMenu := PopupMenu1;
   Grid.Parent := Panel2;
 
   F := TFont.Create;
@@ -325,16 +399,16 @@ begin
   SetLength(CellContents, 0);
   Grid.RowCount := Grid.FixedRows;
   FCurrentBlockNumber := -1;
+  FBlockToGoTo := -1;
 end;
 
 procedure TFormBrowseTape.FillGrid;
-var                              
-  TempCanvas: TCanvas;
 
   function AdjustText(CC: TCellContent): Integer;
   var
     S1, S2: String;
-    P, L, K, P0: Integer;
+    P, K, P0: Integer;
+    Sz: TSize;
   begin
     Result := 0;
     K := 1;
@@ -352,14 +426,14 @@ var
       end;
       if S1 <> '' then begin
         S1 := ' ' + S1 + ' ';
-        L := TempCanvas.TextWidth(S1);
+        TCommonFunctionsLCL.CalculateTextSize(Grid.Font, S1, Sz);
         if CC.Details <> '' then begin
           S1 := #13 + S1;
           Inc(K);
         end;
         CC.Details := CC.Details + S1;
-        if L > Result then
-          Result := L;
+        if Sz.cx > Result then
+          Result := Sz.cx;
       end;
     until P = 0;
     CC.TextHeightDetails := K * TextRowHeight;
@@ -370,6 +444,7 @@ var
   CC: TCellContent;
   BL: TTapeBlock;
   S1: String;
+
 begin
   Grid.BeginUpdate;
   try
@@ -392,56 +467,51 @@ begin
         end;
         SetLength(CellContents, N);
         NN := 0;
-        TempCanvas := GetWorkingCanvas(Grid.Canvas);
-        try
-          TempCanvas.Font := Grid.Font;
-          for I := 0 to FTapePlayer.GetBlockCount - 1 do begin
-            BL := FTapePlayer.GetBlock(I);
 
-            for J := 0 to M - 1 do begin
-              TxtW := 0;
+        for I := 0 to FTapePlayer.GetBlockCount - 1 do begin
+          BL := FTapePlayer.GetBlock(I);
 
-              CC := TCellContent.Create;
-              CellContents[NN] := CC;
-              Inc(NN);
-              case J of
-                0:
-                  CC.Details := ' ' + IntToStr(I + 1) + '. ';
-                1:
-                  begin
-                    CC.Details := BL.GetBlockIdAsString;
-                    if CC.Details <> '' then
-                      CC.Details := CC.Details + ' — ';
-                    CC.Details := Format(' %s%s (%d) ', [
+          for J := 0 to M - 1 do begin
+            TxtW := 0;
+
+            CC := TCellContent.Create;
+            CellContents[NN] := CC;
+            Inc(NN);
+            case J of
+              0:
+                CC.Details := ' ' + IntToStr(I + 1) + '. ';
+              1:
+                begin
+                  CC.Details := BL.GetBlockIdAsString;
+                  if CC.Details <> '' then
+                    CC.Details := CC.Details + ' — ';
+
+                  CC.Details :=
+                    Format(' %s%s (%d) ', [
                       CC.Details,
                       BL.GetBlockDescription,
                       BL.GetBlockLength
-                      ]);
-                  end;
-                2:
-                  BL.Details(CC.Details);
-              otherwise
-                CC.Details := '';
-              end;
+                    ]);
+                end;
+              2:
+                BL.Details(CC.Details);
+            otherwise
+              CC.Details := '';
+            end;
 
-              TxtW := AdjustText(CC);
+            TxtW := AdjustText(CC);
 
-              K := CC.TextHeightDetails + TextSpcHeight;
+            K := CC.TextHeightDetails + TextSpcHeight;
 
-              if K > Grid.RowHeights[Grid.FixedRows + I] then
-                Grid.RowHeights[Grid.FixedRows + I] := K;
+            if K > Grid.RowHeights[Grid.FixedRows + I] then
+              Grid.RowHeights[Grid.FixedRows + I] := K;
 
-              if (J > 0) and (TxtW > 0) then begin
-                TxtW := TxtW + 6;
-                if TxtW > Grid.ColWidths[Grid.FixedCols + J] then
-                  Grid.ColWidths[Grid.FixedCols + J] := TxtW;
-              end;
+            if (J > 0) and (TxtW > 0) then begin
+              TxtW := TxtW + 6;
+              if TxtW > Grid.ColWidths[Grid.FixedCols + J] then
+                Grid.ColWidths[Grid.FixedCols + J] := TxtW;
             end;
           end;
-
-        finally
-          if TempCanvas <> Grid.Canvas then
-            FreeWorkingCanvas(TempCanvas);
         end;
       end;
     end else begin

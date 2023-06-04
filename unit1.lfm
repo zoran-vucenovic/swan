@@ -21,7 +21,7 @@ object Form1: TForm1
   OnDropFiles = FormDropFiles
   OnShow = FormShow
   ParentDoubleBuffered = False
-  LCLVersion = '2.2.5.0'
+  LCLVersion = '2.2.7.0'
   object PaintBox1: TPaintBox
     AnchorSideLeft.Control = Owner
     AnchorSideBottom.Control = PanelStatus

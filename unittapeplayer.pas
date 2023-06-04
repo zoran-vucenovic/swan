@@ -39,13 +39,13 @@ type
 
   TTapePlayer = class abstract (TSpectrum.TAbstractTapePlayer)
   strict private
-    procedure EmptyProcedure;
-    procedure SetOnChangeBlock(AValue: TProcedureOfObject);
-    procedure ClearBlocks;
-  strict private
     FOnChangeBlock: TProcedureOfObject;
     FBlockCount: Integer;
     FFileName: String;
+
+    procedure EmptyProcedure;
+    procedure SetOnChangeBlock(AValue: TProcedureOfObject);
+    procedure ClearBlocks;
   protected
     type
       TTapeBlockClass = class of TTapeBlock;
@@ -104,6 +104,7 @@ type
     function GetCurrentBlockNumber: Integer;
     function GetBlock(const I: Integer): TTapeBlock;
     procedure IncBlock(const IncBy: Integer);
+    procedure GoToBlock(const FBlockToGoTo: Integer);
     class function GetTapePlayerClassFromType(const TapeType: TTapeType): TTapePlayerClass; static;
     class function CheckRealTapePlayerClass(const Stream: TStream): TTapePlayerClass;
 
@@ -398,6 +399,18 @@ begin
         DoOnChangeBlock;
       end;
   otherwise
+  end;
+end;
+
+procedure TTapePlayer.GoToBlock(const FBlockToGoTo: Integer);
+begin
+  if (FBlockToGoTo >= 0)
+    and (FBlockToGoTo < FBlockCount)
+    and (FBlockToGoTo <> FCurrentBlockNumber)
+  then begin
+    StopPlaying();
+    FCurrentBlockNumber := FBlockToGoTo;
+    DoOnChangeBlock;
   end;
 end;
 

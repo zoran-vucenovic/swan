@@ -263,6 +263,8 @@ type
     procedure SoundVolumeOnShow(Sender: TObject);
     procedure EventPlayerOnChangeBlock(Sender: TObject);
     procedure PlayerOnChangeBlock;
+    procedure EventTapeBrowserGoToBlock(Sender: TObject);
+    procedure TapeBrowserGoToBlock();
     procedure TapeBrowserAttachTape;
     procedure GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape; const IncludeZip: Boolean; out Extensions: TStringDynArray);
     procedure LoadAsk(const SnapshotOrTape: TSnapshotOrTape);
@@ -1554,6 +1556,17 @@ begin
   AddEventToQueue(@EventPlayerOnChangeBlock);
 end;
 
+procedure TForm1.EventTapeBrowserGoToBlock(Sender: TObject);
+begin
+  if Assigned(TapePlayer) and Assigned(FTapeBrowser) then
+    TapePlayer.GoToBlock(FTapeBrowser.GetBlockToGoTo());
+end;
+
+procedure TForm1.TapeBrowserGoToBlock;
+begin
+  AddEventToQueue(@EventTapeBrowserGoToBlock);
+end;
+
 procedure TForm1.TapeBrowserAttachTape;
 begin
   if Assigned(FTapeBrowser) then
@@ -1957,6 +1970,8 @@ begin
     FTapeBrowser.FreeNotification(Self);
     FTapeBrowser.AllowDropFiles := True;
     FTapeBrowser.OnDropFiles := Self.OnDropFiles;
+
+    FTapeBrowser.OnGoToBlock := @TapeBrowserGoToBlock;
 
     W := 24;
     I := 0;

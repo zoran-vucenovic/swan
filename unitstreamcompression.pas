@@ -33,7 +33,7 @@ begin
 
         OutStream.Position := 0;
         repeat
-          N := DS.read(Buff[0], SizeOf(Buff));
+          N := DS.read({%H-}Buff[0], SizeOf(Buff));
           if N > 0 then
             OutStream.Write(Buff[0], N);
         until N < SizeOf(Buff);
