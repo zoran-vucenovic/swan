@@ -18,7 +18,7 @@ unit PortAudioHeader;
 interface
 
 uses
-  SysUtils, dynlibs, ctypes, LazFileUtils;
+  SysUtils, dynlibs, ctypes;
 
 const
   paContinue = 0;
@@ -137,9 +137,12 @@ begin
   Result := 0;
 end;
 
+var
+  EmptyStr: AnsiString;
+
 function EmptyGetErrorText(ErrorCode: TPaError): PAnsiChar; cdecl;
 begin
-  Result := nil;
+  Result := PAnsiChar(EmptyStr);
 end;
 
 procedure EmptySleepProc(MSec: clong); cdecl;
@@ -177,12 +180,13 @@ const
   {$endif}
                     
 {$ifdef mswindows}
-  procedure TryWithBitness(S: String); inline;
-  var
-    Ext: String;
+var
+  Ext: String;
+  LibAux: String;
+
+  procedure TryWithBitness(S: String); //inline;
   begin
     S := S + IntToStr(SizeOf(Pointer) * 8);
-    Ext := ExtractFileExt(DefaultLibraryName);
     LibHandle := SafeLoadLibrary(S + Ext);
     if LibHandle = NilHandle then begin
       S := 'lib' + S;
@@ -191,9 +195,6 @@ const
         LibHandle := SafeLoadLibrary(S + 'bit' + Ext);
     end;
   end;
-
-var
-  LibAux: String;
 {$endif}
 
 begin
@@ -203,7 +204,9 @@ begin
       LibHandle := SafeLoadLibrary(DefaultLibraryName);
       {$ifdef mswindows}
       if LibHandle = NilHandle then begin
-        LibAux := ExtractFileNameOnly(DefaultLibraryName);
+        LibAux := ExtractFileName(DefaultLibraryName);
+        Ext := ExtractFileExt(LibAux);
+        LibAux := Copy(LibAux, 1, Length(LibAux) - Length(Ext));
         TryWithBitness(LibAux);
         if LibHandle = NilHandle then begin
           TryWithBitness(LibAux + '-');
@@ -267,6 +270,7 @@ end;
 
 procedure Init;
 begin
+  EmptyStr := '';
   LibHandle := NilHandle;
   LoadCount := 0;
   SetToEmptyProcedures;
