@@ -10,12 +10,12 @@ interface
 uses
   Classes, SysUtils, Types, Forms, Controls, Graphics, Dialogs, ActnList, Menus,
   ComCtrls, LCLType, Buttons, StdCtrls, ExtCtrls, zipper, fpjson, UnitSpectrum,
-  UnitFileSna, AboutBox, DebugForm, UnitFormBrowser,
-  UnitColourPalette, UnitSpectrumColourMap, CommonFunctionsLCL,
-  UnitFormKeyMappings, UnitJoystick, UnitFormJoystickSetup,
-  UnitDataModuleImages, unitSoundVolume, UnitConfigs,
+  UnitFileSna, AboutBox, DebugForm, UnitFormBrowser, UnitColourPalette,
+  UnitSpectrumColourMap, CommonFunctionsLCL, UnitFormKeyMappings, UnitJoystick,
+  UnitFormJoystickSetup, UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
-  UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen;
+  UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
+  UnitBeeper;
 
 type
 
@@ -187,11 +187,11 @@ type
     procedure AfterShow(Data: PtrInt);
     procedure UpdateActionsModel();
     procedure UpdateShowCurrentlyActiveJoystick;
-    procedure UpdateShowSound;
+    procedure UpdateSoundControls;
     procedure LoadFromConf;
     procedure SaveToConf;
     function GetSoundVolume: Integer;
-    procedure SetSoundVolume(N: Integer);
+    procedure SetSoundVolume(const N: Integer);
     procedure SetSnapshotHistoryEnabled(const B: Boolean);
 
     procedure KeyFromFormKeyboardOnScreen(AKeyValue: Word; Flags: Integer);
@@ -248,6 +248,7 @@ type
     HistoryQueue: TSnapshotHistoryQueue;
     SnapshotHistoryOptions: TSnapshotHistoryOptions;
 
+    function SoundLibraryDialogCheckLoad(const APath: String): Boolean;
     procedure TryLoadFromFiles(const SnapshotOrTape: TSnapshotOrTape; const AFileNames: Array of String);
     procedure UpdateActiveSnapshotHistory;
     procedure UpdateTextTapeRunning;
@@ -452,6 +453,7 @@ begin
   ScreenSizeFactor := 1;
 
   LoadFromConf;
+  TBeeper.TryLoadLib;
   if FNewModel = TSpectrumModel.smNone then
     FNewModel := TSpectrum.DefaultSpectrumModel;
   DoChangeModel(nil);
@@ -748,7 +750,7 @@ begin
     AddEventToQueue(@ActionMuteSoundExecute);
   end else begin
     Spectrum.SoundMuted := not Spectrum.SoundMuted;
-    UpdateShowSound;
+    UpdateSoundControls;
   end;
 end;
 
@@ -810,9 +812,11 @@ begin
     WasPaused := Spectrum.Paused;
     try
       Spectrum.Paused := True;
-      S := Spectrum.PortAudioLibPath;
-      if TFormInputLibraryPath.ShowLibraryPathDialog(S) then begin
-        Spectrum.PortAudioLibPath := S;
+      S := TBeeper.LibPath;
+      if TFormInputLibraryPath.ShowLibraryPathDialog(S, @SoundLibraryDialogCheckLoad) then begin
+        TBeeper.LibPath := S;
+        Spectrum.CheckStartBeeper;
+        UpdateSoundControls;
       end;
     finally
       Spectrum.Paused := WasPaused;
@@ -1016,8 +1020,9 @@ begin
   if FSoundVolumeForm = nil then begin
     if Sender <> Spectrum then
       AddEventToQueue(@SpeedButton1Click)
-    else
+    else begin
       ShowSoundVolumeForm();
+    end;
   end;
 end;
 
@@ -1154,18 +1159,30 @@ begin
   ActionEnableJoystick.Checked := TJoystick.Joystick.Enabled;
 end;
 
-procedure TForm1.UpdateShowSound;
+procedure TForm1.UpdateSoundControls;
+var
+  SoundAllowed: Boolean;
+  SoundIsMuted: Boolean;
 begin
-  ActionMuteSound.Checked := Spectrum.SoundMuted;
-  if Spectrum.SoundMuted then
+  SoundAllowed := TBeeper.IsLibLoaded and Assigned(Spectrum);
+  SoundIsMuted := (not SoundAllowed) or Spectrum.SoundMuted;
+  ActionMuteSound.Checked := SoundIsMuted;
+
+  if SoundIsMuted then
     SpeedButton1.ImageIndex := 17
   else
     SpeedButton1.ImageIndex := 18;
-  if Assigned(FSoundVolumeForm) then begin
+
+  if not SoundAllowed then
+    DestroySoundVolumeForm()
+  else if Assigned(FSoundVolumeForm) then begin
     FSoundVolumeForm.SpeedButton1.ImageIndex := SpeedButton1.ImageIndex;
-    FSoundVolumeForm.Muted := Spectrum.SoundMuted;
+    FSoundVolumeForm.Muted := SoundIsMuted;
     FSoundVolumeForm.SpeedButton1.Update;
   end;
+
+  ActionMuteSound.Enabled := SoundAllowed;
+  SpeedButton1.Enabled := SoundAllowed and (FSoundVolumeForm = nil);
   SpeedButton1.Update;
 end;
 
@@ -1201,7 +1218,7 @@ begin
     UpdateCheckWriteScreen;
 
     Spectrum.SoundMuted := JObj.Get(cSectionSoundMuted, Integer(0)) <> 0;
-    UpdateShowSound;
+
     SPortaudioLib64 := '';
     SPortaudioLib32 := Trim(JObj.Get(cSectionPortAudioLibPath32, SPortaudioLib64));
     SPortaudioLib64 := Trim(JObj.Get(cSectionPortAudioLibPath64, SPortaudioLib64));
@@ -1216,9 +1233,7 @@ begin
       {$fatal platform not supported!}
     {$endif}
 
-    if (S <> '') and (S <> Spectrum.PortAudioLibPath) then begin
-      Spectrum.PortAudioLibPath := S;
-    end;
+    TBeeper.LibPath := S;
 
     M := JObj.Get(cSectionSoundVolume, N);
     if (M >= 0) and (M <= 31) then
@@ -1234,14 +1249,14 @@ var
   SPortaudioLib32, SPortaudioLib64: String;
   S: String;
 begin
-  if FSkipWriteScreen then
-    N := 1
-  else
-    N := 0;
   JObj := TJSONObject.Create;
   try
     JObj.Add(cSectionSwanVersion, UnitVer.TVersion.FullVersionString);
-    JObj.Add(cSectionScreenSizeFactor, ScreenSizeFactor);
+    JObj.Add(cSectionScreenSizeFactor, Integer(ScreenSizeFactor));
+    if FSkipWriteScreen then
+      N := 1
+    else
+      N := 0;
     JObj.Add(cSectionSkipWriteScr, N);
 
     N := GetSoundVolume;
@@ -1261,10 +1276,10 @@ begin
 
     {$if SizeOf(SizeInt) = 4}
       SPortaudioLib64 := FPortaudioLibPathOtherBitness;
-      SPortaudioLib32 := Spectrum.PortAudioLibPath;
+      SPortaudioLib32 := TBeeper.LibPath;
     {$elseif SizeOf(SizeInt) = 8}
       SPortaudioLib32 := FPortaudioLibPathOtherBitness;
-      SPortaudioLib64 := Spectrum.PortAudioLibPath;
+      SPortaudioLib64 := TBeeper.LibPath;
     {$else}
       {$fatal platform not supported!}
     {$endif}
@@ -1289,12 +1304,12 @@ end;
 
 function TForm1.GetSoundVolume: Integer;
 begin
-  Result := Spectrum.SoundVolume div 4;
+  Result := TBeeper.BeeperVolume div 4;
 end;
 
-procedure TForm1.SetSoundVolume(N: Integer);
+procedure TForm1.SetSoundVolume(const N: Integer);
 begin
-  Spectrum.SoundVolume := N * 4;
+  TBeeper.BeeperVolume := N * 4;
 end;
 
 procedure TForm1.SetSnapshotHistoryEnabled(const B: Boolean);
@@ -1355,6 +1370,13 @@ begin
       Key := 0;
     end;
   end;
+end;
+
+function TForm1.SoundLibraryDialogCheckLoad(const APath: String): Boolean;
+begin
+  if TBeeper.IsLibLoaded and (APath <> TBeeper.LibPath) then
+    TBeeper.TryUnloadLib;
+  Result := TBeeper.TryLoadLib(APath);
 end;
 
 procedure TForm1.UpdateActiveSnapshotHistory;
@@ -1799,11 +1821,8 @@ begin
   Self.OnKeyUp := @DoOnKeyUp;
   Self.OnKeyDown := @DoOnKeyDown;
   UpdateShowCurrentlyActiveJoystick;
-  Spectrum.Start;
 
-  UpdateShowSound;
-  PaintBox1.OnPaint := @PaintScreen;
-  Application.AddOnDeactivateHandler(@FormDeactivate);
+  Spectrum.Start;
 end;
 
 procedure TForm1.DoOnResetSpectrum;
@@ -1921,6 +1940,10 @@ var
   I: Integer;
   Arr: TStringDynArray;
 begin
+  UpdateSoundControls;
+  PaintBox1.OnPaint := @PaintScreen;
+  Application.AddOnDeactivateHandler(@FormDeactivate);
+
   SetLength(Arr{%H-}, ParamCount);
   for I := 1 to ParamCount do
     Arr[I - 1] := ParamStr(I);
@@ -2020,8 +2043,13 @@ end;
 procedure TForm1.ShowSoundVolumeForm;
 begin
   if FSoundVolumeForm = nil then begin
+    if Spectrum.SoundMuted then begin
+      Spectrum.SoundMuted := False;
+      UpdateSoundControls;
+    end;
     FSoundVolumeForm := TFormSoundVolume.ShowSoundVolumeTracker(
-      Spectrum.SoundMuted, GetSoundVolume);
+      Spectrum.SoundMuted,
+      GetSoundVolume);
     FSoundVolumeForm.FreeNotification(Self);
   end;
 
@@ -2090,7 +2118,7 @@ begin
       TJoystick.Joystick.ResetState;
     end else if AComponent = FSoundVolumeForm then begin
       FSoundVolumeForm := nil;
-      SpeedButton1.Enabled := True;
+      UpdateSoundControls;
     end;
 
   end;

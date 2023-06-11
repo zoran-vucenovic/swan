@@ -1,5 +1,5 @@
 unit UnitBeeper;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
@@ -25,7 +25,7 @@ type
   strict private
     class var
       FLibPath: String;
-      InitCnt: Integer;
+      Initialized: Boolean;
       FPlaying: Boolean;
       FBeeperVolume: Integer;
 
@@ -46,14 +46,17 @@ type
       CurrentPosition: Integer;
   public
     class function IsLibLoaded: Boolean; static;
+    class function TryLoadLib(APath: String): Boolean; static;
+    class function TryLoadLib: Boolean; static;
+    class function TryUnloadLib: Boolean; static;
     class function StartBeeper: String; static;
     class function StopBeeper: String; static;
     class function StopAndTerminate: Boolean; static;
-    class function IsPlaying: Boolean; static;
 
     class property LibPath: String read FLibPath write SetLibPath;
     class property BufferLen: Integer read FBufferLen write SetBufferLen;
     class property BeeperVolume: Integer read FBeeperVolume write SetBeeperVolume;
+    class property Playing: Boolean read FPlaying;
   end;
 
 implementation
@@ -63,12 +66,11 @@ function PortAudioCallbackFun(constref {%H-}Input: Pointer; Output: Pointer;
       {%H-}StatusFlags: TPaStreamCallbackFlags; UserData: Pointer): cint; cdecl;
 var
   Data: PByte;
-  Out0: PByte;
   N: Integer;
+  Out0: PByte absolute Output;
 
 begin
   Data := PByte(UserData) + TBeeper.PlayPosition;
-  Out0 := PByte(Output);
   //
   N := FrameCount;
   if TBeeper.PlayPosition + N >= TBeeper.FBufferLen then begin
@@ -89,27 +91,28 @@ end;
 
 class procedure TBeeper.SetBufferLen(const AValue: Integer);
 begin
-  StopBeeper;
+  if AValue <> FBufferLen then begin
+    StopBeeper;
 
-  if AValue <= 0 then begin
-    FBufferLen := 0;
-    if BeeperBuffer <> nil then
-      FreeMemAndNil(BeeperBuffer);
-  end else begin
-    FBufferLen := AValue;
-    ReAllocMem(BeeperBuffer, FBufferLen);
+    if AValue <= 0 then begin
+      FBufferLen := 0;
+      if BeeperBuffer <> nil then
+        FreeMemAndNil(BeeperBuffer);
+    end else begin
+      FBufferLen := AValue;
+      ReAllocMem(BeeperBuffer, FBufferLen);
+    end;
   end;
-
 end;
 
 class procedure TBeeper.Init;
 begin
   FPlaying := False;
-  InitCnt := 0;
+  Initialized := False;
   FLibPath := '';
   BeeperBuffer := nil;
+  FBufferLen := 0;
   FBeeperVolume := 127 div 2;
-  SetBufferLen(0);
 end;
 
 class procedure TBeeper.Final;
@@ -129,18 +132,10 @@ begin
 end;
 
 class procedure TBeeper.SetLibPath(const AValue: String);
-var
-  Err: TPaError;
 begin
   if AValue <> FLibPath then begin
-    if not TerminatePortAudio(Err) then
-      Exit;
-
-    PortAudioHeader.TryUnloadPortAudioLib;
-    if PortAudioHeader.IsLoaded then
-      Exit;
-
-    FLibPath := AValue;
+    if TryUnloadLib() then
+      FLibPath := AValue;
   end;
 end;
 
@@ -148,14 +143,14 @@ class function TBeeper.InitPortAudio(out Err: TPaError): Boolean;
 begin
   Err := 0;
 
-  if InitCnt > 0 then
+  if Initialized then
     Exit(True);
 
   Err := PortAudioHeader.Pa_Initialize();
   if Err < 0 then
     Exit(False);
 
-  InitCnt := 1;
+  Initialized := True;
   Result := True;
 end;
 
@@ -163,7 +158,7 @@ class function TBeeper.TerminatePortAudio(out Err: TPaError): Boolean;
 begin
   Err := 0;
 
-  if InitCnt <= 0 then
+  if not Initialized then
     Exit(True);
 
   if StopBeeper <> '' then
@@ -173,13 +168,41 @@ begin
   if Err < 0 then
     Exit(False);
 
-  InitCnt := 0;
+  Initialized := False;
   Result := True;
 end;
 
 class function TBeeper.IsLibLoaded: Boolean;
 begin
-  Result := PortAudioHeader.IsLoaded or TryLoadPortAudioLib(FLibPath);
+  Result := PortAudioHeader.IsLoaded;
+end;
+
+class function TBeeper.TryLoadLib(APath: String): Boolean;
+begin
+  Result := PortAudioHeader.IsLoaded;
+  if not Result then begin
+    if PortAudioHeader.TryLoadPortAudioLib(APath) then begin
+      FLibPath := APath;
+      Result := True;
+    end;
+  end;
+end;
+
+class function TBeeper.TryLoadLib: Boolean;
+begin
+  Result := TryLoadLib(FLibPath);
+end;
+
+class function TBeeper.TryUnloadLib: Boolean;
+var
+  Err: TPaError;
+begin
+  if not TerminatePortAudio(Err) then
+    Exit(False);
+
+  PortAudioHeader.TryUnloadPortAudioLib;
+
+  Result := not PortAudioHeader.IsLoaded;
 end;
 
 class function TBeeper.StartBeeper: String;
@@ -234,10 +257,8 @@ begin
     if InError(Pa_AbortStream(Stream)) then
       Exit(ErrStr);
 
-  if InError(Pa_StartStream(Stream)) then begin
-    FPlaying := False;
+  if InError(Pa_StartStream(Stream)) then
     Exit(ErrStr);
-  end;       
 
   FPlaying := True;
 end;
@@ -269,11 +290,6 @@ var
   Err: TPaError;
 begin
   Result := TerminatePortAudio(Err);
-end;
-
-class function TBeeper.IsPlaying: Boolean;
-begin
-  Result := FPlaying;
 end;
 
 initialization

@@ -58,6 +58,7 @@ object Form1: TForm1
       Top = 1
       Width = 23
       Anchors = [akRight, akBottom]
+      Enabled = False
       Flat = True
       Images = DataModuleImages.ImageList1
       OnClick = SpeedButton1Click

@@ -1,5 +1,5 @@
 unit unitSoundVolume;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
@@ -23,19 +23,16 @@ type
     FMuted: Boolean;
 
     function GetLevel: Integer;
-    function GetMuted: Boolean;
-    function GetOnMuteClick: TNotifyEvent;
-    function GetOnTrackBarPositionChg: TNotifyEvent;
     procedure SetMuted(const AValue: Boolean);
     procedure SetOnMuteClick(AValue: TNotifyEvent);
     procedure SetOnTrackBarPositionChg(AValue: TNotifyEvent);
 
   public
     class function ShowSoundVolumeTracker(const AMuted: Boolean; const ALevel: Integer): TFormSoundVolume;
-    property OnTrackBarPositionChg: TNotifyEvent read GetOnTrackBarPositionChg write SetOnTrackBarPositionChg;
-    property OnMuteClick: TNotifyEvent read GetOnMuteClick write SetOnMuteClick;
+    property OnTrackBarPositionChg: TNotifyEvent write SetOnTrackBarPositionChg;
+    property OnMuteClick: TNotifyEvent write SetOnMuteClick;
     property Level: Integer read GetLevel;
-    property Muted: Boolean read GetMuted write SetMuted;
+    property Muted: Boolean write SetMuted;
   end;
 
 implementation
@@ -60,21 +57,6 @@ end;
 function TFormSoundVolume.GetLevel: Integer;
 begin
   Result := TrackBar1.Position;
-end;
-
-function TFormSoundVolume.GetMuted: Boolean;
-begin
-  Result := FMuted;
-end;
-
-function TFormSoundVolume.GetOnMuteClick: TNotifyEvent;
-begin
-  Result := SpeedButton1.OnClick;
-end;
-
-function TFormSoundVolume.GetOnTrackBarPositionChg: TNotifyEvent;
-begin
-  Result := TrackBar1.OnChange;
 end;
 
 procedure TFormSoundVolume.SetMuted(const AValue: Boolean);

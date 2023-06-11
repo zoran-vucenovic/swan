@@ -93,7 +93,6 @@ type
     FLatestTickUpdatedBeeper: Int64;
 
     procedure StopBeeper; inline;
-    procedure CheckStartBeeper;
     procedure UpdateBeeperBuffer; inline;
     procedure UpdateAskForSpeedCorrection;
     procedure SetPaused(AValue: Boolean);
@@ -115,14 +114,10 @@ type
     FSoundMuted: Boolean;
     SpectrumColoursBGRA: TSpectrumColoursBGRA;
     function GetFlashState: UInt16;
-    function GetPortAudioLibPath: String;
     function GetRemainingIntPinUp: Integer;
-    function GetSoundVolume: Integer;
     procedure SetFlashState(AValue: UInt16);
-    procedure SetPortAudioLibPath(const AValue: String);
     procedure SetRemainingIntPinUp(AValue: Integer);
     procedure SetSoundMuted(AValue: Boolean);
-    procedure SetSoundVolume(AValue: Integer);
     procedure UpdateDebuggedOrPaused;
     procedure SetInternalEar(AValue: Byte);
     procedure SetSpectrumModel(ASpectrumModel: TSpectrumModel);
@@ -145,6 +140,7 @@ type
     procedure GetSpectrumColours(out Colours: TLCLColourMap);
     procedure SetWriteScreen(const AValue: Boolean);
     procedure SetEarFromTape(AValue: Byte);
+    procedure CheckStartBeeper;
 
     procedure StopRunning;
     procedure ResetSpectrum;
@@ -164,9 +160,7 @@ type
     property OnEndRun: TThreadMethod read FOnEndRun write SetOnEndRun;
     property OnResetSpectrum: TThreadMethod read FOnResetSpectrum write FOnResetSpectrum;
     property Paused: Boolean read FPaused write SetPaused;
-    property PortAudioLibPath: String read GetPortAudioLibPath write SetPortAudioLibPath;
     property SoundMuted: Boolean read FSoundMuted write SetSoundMuted;
-    property SoundVolume: Integer read GetSoundVolume write SetSoundVolume;
     property InternalEar: Byte read FInternalEar write SetInternalEar;
     property FlashState: UInt16 read GetFlashState write SetFlashState;
     property SpectrumModel: TSpectrumModel read FSpectrumModel write SetSpectrumModel;
@@ -186,7 +180,7 @@ var
   B: Byte;
   N, M: Integer;
 begin
-  if (FSpeed = NormalSpeed) and TBeeper.IsPlaying then begin
+  if TBeeper.Playing then begin
     N := ((FSumTicks + FProcessor.TStatesInCurrentFrame) * 63 + 2500 - FLatestTickUpdatedBeeper) div 5000;
     if N > 0 then begin
       FLatestTickUpdatedBeeper := FLatestTickUpdatedBeeper + N * 5000;
@@ -390,7 +384,7 @@ end;
 procedure TSpectrum.CheckStartBeeper;
 begin
   if (not FSoundMuted) and AskForSpeedCorrection and FRunning and (FSpeed = NormalSpeed)
-      and TBeeper.IsLibLoaded and (not TBeeper.IsPlaying)
+      and TBeeper.IsLibLoaded and (not TBeeper.Playing)
   then begin
     FLatestTickUpdatedBeeper := (FSumTicks + FProcessor.TStatesInCurrentFrame) * 63;
     TBeeper.StartBeeper;
@@ -733,19 +727,9 @@ begin
   CheckStartBeeper;
 end;
 
-function TSpectrum.GetSoundVolume: Integer;
-begin
-  Result := TBeeper.BeeperVolume;
-end;
-
 procedure TSpectrum.SetFlashState(AValue: UInt16);
 begin
   FFlashState := AValue and 31;
-end;
-
-function TSpectrum.GetPortAudioLibPath: String;
-begin
-  Result := TBeeper.LibPath;
 end;
 
 function TSpectrum.GetRemainingIntPinUp: Integer;
@@ -761,12 +745,6 @@ begin
   Result := FFlashState and 31;
 end;
 
-procedure TSpectrum.SetPortAudioLibPath(const AValue: String);
-begin
-  TBeeper.LibPath := AValue;
-  CheckStartBeeper;
-end;
-
 procedure TSpectrum.SetRemainingIntPinUp(AValue: Integer);
 begin
   if AValue > 0 then begin
@@ -774,11 +752,6 @@ begin
   end else
     FIntPinUpCount := 0;
   FProcessor.IntPin := FIntPinUpCount > 0;
-end;
-
-procedure TSpectrum.SetSoundVolume(AValue: Integer);
-begin
-  TBeeper.BeeperVolume := AValue;
 end;
 
 procedure TSpectrum.WriteToScreen(TicksTo: Int32Fast);

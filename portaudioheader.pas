@@ -184,7 +184,7 @@ var
   Ext: String;
   LibAux: String;
 
-  procedure TryWithBitness(S: String); //inline;
+  procedure TryWithBitness(S: String);
   begin
     S := S + IntToStr(SizeOf(Pointer) * 8);
     LibHandle := SafeLoadLibrary(S + Ext);

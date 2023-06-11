@@ -1,14 +1,15 @@
 object FormInputLibraryPath: TFormInputLibraryPath
   Left = 256
-  Height = 109
+  Height = 119
   Top = 127
-  Width = 362
+  Width = 402
   BorderStyle = bsDialog
   Caption = 'FormInputLibraryPath'
-  ClientHeight = 109
-  ClientWidth = 362
+  ClientHeight = 119
+  ClientWidth = 402
+  OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
-  LCLVersion = '2.2.5.0'
+  LCLVersion = '2.2.7.0'
   object Panel2: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
@@ -17,11 +18,11 @@ object FormInputLibraryPath: TFormInputLibraryPath
     Left = 0
     Height = 105
     Top = 0
-    Width = 361
+    Width = 407
     AutoSize = True
     BevelOuter = bvNone
     ClientHeight = 105
-    ClientWidth = 361
+    ClientWidth = 407
     TabOrder = 0
     object Panel1: TPanel
       AnchorSideLeft.Control = Panel2
@@ -29,12 +30,12 @@ object FormInputLibraryPath: TFormInputLibraryPath
       Left = 12
       Height = 43
       Top = 12
-      Width = 337
+      Width = 383
       AutoSize = True
       BorderSpacing.Around = 12
       BevelOuter = bvNone
       ClientHeight = 43
-      ClientWidth = 337
+      ClientWidth = 383
       TabOrder = 0
       object Label1: TLabel
         Left = 0
@@ -52,44 +53,26 @@ object FormInputLibraryPath: TFormInputLibraryPath
         Left = 0
         Height = 23
         Top = 20
-        Width = 337
+        Width = 348
         BorderSpacing.Top = 5
         TabOrder = 0
         Text = 'Edit1'
       end
-      object Panel3: TPanel
+      object BitBtn1: TBitBtn
+        AnchorSideLeft.Control = Edit1
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = Edit1
-        AnchorSideRight.Control = Edit1
-        AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = Edit1
         AnchorSideBottom.Side = asrBottom
-        Left = 301
-        Height = 21
-        Top = 21
+        Left = 348
+        Height = 23
+        Top = 20
         Width = 35
-        Anchors = [akTop, akRight, akBottom]
+        Anchors = [akTop, akLeft, akBottom]
         AutoSize = True
-        BorderSpacing.Around = 1
-        BevelOuter = bvNone
-        ClientHeight = 21
-        ClientWidth = 35
+        Caption = '...'
+        OnClick = BitBtn1Click
         TabOrder = 1
-        object BitBtn1: TBitBtn
-          AnchorSideLeft.Control = Panel3
-          AnchorSideTop.Control = Panel3
-          AnchorSideBottom.Control = Panel3
-          AnchorSideBottom.Side = asrBottom
-          Left = 0
-          Height = 21
-          Top = 0
-          Width = 35
-          Anchors = [akTop, akLeft, akBottom]
-          AutoSize = True
-          Caption = '...'
-          OnClick = BitBtn1Click
-          TabOrder = 0
-        end
       end
     end
     object ButtonPanel1: TButtonPanel
@@ -97,7 +80,7 @@ object FormInputLibraryPath: TFormInputLibraryPath
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = Panel2
       AnchorSideRight.Side = asrBottom
-      Left = 190
+      Left = 236
       Height = 26
       Top = 71
       Width = 163
