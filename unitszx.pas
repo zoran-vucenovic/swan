@@ -2,9 +2,9 @@ unit UnitSZX;
 // Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
-{ This is implementation of zx-state file format.
-  http://www.spectaculator.com/redirect.php?id=szx
-  the zx-state file format is maintained by Jonathan Needle,
+{ This is implementation of zx-state (szx) file format.
+  Specification: https://www.spectaculator.com/docs/zx-state/intro.shtml
+  The zx-state file format is maintained by Jonathan Needle,
   the author of Spectaculator. }
 
 {$mode ObjFPC}{$H+}
