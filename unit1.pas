@@ -220,12 +220,18 @@ type
         BDown: Integer;
       end;
 
+      TDropFiles = class(TObject)
+        SnapshotOrTape: TSnapshotOrTape;
+        Filename: String;
+      end;
+
   strict private
     FTapeBrowser: TFormBrowseTape;
     FKeyboardOnScreen: UnitKeyboardOnScreen.TFormKeyboardOnScreen;
     PrevTicks: Int64;
     PrevPCTicks: Int64;
     PrevTimeStop: Integer;
+    DropFiles: TDropFiles;
 
     EventsQueueCount: Integer;
     EventsQueue: Array of TNotifyEvent;
@@ -250,6 +256,7 @@ type
 
     function SoundLibraryDialogCheckLoad(const APath: String): Boolean;
     procedure TryLoadFromFiles(const SnapshotOrTape: TSnapshotOrTape; const AFileNames: Array of String);
+    procedure DropFilesLoad(Sender: TObject);
     procedure UpdateActiveSnapshotHistory;
     procedure UpdateTextTapeRunning;
     procedure UpdateWriteScreen;
@@ -448,6 +455,7 @@ begin
   AutoSize := False;
   Bmp := TBitmap.Create;
 
+  DropFiles := nil;
   DestroySpectrum;
   Spectrum := TSpectrum.Create;
   ScreenSizeFactor := 1;
@@ -981,6 +989,7 @@ begin
     FKeyboardOnScreen.RemoveFreeNotification(Self);
     FreeAndNil(FKeyboardOnScreen);
   end;
+  FreeAndNil(DropFiles);
   if Assigned(FTapeBrowser) then begin
     FTapeBrowser.RemoveFreeNotification(Self);
     FreeAndNil(FTapeBrowser);
@@ -1006,6 +1015,11 @@ begin
       Sot := TSnapshotOrTape.stTape
     else
       Sot := TSnapshotOrTape.stBoth;
+
+    if DropFiles = nil then begin
+      DropFiles := TDropFiles.Create;
+      DropFiles.Filename := '';
+    end;
     TryLoadFromFiles(Sot, FileNames);
   end;
 end;
@@ -1056,13 +1070,34 @@ begin
             if not S.StartsWith(ExtensionSeparator) then
               S := ExtensionSeparator + S;
             if AnsiCompareText(S, EFN) = 0 then begin
-              DoLoad(SnapshotOrTape, FN);
+              if Assigned(DropFiles) then begin
+                DropFiles.SnapshotOrTape := SnapshotOrTape;
+                if DropFiles.Filename = '' then begin
+                  AddEventToQueue(@DropFilesLoad);
+                end;
+                DropFiles.Filename := FN;
+              end else
+                DoLoad(SnapshotOrTape, FN);
+
               Exit;
             end;
           end;
         end;
       end;
     end;
+  end;
+
+  if Assigned(DropFiles) and (DropFiles.Filename = '') then
+    FreeAndNil(DropFiles);
+end;
+
+procedure TForm1.DropFilesLoad(Sender: TObject);
+begin
+  if Assigned(DropFiles) then begin
+    if (DropFiles.Filename <> '') then
+      DoLoad(DropFiles.SnapshotOrTape, DropFiles.Filename);
+
+    FreeAndNil(DropFiles);
   end;
 end;
 
@@ -1947,6 +1982,7 @@ begin
   SetLength(Arr{%H-}, ParamCount);
   for I := 1 to ParamCount do
     Arr[I - 1] := ParamStr(I);
+  FreeAndNil(DropFiles);
   TryLoadFromFiles(TSnapshotOrTape.stBoth, Arr);
 end;
 
