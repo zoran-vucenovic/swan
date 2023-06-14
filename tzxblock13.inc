@@ -14,6 +14,8 @@ strict private
 
   TicksNeeded: Int64;
   CurrentPulseNumber: Integer;
+  FDetails: String;
+  FDetailsFilled: Boolean;
 
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
@@ -32,22 +34,24 @@ end;
 constructor TTzxBlock13.Create(ATapePlayer: TTapePlayer);
 begin
   inherited Create(ATapePlayer);
+
+  FDetailsFilled := False;
   FLen := 0;
   NumOfPulses := 0;
   SetLength(PulsesLengths, 0);
 end;
 
-class function {TTzxPlayer.}TTzxBlock13.GetBlockId: Integer;
+class function TTzxBlock13.GetBlockId: Integer;
 begin
   Result := $13;
 end;
 
-function {TTzxPlayer.}TTzxBlock13.GetBlockLength: Integer;
+function TTzxBlock13.GetBlockLength: Integer;
 begin
   Result := FLen;
 end;
 
-function {TTzxPlayer.}TTzxBlock13.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock13.LoadBlock(const Stream: TStream): Boolean;
 var
   I: Integer;
   B: Byte;
@@ -55,6 +59,7 @@ var
 begin
   Result := False;
 
+  FDetailsFilled := False;
   if Stream.Size > Stream.Position then begin
     if Stream.Read(B{%H-}, 1) = 1 then begin
       NumOfPulses := B;
@@ -77,12 +82,12 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock13.GetBlockDescription: String;
+class function TTzxBlock13.GetBlockDescription: String;
 begin
   Result := 'Pulse sequence';
 end;
 
-function {TTzxPlayer.}TTzxBlock13.GetNextPulse: Boolean;
+function TTzxBlock13.GetNextPulse: Boolean;
 var
   ProcTicks: Int64;
 begin
@@ -106,30 +111,79 @@ begin
   Result := True;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock13.Start;
+procedure TTzxBlock13.Start;
 begin
   inherited Start;
   State := TPlayState.psStart;
 
   TicksNeeded := TicksNeeded.MinValue;
-
   CurrentPulseNumber := 0;
+
   if NumOfPulses = 0 then
     State := TPlayState.psFinished;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock13.Details(out S: String);
-var
-  I: Integer;
-  MaybeComma: String;
-begin
-  S := 'number of pulses: ' + NumOfPulses.ToString
-    ;
-  MaybeComma := #13 + 'pulse lengths: ';
-  for I := 0 to NumOfPulses - 1 do begin
-    S := S + MaybeComma + PulsesLengths[I].ToString;
-    MaybeComma := ', ';
+procedure TTzxBlock13.Details(out S: String);
+
+  procedure FillDetails;
+  const
+    MaxLines = 5;
+    MaxPulsesInFirstLine = 8;
+    MaxPulsesInLine = 10;
+
+  var
+    I: Integer;
+    N: Integer;
+    K: Integer;
+    M: Integer;
+    S2: String;
+
+  begin
+    FDetails := 'Number of pulses: ' + NumOfPulses.ToString;
+
+    if NumOfPulses > 0 then begin
+      K := MaxPulsesInFirstLine;
+      M := MaxPulsesInLine;
+
+      if NumOfPulses > K + (MaxLines - 1) * M then begin
+        N := K + (MaxLines - 2) * M;
+        S2 := #13 + Format('  ... (and %d more)', [NumOfPulses - N]);
+      end else begin
+        S2 := '';
+
+        repeat
+          I := NumOfPulses + M - K;
+          N := I mod M;
+          if (N = 0) or (I div M >= M - N) then
+            Break;
+          Dec(K);
+          Dec(M);
+        until False;
+
+        N := NumOfPulses;
+      end;
+
+      FDetails := FDetails + #13 + 'Pulse lengths: ' + PulsesLengths[0].ToString;
+      for I := 1 to N - 1 do begin
+        Dec(K);
+        if K = 0 then begin
+          FDetails := FDetails + ',' + #13 + '   ';
+          K := M;
+        end else
+          FDetails := FDetails + ', ';
+
+        FDetails := FDetails + PulsesLengths[I].ToString;
+      end;
+
+      FDetails := FDetails + S2;
+    end;
+    FDetailsFilled := True;
   end;
+
+begin
+  if not FDetailsFilled then
+    FillDetails;
+  S := FDetails;
 end;
 
 {$endif}

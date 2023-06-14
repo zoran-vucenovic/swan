@@ -118,7 +118,7 @@ type
 
 { TTzxPlayer.TTzxBlock }
 
-class function {TTzxPlayer.}TTzxBlock.ReadThreeBytes(const Stream: TStream; out
+class function TTzxBlock.ReadThreeBytes(const Stream: TStream; out
   N: Int32): Boolean;
 var
   B: packed array [0..2] of Byte;
@@ -137,14 +137,14 @@ begin
   end;
 end;
 
-constructor {TTzxPlayer.}TTzxBlock.Create(ATapPlayer: TTapePlayer);
+constructor TTzxBlock.Create(ATapPlayer: TTapePlayer);
 begin
   inherited Create(ATapPlayer);
 
   State := psFinished;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock.Start;
+procedure TTzxBlock.Start;
 begin
   inherited Start;
   State := TPlayState.psFinished;
@@ -158,32 +158,32 @@ begin
     Result := '0x' + IntToHex(GetBlockId, 2);
 end;
 
-function {TTzxPlayer.}TTzxBlock.GetRelativeJumpValue: Integer;
+function TTzxBlock.GetRelativeJumpValue: Integer;
 begin
   Result := 0;
 end;
 
-function {TTzxPlayer.}TTzxBlock.GetNumberOfRepetitions: Integer;
+function TTzxBlock.GetNumberOfRepetitions: Integer;
 begin
   Result := 0;
 end;
 
-function {TTzxPlayer.}TTzxBlock.GetNumOfCalls: Integer;
+function TTzxBlock.GetNumOfCalls: Integer;
 begin
   Result := 0;
 end;
 
-function {TTzxPlayer.}TTzxBlock.GetCallBlockNumber(const I: Integer): Integer;
+function TTzxBlock.GetCallBlockNumber(const I: Integer): Integer;
 begin
   Result := 0;
 end;
 
-function {TTzxPlayer.}TTzxBlock.CheckReturnFromCallSequence: Boolean;
+function TTzxBlock.CheckReturnFromCallSequence: Boolean;
 begin
   Result := False;
 end;
 
-function {TTzxPlayer.}TTzxBlock.CheckLoopEnd: Boolean;
+function TTzxBlock.CheckLoopEnd: Boolean;
 begin
   Result := False;
 end;

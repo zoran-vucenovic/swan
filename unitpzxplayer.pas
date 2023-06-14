@@ -603,14 +603,14 @@ begin
   N := Length(Pulses);
   FDetails := 'Pulses count: ' + N.ToString;
   if N > 12 then begin
-    S := #13 + Format(' ... (%d pulses more)', [N - 10]);
+    S := #13 + Format('  ... (and %d more)', [N - 10]);
     N := 10;
   end else
     S := '';
   for I := 0 to N - 1 do begin
     FDetails := FDetails + #13 + Format('%3d. %d ticks', [I + 1, Pulses[I].Duration]);
     if Pulses[I].RepeatCount > 1 then
-      FDetails := FDetails + ', repeted ' + Pulses[I].RepeatCount.ToString + ' times';
+      FDetails := FDetails + ', repeated ' + Pulses[I].RepeatCount.ToString + ' times';
   end;
   FDetails := FDetails + S;
 end;

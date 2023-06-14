@@ -35,17 +35,17 @@ begin
   FLen := 0;
 end;
 
-class function {TTzxPlayer.}TTzxBlock12.GetBlockId: Integer;
+class function TTzxBlock12.GetBlockId: Integer;
 begin
   Result := $12;
 end;
 
-function {TTzxPlayer.}TTzxBlock12.GetBlockLength: Integer;
+function TTzxBlock12.GetBlockLength: Integer;
 begin
   Result := FLen;
 end;
 
-function {TTzxPlayer.}TTzxBlock12.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock12.LoadBlock(const Stream: TStream): Boolean;
 var
   W: Word;
 
@@ -65,12 +65,12 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock12.GetBlockDescription: String;
+class function TTzxBlock12.GetBlockDescription: String;
 begin
   Result := 'Pure Tone';
 end;
 
-function {TTzxPlayer.}TTzxBlock12.GetNextPulse: Boolean;
+function TTzxBlock12.GetNextPulse: Boolean;
 var
   ProcTicks: Int64;
 
@@ -99,7 +99,7 @@ begin
   Result := True;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock12.Start;
+procedure TTzxBlock12.Start;
 begin
   inherited Start;
   State := TPlayState.psStart;
@@ -108,10 +108,10 @@ begin
   PulsesNeeded := 1;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock12.Details(out S: String);
+procedure TTzxBlock12.Details(out S: String);
 begin
-  S := 'pulse length: ' + PulseLen.ToString + #13
-    + 'number of pulses: ' + NumOfPulses.ToString;
+  S := 'Number of pulses: ' + NumOfPulses.ToString
+    + #13 + 'Pulse length: ' + PulseLen.ToString;
 end;
 
 {$endif}
