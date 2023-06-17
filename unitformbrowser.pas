@@ -116,14 +116,14 @@ begin
   Result :=
     OffsetToColRow(
       False, // IsCol
-      True,  // Physical, I have no idea what it means...
+      True,  // Physical, means take scroll offset into consideration.
       MousePos.Y,
       GridCoordinates.Y,
       Rest
     )
     and OffsetToColRow(
       True, // IsCol
-      True,  // Physical, I have no idea what it means...
+      True, // Physical
       MousePos.X,
       GridCoordinates.X,
       Rest

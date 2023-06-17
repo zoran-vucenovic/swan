@@ -54,14 +54,14 @@ begin
   G := Grid as TFileListGrid;
   if G.OffsetToColRow(
       False, // IsCol
-      True,  // Physical, I have no idea what it means...
+      True,  // Physical, means take scroll offset into consideration.
       PMouse.Y,
       P.Y,
       Rest
     )
     and G.OffsetToColRow(
       True, // IsCol
-      True,  // Physical, I have no idea what it means...
+      True, // Physical
       PMouse.X,
       P.X,
       Rest
