@@ -134,10 +134,6 @@
           <Other>
             <CustomOptions Value="-dUseCThreads
 -dDebugging"/>
-            <OtherDefines Count="2">
-              <Define0 Value="UseCThreads"/>
-              <Define1 Value="Debugging"/>
-            </OtherDefines>
           </Other>
         </CompilerOptions>
       </Item>
@@ -577,6 +573,14 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="UnitKeyboardOnScreen"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitchoosefile.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormChooseFile"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitChooseFile"/>
       </Unit>
     </Units>
   </ProjectOptions>

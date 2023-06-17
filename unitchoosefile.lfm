@@ -1,0 +1,93 @@
+object FormChooseFile: TFormChooseFile
+  Left = 308
+  Height = 312
+  Top = 119
+  Width = 350
+  BorderIcons = [biSystemMenu, biMaximize]
+  Caption = 'Choose a file'
+  ClientHeight = 312
+  ClientWidth = 350
+  OnShow = FormShow
+  Position = poDefaultPosOnly
+  LCLVersion = '2.2.7.0'
+  object Panel1: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 0
+    Height = 312
+    Top = 0
+    Width = 350
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BevelOuter = bvNone
+    ClientHeight = 312
+    ClientWidth = 350
+    TabOrder = 0
+    object ButtonPanel1: TButtonPanel
+      Left = 6
+      Height = 26
+      Top = 280
+      Width = 338
+      OKButton.Name = 'OKButton'
+      OKButton.DefaultCaption = True
+      HelpButton.Name = 'HelpButton'
+      HelpButton.DefaultCaption = True
+      CloseButton.Name = 'CloseButton'
+      CloseButton.DefaultCaption = True
+      CancelButton.Name = 'CancelButton'
+      CancelButton.DefaultCaption = True
+      TabOrder = 2
+      ShowButtons = [pbOK, pbCancel]
+      ShowBevel = False
+    end
+    object Panel2: TPanel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel3
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = ButtonPanel1
+      Left = 0
+      Height = 247
+      Top = 27
+      Width = 350
+      Anchors = [akTop, akLeft, akRight, akBottom]
+      BevelOuter = bvNone
+      TabOrder = 1
+    end
+    object Panel3: TPanel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel1
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      Left = 6
+      Height = 15
+      Top = 6
+      Width = 338
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = True
+      BorderSpacing.Around = 6
+      BevelOuter = bvNone
+      ClientHeight = 15
+      ClientWidth = 338
+      TabOrder = 0
+      object Label1: TLabel
+        AnchorSideLeft.Control = Panel3
+        AnchorSideTop.Control = Panel3
+        AnchorSideRight.Control = Panel3
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 15
+        Top = 0
+        Width = 338
+        Anchors = [akTop, akLeft, akRight]
+        Caption = 'Label1'
+        ParentColor = False
+        WordWrap = True
+      end
+    end
+  end
+end

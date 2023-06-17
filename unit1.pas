@@ -9,13 +9,14 @@ interface
 
 uses
   Classes, SysUtils, Types, Forms, Controls, Graphics, Dialogs, ActnList, Menus,
-  ComCtrls, LCLType, Buttons, StdCtrls, ExtCtrls, zipper, fpjson, UnitSpectrum,
-  UnitFileSna, AboutBox, DebugForm, UnitFormBrowser, UnitColourPalette,
-  UnitSpectrumColourMap, CommonFunctionsLCL, UnitFormKeyMappings, UnitJoystick,
-  UnitFormJoystickSetup, UnitDataModuleImages, unitSoundVolume, UnitConfigs,
+  ComCtrls, LCLType, Buttons, StdCtrls, ExtCtrls, zipper, fpjson,
+  UnitSpectrum, UnitFileSna, AboutBox, DebugForm, UnitFormBrowser,
+  UnitColourPalette, UnitSpectrumColourMap, CommonFunctionsLCL,
+  UnitFormKeyMappings, UnitJoystick, UnitFormJoystickSetup,
+  UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
-  UnitBeeper;
+  UnitBeeper, UnitChooseFile;
 
 type
 
@@ -204,11 +205,17 @@ type
 
       TFileUnzipper = class(TObject)
       strict private
-        Stream: TStream;
+        InStream: TStream;
+        OutStream: TStream;
 
+        procedure DoOpenInputStream(Sender: TObject; var AStream: TStream);
+        procedure DoCloseInputStream(Sender: TObject; var AStream: TStream);
         procedure DoCreateOutZipStream(Sender : TObject; var AStream : TStream; {%H-}AItem : TFullZipFileEntry);
         procedure DoDoneOutZipStream(Sender : TObject; var AStream : TStream; {%H-}AItem : TFullZipFileEntry);
+
       public
+        class function GetFileFromZipStream(const AZipStream: TStream; const Extensions: array of String;
+          out AStream: TStream; out FileNameInZip: String): Boolean; static;
         class function GetFileFromZipFile(const ZipFileName: String; const Extensions: array of String;
           out AStream: TStream; out FileNameInZip: String): Boolean; static;
       end;
@@ -307,12 +314,26 @@ implementation
 
 { TForm1.TFileUnzipper }
 
+procedure TForm1.TFileUnzipper.DoOpenInputStream(Sender: TObject;
+  var AStream: TStream);
+begin
+  AStream := InStream;
+  if Assigned(InStream) then
+    InStream.Position := 0;
+end;
+
+procedure TForm1.TFileUnzipper.DoCloseInputStream(Sender: TObject;
+  var AStream: TStream);
+begin
+  AStream := nil;
+end;
+
 procedure TForm1.TFileUnzipper.DoCreateOutZipStream(Sender: TObject;
   var AStream: TStream; AItem: TFullZipFileEntry);
 begin
-  Stream := TMemoryStream.Create;
-  Stream.Position := 0;
-  AStream := Stream;
+  OutStream := TMemoryStream.Create;
+  OutStream.Position := 0;
+  AStream := OutStream;
 end;
 
 procedure TForm1.TFileUnzipper.DoDoneOutZipStream(Sender: TObject;
@@ -322,90 +343,129 @@ begin
     AStream.Position := 0;
 end;
 
-class function TForm1.TFileUnzipper.GetFileFromZipFile(
-  const ZipFileName: String; const Extensions: array of String; out
+class function TForm1.TFileUnzipper.GetFileFromZipStream(
+  const AZipStream: TStream; const Extensions: array of String; out
   AStream: TStream; out FileNameInZip: String): Boolean;
 var
   UnZ: TUnZipper;
-  I, II, LE: Integer;
+  I, II, LE, N: Integer;
   Entry: TFullZipFileEntry;
-  Extension, S: AnsiString;
+  Extension: AnsiString;
   SL: TStringList;
   FiUnz: TFileUnzipper;
   ExtFound: Boolean;
-
+  S, S2: AnsiString;
 begin
   Result := False;
   AStream := nil;
   FileNameInZip := '';
 
-  LE := Length(Extensions);
-  if LE > 0 then begin
-    UnZ := TUnZipper.Create;
-    try
-      UnZ.FileName := ZipFileName;
-      UnZ.Examine;
+  if Assigned(AZipStream) then begin
+    LE := Length(Extensions);
+    if LE > 0 then begin
+      FiUnz := TFileUnzipper.Create;
+      try
+        UnZ := TUnZipper.Create;
+        try
+          UnZ.FileName := '';
+          FiUnz.InStream := AZipStream;
+          UnZ.OnOpenInputStream := @(FiUnz.DoOpenInputStream);
+          UnZ.OnCloseInputStream := @(FiUnz.DoCloseInputStream);
+          UnZ.Examine;
 
-      I := 0;
-      while (I < UnZ.Entries.Count) and (not Result) do begin
-        Entry := UnZ.Entries.FullEntries[I];
-        if not (Entry.IsDirectory or Entry.IsLink) then begin
-          FileNameInZip := Entry.ArchiveFileName;
-          Extension := ExtractFileExt(FileNameInZip);
+          SL := TStringList.Create;
+          try
+            I := 0;
+            while I < UnZ.Entries.Count do begin
+              Entry := UnZ.Entries.FullEntries[I];
+              if not (Entry.IsDirectory or Entry.IsLink) then begin
+                //FileNameInZip := Entry.ArchiveFileName;
+                S2 := Entry.ArchiveFileName;
+                Extension := ExtractFileExt(S2);
 
-          ExtFound := False;
-          II := 0;
-          while (not ExtFound) and (II < LE) do begin
-            S := Trim(Extensions[II]);
-            if Length(S) > 0 then begin
-              if not S.StartsWith(ExtensionSeparator) then
-                S := ExtensionSeparator + S;
-              ExtFound := AnsiCompareText(Extension, S) = 0;
+                ExtFound := False;
+                II := 0;
+                while (not ExtFound) and (II < LE) do begin
+                  S := Trim(Extensions[II]);
+                  if Length(S) > 0 then begin
+                    if not S.StartsWith(ExtensionSeparator) then
+                      S := ExtensionSeparator + S;
+                    ExtFound := AnsiCompareText(Extension, S) = 0;
+                  end;
+                  Inc(II);
+                end;
+
+                if ExtFound then
+                  SL.Append(S2);
+
+              end;
+              Inc(I);
             end;
-            Inc(II);
-          end;
 
-          if ExtFound then begin
-            SL := TStringList.Create;
-            try
-              SL.Append(FileNameInZip);
-              FiUnz := TFileUnzipper.Create;
+            if UnitChooseFile.TFormChooseFile.ShowFormChooseFile(SL, N) then begin
+              S2 := SL.Strings[N];
+              SL.Clear;
+              SL.Append(S2);
+              FileNameInZip := S2;
+
+              FiUnz.OutStream := nil;
               try
-                FiUnz.Stream := nil;
                 try
                   UnZ.OnCreateStream := @(FiUnz.DoCreateOutZipStream);
                   UnZ.OnDoneStream := @(FiUnz.DoDoneOutZipStream);
-
                   UnZ.UnZipFiles(SL);
-                  if Assigned(FiUnz.Stream) then begin
-                    if FiUnz.Stream.Size = 0 then
-                      FreeAndNil(FiUnz.Stream)
-                    else begin
-                      AStream := FiUnz.Stream;
-                      Result := True;
+                  if Assigned(FiUnz.OutStream) then begin
+                    if FiUnz.OutStream.Size > 0 then begin
+                      Extension := ExtractFileExt(S2);
+                      if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
+                        if GetFileFromZipStream(FiUnz.OutStream, Extensions, AStream, S) then begin
+                          FileNameInZip := IncludeTrailingPathDelimiter(FileNameInZip) + S;
+
+                          Result := True;
+                        end else
+                          AStream := nil;
+                      end else begin
+                        AStream := FiUnz.OutStream;
+                        FiUnz.OutStream := nil;
+                        Result := True;
+                      end;
                     end;
                   end;
                 except
                   AStream := nil;
-                  FiUnz.Stream.Free;
                 end;
               finally
-                FiUnz.Free;
+                FiUnz.OutStream.Free;
               end;
-
-            finally
-              SL.Free;
             end;
-
+          finally
+            SL.Free;
           end;
-
+        finally
+          UnZ.Free;
         end;
-        Inc(I);
+      finally
+        FiUnz.Free;
       end;
-
-    finally
-      UnZ.Free;
     end;
+  end;
+end;
+
+class function TForm1.TFileUnzipper.GetFileFromZipFile(
+  const ZipFileName: String; const Extensions: array of String; out
+  AStream: TStream; out FileNameInZip: String): Boolean;
+var
+  ZipStream: TStream;
+begin
+  Result := False;
+  try
+    ZipStream := TFileStream.Create(ZipFileName, fmOpenRead or fmShareDenyWrite);
+    try
+      Result := GetFileFromZipStream(ZipStream, Extensions, AStream, FileNameInZip);
+    finally
+      ZipStream.Free;
+    end;
+  except
   end;
 end;
 
@@ -1748,10 +1808,11 @@ begin
       Extension := ExtractFileExt(ASourceFile);
       
       if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
-        GetAcceptableExtensions(SnapshotOrTape, False, AcceptedExtensions);
+        GetAcceptableExtensions(SnapshotOrTape, True, AcceptedExtensions);
         if not TFileUnzipper.GetFileFromZipFile(ASourceFile, AcceptedExtensions, Stream, FileName) then begin
           Stream := nil;
         end else begin
+          DoDirSeparators(FileName);
           Extension := ExtractFileExt(FileName);
           FileName := IncludeTrailingPathDelimiter(ASourceFile) + FileName;
         end;
