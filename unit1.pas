@@ -379,7 +379,6 @@ begin
             while I < UnZ.Entries.Count do begin
               Entry := UnZ.Entries.FullEntries[I];
               if not (Entry.IsDirectory or Entry.IsLink) then begin
-                //FileNameInZip := Entry.ArchiveFileName;
                 S2 := Entry.ArchiveFileName;
                 Extension := ExtractFileExt(S2);
 
@@ -403,10 +402,9 @@ begin
             end;
 
             if UnitChooseFile.TFormChooseFile.ShowFormChooseFile(SL, N) then begin
-              S2 := SL.Strings[N];
+              FileNameInZip := SL.Strings[N];
               SL.Clear;
-              SL.Append(S2);
-              FileNameInZip := S2;
+              SL.Append(FileNameInZip);
 
               FiUnz.OutStream := nil;
               try
@@ -416,7 +414,7 @@ begin
                   UnZ.UnZipFiles(SL);
                   if Assigned(FiUnz.OutStream) then begin
                     if FiUnz.OutStream.Size > 0 then begin
-                      Extension := ExtractFileExt(S2);
+                      Extension := ExtractFileExt(FileNameInZip);
                       if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
                         if GetFileFromZipStream(FiUnz.OutStream, Extensions, AStream, S) then begin
                           FileNameInZip := IncludeTrailingPathDelimiter(FileNameInZip) + S;
@@ -455,15 +453,30 @@ class function TForm1.TFileUnzipper.GetFileFromZipFile(
   const ZipFileName: String; const Extensions: array of String; out
   AStream: TStream; out FileNameInZip: String): Boolean;
 var
-  ZipStream: TStream;
+  FileStream: TStream;
+  ZipStream: TMemoryStream;
 begin
   Result := False;
   try
-    ZipStream := TFileStream.Create(ZipFileName, fmOpenRead or fmShareDenyWrite);
+    FileStream := TFileStream.Create(ZipFileName, fmOpenRead or fmShareDenyWrite);
     try
-      Result := GetFileFromZipStream(ZipStream, Extensions, AStream, FileNameInZip);
+      // Create auxiliary in-memory stream, instead of passing the file stream
+      // directly, so that we can release file locks immediately.
+      ZipStream := TMemoryStream.Create;
+      try
+        ZipStream.Size := FileStream.Size;
+        FileStream.Position := 0;
+        ZipStream.Position := 0;
+        if FileStream.Read(ZipStream.Memory^, ZipStream.Size) = ZipStream.Size then begin
+          FreeAndNil(FileStream); // release file locks immediately
+          Result := GetFileFromZipStream(ZipStream, Extensions, AStream, FileNameInZip);
+        end;
+      finally
+        ZipStream.Free;
+      end;
+
     finally
-      ZipStream.Free;
+      FileStream.Free;
     end;
   except
   end;
