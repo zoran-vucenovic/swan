@@ -63,8 +63,9 @@ type
     ActionPause: TAction;
     ActionExit: TAction;
     ActionList1: TActionList;
-    Label1: TLabel;
-    Label2: TLabel;
+    LabelSpeed: TLabel;
+    LabelJoystick: TLabel;
+    LabelModel: TLabel;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
     MenuItem10: TMenuItem;
@@ -117,6 +118,7 @@ type
     PaintBox1: TPaintBox;
     Panel1: TPanel;
     Panel2: TPanel;
+    Panel3: TPanel;
     PanelStatus: TPanel;
     SaveDialog1: TSaveDialog;
     Separator1: TMenuItem;
@@ -502,8 +504,9 @@ begin
 
   FLastFilePath := '';
   FPortaudioLibPathOtherBitness := '';
-  Label2.Caption := ' ';
-  Label1.Caption := ' ';
+  LabelJoystick.Caption := ' ';
+  LabelSpeed.Caption := ' ';
+  LabelModel.Caption := ' ';
 
   FSoundVolumeForm := nil;
   FTapeBrowser := nil;
@@ -521,9 +524,6 @@ begin
 
   FSkipWriteScreen := True;
   FWriteScreen := True;
-
-  Label1.Constraints.MinWidth := PanelStatus.Canvas.GetTextWidth('Wspeed 100.99%W');
-  Label2.Constraints.MinWidth := PanelStatus.Canvas.GetTextWidth('WWWJoystick: Interface II right');
 
   AutoSize := False;
   Bmp := TBitmap.Create;
@@ -1114,11 +1114,15 @@ begin
 end;
 
 procedure TForm1.DoChangeModel(Sender: TObject);
+var
+  S: String;
 begin
   if FNewModel <> TSpectrumModel.smNone then begin
     if FNewModel <> Spectrum.SpectrumModel then begin
       Spectrum.SpectrumModel := FNewModel;
       UpdateActionsModel();
+      WriteStr(S, Spectrum.SpectrumModel);
+      LabelModel.Caption := StringReplace(Copy(S, 3), '_', ' ', [rfReplaceAll]);
     end;
     FNewModel := TSpectrumModel.smNone;
   end;
@@ -1238,8 +1242,12 @@ begin
     UpdateScreenSizeFactor;
     Self.AutoSize := True;
     Application.QueueAsyncCall(@AfterShow, Data - 1);
-  end else
+  end else begin
+    LabelSpeed.Constraints.MinWidth := PanelStatus.Canvas.GetTextWidth('Wspeed 100%');
+    LabelJoystick.Constraints.MinWidth := PanelStatus.Canvas.GetTextWidth('WJoystick: Interface II right');
+    LabelModel.Constraints.MinWidth := PanelStatus.Canvas.GetTextWidth('W48K issue 2');
     RunSpectrum;
+  end;
 
 end;
 
@@ -1261,9 +1269,9 @@ end;
 procedure TForm1.UpdateShowCurrentlyActiveJoystick;
 begin
   if TJoystick.Joystick.Enabled then
-    Label2.Caption := 'Joystick: ' + TJoystick.Joystick.CurrentJoystickTypeAsString
+    LabelJoystick.Caption := 'Joystick: ' + TJoystick.Joystick.CurrentJoystickTypeAsString
   else
-    Label2.Caption := 'Joystick disabled';
+    LabelJoystick.Caption := 'Joystick disabled';
   ActionEnableJoystick.Checked := TJoystick.Joystick.Enabled;
 end;
 
@@ -2025,12 +2033,12 @@ begin
       if not Spectrum.Paused then begin
         K := K * 35;
         K := (Ticks - PrevTicks + (K shr 1)) div K;
-        Label1.Caption := 'speed ' + IntToStr(K) + '%';
+        LabelSpeed.Caption := 'speed ' + IntToStr(K) + '%';
       end else
-        Label1.Caption := 'paused';
+        LabelSpeed.Caption := 'paused';
 
       PrevTicks := Ticks;
-      Label1.Update;
+      LabelSpeed.Update;
     end;
   end;
 
