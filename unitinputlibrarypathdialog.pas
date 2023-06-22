@@ -17,6 +17,7 @@ type
     ButtonPanel1: TButtonPanel;
     Edit1: TEdit;
     Label1: TLabel;
+    Label2: TLabel;
     OpenDialog1: TOpenDialog;
     Panel1: TPanel;
     Panel2: TPanel;

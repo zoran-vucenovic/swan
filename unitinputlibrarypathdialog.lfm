@@ -16,28 +16,30 @@ object FormInputLibraryPath: TFormInputLibraryPath
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Side = asrBottom
     Left = 0
-    Height = 105
+    Height = 125
     Top = 0
     Width = 407
     AutoSize = True
     BevelOuter = bvNone
-    ClientHeight = 105
+    ClientHeight = 125
     ClientWidth = 407
     TabOrder = 0
     object Panel1: TPanel
       AnchorSideLeft.Control = Panel2
       AnchorSideTop.Control = Panel2
       Left = 12
-      Height = 43
+      Height = 63
       Top = 12
       Width = 383
       AutoSize = True
       BorderSpacing.Around = 12
       BevelOuter = bvNone
-      ClientHeight = 43
+      ClientHeight = 63
       ClientWidth = 383
       TabOrder = 0
       object Label1: TLabel
+        AnchorSideLeft.Control = Edit1
+        AnchorSideTop.Control = Panel1
         Left = 0
         Height = 15
         Top = 0
@@ -46,7 +48,7 @@ object FormInputLibraryPath: TFormInputLibraryPath
         ParentColor = False
       end
       object Edit1: TEdit
-        AnchorSideLeft.Control = Label1
+        AnchorSideLeft.Control = Panel1
         AnchorSideTop.Control = Label1
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Side = asrBottom
@@ -74,6 +76,18 @@ object FormInputLibraryPath: TFormInputLibraryPath
         OnClick = BitBtn1Click
         TabOrder = 1
       end
+      object Label2: TLabel
+        AnchorSideLeft.Control = Edit1
+        AnchorSideTop.Control = Edit1
+        AnchorSideTop.Side = asrBottom
+        Left = 0
+        Height = 15
+        Top = 48
+        Width = 222
+        BorderSpacing.Top = 5
+        Caption = 'Leave empty to search in default locations'
+        ParentColor = False
+      end
     end
     object ButtonPanel1: TButtonPanel
       AnchorSideTop.Control = Panel1
@@ -82,7 +96,7 @@ object FormInputLibraryPath: TFormInputLibraryPath
       AnchorSideRight.Side = asrBottom
       Left = 236
       Height = 26
-      Top = 71
+      Top = 91
       Width = 163
       Align = alNone
       Anchors = [akTop, akRight]
