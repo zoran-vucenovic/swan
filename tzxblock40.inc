@@ -117,7 +117,8 @@ end;
 
 procedure {TTzxPlayer.}TTzxBlock40.Start;
 begin
-  //inherited Start;
+  inherited Start;
+
   State := psStart;
   if (FSnapStream = nil) or (FSnapLen = 0) then
     State := TPlayState.psFinished;

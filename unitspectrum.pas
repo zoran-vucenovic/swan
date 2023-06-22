@@ -25,7 +25,10 @@ const
   WholeScreenWidth = LeftBorder + CentralScreenWidth + RightBorder; // 352
 
 type
-  TSpectrumModel = (smNone, sm48K_issue_2, sm48K_issue_3); // one day, more models... maybe.
+  TSpectrumModel = (
+    smNone, sm16K_issue_2, sm16K_issue_3, sm48K_issue_2, sm48K_issue_3
+    // sm128K, smPlus2, smPlus2a, smPlus3 // one day... maybe.
+    );
 
   TSpectrumColour = Integer;
   TSpectrumColours = array [False..True, 0..7] of TSpectrumColour;
@@ -62,6 +65,8 @@ type
     FOnSync: TThreadMethod;
     FPaused: Boolean;
     FSpectrumModel: TSpectrumModel;
+    FBkpSpectrumModel: TSpectrumModel;
+    FIssue2Keyboard: Boolean;
     FProcessor: TProcessor;
     FMemory: PMemory;
     FDebugger: IDebugger;
@@ -91,6 +96,7 @@ type
     FFrameCount: Int64;
     FIntPinUpCount: Int16Fast;
     FLatestTickUpdatedBeeper: Int64;
+    FRestoringSpectrumModel: Boolean;
 
     procedure StopBeeper; inline;
     procedure UpdateBeeperBuffer; inline;
@@ -109,6 +115,8 @@ type
     procedure RunSpectrum;
 
   strict private
+    FInLoadingSnapshot: Boolean;
+    FOnChangeModel: TThreadMethod;
     FOnResetSpectrum: TThreadMethod;
     FOnStartRun: TThreadMethod;
     FSoundMuted: Boolean;
@@ -149,6 +157,7 @@ type
     function GetFrameCount: Int64;
     procedure DrawToCanvas(ACanvas: TCanvas); inline;
     function GetBgraColours: TBGRAColours;
+    function IsIssue2: Boolean;
 
     property RemainingIntPinUp: Integer // for szx file
       read GetRemainingIntPinUp write SetRemainingIntPinUp;
@@ -159,11 +168,14 @@ type
     property OnStartRun: TThreadMethod read FOnStartRun write FOnStartRun;
     property OnEndRun: TThreadMethod read FOnEndRun write SetOnEndRun;
     property OnResetSpectrum: TThreadMethod read FOnResetSpectrum write FOnResetSpectrum;
+    property OnChangeModel: TThreadMethod read FOnChangeModel write FOnChangeModel;
     property Paused: Boolean read FPaused write SetPaused;
     property SoundMuted: Boolean read FSoundMuted write SetSoundMuted;
     property InternalEar: Byte read FInternalEar write SetInternalEar;
     property FlashState: UInt16 read GetFlashState write SetFlashState;
     property SpectrumModel: TSpectrumModel read FSpectrumModel write SetSpectrumModel;
+    property BkpSpectrumModel: TSpectrumModel read FBkpSpectrumModel write FBkpSpectrumModel;
+    property InLoadingSnapshot: Boolean read FInLoadingSnapshot write FInLoadingSnapshot;
   end;
 
 implementation
@@ -325,16 +337,16 @@ begin
     // read KeyBoard...
     B := %00011111;
 
-    if Application.Active then begin
+    //if Application.Active then begin
       Ba := WordRec(FProcessor.AddressBus).Hi;
       for I := Low(KeyBoard.HalfRows) to High(KeyBoard.HalfRows) do
         if (Ba shr I) and 1 = 0 then
           B := B and KeyBoard.HalfRows[I];
-    end;
+    //end;
 
     if Assigned(FTapePlayer) then
       FTapePlayer.GetNextPulse();
-    if (FSpectrumModel = TSpectrumModel.sm48K_issue_2) and ((FTapePlayer = nil) or FTapePlayer.InPause) then
+    if FIssue2Keyboard and ((FTapePlayer = nil) or FTapePlayer.InPause) then
       B := B or ((not FMic shl 3) and %01000000);
 
     FProcessor.DataBus :=
@@ -434,6 +446,10 @@ begin
   FProcessor := TProcessor.Create;
   FMemory := FProcessor.GetMemory();
   FSpectrumModel := smNone;
+  FBkpSpectrumModel := smNone;
+  FIssue2Keyboard := False;
+  FOnChangeModel := nil;
+  FRestoringSpectrumModel := False;
 
   FRunning := False;
 
@@ -475,27 +491,54 @@ begin
 end;
 
 procedure TSpectrum.SetSpectrumModel(ASpectrumModel: TSpectrumModel);
+
+  function GetRomResName(AModel: TSpectrumModel): String;
+  begin
+    case AModel of
+      sm16K_issue_2, sm16K_issue_3, sm48K_issue_2, sm48K_issue_3:
+        Result := 'SPECTRUM48_ROM';
+      // perhaps add 128k models one day...
+    otherwise
+      Result := '';
+    end;
+  end;
+
 var
   RomStream: TStream;
+  NewRamSize: Word;
+  RomResName: String;
+  SkipReset: Boolean;
+
 begin
   if ASpectrumModel = FSpectrumModel then
     Exit;
 
   try
     case ASpectrumModel of
-      sm48K_issue_2, sm48K_issue_3:
+      sm16K_issue_2, sm16K_issue_3, sm48K_issue_2, sm48K_issue_3:
         begin
-          RomStream := nil;
-          try
-            RomStream := TResourceStream.Create(HINSTANCE, 'SPECTRUM48_ROM', RT_RCDATA);
+          case ASpectrumModel of
+            sm16K_issue_2, sm16K_issue_3:
+              NewRamSize := 16;
+          otherwise
+            NewRamSize := 48;
+          end;
+          FMemory^.SetSizesInKB(16, NewRamSize);
 
-            FMemory^.SetSizesInKB(16, 48);
-            RomStream.Position := 0;
-            if not FMemory^.LoadRomFromStream(RomStream) then
-              Abort;
+          RomResName := GetRomResName(ASpectrumModel);
+          if RomResName <> GetRomResname(FSpectrumModel) then begin
+            RomStream := nil;
+            try
+              RomStream := TResourceStream.Create(HINSTANCE, RomResName, RT_RCDATA);
 
-          finally
-            RomStream.Free;
+              RomStream.Position := 0;
+              if not FMemory^.LoadRomFromStream(RomStream) then
+                Abort;
+
+            finally
+              RomStream.Free;
+            end;
+
           end;
         end;
     otherwise
@@ -504,9 +547,27 @@ begin
   except
     ASpectrumModel := smNone;
   end;
-  FSpectrumModel := ASpectrumModel;
 
-  ResetSpectrum;
+  if FInLoadingSnapshot then begin
+    if FBkpSpectrumModel = smNone then
+      FBkpSpectrumModel := FSpectrumModel;
+  end else
+    FBkpSpectrumModel := smNone;
+
+  SkipReset :=
+    FRestoringSpectrumModel
+    //or ((ASpectrumModel in [sm16K_issue_2, sm16K_issue_3]) and (FSpectrumModel in [sm16K_issue_2, sm16K_issue_3]))
+    //or ((ASpectrumModel in [sm48K_issue_2, sm48K_issue_3]) and (FSpectrumModel in [sm48K_issue_2, sm48K_issue_3]))
+    ;
+
+  FSpectrumModel := ASpectrumModel;
+  FIssue2Keyboard := FSpectrumModel in [sm16K_issue_2, sm48K_issue_2];
+
+  if Assigned(FOnChangeModel) then
+    Synchronize(FOnChangeModel);
+
+  if not SkipReset then
+    ResetSpectrum;
 end;
 
 procedure TSpectrum.UpdateDebuggedOrPaused;
@@ -574,7 +635,18 @@ end;
 procedure TSpectrum.ResetSpectrum;
 begin
   StopBeeper;
-  FSumTicks := FSumTicks + FProcessor.TStatesInCurrentFrame;
+  if not FInLoadingSnapshot then
+    if FBkpSpectrumModel <> smNone then begin
+      if FSpectrumModel <> FBkpSpectrumModel then begin
+        FRestoringSpectrumModel := True;
+        try
+          SetSpectrumModel(FBkpSpectrumModel);
+        finally
+          FRestoringSpectrumModel := False;
+        end;
+      end;
+      FBkpSpectrumModel := smNone;
+    end;
 
   if Assigned(FOnResetSpectrum) then
     Synchronize(FOnResetSpectrum);
@@ -587,9 +659,10 @@ begin
   FCodedBorderColour := 0;
   SetCodedBorderColour(7);
   TicksFrom := ScreenStart;
+  FSumTicks := FSumTicks + FProcessor.TStatesInCurrentFrame;
   FProcessor.ResetCPU;
   FFlashState := 0;
-  FProcessor.GetMemory()^.ClearRam;
+  FMemory^.ClearRam;
 
   FFrameCount := 0;
   InitTimes;
@@ -623,6 +696,11 @@ end;
 function TSpectrum.GetBgraColours: TBGRAColours;
 begin
   Result := SpectrumColoursBGRA.BGRAColours;
+end;
+
+function TSpectrum.IsIssue2: Boolean;
+begin
+  Result := FIssue2Keyboard;
 end;
 
 procedure TSpectrum.RunSpectrum;
@@ -714,6 +792,7 @@ begin
   if Assigned(FOnEndRun) then
     Synchronize(FOnEndRun);
 
+  FOnChangeModel := nil;
   Terminate;
 end;
 

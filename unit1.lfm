@@ -372,6 +372,21 @@ object Form1: TForm1
       Hint = 'Send RESET signal to processor ("soft reset")'
       OnExecute = ActionResetCPUExecute
     end
+    object ActionShowKeyboardOnScreen: TAction
+      Category = 'Options'
+      Caption = 'On-screen keyboard'
+      OnExecute = ActionShowKeyboardOnScreenExecute
+    end
+    object ActionModel16KIssue2: TAction
+      Category = 'SpectrumModel'
+      Caption = 'Spectrum 16K issue 2'
+      OnExecute = ActionModel16KIssue2Execute
+    end
+    object ActionModel16KIssue3: TAction
+      Category = 'SpectrumModel'
+      Caption = 'Spectrum 16K issue 3'
+      OnExecute = ActionModel16KIssue3Execute
+    end
     object ActionModel48KIssue2: TAction
       Category = 'SpectrumModel'
       Caption = 'Spectrum 48K issue 2'
@@ -381,11 +396,6 @@ object Form1: TForm1
       Category = 'SpectrumModel'
       Caption = 'Spectrum 48K issue 3'
       OnExecute = ActionModel48KIssue3Execute
-    end
-    object ActionShowKeyboardOnScreen: TAction
-      Category = 'Options'
-      Caption = 'On-screen keyboard'
-      OnExecute = ActionShowKeyboardOnScreenExecute
     end
   end
   object MainMenu1: TMainMenu
@@ -465,6 +475,12 @@ object Form1: TForm1
       end
       object MenuItem44: TMenuItem
         Caption = 'Machine'
+        object MenuItem48: TMenuItem
+          Action = ActionModel16KIssue2
+        end
+        object MenuItem49: TMenuItem
+          Action = ActionModel16KIssue3
+        end
         object MenuItem45: TMenuItem
           Action = ActionModel48KIssue2
         end

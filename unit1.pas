@@ -23,6 +23,8 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionModel16KIssue2: TAction;
+    ActionModel16KIssue3: TAction;
     ActionShowKeyboardOnScreen: TAction;
     ActionModel48KIssue3: TAction;
     ActionModel48KIssue2: TAction;
@@ -109,6 +111,8 @@ type
     MenuItem45: TMenuItem;
     MenuItem46: TMenuItem;
     MenuItem47: TMenuItem;
+    MenuItem48: TMenuItem;
+    MenuItem49: TMenuItem;
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
@@ -138,6 +142,8 @@ type
     procedure ActionInputPokesExecute(Sender: TObject);
     procedure ActionJoystickExecute(Sender: TObject);
     procedure ActionKeyMappingsExecute(Sender: TObject);
+    procedure ActionModel16KIssue2Execute(Sender: TObject);
+    procedure ActionModel16KIssue3Execute(Sender: TObject);
     procedure ActionModel48KIssue2Execute(Sender: TObject);
     procedure ActionModel48KIssue3Execute(Sender: TObject);
     procedure ActionMoveBackExecute(Sender: TObject);
@@ -185,6 +191,7 @@ type
   strict private
     FNewModel: TSpectrumModel;
 
+    procedure SpectrumOnChangeModel();
     procedure DoChangeModel(Sender: TObject);
     function MakeExtensionsFilter(ArSt: Array of String): String;
     procedure AfterShow(Data: PtrInt);
@@ -497,6 +504,8 @@ begin
 
   ActionMoveBack.ShortCut := SnapshotHistoryOptions.KeyGoBack;
 
+  ActionModel16KIssue2.Tag := Ord(TSpectrumModel.sm16K_issue_2);
+  ActionModel16KIssue3.Tag := Ord(TSpectrumModel.sm16K_issue_3);
   ActionModel48KIssue2.Tag := Ord(TSpectrumModel.sm48K_issue_2);
   ActionModel48KIssue3.Tag := Ord(TSpectrumModel.sm48K_issue_3);
 
@@ -532,6 +541,7 @@ begin
   DestroySpectrum;
   Spectrum := TSpectrum.Create;
   ScreenSizeFactor := 1;
+  Spectrum.OnChangeModel := @SpectrumOnChangeModel;
 
   LoadFromConf;
   TBeeper.TryLoadLib;
@@ -800,6 +810,18 @@ begin
       Spectrum.Paused := WasPaused;
     end;
   end;
+end;
+
+procedure TForm1.ActionModel16KIssue2Execute(Sender: TObject);
+begin
+  FNewModel := TSpectrumModel.sm16K_issue_2;
+  AddEventToQueue(@DoChangeModel);
+end;
+
+procedure TForm1.ActionModel16KIssue3Execute(Sender: TObject);
+begin
+  FNewModel := TSpectrumModel.sm16K_issue_3;
+  AddEventToQueue(@DoChangeModel);
 end;
 
 procedure TForm1.ActionModel48KIssue2Execute(Sender: TObject);
@@ -1113,16 +1135,20 @@ begin
   end;
 end;
 
-procedure TForm1.DoChangeModel(Sender: TObject);
+procedure TForm1.SpectrumOnChangeModel;
 var
   S: String;
+begin
+  UpdateActionsModel();
+  WriteStr(S, Spectrum.SpectrumModel);
+  LabelModel.Caption := StringReplace(Copy(S, 3), '_', ' ', [rfReplaceAll]);
+end;
+
+procedure TForm1.DoChangeModel(Sender: TObject);
 begin
   if FNewModel <> TSpectrumModel.smNone then begin
     if FNewModel <> Spectrum.SpectrumModel then begin
       Spectrum.SpectrumModel := FNewModel;
-      UpdateActionsModel();
-      WriteStr(S, Spectrum.SpectrumModel);
-      LabelModel.Caption := StringReplace(Copy(S, 3), '_', ' ', [rfReplaceAll]);
     end;
     FNewModel := TSpectrumModel.smNone;
   end;
@@ -1384,7 +1410,9 @@ begin
       N := 0;
     JObj.Add(cSectionSoundMuted, N);
 
-    WriteStr(S, Spectrum.SpectrumModel);
+    if Spectrum.BkpSpectrumModel = smNone then
+      Spectrum.BkpSpectrumModel := Spectrum.SpectrumModel;
+    WriteStr(S, Spectrum.BkpSpectrumModel);
     if (Length(S) > 2) and (AnsiCompareText('sm', Copy(S, 1, 2)) = 0) then begin
       S := StringReplace(Copy(S, 3), '_', ' ', [rfReplaceAll]);
       JObj.Add(cSectionSpectrumModel, S);
@@ -1864,8 +1892,14 @@ begin
             try
               SnapshotFile.SetSpectrum(Spectrum);
 
-              Spectrum.ResetSpectrum;
-              L := SnapshotFile.LoadFromStream(Stream);
+              //Spectrum.ResetSpectrum;
+              Spectrum.InLoadingSnapshot := True;
+              try
+                L := SnapshotFile.LoadFromStream(Stream);
+                UpdateShowCurrentlyActiveJoystick;
+              finally
+                Spectrum.InLoadingSnapshot := False;
+              end;
               if not L then
                 LoadingFailed;
 
