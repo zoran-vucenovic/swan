@@ -4,6 +4,7 @@ unit UnitSZX;
 
 { This is implementation of zx-state (szx) file format.
   Specification: https://www.spectaculator.com/docs/zx-state/intro.shtml
+     ver. 1.5 currently: https://www.spectaculator.com/docs/svn/zx-state/intro.shtml
   The zx-state file format is maintained by Jonathan Needle,
   the author of Spectaculator. }
 
@@ -13,7 +14,8 @@ unit UnitSZX;
 interface
 
 uses
-  Classes, SysUtils, fgl, UnitFileSna, UnitStreamCompression, UnitSpectrum, UnitVer;
+  Classes, SysUtils, fgl, UnitFileSna, UnitStreamCompression, UnitSpectrum,
+  UnitVer, UnitJoystick;
 
 type
 
@@ -65,12 +67,12 @@ type
       end;
 
       TZxstZ80Regs = class(TSzxBlock)
-      public
+      strict private
         const
-          ZXSTZF_EILAST = 1; // the last instruction was EI, or $DD or $FD prefix
+          ZXSTZF_EILAST = 1; // the last instruction was EI
           ZXSTZF_HALTED = 2; // halted, nops are executed
           ZXSTZF_FSET = 4; // last instruction sets the flags
-      public
+      strict private
         type
           TRecZ80Regs = packed record
             AF, BC, DE, HL: UInt16;
@@ -94,7 +96,7 @@ type
       end;
 
       TZxstSpecRegs = class(TSzxBlock)
-      public
+      strict private
         type
           TRecSpec = packed record
             Border: Byte;
@@ -114,7 +116,7 @@ type
       public
         const
           ZXSTRF_COMPRESSED = 1;
-      public
+      strict private
         type
           TRecRamPage = packed record
             Flags: UInt16;
@@ -130,13 +132,41 @@ type
       end;
 
       TZxstCreator = class(TSzxBlock)
-      public
+      strict private
         type
           TRecCreator = packed record
             ZxCreator: Array [0..31] of Byte;
             MajorVer: UInt16;
             MinorVer: UInt16;
           //  Data: Byte;
+          end;
+      protected
+        function LoadFromStream(const Stream: TStream): Boolean; override;
+        function SaveToStream(const Stream: TStream): Boolean; override;
+
+        class function GetBlockIdAsStr: RawByteString; override;
+      end;
+
+      TZxstKeyboard = class(TSzxBlock)
+      strict private
+        const
+          ZXSTKF_ISSUE2 = 1;
+
+          ZXSTKJT_KEMPSTON = 0;
+          ZXSTKJT_FULLER = 1;
+          ZXSTKJT_CURSOR = 2;
+          ZXSTKJT_SINCLAIR1 = 3;
+          ZXSTKJT_SINCLAIR2 = 4;
+          //ZXSTKJT_SPECTRUMPLUS = 5;
+          //ZXSTKJT_TIMEX1 = 6;
+          //ZXSTKJT_TIMEX2 = 7;
+          ZXSTKJT_NONE = 8;
+
+      strict private
+        type
+          TRecKeyBoard = packed record
+            DwFlags: DWord;
+            ChKeyboardJoystick: Byte;
           end;
       protected
         function LoadFromStream(const Stream: TStream): Boolean; override;
@@ -152,9 +182,15 @@ type
   strict private                  
     Mem: TMemoryStream;
 
-  private
+    IsIssue2: Boolean;
+    JoystickType: TJoystick.TJoystickType;
+    JoystickAttached: Boolean;
+
     State: TSpectrumInternalState;
     function GetMemStr(): TMemoryStream;
+    procedure SetMemSize(ASize: Integer);
+
+  private
     class procedure Init; static;
     class procedure Final; static;
   public
@@ -167,6 +203,86 @@ type
   end;
 
 implementation
+
+{ TSnapshotSZX.TZxstKeyboard }
+
+function TSnapshotSZX.TZxstKeyboard.LoadFromStream(const Stream: TStream
+  ): Boolean;
+var
+  Rec: TRecKeyBoard;
+  BlSz, N: SizeUInt;
+begin
+  Result := False;
+
+  if BlockSize <= SizeOf(Rec) then begin
+    BlSz := BlockSize;
+    N := 0;
+  end else begin
+    BlSz := SizeOf(Rec);
+    N := BlockSize - BlSz;
+  end;
+
+  Rec := Default(TRecKeyBoard);
+  Rec.ChKeyboardJoystick := ZXSTKJT_NONE;
+  if Stream.Read(Rec, BlSz) = BlSz then begin
+    if N > 0 then
+      Stream.Seek(N, TSeekOrigin.soCurrent);
+    Rec.DwFlags := LEtoN(Rec.DwFlags);
+    Szx.IsIssue2 := Rec.DwFlags and 1 <> 0;
+    Szx.JoystickAttached := True;
+    case Rec.ChKeyboardJoystick of
+      ZXSTKJT_KEMPSTON:
+        Szx.JoystickType := TJoystick.TJoystickType.jtKempston;
+      ZXSTKJT_FULLER:
+        Szx.JoystickType := TJoystick.TJoystickType.jtFuller;
+      ZXSTKJT_CURSOR:
+        Szx.JoystickType := TJoystick.TJoystickType.jtCursor;
+      ZXSTKJT_SINCLAIR1:
+        Szx.JoystickType := TJoystick.TJoystickType.jtInterface_II_left;
+      ZXSTKJT_SINCLAIR2:
+        Szx.JoystickType := TJoystick.TJoystickType.jtInterface_II_right;
+    otherwise
+      Szx.JoystickAttached := False;
+    end;
+
+    Result := True;
+  end;
+end;
+
+function TSnapshotSZX.TZxstKeyboard.SaveToStream(const Stream: TStream
+  ): Boolean;
+var
+  Rec: TRecKeyBoard;
+begin
+  Rec := Default(TRecKeyBoard);
+  if Szx.IsIssue2 then
+    Rec.DwFlags := ZXSTKF_ISSUE2;
+  Rec.DwFlags := NtoLE(Rec.DwFlags);
+  Rec.ChKeyboardJoystick := ZXSTKJT_NONE;
+  if Szx.JoystickAttached then begin
+    case Szx.JoystickType of
+      TJoystick.TJoystickType.jtKempston:
+        Rec.ChKeyboardJoystick := ZXSTKJT_KEMPSTON;
+      TJoystick.TJoystickType.jtFuller:
+        Rec.ChKeyboardJoystick := ZXSTKJT_FULLER;
+      TJoystick.TJoystickType.jtInterface_II_left:
+        Rec.ChKeyboardJoystick := ZXSTKJT_SINCLAIR1;
+      TJoystick.TJoystickType.jtInterface_II_right:
+        Rec.ChKeyboardJoystick := ZXSTKJT_SINCLAIR2;
+      TJoystick.TJoystickType.jtCursor:
+        Rec.ChKeyboardJoystick := ZXSTKJT_CURSOR;
+    end;
+  end;
+
+  BlockSize := SizeOf(Rec);
+  Result := WriteBlockSize(Stream)
+    and (Stream.Write(Rec, BlockSize) = BlockSize);
+end;
+
+class function TSnapshotSZX.TZxstKeyboard.GetBlockIdAsStr: RawByteString;
+begin
+  Result := 'KEYB';
+end;
 
 { TSnapshotSZX.TZxstCreator }
 
@@ -229,6 +345,7 @@ var
   Str1: TMemoryStream;
   Okay: Boolean;
   StreamMem: TMemoryStream;
+  P: Integer;
 
 begin
   Result := False;
@@ -272,9 +389,12 @@ begin
             end;
 
             if Okay then begin
-              Szx.GetMemStr().Position := (2 - Rec.PageNo div 2) * KB16;
-              if Szx.GetMemStr().Write(StreamMem.Memory^, KB16) = KB16 then
-                Result := True;
+              P := (2 - Rec.PageNo div 2) * KB16;
+              if Szx.GetMemStr().Size - P >= KB16 then begin
+                StreamMem.Position := 0;
+                if StreamMem.Read((PByte(Szx.GetMemStr().Memory) + P)^, KB16) = KB16 then
+                  Result := True;
+              end;
             end;
 
           finally
@@ -292,6 +412,8 @@ var
   Str1, Str2: TStream;
   PB: PByte;
   IsCompressed: Boolean;
+  P: Integer;
+
 begin
   Result := False;
   case Rec.PageNo of
@@ -299,35 +421,37 @@ begin
       begin
         IsCompressed := Rec.Flags and ZXSTRF_COMPRESSED <> 0;
         Rec.Flags := NtoLE(Rec.Flags);
-        PB := PByte(Szx.GetMemStr.Memory) + (2 - Rec.PageNo div 2) * KB16;
-        if IsCompressed then begin
-          Str1 := TMemoryStream.Create();
-          try
-            Str1.Position := 0;
-            if Str1.Write(PB^, KB16) = KB16 then begin
-              Str2 := TMemoryStream.Create;
-              try
-                if CompressStream(Str1, Str2) then begin
-                  BlockSize := Str2.Size + SizeOf(Rec);
-                  Result := WriteBlockSize(Stream)
-                    and (Stream.Write(Rec, SizeOf(Rec)) = SizeOf(Rec))
-                    and (Stream.Write(TMemoryStream(Str2).Memory^, Str2.Size) = Str2.Size);
+        P := (2 - Rec.PageNo div 2) * KB16;
+        if Szx.GetMemStr().Size - P >= KB16 then begin
+          PB := PByte(Szx.GetMemStr.Memory) + P;
+          if IsCompressed then begin
+            Str1 := TMemoryStream.Create();
+            try
+              Str1.Position := 0;
+              if Str1.Write(PB^, KB16) = KB16 then begin
+                Str2 := TMemoryStream.Create;
+                try
+                  if CompressStream(Str1, Str2) then begin
+                    BlockSize := Str2.Size + SizeOf(Rec);
+                    Result := WriteBlockSize(Stream)
+                      and (Stream.Write(Rec, SizeOf(Rec)) = SizeOf(Rec))
+                      and (Stream.Write(TMemoryStream(Str2).Memory^, Str2.Size) = Str2.Size);
+                  end;
+
+                finally
+                  Str2.Free;
                 end;
-
-              finally
-                Str2.Free;
               end;
+            finally
+              Str1.Free;
             end;
-          finally
-            Str1.Free;
+          end else begin
+            BlockSize := KB16 + SizeOf(Rec);
+            Result := WriteBlockSize(Stream)
+                and (Stream.Write(Rec, SizeOf(Rec)) = SizeOf(Rec))
+                and (Stream.Write(PB^, KB16) = KB16);
           end;
-        end else begin
-          BlockSize := KB16 + SizeOf(Rec);
-          Result := WriteBlockSize(Stream)
-              and (Stream.Write(Rec, SizeOf(Rec)) = SizeOf(Rec))
-              and (Stream.Write(PB^, KB16) = KB16);
         end;
-
       end;
   otherwise
   end;
@@ -512,6 +636,16 @@ begin
   Result := Mem;
 end;
 
+procedure TSnapshotSZX.SetMemSize(ASize: Integer);
+begin
+  if Mem = nil then
+    Mem := TMemoryStream.Create
+  else if Mem.Size = ASize then
+    Exit;
+
+  Mem.Size := ASize;
+end;
+
 class procedure TSnapshotSZX.Init;
 
   procedure AddBlockClass(BlockClass: TSzxBlockClass);
@@ -525,6 +659,7 @@ begin
   AddBlockClass(TZxstZ80Regs);
   AddBlockClass(TZxstSpecRegs);
   AddBlockClass(TZxstRamPage);
+  AddBlockClass(TZxstKeyboard);
 end;
 
 class procedure TSnapshotSZX.Final;
@@ -536,6 +671,8 @@ constructor TSnapshotSZX.Create;
 begin
   inherited Create;
 
+  IsIssue2 := False;
+  JoystickAttached := False;
   State := Default(TSpectrumInternalState);
   Mem := nil;
 end;
@@ -553,6 +690,8 @@ begin
 end;
 
 function TSnapshotSZX.LoadFromStream(const Stream: TStream): Boolean;
+var
+  Model: TSpectrumModel;
 
   function LoadHeader(): Boolean;
   var
@@ -562,11 +701,25 @@ function TSnapshotSZX.LoadFromStream(const Stream: TStream): Boolean;
 
     if Stream.Size >= SizeOf(SzxHeader) then begin
       if Stream.Read(SzxHeader{%H-}, SizeOf(SzxHeader)) = SizeOf(SzxHeader) then begin
-        if SzxHeader.DwMagic = TZxstHeadr.GetUMagic() then
+        if SzxHeader.DwMagic = TZxstHeadr.GetUMagic() then begin
           case SzxHeader.MachineId of
-            TZxstHeadr.ZXSTMID_16K, TZxstHeadr.ZXSTMID_48K:
-              Exit(True);
+            TZxstHeadr.ZXSTMID_16K:
+              begin
+                SetMemSize(KB16);
+                Model := TSpectrumModel.sm16K_issue_3;
+                Result := True;
+              end;
+
+            TZxstHeadr.ZXSTMID_48K:
+              begin
+                SetMemSize(KB48);
+                Model := TSpectrumModel.sm48K_issue_3;
+                Result := True;
+              end;
+
+          otherwise
           end;
+        end;
       end;
     end;
   end;
@@ -607,15 +760,35 @@ function TSnapshotSZX.LoadFromStream(const Stream: TStream): Boolean;
   end;
 
 begin
+  Result := False;
   Stream.Position := 0;
 
   if LoadHeader() then begin
     Self.State := Default(TSpectrumInternalState);
     FillChar(GetMemStr().Memory^, GetMemStr().Size, 0);
+    IsIssue2 := FSpectrum.IsIssue2;
+    JoystickAttached := TJoystick.Joystick.Enabled;
+    JoystickType := TJoystick.Joystick.JoystickType;
 
     while LoadBlock() do
       if Stream.Position = Stream.Size then begin
+
+        if IsIssue2 then begin
+          case Model of
+            TSpectrumModel.sm16K_issue_3:
+              Model := TSpectrumModel.sm16K_issue_2;
+            TSpectrumModel.sm48K_issue_3:
+              Model := TSpectrumModel.sm48K_issue_2;
+          otherwise
+          end;
+        end;
+
+        FSpectrum.SpectrumModel := Model;
+
         if State.SaveToSpectrum(FSpectrum) then begin
+          TJoystick.Joystick.Enabled := JoystickAttached;
+          if JoystickAttached then
+            TJoystick.Joystick.JoystickType := JoystickType;
           GetMemStr().Position := 0;
           if FSpectrum.GetProcessor.GetMemory^.LoadRamFromStream(GetMemStr()) then
             Exit(True);
@@ -623,20 +796,27 @@ begin
       end;
   end;
 
-  Result := False;
 end;
 
 function TSnapshotSZX.SaveToStream(const Stream: TStream): Boolean;
 
+var
+  SzxHeader: TZxstHeadr;
+
   function SaveHeader: Boolean;
-  var
-    SzxHeader: TZxstHeadr;
   begin
     //
     SzxHeader.DwMagic := TZxstHeadr.GetUMagic;
     SzxHeader.MajorVer := 1;
     SzxHeader.MinorVer := 5;
-    SzxHeader.MachineId := TZxstHeadr.ZXSTMID_48K;
+    case FSpectrum.SpectrumModel of
+      TSpectrumModel.sm16K_issue_2, TSpectrumModel.sm16K_issue_3:
+        SzxHeader.MachineId := TZxstHeadr.ZXSTMID_16K;
+      TSpectrumModel.sm48K_issue_2, TSpectrumModel.sm48K_issue_3:
+        SzxHeader.MachineId := TZxstHeadr.ZXSTMID_48K;
+    otherwise
+      Exit(False);
+    end;
     SzxHeader.ChFlags := 0;
 
     Result := Stream.Write(SzxHeader, SizeOf(SzxHeader)) = SizeOf(SzxHeader);
@@ -660,21 +840,29 @@ begin
   Result := False;
 
   if State.LoadFromSpectrum(FSpectrum) then begin
+    SetMemSize(FSpectrum.GetProcessor.GetMemory^.RamSize);
     GetMemStr.Position := 0;
     if FSpectrum.GetProcessor.GetMemory^.SaveRamToStream(GetMemStr()) then begin
       if SaveHeader then begin
+        IsIssue2 := FSpectrum.IsIssue2;
+        JoystickAttached := TJoystick.Joystick.Enabled;
+        JoystickType := TJoystick.Joystick.JoystickType;
+
         if SaveBlock(TZxstCreator.Create)
           and SaveBlock(TZxstZ80Regs.Create)
           and SaveBlock(TZxstSpecRegs.Create)
+          and SaveBlock(TZxstKeyboard.Create)
         then begin
-          for I := 2 downto 0 do begin
+          I := 2;
+          repeat
             BlockRP := TZxstRamPage.Create;
             BlockRP.Rec.PageNo := 2 * I + I div 2;
             BlockRP.Rec.Flags := TZxstRamPage.ZXSTRF_COMPRESSED;
             if not SaveBlock(BlockRP) then
               Exit(False);
             Result := True;
-          end;
+            Dec(I);
+          until (I < 0) or (SzxHeader.MachineId = TZxstHeadr.ZXSTMID_16K);
         end;
       end;
     end;
