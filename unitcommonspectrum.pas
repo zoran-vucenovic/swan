@@ -1,5 +1,5 @@
 unit UnitCommonSpectrum;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
@@ -23,6 +23,7 @@ type
       SpectrumColourNames: Array of String = ('black', 'blue', 'red', 'magenta', 'green', 'cyan', 'yellow', 'white');
   public
     class procedure SortSpectrumKeys(var AKeys: Array of Word); static;
+    class function CompareSpectrumKeyValues(X, Y: Word): Integer; static;
 
     class property AuthorName: String read FAuthorName;
   end;
@@ -31,9 +32,6 @@ implementation
 
 type
   TSpectrumKeysSorter = class(specialize TNumArraySorter<Word>)
-  public
-    constructor Create; override;
-    class function CompareKeys(X, Y: Word): Integer; static;
   end;
 
 var
@@ -44,19 +42,12 @@ var
 class procedure TCommonSpectrum.SortSpectrumKeys(var AKeys: array of Word);
 begin
   if SpectrumKeysSorter = nil then
-    SpectrumKeysSorter := TSpectrumKeysSorter.Create();
+    SpectrumKeysSorter := TSpectrumKeysSorter.Create(@CompareSpectrumKeyValues);
 
   SpectrumKeysSorter.SortArray(AKeys);
 end;
 
-{ TSpectrumKeysSorter }
-
-constructor TSpectrumKeysSorter.Create;
-begin
-  inherited Create(@CompareKeys);
-end;
-
-class function TSpectrumKeysSorter.CompareKeys(X, Y: Word): Integer;
+class function TCommonSpectrum.CompareSpectrumKeyValues(X, Y: Word): Integer;
 
   function GetPositionRowNum(B: Byte): Byte; inline;
   begin
@@ -103,6 +94,7 @@ begin
   end;
 end;
 
+{ TSpectrumKeysSorter }
 
 class procedure TCommonSpectrum.Init;
 begin

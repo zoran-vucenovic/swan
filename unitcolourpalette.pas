@@ -1,5 +1,5 @@
 unit UnitColourPalette;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
@@ -9,8 +9,8 @@ interface
 
 uses
   Classes, SysUtils, Types, UnitSpectrumColourMap, CommonFunctionsLCL,
-  UnitCommonSpectrum, Forms, Controls, ExtCtrls, Graphics, StdCtrls, Dialogs,
-  Buttons, ButtonPanel, LCLType, LCLIntf, LazUTF8;
+  UnitCommonSpectrum, UnitFormForOptionsBasic, Forms, Controls, ExtCtrls,
+  Graphics, StdCtrls, Dialogs, Buttons, ButtonPanel, LCLType, LCLIntf, LazUTF8;
 
 type
   TFrameColourPalette3 = class(TFrame)
@@ -68,13 +68,11 @@ type
     procedure SetLCLColours(AValue: TLCLColourMap);
     procedure SetLCLColour(AColour: TColor; ABright: Boolean; ASpectrumColourIndex: Integer);
     procedure CAClick(Sender: TObject);
-    procedure FormAfterShow(Data: PtrInt);
     procedure FillPredefinedPalettes;
     procedure FillCustomPalettes;
     procedure SaveCustomPalettes;
     procedure ClearCombo(CB: TCustomComboBox);
 
-    procedure FormOnShow(Sender: TObject);
     procedure SwitchToCB(CBFrom, CBTo: TCustomComboBox);
     procedure FillColourMapFromColourPanels(var CM: TLCLColourMap);
     procedure InternalAdd(N: Integer; const S: String);
@@ -253,12 +251,14 @@ end;
 
 procedure TFrameColourPalette3.FormCloseCallback(Sender: TObject;
   var CloseAction: TCloseAction);
-var
-  F: TCustomForm;
+//var
+//  F: TCustomForm;
 begin
-  F := GetParentForm(Self);
-  if Assigned(F) then begin
-    if F.ModalResult = mrOK then begin
+  //F := GetParentForm(Self);
+  //if Assigned(F) then begin
+  if Sender is TCustomForm then begin
+    //F := TCustomForm(Sender);
+    if TCustomForm(Sender).ModalResult = mrOK then begin
       SaveCustomPalettes;
     end;
   end;
@@ -374,20 +374,6 @@ begin
   end;
 end;
 
-procedure TFrameColourPalette3.FormAfterShow(Data: PtrInt);
-var
-  F: TCustomForm;
-begin
-  F := GetParentForm(Self);
-  if Assigned(F) then begin
-    TCommonFunctionsLCL.AdjustFormPos(F);
-    F.Constraints.MinHeight := F.Height;
-    F.Constraints.MinWidth := F.Width;
-  end;
-  if Data > 0 then
-    Application.QueueAsyncCall(@FormAfterShow, Data - 1);
-end;
-
 procedure TFrameColourPalette3.FillPredefinedPalettes;
 var
   C: TObjColoursMap;
@@ -447,11 +433,6 @@ begin
     CB.Items.Objects[I] := nil;
   end;
   CB.Clear;
-end;
-
-procedure TFrameColourPalette3.FormOnShow(Sender: TObject);
-begin
-  FormAfterShow(1);
 end;
 
 procedure TFrameColourPalette3.SwitchToCB(CBFrom, CBTo: TCustomComboBox);
@@ -688,49 +669,25 @@ class function TFrameColourPalette3.PickColours(var AColours: TLCLColourMap
 var
   F: TCustomForm;
   Fm: TFrameColourPalette3;
-  BtnPanel: TButtonPanel;
+
 begin
   Result := False;
-  F := TCustomForm.CreateNew(nil);
+  Fm := TFrameColourPalette3.Create(nil);
   try
-    Fm := TFrameColourPalette3.Create(F);
-
-    BtnPanel := TButtonPanel.Create(F);
-    BtnPanel.Align := alNone;                                          
-    BtnPanel.Anchors := [];
-    BtnPanel.BorderSpacing.Around := 0;
-    BtnPanel.ShowButtons := [TPanelButton.pbCancel, TPanelButton.pbOK];
-    BtnPanel.ShowBevel := False;
-    BtnPanel.AnchorParallel(akRight, 7, F);
-    BtnPanel.AnchorParallel(akBottom, 7, F);
-    BtnPanel.BorderSpacing.Left := 7;
-    BtnPanel.Spacing := 6;
-
-    Fm.AnchorParallel(akLeft, 0, F);
-    Fm.AnchorParallel(akTop, 0, F);
-    Fm.AnchorParallel(akRight, 0, F);
-    Fm.AnchorToNeighbour(akBottom, 0, BtnPanel);
-
-    Fm.SetLCLColours(AColours);
-    F.Caption := Fm.Caption;
-
-    Fm.BorderSpacing.Around := 4;
-
-    BtnPanel.Parent := F;
-    Fm.Parent := F;
-    F.BorderStyle := TFormBorderStyle.bsSingle;
-    F.BorderIcons := F.BorderIcons - [TBorderIcon.biMaximize, TBorderIcon.biMinimize];
-    F.AutoSize := True;
-    TCommonFunctionsLCL.FormToScreenCentre(F);
-    F.AddHandlerFirstShow(@Fm.FormOnShow);
-    F.AddHandlerClose(@Fm.FormCloseCallback);
-    if F.ShowModal = mrOK then begin
-      AColours := Fm.GetLCLColours;
-      Result := True;
+    F := UnitFormForOptionsBasic.TFormForOptionsBasic.CreateForControl(nil, Fm);
+    try
+      F.AddHandlerClose(@Fm.FormCloseCallback);
+      F.BorderStyle := bsSingle;
+      Fm.SetLCLColours(AColours);
+      if F.ShowModal = mrOK then begin
+        AColours := Fm.GetLCLColours;
+        Result := True;
+      end;
+    finally
+      F.Free;
     end;
-
   finally
-    F.Free;
+    Fm.Free;
   end;
 end;
 

@@ -13,26 +13,56 @@ uses
 type
   TProcedureOfObject = procedure of object;
 
+  TGlobalCounter = class sealed (TObject)
+  public
+    class function NextValue(): Int64; static;
+  end;
+
   generic TNumArraySorter<T> = class(TObject)
   public
     type
       TSortCompareProc = function(X, Y: T): Integer;
   strict private
     FSortCompareProc: TSortCompareProc;
-    class function DefaultSortCompareProc(X, Y: T): Integer; static;
   public
-    constructor Create; virtual;
     constructor Create(ASortCompareProc: TSortCompareProc); virtual;
 
     procedure SortArray(var A: Array of T);
   end;
 
-  function SpectrumCharToUtf8(S: RawByteString): RawByteString;
-  procedure ConvertCodePageFromISO8859_1_to_Utf8(var S: AnsiString);
+  TCommonFunctions = class sealed (TObject)
+  public
+    class function GlobalClassNameGenerator(C: TClass): String; static;
+    class function GlobalObjectNameGenerator(Obj: TObject): String; static;
+    class function SpectrumCharToUtf8(S: RawByteString): RawByteString; static;
+    class procedure ConvertCodePageFromISO8859_1_to_Utf8(var S: AnsiString); static;
+  end;
 
 implementation
 
-function SpectrumCharToUtf8(S: RawByteString): RawByteString;
+class function TCommonFunctions.GlobalClassNameGenerator(C: TClass): String;
+begin
+  if C = nil then
+    Result := 'z'
+  else begin
+    Result := C.ClassName;
+    Result := StringReplace(Trim(Result), '.', '_', [rfReplaceAll]);
+  end;
+  Result := Result + TGlobalCounter.NextValue().ToHexString(3);
+end;
+
+class function TCommonFunctions.GlobalObjectNameGenerator(Obj: TObject): String;
+begin
+  if Obj = nil then
+    Result := GlobalClassNameGenerator(TClass(nil))
+  else begin
+    Result := Obj.ClassName;
+    Result := StringReplace(Trim(Result), '.', '_', [rfReplaceAll]);
+    Result := Result + PtrUInt(Obj).ToHexString(3);
+  end;
+end;
+
+class function TCommonFunctions.SpectrumCharToUtf8(S: RawByteString): RawByteString;
 const
   UdgDelta = $90 - Ord('A');
   BlockCodes: array [0..15] of RawByteString = (
@@ -111,38 +141,34 @@ begin
   end;
 end;
 
-procedure ConvertCodePageFromISO8859_1_to_Utf8(var S: AnsiString);
+class procedure TCommonFunctions.ConvertCodePageFromISO8859_1_to_Utf8(var S: AnsiString);
 begin                      
 //  https://docs.microsoft.com/en-us/windows/win32/intl/code-page-identifiers
   SetCodePage(RawByteString(S), 28591, False); // set to iso-8859-1
   SetCodePage(RawByteString(S), CP_UTF8, True); // convert
 end;
 
+{ TGlobalCounter }
+
+class function TGlobalCounter.NextValue: Int64;
+{$push}
+{$J+}
+const
+  GlobalCounter: Int64 = 0;
+{$pop}
+begin
+  Result := GlobalCounter;
+  Inc(GlobalCounter);
+end;
+
+
 { TNumArraySorter }
-
-class function TNumArraySorter.DefaultSortCompareProc(X, Y: T): Integer;
-begin
-  if X < Y then
-    Result := -1
-  else if Y < X then
-    Result := 1
-  else
-    Result := 0;
-end;
-
-constructor TNumArraySorter.Create;
-begin
-  Create(nil);
-end;
 
 constructor TNumArraySorter.Create(ASortCompareProc: TSortCompareProc);
 begin
   inherited Create;
 
-  if Assigned(ASortCompareProc) then
-    FSortCompareProc := ASortCompareProc
-  else
-    FSortCompareProc := @DefaultSortCompareProc;
+  FSortCompareProc := ASortCompareProc;
 end;
 
 procedure TNumArraySorter.SortArray(var A: array of T);

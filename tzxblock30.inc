@@ -51,7 +51,7 @@ begin
         SetLength(FTextDescription, B);
         if not Result then begin
           if Stream.Read(FTextDescription[1], B) = B then begin
-            ConvertCodePageFromISO8859_1_to_Utf8(FTextDescription);
+            TCommonFunctions.ConvertCodePageFromISO8859_1_to_Utf8(FTextDescription);
             Result := True;
           end;
         end;

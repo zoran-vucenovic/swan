@@ -1,5 +1,5 @@
-unit UnitFormKeyMappings;
-// Copyright 2022 Zoran Vučenović
+unit UnitFrameKeyMappings;
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
@@ -9,18 +9,14 @@ interface
 
 uses
   Classes, SysUtils, UnitFrameOneKeyMap, UnitKeyMapRecords, UnitFormPressAKey,
-  CommonFunctionsLCL, Forms, Controls, Graphics, Dialogs, ExtCtrls, ButtonPanel,
-  StdCtrls, LazUTF8;
+  CommonFunctionsLCL, UnitFormForOptionsBasic, Forms, Controls, Graphics,
+  Dialogs, ExtCtrls, ButtonPanel, StdCtrls, LazUTF8;
 
 type
-
-  { TFormKeyMappings }
-
-  TFormKeyMappings = class(TForm)
+  TFrameKeyMappings = class(TFrame)
     Bevel1: TBevel;
     Bevel2: TBevel;
     Bevel3: TBevel;
-    ButtonPanel1: TButtonPanel;
     ComboBox1: TComboBox;
     Label1: TLabel;
     Label2: TLabel;
@@ -28,7 +24,6 @@ type
     Label4: TLabel;
     Label5: TLabel;
     Panel1: TPanel;
-    PanelAddRemoveScheme: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
     Panel4: TPanel;
@@ -36,16 +31,13 @@ type
     Panel6: TPanel;
     Panel7: TPanel;
     Panel8: TPanel;
-    procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
-    procedure FormShow(Sender: TObject);
+    PanelAddRemoveScheme: TPanel;
   private
     type
       TKeyMapsObj = class(TObject)
       public
         KM: TKeyMapRecs;
       end;
-
   private
     KeyMappingsCtrl: TControlKeyMappings;
     LastComboItemIndex: Integer;
@@ -56,6 +48,7 @@ type
     procedure SaveToKeyMappings;
     procedure UpdateCurrentComboItem();
     procedure AfterShow(Data: PtrInt);
+    procedure FormFirstShow(Sender: TObject);
     function AddOneMappingToCombo(AMappingName: String; KMRecs: TKeyMapRecs): Integer;
     procedure ClearCombo;
 
@@ -63,7 +56,13 @@ type
     procedure SaveSchemeOnClick(Sender: TObject);
     procedure RemoveSchemeOnClick(Sender: TObject);
     procedure ResetToDefaultOnClick(Sender: TObject);
+    procedure CloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure Close(Sender: TObject; var CloseAction: TCloseAction);
+
   public
+    constructor Create(TheOwner: TComponent); override;
+    destructor Destroy; override;
+
     class function ShowFormKeyMappings(): Boolean;
   end;
 
@@ -71,15 +70,232 @@ implementation
 
 {$R *.lfm}
 
-{ TFormKeyMappings }
+{ TFrameKeyMappings }
 
-procedure TFormKeyMappings.FormCreate(Sender: TObject);
+procedure TFrameKeyMappings.FillKeyMappingsNames;
+var
+  I, N: Integer;
+  S: RawByteString;
+  KM: TKeyMapRecs;
+begin
+  ClearCombo;
+  N := -1;
+  if TKeyMappings.KMappings.Count > 0 then begin
+    for I := 0 to TKeyMappings.KMappings.Count - 1 do begin
+      S := TKeyMappings.KMappings.Keys[I];
+      if S <> '' then begin
+        KM := TKeyMappings.KMappings.Data[I];
+
+        AddOneMappingToCombo(S, KM);
+
+        if N < 0 then
+          if TKeyMappings.KMappings.ActiveKeyMapName = S then
+            N := ComboBox1.Items.Count - 1;
+      end;
+    end;
+  end;
+  ComboBox1.ItemIndex := N;
+end;
+
+procedure TFrameKeyMappings.FillCurrentMap;
+begin
+  if ComboBox1.ItemIndex >= 0 then begin
+    LastComboItemIndex := ComboBox1.ItemIndex;
+    KeyMappingsCtrl.LoadFromKeyMapRecs(TKeyMapsObj(ComboBox1.Items.Objects[LastComboItemIndex]).KM);
+  end else
+    SetMappingsToDefault;
+
+end;
+
+procedure TFrameKeyMappings.SetMappingsToDefault;
+begin
+  LastComboItemIndex := -1;
+  KeyMappingsCtrl.LoadFromKeyMapRecs(TKeyMappings.KMappings.DefaultMapRecs);
+end;
+
+procedure TFrameKeyMappings.ComboMappingNamesChg(Sender: TObject);
+begin
+  UpdateCurrentComboItem();
+  FillCurrentMap;
+end;
+
+procedure TFrameKeyMappings.SaveToKeyMappings;
+var
+  I: Integer;
+  KMObj: TKeyMapsObj;
+  S: RawByteString;
+  Obj: TObject;
+
+begin
+  TKeyMappings.KMappings.ActiveKeyMapName := '';
+  UpdateCurrentComboItem();
+
+  TKeyMappings.KMappings.Clear;
+  for I := 0 to ComboBox1.Items.Count - 1 do begin
+    //
+    Obj := ComboBox1.Items.Objects[I];
+    if Obj is TKeyMapsObj then begin
+      KMObj := TKeyMapsObj(Obj);
+      S := ComboBox1.Items.Strings[I];
+
+      TKeyMappings.KMappings.Add(S, KMObj.KM);
+      if I = ComboBox1.ItemIndex then
+        TKeyMappings.KMappings.ActiveKeyMapName := S;
+    end;
+  end;
+
+end;
+
+procedure TFrameKeyMappings.UpdateCurrentComboItem;
+var
+  KMRecs: TKeyMapRecs;
+  KMObj: TKeyMapsObj;
+  Obj: TObject;
+begin
+  if (LastComboItemIndex >= 0) and (LastComboItemIndex < ComboBox1.Items.Count) then begin
+    KeyMappingsCtrl.SaveToKeyMapRecs(KMRecs);
+    Obj := ComboBox1.Items.Objects[LastComboItemIndex];
+    if Obj is TKeyMapsObj then begin
+      KMObj := TKeyMapsObj(Obj);
+      SetLength(KMObj.KM, 0);
+      KMObj.KM := KMRecs;
+    end;
+  end;
+end;
+
+procedure TFrameKeyMappings.AfterShow(Data: PtrInt);
+begin
+  PanelAddRemoveScheme.BorderSpacing.Left :=
+    Panel2.ScreenToClient(ComboBox1.ClientOrigin).X;
+
+  if Data > 0 then
+    Application.QueueAsyncCall(@AfterShow, Data - 1);
+end;
+
+procedure TFrameKeyMappings.FormFirstShow(Sender: TObject);
+begin
+  AfterShow(2);
+end;
+
+function TFrameKeyMappings.AddOneMappingToCombo(AMappingName: String;
+  KMRecs: TKeyMapRecs): Integer;
+var
+  J: Integer;
+  KMObj: TKeyMapsObj;
+begin
+  Result := -1;
+  AMappingName := UTF8Trim(AMappingName);
+  if AMappingName <> '' then begin
+    KMObj := TKeyMapsObj.Create;
+    SetLength(KMObj.KM, Length(KMRecs));
+    for J := 0 to High(KMRecs) do
+      KMObj.KM[J] := KMRecs[J];
+
+    Result := ComboBox1.Items.AddObject(AMappingName, KMObj);
+  end;
+end;
+
+procedure TFrameKeyMappings.ClearCombo;
+var
+  I: Integer;
+begin
+  for I := 0 to ComboBox1.Items.Count - 1 do begin
+    ComboBox1.Items.Objects[I].Free;
+    ComboBox1.Items.Objects[I] := nil;
+  end;
+  ComboBox1.Clear;
+end;
+
+procedure TFrameKeyMappings.AddPCKeyOnClick(Sender: TObject);
+var
+  W: Word;
+begin
+  if TFormPressAKey.ShowFormPressAKey(W) then begin
+    KeyMappingsCtrl.AddPCKey(W);
+  end;
+end;
+
+procedure TFrameKeyMappings.SaveSchemeOnClick(Sender: TObject);
+var
+  S: String;
+  N: Integer;
+  KMObj: TKeyMapsObj;
+  KMRecs: TKeyMapRecs;
+begin
+  if ComboBox1.ItemIndex >= 0 then
+    S := ComboBox1.Items.Strings[ComboBox1.ItemIndex]
+  else
+    S := '';
+  if InputQuery('Save current scheme', 'Scheme name:', S) then begin
+    S := UTF8Trim(S);
+    if S <> '' then begin
+      N := ComboBox1.Items.IndexOf(S);
+      if (N < 0) or
+        (MessageDlg(
+          Format('Scheme named "%s" already exists.%sDo you want to overwrite this scheme?'
+            , [S, LineEnding])
+          , mtConfirmation, [mbYes, mbNo], 0) = mrYes)
+      then begin
+        KeyMappingsCtrl.SaveToKeyMapRecs(KMRecs);
+        if N < 0 then
+          N := AddOneMappingToCombo(S, KMRecs)
+        else begin
+          KMObj := TKeyMapsObj.Create;
+          KMObj.KM := KMRecs;
+          ComboBox1.Items.Objects[N].Free;
+          ComboBox1.Items.Objects[N] := KMObj;
+        end;
+        LastComboItemIndex := N;
+        ComboBox1.ItemIndex := N;
+      end;
+
+    end;
+  end;
+end;
+
+procedure TFrameKeyMappings.RemoveSchemeOnClick(Sender: TObject);
+var
+  N: Integer;
+begin
+  N := ComboBox1.ItemIndex;
+  if N >= 0 then begin
+    ComboBox1.ItemIndex := -1;
+    ComboBox1.Items.Objects[N].Free;
+    ComboBox1.Items.Objects[N] := nil;
+    ComboBox1.Items.Delete(N);
+    SetMappingsToDefault;
+  end;
+end;
+
+procedure TFrameKeyMappings.ResetToDefaultOnClick(Sender: TObject);
+begin
+  ComboBox1.ItemIndex := -1;
+  SetMappingsToDefault;
+end;
+
+procedure TFrameKeyMappings.CloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+  //
+end;
+
+procedure TFrameKeyMappings.Close(Sender: TObject; var CloseAction: TCloseAction
+  );
+begin
+  if (Sender is TCustomForm) and (TCustomForm(Sender).ModalResult = mrOK) then
+    SaveToKeyMappings;
+end;
+
+constructor TFrameKeyMappings.Create(TheOwner: TComponent);
 var
   LabelAddPCKey: TCustomLabel;
   LabelAddScheme: TCustomLabel;
   LabelRemoveScheme: TCustomLabel;
   LabelResetToDefault: TCustomLabel;
+
 begin
+  inherited Create(TheOwner);
+
+  Caption := 'Key mapping schemes';
   LastComboItemIndex := -1;
   Label5.Caption := 'Note: ';
   Label5.Font.Style := Label5.Font.Style + [fsBold];
@@ -133,234 +349,42 @@ begin
   LabelRemoveScheme.OnClick := @RemoveSchemeOnClick;
   LabelResetToDefault.OnClick := @ResetToDefaultOnClick;
 
-  HandleNeeded;
-end;
-
-procedure TFormKeyMappings.FormDestroy(Sender: TObject);
-begin
-  Screen.RemoveAllHandlersOfObject(Self);
-  ClearCombo;
-end;
-
-procedure TFormKeyMappings.FormShow(Sender: TObject);
-begin
-  //
-  AfterShow(1);
-end;
-
-procedure TFormKeyMappings.FillKeyMappingsNames;
-var
-  I, N: Integer;
-  S: RawByteString;
-  KM: TKeyMapRecs;
-begin
-  ClearCombo;
-  N := -1;
-  if TKeyMappings.KMappings.Count > 0 then begin
-    for I := 0 to TKeyMappings.KMappings.Count - 1 do begin
-      S := TKeyMappings.KMappings.Keys[I];
-      if S <> '' then begin
-        KM := TKeyMappings.KMappings.Data[I];
-
-        AddOneMappingToCombo(S, KM);
-
-        if N < 0 then
-          if TKeyMappings.KMappings.ActiveKeyMapName = S then
-            N := ComboBox1.Items.Count - 1;
-      end;
-    end;
-  end;
-  ComboBox1.ItemIndex := N;
-end;
-
-procedure TFormKeyMappings.FillCurrentMap;
-begin
-  if ComboBox1.ItemIndex >= 0 then begin
-    LastComboItemIndex := ComboBox1.ItemIndex;
-    KeyMappingsCtrl.LoadFromKeyMapRecs(TKeyMapsObj(ComboBox1.Items.Objects[LastComboItemIndex]).KM);
-  end else
-    SetMappingsToDefault;
-
-end;
-
-procedure TFormKeyMappings.SetMappingsToDefault;
-begin
-  LastComboItemIndex := -1;
-  KeyMappingsCtrl.LoadFromKeyMapRecs(TKeyMappings.KMappings.DefaultMapRecs);
-end;
-
-procedure TFormKeyMappings.ComboMappingNamesChg(Sender: TObject);
-begin
-  UpdateCurrentComboItem();
+  FillKeyMappingsNames;
   FillCurrentMap;
+  ComboBox1.OnChange := @ComboMappingNamesChg;
+
+  FillKeyMappingsNames;
+  FillCurrentMap;
+  ComboBox1.OnChange := @(ComboMappingNamesChg);
 end;
 
-procedure TFormKeyMappings.SaveToKeyMappings;
+destructor TFrameKeyMappings.Destroy;
+begin
+  ClearCombo;
+  inherited Destroy;
+end;
+
+class function TFrameKeyMappings.ShowFormKeyMappings: Boolean;
 var
-  I: Integer;
-  KMObj: TKeyMapsObj;
-  S: RawByteString;
-  Obj: TObject;
+  F: TCustomForm;
+  Fm: TFrameKeyMappings;
 
-begin
-  TKeyMappings.KMappings.ActiveKeyMapName := '';
-  UpdateCurrentComboItem();
-
-  TKeyMappings.KMappings.Clear;
-  for I := 0 to ComboBox1.Items.Count - 1 do begin
-    //
-    Obj := ComboBox1.Items.Objects[I];
-    if Obj is TKeyMapsObj then begin
-      KMObj := TKeyMapsObj(Obj);
-      S := ComboBox1.Items.Strings[I];
-
-      TKeyMappings.KMappings.Add(S, KMObj.KM);
-      if I = ComboBox1.ItemIndex then
-        TKeyMappings.KMappings.ActiveKeyMapName := S;
-    end;
-  end;
-
-end;
-
-procedure TFormKeyMappings.UpdateCurrentComboItem;
-var
-  KMRecs: TKeyMapRecs;
-  KMObj: TKeyMapsObj;
-  Obj: TObject;
-begin
-  if (LastComboItemIndex >= 0) and (LastComboItemIndex < ComboBox1.Items.Count) then begin
-    KeyMappingsCtrl.SaveToKeyMapRecs(KMRecs);
-    Obj := ComboBox1.Items.Objects[LastComboItemIndex];
-    if Obj is TKeyMapsObj then begin
-      KMObj := TKeyMapsObj(Obj);
-      SetLength(KMObj.KM, 0);
-      KMObj.KM := KMRecs;
-    end;
-  end;
-end;
-
-procedure TFormKeyMappings.AfterShow(Data: PtrInt);
-begin
-  PanelAddRemoveScheme.BorderSpacing.Left :=
-    Panel2.ScreenToClient(ComboBox1.ClientOrigin).X;
-
-  TCommonFunctionsLCL.AdjustFormPos(Self);
-  if Data > 0 then
-    Application.QueueAsyncCall(@AfterShow, Data - 1);
-end;
-
-function TFormKeyMappings.AddOneMappingToCombo(AMappingName: String;
-  KMRecs: TKeyMapRecs): Integer;
-var
-  J: Integer;
-  KMObj: TKeyMapsObj;
-begin
-  Result := -1;
-  AMappingName := UTF8Trim(AMappingName);
-  if AMappingName <> '' then begin
-    KMObj := TKeyMapsObj.Create;
-    SetLength(KMObj.KM, Length(KMRecs));
-    for J := 0 to High(KMRecs) do
-      KMObj.KM[J] := KMRecs[J];
-
-    Result := ComboBox1.Items.AddObject(AMappingName, KMObj);
-  end;
-end;
-
-procedure TFormKeyMappings.ClearCombo;
-var
-  I: Integer;
-begin
-  for I := 0 to ComboBox1.Items.Count - 1 do begin
-    ComboBox1.Items.Objects[I].Free;
-    ComboBox1.Items.Objects[I] := nil;
-  end;
-  ComboBox1.Clear;
-end;
-
-procedure TFormKeyMappings.AddPCKeyOnClick(Sender: TObject);
-var
-  W: Word;
-begin
-  if TFormPressAKey.ShowFormPressAKey(W) then begin
-    KeyMappingsCtrl.AddPCKey(W);
-  end;
-end;
-
-procedure TFormKeyMappings.SaveSchemeOnClick(Sender: TObject);
-var
-  S: String;
-  N: Integer;
-  KMObj: TKeyMapsObj;
-  KMRecs: TKeyMapRecs;
-begin
-  if ComboBox1.ItemIndex >= 0 then
-    S := ComboBox1.Items.Strings[ComboBox1.ItemIndex]
-  else
-    S := '';
-  if InputQuery('Save current scheme', 'Scheme name:', S) then begin
-    S := UTF8Trim(S);
-    if S <> '' then begin
-      N := ComboBox1.Items.IndexOf(S);
-      if (N < 0) or
-        (MessageDlg(
-          Format('Scheme named "%s" already exists.%sDo you want to overwrite this scheme?'
-            , [S, LineEnding])
-          , mtConfirmation, [mbYes, mbNo], 0) = mrYes)
-      then begin
-        KeyMappingsCtrl.SaveToKeyMapRecs(KMRecs);
-        if N < 0 then
-          N := AddOneMappingToCombo(S, KMRecs)
-        else begin
-          KMObj := TKeyMapsObj.Create;
-          KMObj.KM := KMRecs;
-          ComboBox1.Items.Objects[N].Free;
-          ComboBox1.Items.Objects[N] := KMObj;
-        end;
-        LastComboItemIndex := N;
-        ComboBox1.ItemIndex := N;
-      end;
-
-    end;
-  end;
-end;
-
-procedure TFormKeyMappings.RemoveSchemeOnClick(Sender: TObject);
-var
-  N: Integer;
-begin
-  N := ComboBox1.ItemIndex;
-  if N >= 0 then begin
-    ComboBox1.ItemIndex := -1;
-    ComboBox1.Items.Objects[N].Free;
-    ComboBox1.Items.Objects[N] := nil;
-    ComboBox1.Items.Delete(N);
-    SetMappingsToDefault;
-  end;
-end;
-
-procedure TFormKeyMappings.ResetToDefaultOnClick(Sender: TObject);
-begin
-  ComboBox1.ItemIndex := -1;
-  SetMappingsToDefault;
-end;
-
-class function TFormKeyMappings.ShowFormKeyMappings: Boolean;
-var
-  F: TFormKeyMappings;
 begin
   Result := False;
-  F := TFormKeyMappings.Create(nil);
+  Fm := TFrameKeyMappings.Create(nil);
   try
-    F.FillKeyMappingsNames;
-    F.FillCurrentMap;
-    F.ComboBox1.OnChange := @(F.ComboMappingNamesChg);
-    if F.ShowModal = mrOK then begin
-      F.SaveToKeyMappings;
-      Result := True;
+    F := UnitFormForOptionsBasic.TFormForOptionsBasic.CreateForControl(nil, Fm);
+    try
+      F.AddHandlerFirstShow(@Fm.FormFirstShow);
+      F.AddHandlerClose(@Fm.Close);
+
+      Result := F.ShowModal = mrOK;
+      F.RemoveAllHandlersOfObject(Fm);
+    finally
+      F.Free;
     end;
   finally
-    F.Free;
+    Fm.Free;
   end;
 end;
 

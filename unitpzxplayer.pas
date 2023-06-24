@@ -248,7 +248,7 @@ begin
          , #0, #13, [rfReplaceAll]);
 
     // See the comment inside TPzxBlockPZXT.FillDetails method
-    UnitCommon.ConvertCodePageFromISO8859_1_to_Utf8(BrwsText);
+    TCommonFunctions.ConvertCodePageFromISO8859_1_to_Utf8(BrwsText);
   end;
 end;
 
@@ -786,7 +786,7 @@ begin
       //   - Atlantis
       //   - Myth
       // So, let's treat text as iso-8859-1, as we do with tzx files:
-      UnitCommon.ConvertCodePageFromISO8859_1_to_Utf8(FDetails);
+      TCommonFunctions.ConvertCodePageFromISO8859_1_to_Utf8(FDetails);
 
       Result := True;
     end;

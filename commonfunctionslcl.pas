@@ -7,7 +7,7 @@ unit CommonFunctionsLCL;
 interface
 
 uses
-  Classes, SysUtils, Types, Forms, LCLIntf, Graphics, Controls,
+  Classes, SysUtils, Types, UnitCommon, Forms, LCLIntf, Graphics, Controls,
   StdCtrls, Grids;
 
 type
@@ -22,11 +22,6 @@ type
   strict private
     type
       TLinkLabel = class(TCustomLabel)
-      strict private
-        class var
-          GlobalCounter: Int64;
-      private
-        class procedure Init; static;
       protected
         procedure MouseEnter; override;
         procedure MouseLeave; override;
@@ -51,11 +46,6 @@ implementation
 
 { TCommonFunctionsLCL.TLinkLabel }
 
-class procedure TCommonFunctionsLCL.TLinkLabel.Init;
-begin
-  GlobalCounter := 0;
-end;
-
 procedure TCommonFunctionsLCL.TLinkLabel.MouseEnter;
 begin
   inherited MouseEnter;
@@ -72,15 +62,11 @@ end;
 
 constructor TCommonFunctionsLCL.TLinkLabel.Create(AOwner: TComponent;
   const ACaption: String);
-var
-  S: String;
 begin
   inherited Create(AOwner);
 
   ShowAccelChar := False;
-  S := StringReplace(ClassName, '.', '_', [rfReplaceAll]);
-  Name := S + GlobalCounter.ToHexString(16);
-  Inc(GlobalCounter);
+  Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
   if ACaption = '' then
     Caption := ' '
   else
@@ -138,7 +124,6 @@ end;
 class procedure TCommonFunctionsLCL.Init;
 begin
   Canv := nil;
-  TLinkLabel.Init;
 end;
 
 class procedure TCommonFunctionsLCL.Final;

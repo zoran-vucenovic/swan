@@ -16,13 +16,14 @@ uses
   UnitSpectrum, UnitVer, UnitConfigs, UnitTzxPlayer, UnitFormBrowser,
   UnitColourPalette, UnitSpectrumColourMap, UnitKeyMaps,
   UnitSpectrumColoursBGRA, UnitKeyMapRecords, UnitFrameOneKeyMap,
-  UnitFormKeyMappings, UnitSpectrumKeysDialog, UnitFormPressAKey, UnitCommon,
+  UnitSpectrumKeysDialog, UnitFormPressAKey, UnitCommon,
   UnitCommonSpectrum, UnitJoystick, UnitFormJoystickSetup, AboutBox,
   UnitColourFunctions, UnitDataModuleImages, PortAudioHeader, UnitBeeper,
   unitSoundVolume, FastIntegers, UnitInputLibraryPathDialog, UnitFormInputPokes,
   UnitSZX, UnitStreamCompression, UnitFormHistorySnapshots,
   UnitControlScreenBitmap, UnitTapePlayer, UnitPzxPlayer,
-  UnitSpectrumKeysControl, UnitKeyboardOnScreen, UnitChooseFile;
+  UnitSpectrumKeysControl, UnitKeyboardOnScreen, UnitChooseFile,
+  UnitFormForOptionsBasic, UnitFrameKeyMappings;
 
 {$R *.res}
 

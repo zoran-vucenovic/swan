@@ -1,16 +1,13 @@
-object FormKeyMappings: TFormKeyMappings
-  Left = 691
-  Height = 747
-  Top = 65
+object FrameKeyMappings: TFrameKeyMappings
+  Left = 0
+  Height = 693
+  Top = 0
   Width = 448
-  BorderIcons = [biSystemMenu]
-  Caption = 'Key mapping schemes'
-  ClientHeight = 747
+  ClientHeight = 693
   ClientWidth = 448
-  OnCreate = FormCreate
-  OnDestroy = FormDestroy
-  OnShow = FormShow
-  LCLVersion = '2.2.5.0'
+  TabOrder = 0
+  DesignLeft = 394
+  DesignTop = 31
   object Panel8: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
@@ -19,12 +16,12 @@ object FormKeyMappings: TFormKeyMappings
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 0
-    Height = 747
+    Height = 693
     Top = 0
     Width = 448
     Anchors = [akTop, akLeft, akRight, akBottom]
     BevelOuter = bvNone
-    ClientHeight = 747
+    ClientHeight = 693
     ClientWidth = 448
     TabOrder = 0
     object Panel2: TPanel
@@ -147,14 +144,15 @@ object FormKeyMappings: TFormKeyMappings
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = Panel8
       AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = ButtonPanel1
+      AnchorSideBottom.Control = Panel8
+      AnchorSideBottom.Side = asrBottom
       Left = 0
-      Height = 625
+      Height = 609
       Top = 84
       Width = 448
       Anchors = [akTop, akLeft, akRight, akBottom]
       BevelOuter = bvNone
-      ClientHeight = 625
+      ClientHeight = 609
       ClientWidth = 448
       TabOrder = 1
       object Panel5: TPanel
@@ -221,7 +219,7 @@ object FormKeyMappings: TFormKeyMappings
         AnchorSideRight.Side = asrBottom
         AnchorSideBottom.Control = Bevel3
         Left = 0
-        Height = 539
+        Height = 523
         Top = 83
         Width = 448
         Anchors = [akTop, akLeft, akRight, akBottom]
@@ -261,34 +259,11 @@ object FormKeyMappings: TFormKeyMappings
         AnchorSideBottom.Side = asrBottom
         Left = 0
         Height = 3
-        Top = 622
+        Top = 606
         Width = 448
         Anchors = [akLeft, akRight, akBottom]
         Shape = bsBottomLine
       end
-    end
-    object ButtonPanel1: TButtonPanel
-      AnchorSideRight.Control = Panel8
-      AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = Panel8
-      AnchorSideBottom.Side = asrBottom
-      Left = 279
-      Height = 26
-      Top = 715
-      Width = 163
-      Align = alNone
-      Anchors = [akRight, akBottom]
-      OKButton.Name = 'OKButton'
-      OKButton.DefaultCaption = True
-      HelpButton.Name = 'HelpButton'
-      HelpButton.DefaultCaption = True
-      CloseButton.Name = 'CloseButton'
-      CloseButton.DefaultCaption = True
-      CancelButton.Name = 'CancelButton'
-      CancelButton.DefaultCaption = True
-      TabOrder = 2
-      ShowButtons = [pbOK, pbCancel]
-      ShowBevel = False
     end
   end
 end

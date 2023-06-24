@@ -1,5 +1,5 @@
 unit UnitFrameOneKeyMap;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
@@ -9,7 +9,7 @@ interface
 
 uses
   Classes, SysUtils, Types, fgl, UnitKeyMaps, CommonFunctionsLCL,
-  UnitKeyMapRecords, UnitSpectrumKeysDialog, UnitCommonSpectrum,
+  UnitKeyMapRecords, UnitSpectrumKeysDialog, UnitCommonSpectrum, UnitCommon,
   Forms, Controls, ExtCtrls, StdCtrls, LCLType,
   Graphics, LMessages;
 
@@ -54,15 +54,26 @@ type
 
       TSpectrumKeyControls = Array of TOneSpectrumKeyControl;
 
+      TSpectrumKeyControlsSorter = specialize TNumArraySorter<TFrameOnePCKeyMapping.TOneSpectrumKeyControl>;
+
   strict private
     const
       cHintRemovePCKey = 'Remove all mappings for PC key%s';
+
+    class var
+      Kcs: TSpectrumKeyControlsSorter;
+
+    class function CompareSpectrumKeys(X, Y: TOneSpectrumKeyControl): Integer; static;
   private
     SpectrumKeys: TSpectrumKeyControls;
 
     procedure UpdateSpectrumKeysLayout;
     procedure SortSpectrumKeys;
     procedure AddSpectrumKey(const AValue: Word);
+
+    class procedure Init; static;
+    class procedure Final; static;
+
   strict private
     FPCKeyName: String;
     FPCKey: Word;
@@ -471,6 +482,12 @@ begin
   PanelSpectrumKeys.Constraints.MinHeight := PanelPCKey.Height;
 end;
 
+class function TFrameOnePCKeyMapping.CompareSpectrumKeys(X,
+  Y: TOneSpectrumKeyControl): Integer;
+begin
+  Result := TCommonSpectrum.CompareSpectrumKeyValues(X.SpectrumKey, Y.SpectrumKey);
+end;
+
 function TFrameOnePCKeyMapping.GetOnRemoveClick: TNotifyEvent;
 begin
   Result := LabRemovePCKey.OnClick;
@@ -563,22 +580,12 @@ begin
 end;
 
 procedure TFrameOnePCKeyMapping.SortSpectrumKeys;
-var
-  AW: TWordDynArray;
-  I: Integer;
 begin
-  SetLength(AW, Length(SpectrumKeys));
-  for I := 0 to High(SpectrumKeys) do begin
-    AW[I] := SpectrumKeys[I].SpectrumKey;
-  end;
-
-  TCommonSpectrum.SortSpectrumKeys(AW);
-
   PanelSpectrumKeys.DisableAutoSizing;
   try
-    ClearSpectrumKeys;
-    for I := 0 to High(AW) do
-      AddSpectrumKey(AW[I]);
+    if Kcs = nil then
+      Kcs := TSpectrumKeyControlsSorter.Create(@CompareSpectrumKeys);
+    Kcs.SortArray(SpectrumKeys);
   finally
     PanelSpectrumKeys.EnableAutoSizing;
   end;
@@ -686,6 +693,16 @@ begin
   end;
 end;
 
+class procedure TFrameOnePCKeyMapping.Init;
+begin
+  Kcs := nil;
+end;
+
+class procedure TFrameOnePCKeyMapping.Final;
+begin
+  Kcs.Free;
+end;
+
 procedure TFrameOnePCKeyMapping.ClearSpectrumKeys;
 var
   I: Integer;
@@ -732,6 +749,12 @@ begin
   end;
   inherited Paint;
 end;
+
+initialization
+  TFrameOnePCKeyMapping.Init;
+
+finalization
+  TFrameOnePCKeyMapping.Final;
 
 end.
 

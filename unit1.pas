@@ -12,7 +12,7 @@ uses
   ComCtrls, LCLType, Buttons, StdCtrls, ExtCtrls, zipper, fpjson,
   UnitSpectrum, UnitFileSna, AboutBox, DebugForm, UnitFormBrowser,
   UnitColourPalette, UnitSpectrumColourMap, CommonFunctionsLCL,
-  UnitFormKeyMappings, UnitJoystick, UnitFormJoystickSetup,
+  UnitFrameKeyMappings, UnitJoystick, UnitFormJoystickSetup,
   UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
@@ -800,7 +800,7 @@ begin
     try
       Spectrum.Paused := True;
 
-      if TFormKeyMappings.ShowFormKeyMappings() then begin
+      if TFrameKeyMappings.ShowFormKeyMappings() then begin
         Spectrum.KeyBoard.LoadFromKeyMappings;
       end;
       KeyEventCount := 0;
