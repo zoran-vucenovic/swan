@@ -237,7 +237,7 @@
       <Unit>
         <Filename Value="unitcolourpalette.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="FrameColourPalette3"/>
+        <ComponentName Value="FrameColourPalette"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="UnitColourPalette"/>

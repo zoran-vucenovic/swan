@@ -1,4 +1,4 @@
-object FrameColourPalette3: TFrameColourPalette3
+object FrameColourPalette: TFrameColourPalette
   Left = 0
   Height = 218
   Top = 0
