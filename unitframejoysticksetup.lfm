@@ -1,17 +1,13 @@
-object FormJoystickSetup: TFormJoystickSetup
-  Left = 256
-  Height = 342
-  Top = 127
+object FrameJoystickSetup: TFrameJoystickSetup
+  Left = 0
+  Height = 326
+  Top = 0
   Width = 446
-  BorderIcons = [biSystemMenu]
-  Caption = 'Joystick options...'
-  ClientHeight = 342
+  ClientHeight = 326
   ClientWidth = 446
-  OnCloseQuery = FormCloseQuery
-  OnCreate = FormCreate
-  OnDestroy = FormDestroy
-  OnShow = FormShow
-  LCLVersion = '2.2.5.0'
+  TabOrder = 0
+  DesignLeft = 550
+  DesignTop = 260
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
@@ -20,57 +16,36 @@ object FormJoystickSetup: TFormJoystickSetup
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 0
-    Height = 342
+    Height = 326
     Top = 0
     Width = 446
     Anchors = [akTop, akLeft, akRight, akBottom]
     AutoSize = True
-    ClientHeight = 342
+    ClientHeight = 326
     ClientWidth = 446
     TabOrder = 0
-    object ButtonPanel1: TButtonPanel
-      AnchorSideTop.Side = asrBottom
-      AnchorSideRight.Control = Panel1
-      AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = Panel1
-      AnchorSideBottom.Side = asrBottom
-      Left = 276
-      Height = 26
-      Top = 309
-      Width = 163
-      Align = alNone
-      Anchors = [akRight, akBottom]
-      BorderSpacing.Top = 8
-      OKButton.Name = 'OKButton'
-      OKButton.DefaultCaption = True
-      HelpButton.Name = 'HelpButton'
-      HelpButton.DefaultCaption = True
-      CloseButton.Name = 'CloseButton'
-      CloseButton.DefaultCaption = True
-      CancelButton.Name = 'CancelButton'
-      CancelButton.DefaultCaption = True
-      TabOrder = 1
-      ShowButtons = [pbOK, pbCancel]
-      ShowBevel = False
-    end
     object Panel3: TPanel
       AnchorSideLeft.Control = Panel1
       AnchorSideTop.Control = Panel6
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = ButtonPanel1
-      Left = 11
-      Height = 202
-      Top = 93
-      Width = 424
+      AnchorSideBottom.Control = Panel1
+      AnchorSideBottom.Side = asrBottom
+      Left = 9
+      Height = 231
+      Top = 91
+      Width = 428
       Anchors = [akTop, akLeft, akRight, akBottom]
       AutoSize = True
-      BorderSpacing.Around = 10
+      BorderSpacing.Left = 8
+      BorderSpacing.Top = 8
+      BorderSpacing.Right = 8
+      BorderSpacing.Bottom = 3
       BevelOuter = bvNone
       BorderStyle = bsSingle
-      ClientHeight = 198
-      ClientWidth = 420
+      ClientHeight = 227
+      ClientWidth = 424
       TabOrder = 0
       object Panel2: TPanel
         AnchorSideLeft.Control = Panel3
@@ -92,12 +67,12 @@ object FormJoystickSetup: TFormJoystickSetup
         Left = 0
         Height = 18
         Top = 0
-        Width = 420
+        Width = 424
         Anchors = [akTop, akLeft, akRight]
         AutoSize = True
         BevelOuter = bvNone
         ClientHeight = 18
-        ClientWidth = 420
+        ClientWidth = 424
         TabOrder = 0
         object Label1: TLabel
           AnchorSideLeft.Control = Panel4
@@ -119,17 +94,17 @@ object FormJoystickSetup: TFormJoystickSetup
       AnchorSideTop.Control = Panel1
       AnchorSideRight.Control = Panel3
       AnchorSideRight.Side = asrBottom
-      Left = 11
+      Left = 9
       Height = 24
       Top = 7
-      Width = 424
+      Width = 428
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
       BorderSpacing.Top = 6
       BevelOuter = bvNone
       ClientHeight = 24
-      ClientWidth = 424
-      TabOrder = 2
+      ClientWidth = 428
+      TabOrder = 1
       object ComboBox1: TComboBox
         AnchorSideLeft.Control = Label4
         AnchorSideLeft.Side = asrBottom
@@ -175,16 +150,16 @@ object FormJoystickSetup: TFormJoystickSetup
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = Panel3
       AnchorSideRight.Side = asrBottom
-      Left = 11
+      Left = 9
       Height = 50
       Top = 33
-      Width = 424
+      Width = 428
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Top = 2
       BevelOuter = bvNone
       ClientHeight = 50
-      ClientWidth = 424
-      TabOrder = 3
+      ClientWidth = 428
+      TabOrder = 2
       object Label2: TLabel
         AnchorSideLeft.Control = Label3
         AnchorSideLeft.Side = asrBottom
@@ -195,7 +170,7 @@ object FormJoystickSetup: TFormJoystickSetup
         Left = 34
         Height = 15
         Top = 0
-        Width = 390
+        Width = 394
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Label2 '
         ParentColor = False

@@ -195,7 +195,7 @@ begin
   try
     Fm.InitProc(S);
     Fm.FOnCheckLoad := AOnCheckLoad;
-    F := TFormForOptionsBasic.CreateForControl(nil, Fm);
+    F := TFormForOptionsBasic.CreateForControl(nil, Fm, True);
     try
       //F.BorderStyle := bsSingle;
       F.AddHandlerFirstShow(@(Fm.OnFormFirstShow));

@@ -674,7 +674,7 @@ begin
   Result := False;
   Fm := TFrameColourPalette3.Create(nil);
   try
-    F := UnitFormForOptionsBasic.TFormForOptionsBasic.CreateForControl(nil, Fm);
+    F := UnitFormForOptionsBasic.TFormForOptionsBasic.CreateForControl(nil, Fm, False);
     try
       F.AddHandlerClose(@Fm.FormCloseCallback);
       F.BorderStyle := bsSingle;

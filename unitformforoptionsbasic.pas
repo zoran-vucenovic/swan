@@ -19,6 +19,7 @@ type
     MainControl: TControl;
     BP: TButtonPanel;
     Panel1: TCustomControl;
+    FFixConstraints: Boolean;
 
     function GetFramesArrCount: Integer;
     procedure AfterShow(Data: PtrInt);
@@ -30,7 +31,8 @@ type
       DefaultPanelButtons = [TPanelButton.pbOK, TPanelButton.pbCancel];
       //DefaultPanelButtonsWithHelp: TPanelButtons = [TPanelButton.pbOK, TPanelButton.pbCancel, TPanelButton.pbHelp];
   public
-    constructor CreateForControl(AOwner: TComponent; C: TControl; Buttons: TPanelButtons = DefaultPanelButtons);
+    constructor CreateForControl(AOwner: TComponent; C: TControl;
+      AFixConstraints: Boolean; Buttons: TPanelButtons = DefaultPanelButtons);
     destructor Destroy; override;
 
     function CloseQuery: Boolean; override;
@@ -100,6 +102,15 @@ begin
 
       Panel1.AnchorParallel(akRight, 0, Self);
       Panel1.AnchorParallel(akBottom, 0, Self);
+
+      if FFixConstraints then begin
+        //
+  //if Constraints.MinHeight < Height then
+    Constraints.MinHeight := Height;
+  //if Constraints.MinWidth < Width then
+    Constraints.MinWidth := Width;
+
+      end;
     finally
       EnableAlign;
     end;
@@ -113,7 +124,7 @@ begin
 end;
 
 constructor TFormForOptionsBasic.CreateForControl(AOwner: TComponent;
-  C: TControl; Buttons: TPanelButtons);
+  C: TControl; AFixConstraints: Boolean; Buttons: TPanelButtons);
 
 begin
   if C = nil then
@@ -121,6 +132,7 @@ begin
   inherited CreateNew(AOwner, 0);
 
   Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
+  FFixConstraints := AFixConstraints;
 
   //BorderStyle := bsSingle;
   BorderIcons := BorderIcons - [TBorderIcon.biMaximize, TBorderIcon.biMinimize];

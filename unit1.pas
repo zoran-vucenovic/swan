@@ -12,7 +12,7 @@ uses
   ComCtrls, LCLType, Buttons, StdCtrls, ExtCtrls, zipper, fpjson,
   UnitSpectrum, UnitFileSna, AboutBox, DebugForm, UnitFormBrowser,
   UnitColourPalette, UnitSpectrumColourMap, CommonFunctionsLCL,
-  UnitFrameKeyMappings, UnitJoystick, UnitFormJoystickSetup,
+  UnitFrameKeyMappings, UnitJoystick, UnitFrameJoystickSetup,
   UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
@@ -777,7 +777,7 @@ begin
       AKeys[TJoystick.TJoystickDirection.diFire] := TJoystick.Joystick.KeyFire;
       JoystickType := TJoystick.Joystick.JoystickType;
       JoystickEnabled := TJoystick.Joystick.Enabled;
-      if TFormJoystickSetup.ShowJoystickOptionsDialog(JoystickType, AKeys, JoystickEnabled) then begin
+      if TFrameJoystickSetup.ShowJoystickOptionsDialog(JoystickType, AKeys, JoystickEnabled) then begin
         TJoystick.Joystick.SetKeys(AKeys);
         TJoystick.Joystick.Enabled := JoystickEnabled;
         TJoystick.Joystick.JoystickType := JoystickType;

@@ -373,7 +373,7 @@ begin
   Result := False;
   Fm := TFrameKeyMappings.Create(nil);
   try
-    F := UnitFormForOptionsBasic.TFormForOptionsBasic.CreateForControl(nil, Fm);
+    F := UnitFormForOptionsBasic.TFormForOptionsBasic.CreateForControl(nil, Fm, False);
     try
       F.AddHandlerFirstShow(@Fm.FormFirstShow);
       F.AddHandlerClose(@Fm.Close);

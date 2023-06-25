@@ -307,12 +307,12 @@
         <UnitName Value="UnitJoystick"/>
       </Unit>
       <Unit>
-        <Filename Value="unitformjoysticksetup.pas"/>
+        <Filename Value="unitframejoysticksetup.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="FormJoystickSetup"/>
+        <ComponentName Value="FrameJoystickSetup"/>
         <HasResources Value="True"/>
-        <ResourceBaseClass Value="Form"/>
-        <UnitName Value="UnitFormJoystickSetup"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitFrameJoystickSetup"/>
       </Unit>
       <Unit>
         <Filename Value="aboutbox.pas"/>

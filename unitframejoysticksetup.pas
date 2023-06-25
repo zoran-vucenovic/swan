@@ -1,4 +1,4 @@
-unit UnitFormJoystickSetup;
+unit UnitFrameJoystickSetup;
 // Copyright 2022 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
@@ -10,12 +10,11 @@ interface
 
 uses
   Classes, SysUtils, UnitKeyMaps, CommonFunctionsLCL, UnitFormPressAKey,
-  UnitJoystick, Forms, Controls, Graphics, Dialogs, ExtCtrls,
-  ButtonPanel, StdCtrls;
+  UnitJoystick, UnitFormForOptionsBasic, Forms, Controls, Graphics, Dialogs,
+  ExtCtrls, StdCtrls;
 
 type
-  TFormJoystickSetup = class(TForm)
-    ButtonPanel1: TButtonPanel;
+  TFrameJoystickSetup = class(TFrame)
     CheckBox1: TCheckBox;
     ComboBox1: TComboBox;
     Label1: TLabel;
@@ -28,10 +27,6 @@ type
     Panel4: TPanel;
     Panel5: TPanel;
     Panel6: TPanel;
-    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
-    procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
-    procedure FormShow(Sender: TObject);
 
   strict private
     type
@@ -89,9 +84,16 @@ type
     procedure AfterShow(Data: PtrInt);
     procedure FillCombo;
     procedure ClearCombo;
+    procedure FormOnCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure FormOnFirstShow(Sender: TObject);
+    procedure InitJoystickSetup(const AJoystickType: TJoystick.TJoystickType;
+      const AKeys: TJoystick.TJoystickDirectionsKeys; const AEnabled: Boolean);
 
     property JoystickType: TJoystick.TJoystickType read GetJoystickType write SetJoystickType;
   public
+    constructor Create(TheOwner: TComponent); override;
+    destructor Destroy; override;
+
     class function ShowJoystickOptionsDialog(var AJoystickType: TJoystick.TJoystickType;
       var AKeys: TJoystick.TJoystickDirectionsKeys; var AEnabled: Boolean): Boolean;
   end;
@@ -100,9 +102,9 @@ implementation
 
 {$R *.lfm}
 
-{ TFormJoystickSetup.TJoystickKey.TLabelKeyControl }
+{ TFrameJoystickSetup.TJoystickKey.TLabelKeyControl }
 
-procedure TFormJoystickSetup.TJoystickKey.TLabelKeyControl.SetHasFrame(
+procedure TFrameJoystickSetup.TJoystickKey.TLabelKeyControl.SetHasFrame(
   AValue: Boolean);
 begin
   if FHasFrame = AValue then Exit;
@@ -110,14 +112,14 @@ begin
   Invalidate;
 end;
 
-constructor TFormJoystickSetup.TJoystickKey.TLabelKeyControl.Create(
+constructor TFrameJoystickSetup.TJoystickKey.TLabelKeyControl.Create(
   AOwner: TComponent);
 begin
   inherited Create(AOwner);
   FHasFrame := False;
 end;
 
-procedure TFormJoystickSetup.TJoystickKey.TLabelKeyControl.Paint;
+procedure TFrameJoystickSetup.TJoystickKey.TLabelKeyControl.Paint;
 var
   R: TRect;
 begin
@@ -130,9 +132,9 @@ begin
   end;
 end;
 
-{ TFormJoystickSetup.TJoystickKey }
+{ TFrameJoystickSetup.TJoystickKey }
 
-procedure TFormJoystickSetup.TJoystickKey.UpdateLabelKey;
+procedure TFrameJoystickSetup.TJoystickKey.UpdateLabelKey;
 var
   S: String;
 begin
@@ -153,12 +155,12 @@ begin
 
 end;
 
-procedure TFormJoystickSetup.TJoystickKey.UpdateLabelDirection;
+procedure TFrameJoystickSetup.TJoystickKey.UpdateLabelDirection;
 begin
   LabelDirection.Caption := TJoystick.DirectionToString(FDirection);
 end;
 
-procedure TFormJoystickSetup.TJoystickKey.OnEditClick(Sender: TObject);
+procedure TFrameJoystickSetup.TJoystickKey.OnEditClick(Sender: TObject);
 var
   W: Word;
   D: TJoystick.TJoystickDirection;
@@ -183,20 +185,20 @@ begin
   end;
 end;
 
-procedure TFormJoystickSetup.TJoystickKey.SetKey(AValue: Word);
+procedure TFrameJoystickSetup.TJoystickKey.SetKey(AValue: Word);
 begin
   FKey := AValue;
   UpdateLabelKey;
 end;
 
-procedure TFormJoystickSetup.TJoystickKey.SetDirection(
+procedure TFrameJoystickSetup.TJoystickKey.SetDirection(
   AValue: TJoystick.TJoystickDirection);
 begin
   FDirection := AValue;
   UpdateLabelDirection;
 end;
 
-constructor TFormJoystickSetup.TJoystickKey.Create(AOwner: TComponent;
+constructor TFrameJoystickSetup.TJoystickKey.Create(AOwner: TComponent;
   ADirection: TJoystick.TJoystickDirection);
 var
   C: TCustomControl;
@@ -245,18 +247,170 @@ begin
   LabelEdit.OnClick := @OnEditClick;
 end;
 
-constructor TFormJoystickSetup.TJoystickKey.Create(AOwner: TComponent);
+constructor TFrameJoystickSetup.TJoystickKey.Create(AOwner: TComponent);
 begin
   Create(AOwner, TJoystick.TJoystickDirection.diFire);
 end;
 
-{ TFormJoystickSetup }
+{ TFrameJoystickSetup }
 
-procedure TFormJoystickSetup.FormCreate(Sender: TObject);
+procedure TFrameJoystickSetup.FormOnFirstShow(Sender: TObject);
+begin
+  AfterShow(2);
+end;
+
+procedure TFrameJoystickSetup.InitJoystickSetup(
+  const AJoystickType: TJoystick.TJoystickType;
+  const AKeys: TJoystick.TJoystickDirectionsKeys; const AEnabled: Boolean);
+begin
+  SetDirectionsKeys(AKeys);
+  JoystickType := AJoystickType;
+  CheckBox1.Checked := AEnabled;
+end;
+
+function TFrameJoystickSetup.GetJoystickType: TJoystick.TJoystickType;
+var
+  Obj: TObject;
+begin
+  Result := Low(TJoystick.TJoystickType);
+  if ComboBox1.ItemIndex >= 0 then begin
+    Obj := ComboBox1.Items.Objects[ComboBox1.ItemIndex];
+    if Obj is TJoystickTypeObj then begin
+      Result := TJoystickTypeObj(Obj).JT;
+    end;
+  end;
+end;
+
+procedure TFrameJoystickSetup.SetJoystickType(
+  const AValue: TJoystick.TJoystickType);
+var
+  Obj: TObject;
+  I: Integer;
+begin
+  for I := 0 to ComboBox1.Items.Count - 1 do begin
+    Obj := ComboBox1.Items.Objects[I];
+    if Obj is TJoystickTypeObj then
+      if TJoystickTypeObj(Obj).JT = AValue then begin
+        ComboBox1.ItemIndex := I;
+        Break;
+      end;
+  end;
+end;
+
+procedure TFrameJoystickSetup.FormOnCloseQuery(Sender: TObject;
+  var CanClose: Boolean);
+var
+  JD: TJoystick.TJoystickDirection;
+  F: TCustomForm;
+begin
+  if Sender is TCustomForm then begin
+    F := TCustomForm(Sender);
+    if (F.ModalResult = mrOK) and CheckBox1.Checked then begin
+      for JD := Low(TJoystick.TJoystickDirection) to High(TJoystick.TJoystickDirection) do begin
+        if JoystickKeys[JD].Key = 0 then begin
+          CanClose := False;
+          MessageDlg('Joystick cannot be enabled, because not all keys are assigned.'
+            + LineEnding + LineEnding
+            + 'To be able to enable joystick, you have to assign a key to each joystick direction/button.',
+            mtError, [mbClose], 0);
+          Break;
+        end;
+      end;
+    end;
+  end;
+end;
+
+procedure TFrameJoystickSetup.GetDirectionsKeys(out
+  AValue: TJoystick.TJoystickDirectionsKeys);
+var
+  JD: TJoystick.TJoystickDirection;
+begin
+  for JD := Low(TJoystick.TJoystickDirection) to High(TJoystick.TJoystickDirection) do begin
+    AValue[JD] := JoystickKeys[JD].Key;
+  end;
+end;
+
+procedure TFrameJoystickSetup.SetDirectionsKeys(
+  const AValue: TJoystick.TJoystickDirectionsKeys);
+var
+  JD: TJoystick.TJoystickDirection;
+begin
+  for JD := Low(TJoystick.TJoystickDirection) to High(TJoystick.TJoystickDirection) do begin
+    JoystickKeys[JD].Key := AValue[JD];
+  end;
+end;
+
+function TFrameJoystickSetup.CheckSameKeys(var ADirection: TJoystick.TJoystickDirection;
+  AKey: Word): Boolean;
+var
+  JD: TJoystick.TJoystickDirection;
+begin
+  for JD := Low(TJoystick.TJoystickDirection) to High(TJoystick.TJoystickDirection) do begin
+    if JD <> ADirection then begin
+      if JoystickKeys[JD].Key = AKey then begin
+        ADirection := JD;
+        Exit(True);
+      end;
+    end;
+  end;
+  Result := False;
+end;
+
+procedure TFrameJoystickSetup.AfterShow(Data: PtrInt);
+begin                                          
+  //AutoSize := False;
+  //TCommonFunctionsLCL.AdjustFormPos(Self);
+  if Data = 0 then begin
+    Panel2.AnchorParallel(akRight, 0, Panel3);
+    Panel2.AnchorParallel(akBottom, 0, Panel3);
+    Exit;
+  end;
+  //
+  //AutoSize := True;
+  if Data > 0 then begin
+    Application.QueueAsyncCall(@AfterShow, Data - 1);
+  end;
+  //
+  //if Constraints.MinHeight < Height then
+  //  Constraints.MinHeight := Height;
+  //if Constraints.MinWidth < Width then
+  //  Constraints.MinWidth := Width;
+
+end;
+
+procedure TFrameJoystickSetup.FillCombo;
+var
+  JT: TJoystick.TJoystickType;
+  S: String;
+  JTO: TJoystickTypeObj;
+begin
+  ClearCombo;
+  for JT := Low(TJoystick.TJoystickType) to High(TJoystick.TJoystickType) do begin
+    S := TJoystick.JoystickTypeToString(JT);
+    JTO := TJoystickTypeObj.Create;
+    JTO.JT := JT;
+    ComboBox1.Items.AddObject(S, JTO);
+  end;
+end;
+
+procedure TFrameJoystickSetup.ClearCombo;
+var
+  I: Integer;
+begin
+  for I := 0 to ComboBox1.Items.Count - 1 do begin
+    ComboBox1.Items.Objects[I].Free;
+    ComboBox1.Items.Objects[I] := nil;
+  end;
+  ComboBox1.Clear;
+end;
+
+constructor TFrameJoystickSetup.Create(TheOwner: TComponent);
 var
   JD: TJoystick.TJoystickDirection;
   JK: TJoystickKey;
 begin
+  inherited Create(TheOwner);
+
   Label2.Font.Color := clMaroon;
   Label3.Font.Color := clMaroon;
   Label3.Font.Style := Label3.Font.Style + [fsBold];
@@ -307,170 +461,41 @@ begin
   AfterShow(-1);
 end;
 
-procedure TFormJoystickSetup.FormDestroy(Sender: TObject);
+destructor TFrameJoystickSetup.Destroy;
 begin
   ClearCombo;
+  inherited Destroy;
 end;
 
-procedure TFormJoystickSetup.FormShow(Sender: TObject);
-begin
-  AfterShow(2);
-end;
-
-function TFormJoystickSetup.GetJoystickType: TJoystick.TJoystickType;
-var
-  Obj: TObject;
-begin
-  Result := Low(TJoystick.TJoystickType);
-  if ComboBox1.ItemIndex >= 0 then begin
-    Obj := ComboBox1.Items.Objects[ComboBox1.ItemIndex];
-    if Obj is TJoystickTypeObj then begin
-      Result := TJoystickTypeObj(Obj).JT;
-    end;
-  end;
-end;
-
-procedure TFormJoystickSetup.SetJoystickType(
-  const AValue: TJoystick.TJoystickType);
-var
-  Obj: TObject;
-  I: Integer;
-begin
-  for I := 0 to ComboBox1.Items.Count - 1 do begin
-    Obj := ComboBox1.Items.Objects[I];
-    if Obj is TJoystickTypeObj then
-      if TJoystickTypeObj(Obj).JT = AValue then begin
-        ComboBox1.ItemIndex := I;
-        Break;
-      end;
-  end;
-end;
-
-procedure TFormJoystickSetup.FormCloseQuery(Sender: TObject;
-  var CanClose: Boolean);
-var
-  JD: TJoystick.TJoystickDirection;
-begin
-  if (ModalResult = mrOK) and CheckBox1.Checked then begin
-    for JD := Low(TJoystick.TJoystickDirection) to High(TJoystick.TJoystickDirection) do begin
-      if JoystickKeys[JD].Key = 0 then begin
-        CanClose := False;
-        MessageDlg('Joystick cannot be enabled, because not all keys are assigned.'
-          + LineEnding + LineEnding
-          + 'To be able to enable joystick, you have to assign a key to each joystick direction/button.',
-          mtError, [mbClose], 0);
-        Break;
-      end;
-    end;
-  end;
-end;
-
-procedure TFormJoystickSetup.GetDirectionsKeys(out
-  AValue: TJoystick.TJoystickDirectionsKeys);
-var
-  JD: TJoystick.TJoystickDirection;
-begin
-  for JD := Low(TJoystick.TJoystickDirection) to High(TJoystick.TJoystickDirection) do begin
-    AValue[JD] := JoystickKeys[JD].Key;
-  end;
-end;
-
-procedure TFormJoystickSetup.SetDirectionsKeys(
-  const AValue: TJoystick.TJoystickDirectionsKeys);
-var
-  JD: TJoystick.TJoystickDirection;
-begin
-  for JD := Low(TJoystick.TJoystickDirection) to High(TJoystick.TJoystickDirection) do begin
-    JoystickKeys[JD].Key := AValue[JD];
-  end;
-end;
-
-function TFormJoystickSetup.CheckSameKeys(var ADirection: TJoystick.TJoystickDirection;
-  AKey: Word): Boolean;
-var
-  JD: TJoystick.TJoystickDirection;
-begin
-  for JD := Low(TJoystick.TJoystickDirection) to High(TJoystick.TJoystickDirection) do begin
-    if JD <> ADirection then begin
-      if JoystickKeys[JD].Key = AKey then begin
-        ADirection := JD;
-        Exit(True);
-      end;
-    end;
-  end;
-  Result := False;
-end;
-
-procedure TFormJoystickSetup.AfterShow(Data: PtrInt);
-begin                                          
-  AutoSize := False;
-  TCommonFunctionsLCL.AdjustFormPos(Self);
-  if Data = 0 then begin
-    Panel2.AnchorParallel(akRight, 0, Panel3);
-    Panel2.AnchorParallel(akBottom, 0, Panel3);
-    Exit;
-  end;
-
-  AutoSize := True;
-  if Data > 0 then begin
-    Application.QueueAsyncCall(@AfterShow, Data - 1);
-  end;
-
-  if Constraints.MinHeight < Height then
-    Constraints.MinHeight := Height;
-  if Constraints.MinWidth < Width then
-    Constraints.MinWidth := Width;
-
-end;
-
-procedure TFormJoystickSetup.FillCombo;
-var
-  JT: TJoystick.TJoystickType;
-  S: String;
-  JTO: TJoystickTypeObj;
-begin
-  ClearCombo;
-  for JT := Low(TJoystick.TJoystickType) to High(TJoystick.TJoystickType) do begin
-    S := TJoystick.JoystickTypeToString(JT);
-    JTO := TJoystickTypeObj.Create;
-    JTO.JT := JT;
-    ComboBox1.Items.AddObject(S, JTO);
-  end;
-end;
-
-procedure TFormJoystickSetup.ClearCombo;
-var
-  I: Integer;
-begin
-  for I := 0 to ComboBox1.Items.Count - 1 do begin
-    ComboBox1.Items.Objects[I].Free;
-    ComboBox1.Items.Objects[I] := nil;
-  end;
-  ComboBox1.Clear;
-end;
-
-class function TFormJoystickSetup.ShowJoystickOptionsDialog(
+class function TFrameJoystickSetup.ShowJoystickOptionsDialog(
   var AJoystickType: TJoystick.TJoystickType;
   var AKeys: TJoystick.TJoystickDirectionsKeys; var AEnabled: Boolean): Boolean;
 var
-  F: TFormJoystickSetup;
+  Fm: TFrameJoystickSetup;
+  F: TFormForOptionsBasic;
 
 begin
   Result := False;
-  F := TFormJoystickSetup.Create(nil);
+  Fm := TFrameJoystickSetup.Create(nil);
   try
-    F.SetDirectionsKeys(AKeys);
-    F.JoystickType := AJoystickType;
-    F.CheckBox1.Checked := AEnabled;
-    //
-    if F.ShowModal = mrOK then begin
-      F.GetDirectionsKeys(AKeys);
-      AJoystickType := F.JoystickType;
-      AEnabled := F.CheckBox1.Checked;
-      Result := True;
+    Fm.InitJoystickSetup(AJoystickType, AKeys, AEnabled);
+
+    F := TFormForOptionsBasic.CreateForControl(nil, Fm, True);
+    try
+      F.AddHandlerFirstShow(@(Fm.FormOnFirstShow));
+      F.AddCloseQuery(@(Fm.FormOnCloseQuery));
+
+      if F.ShowModal = mrOK then begin
+        Fm.GetDirectionsKeys(AKeys);
+        AJoystickType := Fm.JoystickType;
+        AEnabled := Fm.CheckBox1.Checked;
+        Result := True;
+      end;
+    finally
+      F.Free;
     end;
   finally
-    F.Free;
+    Fm.Free;
   end;
 end;
 
