@@ -8,13 +8,12 @@ unit UnitInputLibraryPathDialog;
 interface
 
 uses
-  Classes, SysUtils, CommonFunctionsLCL, Forms, Controls, Graphics, Dialogs,
-  ExtCtrls, StdCtrls, Buttons, ButtonPanel;
+  Classes, SysUtils, UnitFormForOptionsBasic, Forms,
+  Controls, Graphics, Dialogs, ExtCtrls, StdCtrls, Buttons;
 
 type
-  TFormInputLibraryPath = class(TForm)
+  TFrameInputLibraryPath = class(TFrame)
     BitBtn1: TBitBtn;
-    ButtonPanel1: TButtonPanel;
     Edit1: TEdit;
     Label1: TLabel;
     Label2: TLabel;
@@ -22,20 +21,20 @@ type
     Panel1: TPanel;
     Panel2: TPanel;
     procedure BitBtn1Click(Sender: TObject);
-    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
-    procedure FormCreate(Sender: TObject);
   public
     type
       TOnCheckLoadEvent = function(const APath: String): Boolean of object;
   private
     FOnCheckLoad: TOnCheckLoadEvent;
 
+    procedure InitProc(var S: String);
     procedure AfterShow(Data: PtrInt);
     procedure OnFormFirstShow(Sender: TObject);
     procedure MakeExtensionsFilter;
-    procedure CheckIfFileExists;
     function DoCheckLoad: Boolean;
+    procedure FormOnCloseQuery(Sender: TObject; var CanClose: Boolean);
   public
+    constructor Create(TheOwner: TComponent); override;
     class function ShowLibraryPathDialog(var S: String; const AOnCheckLoad: TOnCheckLoadEvent): Boolean;
   end;
 
@@ -43,16 +42,39 @@ implementation
 
 {$R *.lfm}
 
-{ TFormInputLibraryPath }
+{ TFrameInputLibraryPath }
 
-procedure TFormInputLibraryPath.FormCreate(Sender: TObject);
+procedure TFrameInputLibraryPath.InitProc(var S: String);
+var
+  S1: String;
+  L: Integer;
+  Separators: set of AnsiChar;
 begin
-  Edit1.Clear;
-  AfterShow(-1);
-  Self.AddHandlerFirstShow(@OnFormFirstShow);
+  S := Trim(S);
+  Edit1.Text := S;
+
+  Separators := AllowDirectorySeparators + AllowDriveSeparators;
+  S1 := S;
+  repeat
+    L := Length(S1);
+    if (L > 0) and (S1[L] in Separators) then
+      Delete(S1, L, 1);
+    S1 := Trim(ExtractFilePath(S1));
+    if Length(S1) = L then begin
+      S1 := '';
+    end;
+  until (S1 = '') or (DirectoryExists(S1));
+
+  if S1 = '' then
+    OpenDialog1.InitialDir := ExtractFilePath(Application.ExeName)
+  else
+    OpenDialog1.InitialDir := S1;
+
+  OpenDialog1.FileName := ExtractFileName(S);
+  MakeExtensionsFilter;
 end;
 
-procedure TFormInputLibraryPath.BitBtn1Click(Sender: TObject);
+procedure TFrameInputLibraryPath.BitBtn1Click(Sender: TObject);
 begin
   if OpenDialog1.Execute then begin
     Edit1.Text := OpenDialog1.FileName;
@@ -60,7 +82,7 @@ begin
   OpenDialog1.FileName := ExtractFileName(OpenDialog1.FileName);
 end;
 
-procedure TFormInputLibraryPath.FormCloseQuery(Sender: TObject;
+procedure TFrameInputLibraryPath.FormOnCloseQuery(Sender: TObject;
   var CanClose: Boolean);
 const
   ContinueClicked = mrLast + 1;
@@ -71,53 +93,75 @@ const
     ;
 var
   S, S1, S2, S3: String;
+  F: TCustomForm;
 begin
-  CanClose := ModalResult <> mrOK;
-  if not CanClose then begin
-    S := Trim(Edit1.Text);
-    Edit1.Text := S;
-    S1 := '';
-    S2 := '';
-    S3 := '';
-    if S <> '' then begin
-      if not FileExists(S) then begin
-        S1 := 'File ' + AnsiQuotedStr(S, '"') + LineEnding
-          + 'does not exist.' + LineEnding + LineEnding;
-        S2 := 'loaded.';
-      end else if not DoCheckLoad then begin
-        S2 := 'loaded from file ' + AnsiQuotedStr(S, '"') + '.';
-      end else
-        CanClose := True;
-    end else begin
-      CanClose := DoCheckLoad;
-      S2 := 'found in default locations.';
-      S3 := ' yourself';
+  if Sender is TCustomForm then begin
+    F := TCustomForm(Sender);
+    CanClose := F.ModalResult <> mrOK;
+    if not CanClose then begin
+      S := Trim(Edit1.Text);
+      Edit1.Text := S;
+      S1 := '';
+      S2 := '';
+      S3 := '';
+      if S <> '' then begin
+        if not FileExists(S) then begin
+          S1 := 'File ' + AnsiQuotedStr(S, '"') + LineEnding
+            + 'does not exist.' + LineEnding + LineEnding;
+          S2 := 'loaded.';
+        end else if not DoCheckLoad then begin
+          S2 := 'loaded from file ' + AnsiQuotedStr(S, '"') + '.';
+        end else
+          CanClose := True;
+      end else begin
+        CanClose := DoCheckLoad;
+        S2 := 'found in default locations.';
+        S3 := ' yourself';
+      end;
+
+      CanClose := CanClose or
+        (QuestionDlg('PortAudio library loading failed', Format(Msg, [S1, S2, S3]), TMsgDlgType.mtConfirmation,
+           [ContinueClicked, 'Continue without sound', 'IsDefault',
+           CancelClicked, 'Keep trying', 'IsCancel'], 0)
+         = ContinueClicked);
     end;
-
-    CanClose := CanClose or
-      (QuestionDlg('PortAudio library loading failed', Format(Msg, [S1, S2, S3]), TMsgDlgType.mtConfirmation,
-         [ContinueClicked, 'Continue without sound', 'IsDefault',
-         CancelClicked, 'Keep trying', 'IsCancel'], 0)
-       = ContinueClicked);
   end;
 end;
 
-procedure TFormInputLibraryPath.AfterShow(Data: PtrInt);
+constructor TFrameInputLibraryPath.Create(TheOwner: TComponent);
 begin
-  CommonFunctionsLCL.TCommonFunctionsLCL.FormToScreenCentre(Self);
-  AutoSize := False;
+  inherited Create(TheOwner);
+
+  Edit1.Clear;
+  Caption := 'Portaudio library path';
+end;
+
+procedure TFrameInputLibraryPath.AfterShow(Data: PtrInt);
+begin
   if Data > 0 then begin
-    AutoSize := True;
     Application.QueueAsyncCall(@AfterShow, Data - 1);
+  end else begin
+    DisableAlign;
+    try
+      Panel2.AutoSize := False;
+      Panel1.AutoSize := False;
+      BitBtn1.Anchors := BitBtn1.Anchors - [akLeft];
+      BitBtn1.AnchorParallel(akRight, 0, Panel1);
+      Edit1.AnchorToNeighbour(akRight, 0, BitBtn1);
+      Panel1.AnchorParallel(akRight, 0, Panel2);
+      Panel2.AnchorParallel(akRight, 0, Self);
+    finally
+      EnableAlign;
+    end;
   end;
 end;
 
-procedure TFormInputLibraryPath.OnFormFirstShow(Sender: TObject);
+procedure TFrameInputLibraryPath.OnFormFirstShow(Sender: TObject);
 begin
-  AfterShow(2);
+  AfterShow(1);
 end;
 
-procedure TFormInputLibraryPath.MakeExtensionsFilter;
+procedure TFrameInputLibraryPath.MakeExtensionsFilter;
 const
   DefaultLibraryFilter =
   {$if defined(mswindows)}
@@ -134,59 +178,39 @@ begin
   OpenDialog1.Filter := DefaultLibraryFilter + '|all files|*';
 end;
 
-procedure TFormInputLibraryPath.CheckIfFileExists;
-begin
-  //
-end;
-
-function TFormInputLibraryPath.DoCheckLoad: Boolean;
+function TFrameInputLibraryPath.DoCheckLoad: Boolean;
 begin
   if Assigned(FOnCheckLoad) then
     Result := FOnCheckLoad(Trim(Edit1.Text));
 end;
 
-class function TFormInputLibraryPath.ShowLibraryPathDialog(var S: String;
+class function TFrameInputLibraryPath.ShowLibraryPathDialog(var S: String;
   const AOnCheckLoad: TOnCheckLoadEvent): Boolean;
 var
-  F: TFormInputLibraryPath;
-  S1: String;
-  L: Integer;
-  Separators: set of AnsiChar;
+  Fm: TFrameInputLibraryPath;
+  F: TFormForOptionsBasic;
 begin
   Result := False;
-  F := TFormInputLibraryPath.Create(nil);
+  Fm := TFrameInputLibraryPath.Create(nil);
   try
-    F.Caption := 'Portaudio library path';
-    S := Trim(S);
-    F.Edit1.Text := S;
-    F.FOnCheckLoad := AOnCheckLoad;
+    Fm.InitProc(S);
+    Fm.FOnCheckLoad := AOnCheckLoad;
+    F := TFormForOptionsBasic.CreateForControl(nil, Fm);
+    try
+      //F.BorderStyle := bsSingle;
+      F.AddHandlerFirstShow(@(Fm.OnFormFirstShow));
+      F.AddCloseQuery(@Fm.FormOnCloseQuery);
 
-    Separators := AllowDirectorySeparators + AllowDriveSeparators;
-    S1 := S;
-    repeat
-      L := Length(S1);
-      if (L > 0) and (S1[L] in Separators) then
-        Delete(S1, L, 1);
-      S1 := Trim(ExtractFilePath(S1));
-      if Length(S1) = L then begin
-        S1 := '';
+      if F.ShowModal = mrOK then begin
+        S := Trim(Fm.Edit1.Text);
+        Result := True;
       end;
-    until (S1 = '') or (DirectoryExists(S1));
 
-    if S1 = '' then
-      F.OpenDialog1.InitialDir := ExtractFilePath(Application.ExeName)
-    else
-      F.OpenDialog1.InitialDir := S1;
-
-    F.OpenDialog1.FileName := ExtractFileName(S);
-    F.MakeExtensionsFilter;
-
-    if F.ShowModal = mrOK then begin
-      S := Trim(F.Edit1.Text);
-      Result := True;
+    finally
+      F.Free;
     end;
   finally
-    F.Free;
+    Fm.Free;
   end;
 end;
 

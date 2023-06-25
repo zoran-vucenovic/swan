@@ -916,7 +916,7 @@ begin
     try
       Spectrum.Paused := True;
       S := TBeeper.LibPath;
-      if TFormInputLibraryPath.ShowLibraryPathDialog(S, @SoundLibraryDialogCheckLoad) then begin
+      if TFrameInputLibraryPath.ShowLibraryPathDialog(S, @SoundLibraryDialogCheckLoad) then begin
         TBeeper.LibPath := S;
         Spectrum.CheckStartBeeper;
         UpdateSoundControls;

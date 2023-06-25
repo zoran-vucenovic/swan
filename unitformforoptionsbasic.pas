@@ -100,7 +100,6 @@ begin
 
       Panel1.AnchorParallel(akRight, 0, Self);
       Panel1.AnchorParallel(akBottom, 0, Self);
-
     finally
       EnableAlign;
     end;
@@ -135,10 +134,8 @@ begin
   Panel1.Caption := '';
   Panel1.Anchors := [];
   Panel1.AnchorParallel(akLeft, 0, Self);
-  //Panel1.AnchorParallel(akRight, 0, Self);
   Panel1.AnchorParallel(akTop, 0, Self);
-  //Panel1.AnchorParallel(akBottom, 0, Self);
-        
+
   C.Anchors := [];
   C.AnchorParallel(akRight, 0, Panel1);
   C.AnchorParallel(akTop, 0, Panel1);
@@ -151,10 +148,8 @@ begin
     BP.ShowBevel := False;
     BP.ShowButtons := Buttons;
 
-    //BP.AnchorParallel(akLeft, 0, Panel1);
     BP.AnchorParallel(akRight, 0, Panel1);
     BP.AnchorToNeighbour(akTop, 0, C);
-    //BP.BorderSpacing.Bottom := 0;
     BP.BorderSpacing.Around := 6;
 
     BP.Parent := Panel1;

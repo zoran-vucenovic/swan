@@ -366,9 +366,9 @@
       <Unit>
         <Filename Value="unitinputlibrarypathdialog.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="FormInputLibraryPath"/>
+        <ComponentName Value="FrameInputLibraryPath"/>
         <HasResources Value="True"/>
-        <ResourceBaseClass Value="Form"/>
+        <ResourceBaseClass Value="Frame"/>
         <UnitName Value="UnitInputLibraryPathDialog"/>
       </Unit>
       <Unit>
