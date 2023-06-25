@@ -13,7 +13,7 @@ uses
   Graphics, StdCtrls, Dialogs, Buttons, ButtonPanel, LCLType, LCLIntf, LazUTF8;
 
 type
-  TFrameColourPalette3 = class(TFrame)
+  TFrameColourPalette = class(TFrame)
     BitBtn1: TBitBtn;
     BitBtn2: TBitBtn;
     BitBtn3: TBitBtn;
@@ -91,9 +91,9 @@ implementation
 
 {$R *.lfm}
 
-{ TFrameColourPalette3.TColourArea }
+{ TFrameColourPalette.TColourArea }
 
-procedure TFrameColourPalette3.TColourArea.SetColor(Value: TColor);
+procedure TFrameColourPalette.TColourArea.SetColor(Value: TColor);
 const
   NonBreakSpace: RawByteString = #$c2 + #$a0;
   NarrowNonBreakSpace: RawByteString = #$e2 + #$80 + #$af;
@@ -125,19 +125,19 @@ begin
   inherited SetColor(Value);
 end;
 
-procedure TFrameColourPalette3.TColourArea.MouseEnter;
+procedure TFrameColourPalette.TColourArea.MouseEnter;
 begin
   inherited MouseEnter;
   Invalidate;
 end;
 
-procedure TFrameColourPalette3.TColourArea.MouseLeave;
+procedure TFrameColourPalette.TColourArea.MouseLeave;
 begin
   inherited MouseLeave;
   Invalidate;
 end;
 
-constructor TFrameColourPalette3.TColourArea.Create(AOwner: TComponent);
+constructor TFrameColourPalette.TColourArea.Create(AOwner: TComponent);
 begin
   DisplayText := '';
   inherited Create(AOwner);
@@ -154,7 +154,7 @@ begin
   Cursor := crHandPoint;
 end;
 
-procedure TFrameColourPalette3.TColourArea.Paint;
+procedure TFrameColourPalette.TColourArea.Paint;
 
   procedure DrawRect(const R: TRect; AndFill: Boolean);
   var
@@ -190,9 +190,9 @@ begin
   Canvas.TextRect(Self.ClientRect, 0, 0, DisplayText, TextStyle);
 end;
 
-{ TFrameColourPalette3 }
+{ TFrameColourPalette }
 
-procedure TFrameColourPalette3.SetLCLColours(AValue: TLCLColourMap);
+procedure TFrameColourPalette.SetLCLColours(AValue: TLCLColourMap);
 var
   I: Integer;
 begin
@@ -216,7 +216,7 @@ begin
 
 end;
 
-procedure TFrameColourPalette3.NewPalette;
+procedure TFrameColourPalette.NewPalette;
 var
   S: String;
   N: Integer;
@@ -249,7 +249,7 @@ begin
 
 end;
 
-procedure TFrameColourPalette3.FormCloseCallback(Sender: TObject;
+procedure TFrameColourPalette.FormCloseCallback(Sender: TObject;
   var CloseAction: TCloseAction);
 //var
 //  F: TCustomForm;
@@ -264,12 +264,12 @@ begin
   end;
 end;
 
-procedure TFrameColourPalette3.BitBtn1Click(Sender: TObject);
+procedure TFrameColourPalette.BitBtn1Click(Sender: TObject);
 begin
   NewPalette;
 end;
 
-procedure TFrameColourPalette3.BitBtn2Click(Sender: TObject);
+procedure TFrameColourPalette.BitBtn2Click(Sender: TObject);
 var
   N: Integer;
   S: String;
@@ -294,7 +294,7 @@ begin
   end;
 end;
 
-procedure TFrameColourPalette3.BitBtn3Click(Sender: TObject);
+procedure TFrameColourPalette.BitBtn3Click(Sender: TObject);
 var
   ColourMap: TLCLColourMap;
   ColoursArr: TLCLColours;
@@ -315,17 +315,17 @@ begin
   end;
 end;
 
-procedure TFrameColourPalette3.ComboBoxCustomChange(Sender: TObject);
+procedure TFrameColourPalette.ComboBoxCustomChange(Sender: TObject);
 begin
   SwitchToCB(ComboBoxPredefined, ComboBoxCustom);
 end;
 
-procedure TFrameColourPalette3.ComboBoxPredefinedChange(Sender: TObject);
+procedure TFrameColourPalette.ComboBoxPredefinedChange(Sender: TObject);
 begin
   SwitchToCB(ComboBoxCustom, ComboBoxPredefined);
 end;
 
-function TFrameColourPalette3.GetLCLColours: TLCLColourMap;
+function TFrameColourPalette.GetLCLColours: TLCLColourMap;
 begin
   if ComboBoxCustom.ItemIndex >= 0 then
     Result := (ComboBoxCustom.Items.Objects[ComboBoxCustom.ItemIndex] as TObjColoursMap).LCLColourMap
@@ -337,7 +337,7 @@ begin
   end;
 end;
 
-procedure TFrameColourPalette3.SetLCLColour(AColour: TColor; ABright: Boolean;
+procedure TFrameColourPalette.SetLCLColour(AColour: TColor; ABright: Boolean;
   ASpectrumColourIndex: Integer);
 var
   J: Integer;
@@ -348,7 +348,7 @@ begin
   ColourPanels[J].Color := AColour;
 end;
 
-procedure TFrameColourPalette3.CAClick(Sender: TObject);
+procedure TFrameColourPalette.CAClick(Sender: TObject);
 var
   CA: TColourArea;
   S: String;
@@ -374,7 +374,7 @@ begin
   end;
 end;
 
-procedure TFrameColourPalette3.FillPredefinedPalettes;
+procedure TFrameColourPalette.FillPredefinedPalettes;
 var
   C: TObjColoursMap;
 begin
@@ -390,7 +390,7 @@ begin
   ComboBoxPredefined.Items.AddObject(C.LCLColourMap.Name, C);
 end;
 
-procedure TFrameColourPalette3.FillCustomPalettes;
+procedure TFrameColourPalette.FillCustomPalettes;
 var
   C: TObjColoursMap;
   CC: TLCLColourMapArray;
@@ -405,7 +405,7 @@ begin
   end;
 end;
 
-procedure TFrameColourPalette3.SaveCustomPalettes;
+procedure TFrameColourPalette.SaveCustomPalettes;
 var
   Obj: TObject;
   CC: TLCLColourMapArray;
@@ -424,7 +424,7 @@ begin
   SetColourMaps(CC);
 end;
 
-procedure TFrameColourPalette3.ClearCombo(CB: TCustomComboBox);
+procedure TFrameColourPalette.ClearCombo(CB: TCustomComboBox);
 var
   I: Integer;
 begin
@@ -435,7 +435,7 @@ begin
   CB.Clear;
 end;
 
-procedure TFrameColourPalette3.SwitchToCB(CBFrom, CBTo: TCustomComboBox);
+procedure TFrameColourPalette.SwitchToCB(CBFrom, CBTo: TCustomComboBox);
 var
   O: TObject;
   CM: TLCLColourMap;
@@ -454,7 +454,7 @@ begin
   end;
 end;
 
-procedure TFrameColourPalette3.FillColourMapFromColourPanels(
+procedure TFrameColourPalette.FillColourMapFromColourPanels(
   var CM: TLCLColourMap);
 
 var
@@ -472,7 +472,7 @@ begin
   end;
 end;
 
-procedure TFrameColourPalette3.InternalAdd(N: Integer; const S: String);
+procedure TFrameColourPalette.InternalAdd(N: Integer; const S: String);
 var
   C: TObjColoursMap;
 begin
@@ -490,7 +490,7 @@ begin
   ComboBoxCustom.ItemIndex := N;
 end;
 
-constructor TFrameColourPalette3.Create(TheOwner: TComponent);
+constructor TFrameColourPalette.Create(TheOwner: TComponent);
 
 var
   Pan: TPan;
@@ -653,7 +653,7 @@ begin
   Self.AutoSize := True;
 end;
 
-destructor TFrameColourPalette3.Destroy;
+destructor TFrameColourPalette.Destroy;
 begin
   Application.RemoveAsyncCalls(Self);
   Screen.RemoveAllHandlersOfObject(Self);
@@ -664,15 +664,15 @@ begin
   inherited Destroy;
 end;
 
-class function TFrameColourPalette3.PickColours(var AColours: TLCLColourMap
+class function TFrameColourPalette.PickColours(var AColours: TLCLColourMap
   ): Boolean;
 var
   F: TCustomForm;
-  Fm: TFrameColourPalette3;
+  Fm: TFrameColourPalette;
 
 begin
   Result := False;
-  Fm := TFrameColourPalette3.Create(nil);
+  Fm := TFrameColourPalette.Create(nil);
   try
     F := UnitFormForOptionsBasic.TFormForOptionsBasic.CreateForControl(nil, Fm, False);
     try

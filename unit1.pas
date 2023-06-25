@@ -582,7 +582,7 @@ begin
       Spectrum.Paused := True;
       Spectrum.GetSpectrumColours(Colours);
 
-      if UnitColourPalette.TFrameColourPalette3.PickColours(Colours) then begin
+      if UnitColourPalette.TFrameColourPalette.PickColours(Colours) then begin
         Spectrum.SetSpectrumColours(Colours);
       end;
 
