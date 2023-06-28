@@ -399,7 +399,6 @@ begin
     if FOptionControlsCount + Grid.FixedRows >= Grid.RowCount then begin
       Grid.RowCount := Grid.FixedRows + FOptionControlsCount + 1;
     end;
-    //TCustomStringGrid(Grid).Cells[Grid.FixedCols, Grid.FixedRows + FOptionControlsCount] := R.LabSelect;
 
     if Length(FOptionControls) <= FOptionControlsCount then
       SetLength(FOptionControls, FOptionControlsCount + 1);
@@ -409,7 +408,6 @@ begin
 
     C.Anchors := [];
     C.AnchorParallel(akLeft, 0, Panel3);
-    //C.AnchorParallel(akTop, 0, Panel3);
     C.AnchorToNeighbour(akTop, 0, Panel6);
 
     C.Parent := Panel3;

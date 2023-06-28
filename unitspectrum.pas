@@ -556,8 +556,8 @@ begin
 
   SkipReset :=
     FRestoringSpectrumModel
-    //or ((ASpectrumModel in [sm16K_issue_2, sm16K_issue_3]) and (FSpectrumModel in [sm16K_issue_2, sm16K_issue_3]))
-    //or ((ASpectrumModel in [sm48K_issue_2, sm48K_issue_3]) and (FSpectrumModel in [sm48K_issue_2, sm48K_issue_3]))
+    or ((ASpectrumModel in [sm16K_issue_2, sm16K_issue_3]) and (FSpectrumModel in [sm16K_issue_2, sm16K_issue_3]))
+    or ((ASpectrumModel in [sm48K_issue_2, sm48K_issue_3]) and (FSpectrumModel in [sm48K_issue_2, sm48K_issue_3]))
     ;
 
   FSpectrumModel := ASpectrumModel;
