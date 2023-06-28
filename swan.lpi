@@ -134,6 +134,10 @@
           <Other>
             <CustomOptions Value="-dUseCThreads
 -dDebugging"/>
+            <OtherDefines Count="2">
+              <Define0 Value="UseCThreads"/>
+              <Define1 Value="Debugging"/>
+            </OtherDefines>
           </Other>
         </CompilerOptions>
       </Item>
@@ -586,6 +590,28 @@
         <Filename Value="unitformforoptionsbasic.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitFormForOptionsBasic"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitoptions.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormOptions"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitOptions"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitframeotheroptions.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameOtherOptions"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitFrameOtherOptions"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitframespectrummodel.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameSpectrumModel"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitFrameSpectrumModel"/>
       </Unit>
     </Units>
   </ProjectOptions>

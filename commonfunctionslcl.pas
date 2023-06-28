@@ -40,6 +40,7 @@ type
     class procedure CalculateTextSize(const F: TFont;
         const S: String; out ATextSize: TSize); static;
     class procedure RowInView(AGrid: TCustomGrid; ARow: Integer); static;
+    class function GetBestContrastColorForFont(R, G, B: Integer): TColor;
   end;
 
 implementation
@@ -119,6 +120,18 @@ begin
   finally
     G.EndUpdate;
   end;
+end;
+
+class function TCommonFunctionsLCL.GetBestContrastColorForFont(R, G, B: Integer
+  ): TColor;
+begin
+  // double luma = ((0.299 * iColor.R) + (0.587 * iColor.G) + (0.114 * iColor.B)) / 255;
+  // from here: https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color
+  // black or white:
+  if R * 299 + G * 587 + B * 114 <= 127500 then
+    Result := clWhite // $FFFFFF
+  else
+    Result := clBlack; // 0
 end;
 
 class procedure TCommonFunctionsLCL.Init;

@@ -9,8 +9,8 @@ interface
 
 uses
   Classes, SysUtils, UnitFrameOneKeyMap, UnitKeyMapRecords, UnitFormPressAKey,
-  CommonFunctionsLCL, UnitFormForOptionsBasic, Forms, Controls, Graphics,
-  Dialogs, ExtCtrls, ButtonPanel, StdCtrls, LazUTF8;
+  CommonFunctionsLCL, UnitFormForOptionsBasic, UnitOptions, Forms, Controls,
+  Graphics, Dialogs, ExtCtrls, ButtonPanel, StdCtrls, LazUTF8;
 
 type
   TFrameKeyMappings = class(TFrame)
@@ -56,7 +56,6 @@ type
     procedure SaveSchemeOnClick(Sender: TObject);
     procedure RemoveSchemeOnClick(Sender: TObject);
     procedure ResetToDefaultOnClick(Sender: TObject);
-    procedure CloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure Close(Sender: TObject; var CloseAction: TCloseAction);
 
   public
@@ -64,6 +63,7 @@ type
     destructor Destroy; override;
 
     class function ShowFormKeyMappings(): Boolean;
+    class function CreateFrameKeyMappingsForAllOptions(AOptionsDialog: TFormOptions): TFrameKeyMappings;
   end;
 
 implementation
@@ -273,14 +273,10 @@ begin
   SetMappingsToDefault;
 end;
 
-procedure TFrameKeyMappings.CloseQuery(Sender: TObject; var CanClose: Boolean);
-begin
-  //
-end;
-
 procedure TFrameKeyMappings.Close(Sender: TObject; var CloseAction: TCloseAction
   );
 begin
+  Application.RemoveAsyncCalls(Self);
   if (Sender is TCustomForm) and (TCustomForm(Sender).ModalResult = mrOK) then
     SaveToKeyMappings;
 end;
@@ -385,6 +381,25 @@ begin
     end;
   finally
     Fm.Free;
+  end;
+end;
+
+class function TFrameKeyMappings.CreateFrameKeyMappingsForAllOptions(
+  AOptionsDialog: TFormOptions): TFrameKeyMappings;
+var
+  Fm: TFrameKeyMappings;
+begin
+  Result := nil;
+  if Assigned(AOptionsDialog) then begin
+    Fm := TFrameKeyMappings.Create(AOptionsDialog);
+    try
+      AOptionsDialog.AddHandlerFirstShow(@Fm.FormFirstShow);
+      AOptionsDialog.AddHandlerClose(@Fm.Close);
+      AOptionsDialog.AddAnOptionControl(Fm, 'Key mappings');
+      Result := Fm;
+    except
+      FreeAndNil(Fm);
+    end;
   end;
 end;
 

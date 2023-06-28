@@ -16,13 +16,14 @@ uses
   UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
-  UnitBeeper, UnitChooseFile;
+  UnitBeeper, UnitChooseFile, UnitOptions, UnitFrameSpectrumModel;
 
 type
 
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionAllOptions: TAction;
     ActionModel16KIssue2: TAction;
     ActionModel16KIssue3: TAction;
     ActionShowKeyboardOnScreen: TAction;
@@ -114,6 +115,7 @@ type
     MenuItem48: TMenuItem;
     MenuItem49: TMenuItem;
     MenuItem5: TMenuItem;
+    MenuItem50: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
     MenuItem8: TMenuItem;
@@ -126,8 +128,10 @@ type
     PanelStatus: TPanel;
     SaveDialog1: TSaveDialog;
     Separator1: TMenuItem;
+    Separator2: TMenuItem;
     SpeedButton1: TSpeedButton;
     procedure ActionAboutExecute(Sender: TObject);
+    procedure ActionAllOptionsExecute(Sender: TObject);
     procedure ActionAttachTapExecute(Sender: TObject);
     procedure ActionColoursExecute(Sender: TObject);
     procedure ActionDecTapeBlockExecute(Sender: TObject);
@@ -203,6 +207,7 @@ type
     function GetSoundVolume: Integer;
     procedure SetSoundVolume(const N: Integer);
     procedure SetSnapshotHistoryEnabled(const B: Boolean);
+    procedure ShowAllOptionsDialog(ControlClass: TControlClass);
 
     procedure KeyFromFormKeyboardOnScreen(AKeyValue: Word; Flags: Integer);
     procedure ReleaseShifts(Sender: TObject);
@@ -495,6 +500,14 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+{$ifNdef Debugging}
+  // "all options" dialog is not completed yet,
+  // don't show it unless we're in debugging mode
+  ActionAllOptions.OnExecute := nil;
+  ActionAllOptions.Visible := False;
+  Separator2.Visible := False;
+{$endif}
+
   FNewModel := TSpectrumModel.smNone;
   HistoryQueue := nil;
 
@@ -664,6 +677,15 @@ begin
   end;
 end;
 
+procedure TForm1.ActionAllOptionsExecute(Sender: TObject);
+begin
+  if Sender <> Spectrum then begin
+    AddEventToQueue(@ActionAllOptionsExecute);
+  end else begin
+    ShowAllOptionsDialog(nil);
+  end;
+end;
+
 procedure TForm1.ActionAttachTapExecute(Sender: TObject);
 begin
   if Sender <> Spectrum then begin
@@ -770,11 +792,7 @@ begin
       Spectrum.KeyBoard.ClearKeyboard;
       TJoystick.Joystick.ResetState;
 
-      AKeys[TJoystick.TJoystickDirection.diUp] := TJoystick.Joystick.KeyUp;
-      AKeys[TJoystick.TJoystickDirection.diDown] := TJoystick.Joystick.KeyDown;
-      AKeys[TJoystick.TJoystickDirection.diLeft] := TJoystick.Joystick.KeyLeft;
-      AKeys[TJoystick.TJoystickDirection.diRight] := TJoystick.Joystick.KeyRight;
-      AKeys[TJoystick.TJoystickDirection.diFire] := TJoystick.Joystick.KeyFire;
+      TJoystick.Joystick.GetKeys(AKeys);
       JoystickType := TJoystick.Joystick.JoystickType;
       JoystickEnabled := TJoystick.Joystick.Enabled;
       if TFrameJoystickSetup.ShowJoystickOptionsDialog(JoystickType, AKeys, JoystickEnabled) then begin
@@ -1467,6 +1485,76 @@ begin
       FreeAndNil(HistoryQueue);
     end;
     UpdateActiveSnapshotHistory();
+  end;
+end;
+
+procedure TForm1.ShowAllOptionsDialog(ControlClass: TControlClass);
+var
+  WasPaused: Boolean;
+  OptionsDialog: TFormOptions;
+  FrameKeyMappings: TFrameKeyMappings;
+  FrameColourPalette: TFrameColourPalette;
+  Colours: TLCLColourMap;
+  FrameJoystickSetup: TFrameJoystickSetup;
+  JoystickEnabled: Boolean;
+  JoystickType: TJoystick.TJoystickType;
+  AKeys: TJoystick.TJoystickDirectionsKeys;
+  FrameSpectrumModel: TFrameSpectrumModel;
+
+begin
+  WasPaused := Spectrum.Paused;
+  try
+    Spectrum.Paused := True;
+
+    KeyEventCount := 0;
+    Spectrum.KeyBoard.ClearKeyboard;
+    TJoystick.Joystick.ResetState;
+
+    OptionsDialog := TFormOptions.CreateOptionsDialog([]);
+    if Assigned(OptionsDialog) then
+      try   
+        FrameKeyMappings := TFrameKeyMappings.CreateFrameKeyMappingsForAllOptions(OptionsDialog);
+        if not Assigned(FrameKeyMappings) then
+          Abort;
+        FrameKeyMappings.ParentColor := False;
+
+        FrameColourPalette := TFrameColourPalette.CreateForOptionsDialog(OptionsDialog);
+        if not Assigned(FrameColourPalette) then
+          Abort;
+        Spectrum.GetSpectrumColours(Colours);
+        FrameColourPalette.LCLColours := Colours;
+        //FrameColourPalette.ParentColor := False;
+        //FrameColourPalette.Color := clwhite;
+
+        TJoystick.Joystick.GetKeys(AKeys);
+        FrameJoystickSetup := TFrameJoystickSetup.CreateForAllOptions(
+          OptionsDialog, TJoystick.Joystick.JoystickType, AKeys, TJoystick.Joystick.Enabled);
+        if not Assigned(FrameJoystickSetup) then
+          Abort;
+        //FrameJoystickSetup.ParentColor := False;
+        //FrameJoystickSetup.Color := clWhite;
+
+        FrameSpectrumModel := TFrameSpectrumModel.CreateForAllOptions(
+          OptionsDialog, Spectrum);
+        if not Assigned(FrameSpectrumModel) then
+          Abort;
+
+        // ...
+        OptionsDialog.SetCurrentControlByClass(ControlClass);
+        if OptionsDialog.ShowModal = mrOK then begin
+          Spectrum.SetSpectrumColours(FrameColourPalette.LCLColours);
+          Spectrum.KeyBoard.LoadFromKeyMappings;
+          FrameJoystickSetup.GetJoystickSetup(JoystickType, AKeys, JoystickEnabled);
+          TJoystick.Joystick.SetKeys(AKeys);
+          TJoystick.Joystick.Enabled := JoystickEnabled;
+          TJoystick.Joystick.JoystickType := JoystickType;
+          UpdateShowCurrentlyActiveJoystick;
+        end;
+      finally
+        OptionsDialog.Free;
+      end;
+  finally
+    Spectrum.Paused := WasPaused;
   end;
 end;
 

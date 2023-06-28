@@ -1,0 +1,21 @@
+object FrameOtherOptions: TFrameOtherOptions
+  Left = 0
+  Height = 392
+  Top = 0
+  Width = 570
+  ClientHeight = 392
+  ClientWidth = 570
+  TabOrder = 0
+  DesignLeft = 516
+  DesignTop = 191
+  object Panel1: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    Left = 0
+    Height = 392
+    Top = 0
+    Width = 570
+    BevelOuter = bvNone
+    TabOrder = 0
+  end
+end

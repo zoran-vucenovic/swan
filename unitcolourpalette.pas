@@ -9,8 +9,9 @@ interface
 
 uses
   Classes, SysUtils, Types, UnitSpectrumColourMap, CommonFunctionsLCL,
-  UnitCommonSpectrum, UnitFormForOptionsBasic, Forms, Controls, ExtCtrls,
-  Graphics, StdCtrls, Dialogs, Buttons, ButtonPanel, LCLType, LCLIntf, LazUTF8;
+  UnitCommonSpectrum, UnitFormForOptionsBasic, UnitOptions, Forms, Controls,
+  ExtCtrls, Graphics, StdCtrls, Dialogs, Buttons, ButtonPanel, LCLType, LCLIntf,
+  LazUTF8;
 
 type
   TFrameColourPalette = class(TFrame)
@@ -83,6 +84,7 @@ type
     destructor Destroy; override;
 
     class function PickColours(var AColours: TLCLColourMap): Boolean;
+    class function CreateForOptionsDialog(AOptionsDialog: TFormOptions): TFrameColourPalette;
 
     property LCLColours: TLCLColourMap read GetLCLColours write SetLCLColours;
   end;
@@ -114,13 +116,7 @@ begin
   DisplayText := Format('RGB:%3:s%0:s%4:s%1:s%4:s%2:s',
     [IntToHex(R, 2), IntToHex(G, 2), IntToHex(B, 2), NonBreakSpace, NarrowNonBreakSpace]);
 
-  // double luma = ((0.299 * iColor.R) + (0.587 * iColor.G) + (0.114 * iColor.B)) / 255;
-  // from here: https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color
-  // black or white:
-  if R * 299 + G * 587 + B * 114 <= 127500 then
-    Font.Color := clWhite // $FFFFFF
-  else
-    Font.Color := clBlack; // 0
+  Font.Color := TCommonFunctionsLCL.GetBestContrastColorForFont(R, G, B);
 
   inherited SetColor(Value);
 end;
@@ -251,13 +247,9 @@ end;
 
 procedure TFrameColourPalette.FormCloseCallback(Sender: TObject;
   var CloseAction: TCloseAction);
-//var
-//  F: TCustomForm;
 begin
-  //F := GetParentForm(Self);
-  //if Assigned(F) then begin
+  Application.RemoveAsyncCalls(Self);
   if Sender is TCustomForm then begin
-    //F := TCustomForm(Sender);
     if TCustomForm(Sender).ModalResult = mrOK then begin
       SaveCustomPalettes;
     end;
@@ -688,6 +680,24 @@ begin
     end;
   finally
     Fm.Free;
+  end;
+end;
+
+class function TFrameColourPalette.CreateForOptionsDialog(
+  AOptionsDialog: TFormOptions): TFrameColourPalette;
+var
+  Fm: TFrameColourPalette;
+begin
+  Result := nil;
+  if Assigned(AOptionsDialog) then begin
+    Fm := TFrameColourPalette.Create(AOptionsDialog);
+    try
+      AOptionsDialog.AddHandlerClose(@Fm.FormCloseCallback);
+      AOptionsDialog.AddAnOptionControl(Fm, 'Spectrum colours');
+      Result := Fm;
+    except
+      FreeAndNil(Fm);
+    end;
   end;
 end;
 

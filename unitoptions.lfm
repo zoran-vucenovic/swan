@@ -1,0 +1,166 @@
+object FormOptions: TFormOptions
+  Left = 833
+  Height = 781
+  Top = 68
+  Width = 669
+  Caption = 'Options'
+  ClientHeight = 781
+  ClientWidth = 669
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  LCLVersion = '2.2.7.0'
+  object Panel1: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 0
+    Height = 781
+    Top = 0
+    Width = 669
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BevelOuter = bvNone
+    ClientHeight = 781
+    ClientWidth = 669
+    TabOrder = 0
+    object ButtonPanel1: TButtonPanel
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = Panel1
+      AnchorSideBottom.Side = asrBottom
+      Left = 500
+      Height = 26
+      Top = 749
+      Width = 163
+      Align = alNone
+      Anchors = [akRight, akBottom]
+      OKButton.Name = 'OKButton'
+      OKButton.DefaultCaption = True
+      HelpButton.Name = 'HelpButton'
+      HelpButton.DefaultCaption = True
+      CloseButton.Name = 'CloseButton'
+      CloseButton.DefaultCaption = True
+      CancelButton.Name = 'CancelButton'
+      CancelButton.DefaultCaption = True
+      TabOrder = 1
+      ShowButtons = [pbOK, pbCancel]
+      ShowBevel = False
+    end
+    object Panel4: TPanel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel1
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = ButtonPanel1
+      Left = 4
+      Height = 739
+      Top = 4
+      Width = 661
+      Anchors = [akTop, akLeft, akRight, akBottom]
+      BorderSpacing.Around = 4
+      BevelOuter = bvNone
+      ClientHeight = 739
+      ClientWidth = 661
+      TabOrder = 0
+      object Panel2: TPanel
+        AnchorSideLeft.Control = Panel4
+        AnchorSideTop.Control = Panel4
+        AnchorSideBottom.Control = Panel4
+        AnchorSideBottom.Side = asrBottom
+        Left = 0
+        Height = 739
+        Top = 0
+        Width = 72
+        Anchors = [akTop, akLeft, akBottom]
+        Caption = 'Panel2'
+        TabOrder = 0
+      end
+      object Panel5: TPanel
+        AnchorSideLeft.Control = Panel2
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel4
+        AnchorSideRight.Control = Panel4
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = Panel4
+        AnchorSideBottom.Side = asrBottom
+        Left = 72
+        Height = 739
+        Top = 0
+        Width = 589
+        Anchors = [akTop, akLeft, akRight, akBottom]
+        BevelOuter = bvNone
+        ClientHeight = 739
+        ClientWidth = 589
+        TabOrder = 1
+        object Panel3: TPanel
+          AnchorSideLeft.Control = Panel5
+          AnchorSideTop.Control = Panel5
+          AnchorSideRight.Control = Panel5
+          AnchorSideRight.Side = asrBottom
+          AnchorSideBottom.Control = Panel5
+          AnchorSideBottom.Side = asrBottom
+          Left = 8
+          Height = 723
+          Top = 8
+          Width = 573
+          Anchors = [akTop, akLeft, akRight, akBottom]
+          BorderSpacing.Around = 8
+          BevelOuter = bvNone
+          Caption = 'Panel3'
+          ClientHeight = 723
+          ClientWidth = 573
+          TabOrder = 0
+          object Panel6: TPanel
+            AnchorSideLeft.Control = Panel3
+            AnchorSideTop.Control = Panel3
+            AnchorSideRight.Control = Panel3
+            AnchorSideRight.Side = asrBottom
+            Left = 0
+            Height = 81
+            Top = 0
+            Width = 573
+            Anchors = [akTop, akLeft, akRight]
+            AutoSize = True
+            Caption = 'Panel6'
+            ClientHeight = 81
+            ClientWidth = 573
+            TabOrder = 0
+            object Label1: TLabel
+              AnchorSideLeft.Control = Panel6
+              AnchorSideTop.Control = Panel6
+              AnchorSideRight.Control = Panel6
+              AnchorSideRight.Side = asrBottom
+              Left = 7
+              Height = 15
+              Top = 7
+              Width = 34
+              BorderSpacing.Around = 6
+              Caption = 'Label1'
+              ParentColor = False
+            end
+            object Panel7: TPanel
+              AnchorSideLeft.Control = Panel6
+              AnchorSideTop.Control = Label1
+              AnchorSideTop.Side = asrBottom
+              AnchorSideRight.Control = Panel6
+              AnchorSideRight.Side = asrBottom
+              Left = 5
+              Height = 50
+              Top = 28
+              Width = 563
+              Anchors = [akTop, akLeft, akRight]
+              BorderSpacing.Left = 4
+              BorderSpacing.Right = 4
+              BorderSpacing.Bottom = 2
+              Caption = 'Panel7'
+              TabOrder = 0
+            end
+          end
+        end
+      end
+    end
+  end
+end

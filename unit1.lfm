@@ -397,6 +397,11 @@ object Form1: TForm1
       Caption = 'Spectrum 48K issue 3'
       OnExecute = ActionModel48KIssue3Execute
     end
+    object ActionAllOptions: TAction
+      Category = 'Options'
+      Caption = 'All options...'
+      OnExecute = ActionAllOptionsExecute
+    end
   end
   object MainMenu1: TMainMenu
     Images = DataModuleImages.ImageList1
@@ -505,6 +510,12 @@ object Form1: TForm1
       end
       object MenuItem38: TMenuItem
         Action = ActionEnableHistory
+      end
+      object Separator2: TMenuItem
+        Caption = '-'
+      end
+      object MenuItem50: TMenuItem
+        Action = ActionAllOptions
       end
     end
     object MenuItem1: TMenuItem

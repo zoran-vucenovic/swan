@@ -23,7 +23,8 @@ uses
   UnitSZX, UnitStreamCompression, UnitFormHistorySnapshots,
   UnitControlScreenBitmap, UnitTapePlayer, UnitPzxPlayer,
   UnitSpectrumKeysControl, UnitKeyboardOnScreen, UnitChooseFile,
-  UnitFormForOptionsBasic, UnitFrameKeyMappings;
+  UnitFormForOptionsBasic, UnitFrameKeyMappings, UnitOptions, 
+  UnitFrameOtherOptions, UnitFrameSpectrumModel;
 
 {$R *.res}
 

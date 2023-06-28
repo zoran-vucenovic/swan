@@ -88,6 +88,7 @@ type
     class function JoystickTypeToString(AJoystickType: TJoystickType): String;
     class function DirectionToString(ADirection: TJoystickDirection): String;
     function SetKeys(const AKeys: TJoystickDirectionsKeys): Boolean;
+    procedure GetKeys(out AKeys: TJoystickDirectionsKeys);
 
     property State: Byte read FState;
     property KeyUp: Word read GetKeyUp;
@@ -303,6 +304,11 @@ begin
   FKeys := AKeys;
 
   Result := True;
+end;
+
+procedure TJoystick.GetKeys(out AKeys: TJoystickDirectionsKeys);
+begin
+  AKeys := FKeys;
 end;
 
 constructor TJoystick.Create;

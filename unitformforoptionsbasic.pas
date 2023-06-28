@@ -104,12 +104,8 @@ begin
       Panel1.AnchorParallel(akBottom, 0, Self);
 
       if FFixConstraints then begin
-        //
-  //if Constraints.MinHeight < Height then
-    Constraints.MinHeight := Height;
-  //if Constraints.MinWidth < Width then
-    Constraints.MinWidth := Width;
-
+        Constraints.MinHeight := Height;
+        Constraints.MinWidth := Width;
       end;
     finally
       EnableAlign;

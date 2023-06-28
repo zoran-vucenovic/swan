@@ -1,0 +1,77 @@
+object FrameSpectrumModel: TFrameSpectrumModel
+  Left = 0
+  Height = 117
+  Top = 0
+  Width = 330
+  AutoSize = True
+  ClientHeight = 117
+  ClientWidth = 330
+  TabOrder = 0
+  DesignLeft = 308
+  DesignTop = 119
+  object Panel1: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    Left = 0
+    Height = 107
+    Top = 0
+    Width = 324
+    AutoSize = True
+    BevelOuter = bvNone
+    ClientHeight = 107
+    ClientWidth = 324
+    TabOrder = 0
+    object RadioGroupSpectrumModel: TRadioGroup
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel1
+      Left = 10
+      Height = 87
+      Top = 10
+      Width = 147
+      AutoFill = True
+      BorderSpacing.Left = 10
+      BorderSpacing.Top = 10
+      Caption = 'Spectrum model'
+      ChildSizing.LeftRightSpacing = 6
+      ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+      ChildSizing.EnlargeVertical = crsHomogenousChildResize
+      ChildSizing.ShrinkHorizontal = crsScaleChilds
+      ChildSizing.ShrinkVertical = crsScaleChilds
+      ChildSizing.Layout = cclLeftToRightThenTopToBottom
+      ChildSizing.ControlsPerLine = 1
+      ClientHeight = 67
+      ClientWidth = 143
+      Items.Strings = (
+        'Spectrum 16K'
+        'Spectrum 48K'
+      )
+      TabOrder = 0
+    end
+    object RadioGroupKeyboardModel: TRadioGroup
+      AnchorSideLeft.Control = RadioGroupSpectrumModel
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Panel1
+      Left = 167
+      Height = 87
+      Top = 10
+      Width = 147
+      AutoFill = True
+      BorderSpacing.Around = 10
+      Caption = 'Keyboard model'
+      ChildSizing.LeftRightSpacing = 6
+      ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+      ChildSizing.EnlargeVertical = crsHomogenousChildResize
+      ChildSizing.ShrinkHorizontal = crsScaleChilds
+      ChildSizing.ShrinkVertical = crsScaleChilds
+      ChildSizing.Layout = cclLeftToRightThenTopToBottom
+      ChildSizing.ControlsPerLine = 1
+      ClientHeight = 67
+      ClientWidth = 143
+      Items.Strings = (
+        'issue 2'
+        'issue 3'
+      )
+      TabOrder = 1
+    end
+  end
+end

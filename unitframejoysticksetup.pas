@@ -10,8 +10,8 @@ interface
 
 uses
   Classes, SysUtils, UnitKeyMaps, CommonFunctionsLCL, UnitFormPressAKey,
-  UnitJoystick, UnitFormForOptionsBasic, Forms, Controls, Graphics, Dialogs,
-  ExtCtrls, StdCtrls;
+  UnitJoystick, UnitFormForOptionsBasic, UnitOptions, Forms, Controls, Graphics,
+  Dialogs, ExtCtrls, StdCtrls;
 
 type
   TFrameJoystickSetup = class(TFrame)
@@ -94,8 +94,16 @@ type
     constructor Create(TheOwner: TComponent); override;
     destructor Destroy; override;
 
+    procedure GetJoystickSetup(out AJoystickType: TJoystick.TJoystickType;
+      out AKeys: TJoystick.TJoystickDirectionsKeys; out AEnabled: Boolean);
+
     class function ShowJoystickOptionsDialog(var AJoystickType: TJoystick.TJoystickType;
       var AKeys: TJoystick.TJoystickDirectionsKeys; var AEnabled: Boolean): Boolean;
+
+    class function CreateForAllOptions(
+      AOptionsDialog: TFormOptions; const AJoystickType: TJoystick.TJoystickType;
+      const AKeys: TJoystick.TJoystickDirectionsKeys; const AEnabled: Boolean
+          ): TFrameJoystickSetup;
   end;
 
 implementation
@@ -303,6 +311,7 @@ var
   JD: TJoystick.TJoystickDirection;
   F: TCustomForm;
 begin
+  Application.RemoveAsyncCalls(Self);
   if Sender is TCustomForm then begin
     F := TCustomForm(Sender);
     if (F.ModalResult = mrOK) and CheckBox1.Checked then begin
@@ -357,25 +366,16 @@ begin
 end;
 
 procedure TFrameJoystickSetup.AfterShow(Data: PtrInt);
-begin                                          
-  //AutoSize := False;
-  //TCommonFunctionsLCL.AdjustFormPos(Self);
-  if Data = 0 then begin
-    Panel2.AnchorParallel(akRight, 0, Panel3);
-    Panel2.AnchorParallel(akBottom, 0, Panel3);
-    Exit;
-  end;
-  //
-  //AutoSize := True;
+begin
   if Data > 0 then begin
     Application.QueueAsyncCall(@AfterShow, Data - 1);
+  end else begin
+    Self.AutoSize := False;
+    Panel3.AnchorParallel(akRight, 0, Self);
+    Panel3.AnchorParallel(akBottom, 0, Self);
+    Panel2.AnchorParallel(akRight, 0, Panel3);
+    Panel2.AnchorParallel(akBottom, 0, Panel3);
   end;
-  //
-  //if Constraints.MinHeight < Height then
-  //  Constraints.MinHeight := Height;
-  //if Constraints.MinWidth < Width then
-  //  Constraints.MinWidth := Width;
-
 end;
 
 procedure TFrameJoystickSetup.FillCombo;
@@ -411,6 +411,7 @@ var
 begin
   inherited Create(TheOwner);
 
+  Caption := 'Joystick options';
   Label2.Font.Color := clMaroon;
   Label3.Font.Color := clMaroon;
   Label3.Font.Style := Label3.Font.Style + [fsBold];
@@ -457,14 +458,21 @@ begin
 
   Panel6.AutoSize := True;
   Self.AutoSize := True;
-
-  AfterShow(-1);
 end;
 
 destructor TFrameJoystickSetup.Destroy;
 begin
   ClearCombo;
   inherited Destroy;
+end;
+
+procedure TFrameJoystickSetup.GetJoystickSetup(out
+  AJoystickType: TJoystick.TJoystickType; out
+  AKeys: TJoystick.TJoystickDirectionsKeys; out AEnabled: Boolean);
+begin
+  GetDirectionsKeys(AKeys);
+  AJoystickType := JoystickType;
+  AEnabled := CheckBox1.Checked;
 end;
 
 class function TFrameJoystickSetup.ShowJoystickOptionsDialog(
@@ -486,9 +494,7 @@ begin
       F.AddCloseQuery(@(Fm.FormOnCloseQuery));
 
       if F.ShowModal = mrOK then begin
-        Fm.GetDirectionsKeys(AKeys);
-        AJoystickType := Fm.JoystickType;
-        AEnabled := Fm.CheckBox1.Checked;
+        Fm.GetJoystickSetup(AJoystickType, AKeys, AEnabled);
         Result := True;
       end;
     finally
@@ -496,6 +502,27 @@ begin
     end;
   finally
     Fm.Free;
+  end;
+end;
+
+class function TFrameJoystickSetup.CreateForAllOptions(
+  AOptionsDialog: TFormOptions; const AJoystickType: TJoystick.TJoystickType;
+  const AKeys: TJoystick.TJoystickDirectionsKeys; const AEnabled: Boolean
+  ): TFrameJoystickSetup;
+var
+  Fm: TFrameJoystickSetup;
+begin
+  Result := nil;
+  Fm := TFrameJoystickSetup.Create(AOptionsDialog);
+  try
+    Fm.InitJoystickSetup(AJoystickType, AKeys, AEnabled);
+    AOptionsDialog.AddHandlerFirstShow(@Fm.FormOnFirstShow);
+    AOptionsDialog.AddCloseQuery(@Fm.FormOnCloseQuery);
+    AOptionsDialog.AddAnOptionControl(Fm, 'Joystick');
+
+    Result := Fm;
+  except
+    FreeAndNil(Fm);
   end;
 end;
 
