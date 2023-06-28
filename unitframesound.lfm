@@ -1,0 +1,59 @@
+object FrameSound: TFrameSound
+  Left = 0
+  Height = 173
+  Top = 0
+  Width = 412
+  ClientHeight = 173
+  ClientWidth = 412
+  TabOrder = 0
+  DesignLeft = 308
+  DesignTop = 119
+  object Panel1: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    Left = 0
+    Height = 168
+    Top = 0
+    Width = 408
+    ClientHeight = 168
+    ClientWidth = 408
+    TabOrder = 0
+    object CheckBox1: TCheckBox
+      AnchorSideLeft.Control = Bevel1
+      AnchorSideTop.Control = Bevel1
+      AnchorSideTop.Side = asrBottom
+      Left = 21
+      Height = 19
+      Top = 131
+      Width = 84
+      BorderSpacing.Left = 15
+      Caption = 'Mute sound'
+      TabOrder = 0
+    end
+    object PanelSoundLibrary: TPanel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel1
+      Left = 1
+      Height = 122
+      Top = 1
+      Width = 402
+      Caption = 'PanelSoundLibrary'
+      TabOrder = 1
+    end
+    object Bevel1: TBevel
+      AnchorSideLeft.Control = PanelSoundLibrary
+      AnchorSideTop.Control = PanelSoundLibrary
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = PanelSoundLibrary
+      AnchorSideRight.Side = asrBottom
+      Left = 6
+      Height = 8
+      Top = 123
+      Width = 392
+      Anchors = [akTop, akLeft, akRight]
+      BorderSpacing.Left = 5
+      BorderSpacing.Right = 5
+      Shape = bsTopLine
+    end
+  end
+end

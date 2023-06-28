@@ -8,8 +8,8 @@ unit UnitInputLibraryPathDialog;
 interface
 
 uses
-  Classes, SysUtils, UnitFormForOptionsBasic, Forms,
-  Controls, Graphics, Dialogs, ExtCtrls, StdCtrls, Buttons;
+  Classes, SysUtils, UnitFormForOptionsBasic, UnitCommon, CommonFunctionsLCL,
+  Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls, Buttons;
 
 type
   TFrameInputLibraryPath = class(TFrame)
@@ -26,6 +26,7 @@ type
       TOnCheckLoadEvent = function(const APath: String): Boolean of object;
   private
     FOnCheckLoad: TOnCheckLoadEvent;
+    FDoOnCloseOK: TProcedureOfObjectString;
 
     procedure InitProc(var S: String);
     procedure AfterShow(Data: PtrInt);
@@ -33,9 +34,15 @@ type
     procedure MakeExtensionsFilter;
     function DoCheckLoad: Boolean;
     procedure FormOnCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure FormOnClose(Sender: TObject; var CloseAction: TCloseAction);
   public
     constructor Create(TheOwner: TComponent); override;
-    class function ShowLibraryPathDialog(var S: String; const AOnCheckLoad: TOnCheckLoadEvent): Boolean;
+    constructor CreateLibraryPathDialog(AOwner: TComponent; S: String;
+      const AOnCheckLoad: TOnCheckLoadEvent; ADoOnCloseOK: TProcedureOfObjectString);
+
+    procedure AddFormEvents(F: TCustomForm);
+    class function ShowLibraryPathDialog(const S: String;
+      const AOnCheckLoad: TOnCheckLoadEvent; ADoOnCloseOK: TProcedureOfObjectString): Boolean;
   end;
 
 implementation
@@ -128,12 +135,46 @@ begin
   end;
 end;
 
+procedure TFrameInputLibraryPath.FormOnClose(Sender: TObject;
+  var CloseAction: TCloseAction);
+var
+  S: String;
+begin
+  if Sender is TCustomForm then
+    if TCustomForm(Sender).ModalResult = mrOK then
+      if Assigned(FDoOnCloseOK) then begin
+        S := Trim(Edit1.Text);
+        FDoOnCloseOK(S);
+      end;
+
+end;
+
 constructor TFrameInputLibraryPath.Create(TheOwner: TComponent);
 begin
   inherited Create(TheOwner);
 
+  FOnCheckLoad := nil;
+  FDoOnCloseOK := nil;
   Edit1.Clear;
   Caption := 'Portaudio library path';
+end;
+
+constructor TFrameInputLibraryPath.CreateLibraryPathDialog(AOwner: TComponent;
+  S: String; const AOnCheckLoad: TOnCheckLoadEvent;
+  ADoOnCloseOK: TProcedureOfObjectString);
+begin
+  Create(AOwner);
+  InitProc(S);
+  FOnCheckLoad := AOnCheckLoad;
+  FDoOnCloseOK := ADoOnCloseOK;
+end;
+
+procedure TFrameInputLibraryPath.AddFormEvents(F: TCustomForm);
+begin
+  F.AddHandlerFirstShow(@OnFormFirstShow);
+  if F is IFormAddCloseQuery then
+    (F as IFormAddCloseQuery).AddCloseQuery(@FormOnCloseQuery);
+  F.AddHandlerClose(@FormOnClose);
 end;
 
 procedure TFrameInputLibraryPath.AfterShow(Data: PtrInt);
@@ -184,25 +225,22 @@ begin
     Result := FOnCheckLoad(Trim(Edit1.Text));
 end;
 
-class function TFrameInputLibraryPath.ShowLibraryPathDialog(var S: String;
-  const AOnCheckLoad: TOnCheckLoadEvent): Boolean;
+class function TFrameInputLibraryPath.ShowLibraryPathDialog(const S: String;
+  const AOnCheckLoad: TOnCheckLoadEvent; ADoOnCloseOK: TProcedureOfObjectString
+  ): Boolean;
 var
   Fm: TFrameInputLibraryPath;
   F: TFormForOptionsBasic;
 begin
   Result := False;
-  Fm := TFrameInputLibraryPath.Create(nil);
+  Fm := TFrameInputLibraryPath.CreateLibraryPathDialog(
+    nil, S, AOnCheckLoad, ADoOnCloseOK);
   try
-    Fm.InitProc(S);
-    Fm.FOnCheckLoad := AOnCheckLoad;
     F := TFormForOptionsBasic.CreateForControl(nil, Fm, True);
     try
       //F.BorderStyle := bsSingle;
-      F.AddHandlerFirstShow(@(Fm.OnFormFirstShow));
-      F.AddCloseQuery(@Fm.FormOnCloseQuery);
-
+      Fm.AddFormEvents(F);
       if F.ShowModal = mrOK then begin
-        S := Trim(Fm.Edit1.Text);
         Result := True;
       end;
 

@@ -14,7 +14,7 @@ uses
 
 type
 
-  TFormOptions = class(TForm)
+  TFormOptions = class(TForm, IFormAddCloseQuery)
     ButtonPanel1: TButtonPanel;
     Label1: TLabel;
     Panel1: TPanel;

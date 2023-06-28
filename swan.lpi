@@ -603,6 +603,7 @@
         <Filename Value="unitframeotheroptions.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameOtherOptions"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="UnitFrameOtherOptions"/>
       </Unit>
@@ -610,8 +611,17 @@
         <Filename Value="unitframespectrummodel.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameSpectrumModel"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="UnitFrameSpectrumModel"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitframesound.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameSound"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitFrameSound"/>
       </Unit>
     </Units>
   </ProjectOptions>

@@ -43,6 +43,11 @@ type
     class function GetBestContrastColorForFont(R, G, B: Integer): TColor;
   end;
 
+  IFormAddCloseQuery = interface
+  ['{5D69DCCC-F77B-44B0-B25E-EC4A6D350982}']
+    procedure AddCloseQuery(C: TCloseQueryEvent);
+  end;
+
 implementation
 
 { TCommonFunctionsLCL.TLinkLabel }

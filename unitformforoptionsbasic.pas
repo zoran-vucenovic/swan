@@ -13,7 +13,7 @@ uses
 
 type
 
-  TFormForOptionsBasic = class(TCustomForm)
+  TFormForOptionsBasic = class(TCustomForm, IFormAddCloseQuery)
   private
     CloseQueryList: TMethodList;
     MainControl: TControl;

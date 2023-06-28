@@ -12,6 +12,7 @@ uses
 
 type
   TProcedureOfObject = procedure of object;
+  TProcedureOfObjectString = procedure(var S: String) of object;
 
   TGlobalCounter = class sealed (TObject)
   public

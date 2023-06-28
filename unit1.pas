@@ -9,14 +9,14 @@ interface
 
 uses
   Classes, SysUtils, Types, Forms, Controls, Graphics, Dialogs, ActnList, Menus,
-  ComCtrls, LCLType, Buttons, StdCtrls, ExtCtrls, zipper, fpjson,
-  UnitSpectrum, UnitFileSna, AboutBox, DebugForm, UnitFormBrowser,
-  UnitColourPalette, UnitSpectrumColourMap, CommonFunctionsLCL,
-  UnitFrameKeyMappings, UnitJoystick, UnitFrameJoystickSetup,
-  UnitDataModuleImages, unitSoundVolume, UnitConfigs,
+  ComCtrls, LCLType, Buttons, StdCtrls, ExtCtrls, zipper, fpjson, UnitSpectrum,
+  UnitFileSna, AboutBox, DebugForm, UnitFormBrowser, UnitColourPalette,
+  UnitSpectrumColourMap, CommonFunctionsLCL, UnitFrameKeyMappings, UnitJoystick,
+  UnitFrameJoystickSetup, UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
-  UnitBeeper, UnitChooseFile, UnitOptions, UnitFrameSpectrumModel;
+  UnitBeeper, UnitChooseFile, UnitOptions, UnitFrameSpectrumModel,
+  UnitFrameSound;
 
 type
 
@@ -275,6 +275,7 @@ type
     HistoryQueue: TSnapshotHistoryQueue;
     SnapshotHistoryOptions: TSnapshotHistoryOptions;
 
+    procedure SoundLibraryOnSave(var LibPath: String);
     function SoundLibraryDialogCheckLoad(const APath: String): Boolean;
     procedure TryLoadFromFiles(const SnapshotOrTape: TSnapshotOrTape; const AFileNames: Array of String);
     procedure DropFilesLoad(Sender: TObject);
@@ -924,7 +925,6 @@ end;
 
 procedure TForm1.ActionPortAudioLibPathExecute(Sender: TObject);
 var
-  S: String;
   WasPaused: Boolean;
 begin
   if Sender <> Spectrum then begin
@@ -933,12 +933,8 @@ begin
     WasPaused := Spectrum.Paused;
     try
       Spectrum.Paused := True;
-      S := TBeeper.LibPath;
-      if TFrameInputLibraryPath.ShowLibraryPathDialog(S, @SoundLibraryDialogCheckLoad) then begin
-        TBeeper.LibPath := S;
-        Spectrum.CheckStartBeeper;
-        UpdateSoundControls;
-      end;
+      TFrameInputLibraryPath.ShowLibraryPathDialog(
+        TBeeper.LibPath, @SoundLibraryDialogCheckLoad, @SoundLibraryOnSave);
     finally
       Spectrum.Paused := WasPaused;
     end;
@@ -1500,6 +1496,8 @@ var
   JoystickType: TJoystick.TJoystickType;
   AKeys: TJoystick.TJoystickDirectionsKeys;
   FrameSpectrumModel: TFrameSpectrumModel;
+  FrameSound: TFrameSound;
+  FrameSoundLib: TFrameInputLibraryPath;
 
 begin
   WasPaused := Spectrum.Paused;
@@ -1537,6 +1535,15 @@ begin
         FrameSpectrumModel := TFrameSpectrumModel.CreateForAllOptions(
           OptionsDialog, Spectrum);
         if not Assigned(FrameSpectrumModel) then
+          Abort;
+
+        FrameSoundLib := TFrameInputLibraryPath.CreateLibraryPathDialog(
+          OptionsDialog, TBeeper.LibPath, @SoundLibraryDialogCheckLoad,
+          @SoundLibraryOnSave);
+        FrameSoundLib.AddFormEvents(OptionsDialog);
+        FrameSound := TFrameSound.CreateForAllOptions(OptionsDialog, Spectrum,
+          FrameSoundLib);
+        if not Assigned(FrameSound) then
           Abort;
 
         // ...
@@ -1602,6 +1609,13 @@ begin
       Key := 0;
     end;
   end;
+end;
+
+procedure TForm1.SoundLibraryOnSave(var LibPath: String);
+begin
+  TBeeper.LibPath := LibPath;
+  Spectrum.CheckStartBeeper;
+  UpdateSoundControls;
 end;
 
 function TForm1.SoundLibraryDialogCheckLoad(const APath: String): Boolean;
