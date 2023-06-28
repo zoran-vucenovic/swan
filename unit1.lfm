@@ -479,7 +479,7 @@ object Form1: TForm1
         Action = ActionPortAudioLibPath
       end
       object MenuItem44: TMenuItem
-        Caption = 'Machine'
+        Caption = 'Model'
         object MenuItem48: TMenuItem
           Action = ActionModel16KIssue2
         end
