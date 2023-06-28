@@ -580,12 +580,16 @@ begin
 end;
 
 procedure TFrameOnePCKeyMapping.SortSpectrumKeys;
+var
+  I: Integer;
 begin
   PanelSpectrumKeys.DisableAutoSizing;
   try
     if Kcs = nil then
       Kcs := TSpectrumKeyControlsSorter.Create(@CompareSpectrumKeys);
     Kcs.SortArray(SpectrumKeys);
+    for I := Low(SpectrumKeys) to High(SpectrumKeys) do
+      SpectrumKeys[I].SetHasPlus(I > 0);
   finally
     PanelSpectrumKeys.EnableAutoSizing;
   end;
