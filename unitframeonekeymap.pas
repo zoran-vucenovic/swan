@@ -54,7 +54,7 @@ type
 
       TSpectrumKeyControls = Array of TOneSpectrumKeyControl;
 
-      TSpectrumKeyControlsSorter = specialize TNumArraySorter<TFrameOnePCKeyMapping.TOneSpectrumKeyControl>;
+      TSpectrumKeyControlsSorter = specialize TNumArraySorter<TOneSpectrumKeyControl>;
 
   strict private
     const
@@ -589,7 +589,7 @@ begin
       Kcs := TSpectrumKeyControlsSorter.Create(@CompareSpectrumKeys);
     Kcs.SortArray(SpectrumKeys);
     for I := Low(SpectrumKeys) to High(SpectrumKeys) do
-      SpectrumKeys[I].SetHasPlus(I > 0);
+      SpectrumKeys[I].SetHasPlus(I > Low(SpectrumKeys));
   finally
     PanelSpectrumKeys.EnableAutoSizing;
   end;
