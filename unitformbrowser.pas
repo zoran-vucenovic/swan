@@ -462,6 +462,7 @@ begin
       N := FTapePlayer.GetBlockCount * M;
 
       if N > 0 then begin
+        Grid.Col := Grid.FixedCols;
         for J := Grid.FixedCols + 1 to Grid.ColCount - 1 do begin
           Grid.ColWidths[J] := 6;
         end;
