@@ -46,10 +46,10 @@ type
     FInternalSettingRow: Boolean;
     Grid: TGridSelector;
     CellInnerBorder: Integer;
+    FCurrentControl: TControl;
 
     procedure AfterShow(Data: PtrInt);
     procedure SetCurrentControlNumber(ANumber: Integer);
-    //function GetCurrentControlNumber(): Integer;
     procedure GridOnSelectCell(Sender: TObject; {%H-}aCol, aRow: Integer;
           var {%H-}CanSelect: Boolean);
     procedure GridOnDrawCell(Sender: TObject; {%H-}aCol, aRow: Integer;
@@ -78,6 +78,7 @@ procedure TFormOptions.FormCreate(Sender: TObject);
 begin
   Label1.Caption := ' ';
 
+  FCurrentControl := nil;
   CellInnerBorder := 0;
   FInternalSettingRow := False;
   FOptionControlsCount := 0;
@@ -135,11 +136,9 @@ var
 begin
   if aState * [gdSelected, gdFocused] = [] then begin
     C := Grid.Color;
-  //  Selected := False;
     Grid.Canvas.Font.Style := Grid.Canvas.Font.Style - [fsBold];
   end else begin
     C := Panel5.Color;
-    //Selected := True;
     Grid.Canvas.Font.Style := Grid.Canvas.Font.Style + [fsBold];
   end;
   Grid.Canvas.Brush.Color := C;
@@ -153,7 +152,11 @@ begin
 end;
 
 procedure TFormOptions.FormDestroy(Sender: TObject);
+var
+  I: Integer;
 begin
+  for I := Low(FOptionControls) to High(FOptionControls) do
+    Application.RemoveAsyncCalls(FOptionControls[I].Control);
   Application.RemoveAsyncCalls(Self);
   FreeAndNil(CloseQueryList);
 end;
@@ -274,7 +277,8 @@ begin
     Panel3.Constraints.MinHeight := 0;
 
     Grid.OnSelectCell := @GridOnSelectCell;
-    SetCurrentControlNumber(0);
+    if FCurrentControl = nil then
+      SetCurrentControlNumber(0);
   end;
   TCommonFunctionsLCL.AdjustFormPos(Self);
 end;
@@ -282,37 +286,40 @@ end;
 procedure TFormOptions.SetCurrentControlNumber(ANumber: Integer);
 var
   C: TControl;
-  I: Integer;
+
 begin
-  if FOptionControlsCount <= 0 then
-    ANumber := -1
-  else if (ANumber < 0) or (ANumber >= FOptionControlsCount) then
-    ANumber := 0;
+  if FOptionControlsCount <= 0 then begin
+    C := nil;
+  end else begin
+    if (ANumber < 0) or (ANumber >= FOptionControlsCount) then begin
+      ANumber := 0;
+    end;
 
-  Panel3.Color := Grid.Color;
+    C := FOptionControls[ANumber].Control;
+  end;
 
-  for I := 0 to FOptionControlsCount - 1 do begin
-    if I <> ANumber then
-      FOptionControls[I].Control.Hide
-    else begin
+  if Assigned(FCurrentControl) then
+    FCurrentControl.Visible := C = FCurrentControl;
+
+  if Assigned(C) then begin
+    if C <> FCurrentControl then begin
+      Panel3.Color := Grid.Color;
+
       FInternalSettingRow := True;
       try
-        Grid.Row := Grid.FixedRows + I;
-        C := FOptionControls[I].Control;
-        Label1.Caption := FOptionControls[I].LabTitle;
-        C.Show;
+        Grid.Row := Grid.FixedRows + ANumber;
+        C.Visible := True;
+        Label1.Caption := FOptionControls[ANumber].LabTitle;
         Panel3.Color := C.GetRGBColorResolvingParent;
       finally
         FInternalSettingRow := False;
       end;
     end;
-  end;
-end;
+  end else
+    Label1.Caption := ' ';
 
-//function TFormOptions.GetCurrentControlNumber: Integer;
-//begin
-//  Result := Grid.Row - Grid.FixedRows;
-//end;
+  FCurrentControl := C;
+end;
 
 class function TFormOptions.CreateOptionsDialog(
   const AControls: array of TControl): TFormOptions;
@@ -327,7 +334,6 @@ begin
       Result.AddAnOptionControl(AControls[I]);
     end;
     Result.Grid.RowCount := Result.Grid.FixedRows + Result.FOptionControlsCount;
-    Result.SetCurrentControlNumber(0);
   end;
 end;
 
@@ -403,7 +409,8 @@ begin
     if Length(FOptionControls) <= FOptionControlsCount then
       SetLength(FOptionControls, FOptionControlsCount + 1);
     FOptionControls[FOptionControlsCount] := R;
-    C.Visible := FOptionControlsCount <= 0;
+
+    C.Visible := False;
     Inc(FOptionControlsCount);
 
     C.Anchors := [];

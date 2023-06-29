@@ -16,7 +16,7 @@ uses
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
   UnitBeeper, UnitChooseFile, UnitOptions, UnitFrameSpectrumModel,
-  UnitFrameSound;
+  UnitFrameSound, UnitFrameOtherOptions;
 
 type
 
@@ -191,9 +191,13 @@ type
       cSectionLastFilePath = 'last_file_path';
       cSectionSpectrumModel = 'spectrum_model';
       cSectionSwanVersion = 'swan_version';
+      cSectionOtherOptions = 'other_options';
+      cSectionSkipJoystickInfoSzxLoad = 'skip_load_joystick_info_from_szx';
+      cSectionAutoShowTapePlayer = 'auto_show_tape_player';
 
   strict private
     FNewModel: TSpectrumModel;
+    FAutoShowTapePlayerWhenTapeLoaded: Boolean;
 
     procedure SpectrumOnChangeModel();
     procedure DoChangeModel(Sender: TObject);
@@ -509,6 +513,7 @@ begin
   Separator2.Visible := False;
 {$endif}
 
+  FAutoShowTapePlayerWhenTapeLoaded := True;
   FNewModel := TSpectrumModel.smNone;
   HistoryQueue := nil;
 
@@ -1345,10 +1350,15 @@ end;
 procedure TForm1.LoadFromConf;
 var
   JObj: TJSONObject;
+  JObj2: TJSONObject;
+  JD: TJSONData;
+
   M, N: Integer;
   SModel: TSpectrumModel;
   S, S1: String;
   SPortaudioLib32, SPortaudioLib64: String;
+  K: Integer;
+
 begin
   JObj := TConfJSON.GetJSONObject(cSection0);
   N := GetSoundVolume;
@@ -1366,6 +1376,22 @@ begin
           Break;
         end;
       end;
+    end;
+
+    JD := JObj.Find(cSectionOtherOptions);
+    if JD is TJSONObject then begin
+      JObj2 := TJSONObject(JD);
+      if TSnapshotSZX.SkipJoystickInfoLoad then
+        K := 1
+      else
+        K := 0;
+      TSnapshotSZX.SkipJoystickInfoLoad := JObj2.Get(cSectionSkipJoystickInfoSzxLoad, K) <> 0;
+
+      if FAutoShowTapePlayerWhenTapeLoaded then
+        K := 1
+      else
+        K := 0;
+      FAutoShowTapePlayerWhenTapeLoaded := JObj2.Get(cSectionAutoShowTapePlayer, K) <> 0;
     end;
 
     FLastFilePath := '';
@@ -1404,6 +1430,9 @@ var
   N: Integer;
   SPortaudioLib32, SPortaudioLib64: String;
   S: String;
+  K: Integer;
+  JObj2: TJSONObject;
+
 begin
   JObj := TJSONObject.Create;
   try
@@ -1452,6 +1481,26 @@ begin
     if FLastFilePath <> '' then
       JObj.Add(cSectionLastFilePath, FLastFilePath);
 
+    JObj2 := TJSONObject.Create;
+    try
+      if TSnapshotSZX.SkipJoystickInfoLoad then
+        K := 1
+      else
+        K := 0;
+      JObj2.Add(cSectionSkipJoystickInfoSzxLoad, K);
+
+      if FAutoShowTapePlayerWhenTapeLoaded then
+        K := 1
+      else
+        K := 0;
+      JObj2.Add(cSectionAutoShowTapePlayer, K);
+
+      if JObj.Add(cSectionOtherOptions, JObj2) >= 0 then
+        JObj2 := nil;
+    finally
+      JObj2.Free;
+    end;
+
     TConfJSON.RemoveSection(cSection0);
     if TConfJSON.AddToConf(cSection0, JObj) then
       JObj := nil;
@@ -1498,6 +1547,7 @@ var
   FrameSpectrumModel: TFrameSpectrumModel;
   FrameSound: TFrameSound;
   FrameSoundLib: TFrameInputLibraryPath;
+  FrameOtherOptions: TFrameOtherOptions;
 
 begin
   WasPaused := Spectrum.Paused;
@@ -1511,6 +1561,14 @@ begin
     OptionsDialog := TFormOptions.CreateOptionsDialog([]);
     if Assigned(OptionsDialog) then
       try   
+        TJoystick.Joystick.GetKeys(AKeys);
+        FrameJoystickSetup := TFrameJoystickSetup.CreateForAllOptions(
+          OptionsDialog, TJoystick.Joystick.JoystickType, AKeys, TJoystick.Joystick.Enabled);
+        if not Assigned(FrameJoystickSetup) then
+          Abort;
+        //FrameJoystickSetup.ParentColor := False;
+        //FrameJoystickSetup.Color := clWhite;
+
         FrameKeyMappings := TFrameKeyMappings.CreateFrameKeyMappingsForAllOptions(OptionsDialog);
         if not Assigned(FrameKeyMappings) then
           Abort;
@@ -1523,14 +1581,6 @@ begin
         FrameColourPalette.LCLColours := Colours;
         //FrameColourPalette.ParentColor := False;
         //FrameColourPalette.Color := clwhite;
-
-        TJoystick.Joystick.GetKeys(AKeys);
-        FrameJoystickSetup := TFrameJoystickSetup.CreateForAllOptions(
-          OptionsDialog, TJoystick.Joystick.JoystickType, AKeys, TJoystick.Joystick.Enabled);
-        if not Assigned(FrameJoystickSetup) then
-          Abort;
-        //FrameJoystickSetup.ParentColor := False;
-        //FrameJoystickSetup.Color := clWhite;
 
         FrameSpectrumModel := TFrameSpectrumModel.CreateForAllOptions(
           OptionsDialog, Spectrum);
@@ -1546,7 +1596,15 @@ begin
         if not Assigned(FrameSound) then
           Abort;
 
+        FrameOtherOptions := TFrameOtherOptions.CreateForAllOptions(OptionsDialog);
+        if not Assigned(FrameOtherOptions) then
+          Abort;
+        FrameOtherOptions.AutoShowTapePlayerOnLoadTape := FAutoShowTapePlayerWhenTapeLoaded;
+        FrameOtherOptions.SkipJoystickInfoSzxLoad := TSnapshotSZX.SkipJoystickInfoLoad;
+
         // ...
+        //if ControlClass = nil then
+        //  ControlClass := TFrameOtherOptions;
         OptionsDialog.SetCurrentControlByClass(ControlClass);
         if OptionsDialog.ShowModal = mrOK then begin
           Spectrum.SetSpectrumColours(FrameColourPalette.LCLColours);
@@ -1556,6 +1614,8 @@ begin
           TJoystick.Joystick.Enabled := JoystickEnabled;
           TJoystick.Joystick.JoystickType := JoystickType;
           UpdateShowCurrentlyActiveJoystick;
+          FAutoShowTapePlayerWhenTapeLoaded := FrameOtherOptions.AutoShowTapePlayerOnLoadTape;
+          TSnapshotSZX.SkipJoystickInfoLoad := FrameOtherOptions.SkipJoystickInfoSzxLoad;
         end;
       finally
         OptionsDialog.Free;
@@ -1841,6 +1901,7 @@ begin
     FTapeBrowser.SetTapePlayer(TapePlayer);
   if Assigned(TapePlayer) then
     TapePlayer.OnChangeBlock := @PlayerOnChangeBlock;
+
 end;
 
 procedure TForm1.GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape;
@@ -2029,8 +2090,10 @@ begin
                 if TapePlayer.LoadFromStream(Stream) then begin
                   TapePlayer.SetSpectrum(Spectrum);
                   TapePlayer.Rewind;
-
-                  TapeBrowserAttachTape;
+                  if FAutoShowTapePlayerWhenTapeLoaded then
+                    ShowTapeBrowser()
+                  else
+                    TapeBrowserAttachTape;
                   L := True;
                 end;
 

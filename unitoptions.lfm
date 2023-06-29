@@ -1,11 +1,11 @@
 object FormOptions: TFormOptions
-  Left = 833
-  Height = 781
-  Top = 68
-  Width = 669
+  Left = 866
+  Height = 680
+  Top = 111
+  Width = 541
   Caption = 'Options'
-  ClientHeight = 781
-  ClientWidth = 669
+  ClientHeight = 680
+  ClientWidth = 541
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
@@ -18,22 +18,22 @@ object FormOptions: TFormOptions
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 0
-    Height = 781
+    Height = 680
     Top = 0
-    Width = 669
+    Width = 541
     Anchors = [akTop, akLeft, akRight, akBottom]
     BevelOuter = bvNone
-    ClientHeight = 781
-    ClientWidth = 669
+    ClientHeight = 680
+    ClientWidth = 541
     TabOrder = 0
     object ButtonPanel1: TButtonPanel
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
-      Left = 500
+      Left = 372
       Height = 26
-      Top = 749
+      Top = 648
       Width = 163
       Align = alNone
       Anchors = [akRight, akBottom]
@@ -56,14 +56,14 @@ object FormOptions: TFormOptions
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Control = ButtonPanel1
       Left = 4
-      Height = 739
+      Height = 638
       Top = 4
-      Width = 661
+      Width = 533
       Anchors = [akTop, akLeft, akRight, akBottom]
       BorderSpacing.Around = 4
       BevelOuter = bvNone
-      ClientHeight = 739
-      ClientWidth = 661
+      ClientHeight = 638
+      ClientWidth = 533
       TabOrder = 0
       object Panel2: TPanel
         AnchorSideLeft.Control = Panel4
@@ -71,7 +71,7 @@ object FormOptions: TFormOptions
         AnchorSideBottom.Control = Panel4
         AnchorSideBottom.Side = asrBottom
         Left = 0
-        Height = 739
+        Height = 638
         Top = 0
         Width = 72
         Anchors = [akTop, akLeft, akBottom]
@@ -87,13 +87,13 @@ object FormOptions: TFormOptions
         AnchorSideBottom.Control = Panel4
         AnchorSideBottom.Side = asrBottom
         Left = 72
-        Height = 739
+        Height = 638
         Top = 0
-        Width = 589
+        Width = 461
         Anchors = [akTop, akLeft, akRight, akBottom]
         BevelOuter = bvNone
-        ClientHeight = 739
-        ClientWidth = 589
+        ClientHeight = 638
+        ClientWidth = 461
         TabOrder = 1
         object Panel3: TPanel
           AnchorSideLeft.Control = Panel5
@@ -103,15 +103,15 @@ object FormOptions: TFormOptions
           AnchorSideBottom.Control = Panel5
           AnchorSideBottom.Side = asrBottom
           Left = 8
-          Height = 723
+          Height = 622
           Top = 8
-          Width = 573
+          Width = 445
           Anchors = [akTop, akLeft, akRight, akBottom]
           BorderSpacing.Around = 8
           BevelOuter = bvNone
           Caption = 'Panel3'
-          ClientHeight = 723
-          ClientWidth = 573
+          ClientHeight = 622
+          ClientWidth = 445
           TabOrder = 0
           object Panel6: TPanel
             AnchorSideLeft.Control = Panel3
@@ -121,12 +121,12 @@ object FormOptions: TFormOptions
             Left = 0
             Height = 81
             Top = 0
-            Width = 573
+            Width = 445
             Anchors = [akTop, akLeft, akRight]
             AutoSize = True
             Caption = 'Panel6'
             ClientHeight = 81
-            ClientWidth = 573
+            ClientWidth = 445
             TabOrder = 0
             object Label1: TLabel
               AnchorSideLeft.Control = Panel6
@@ -150,7 +150,7 @@ object FormOptions: TFormOptions
               Left = 5
               Height = 50
               Top = 28
-              Width = 563
+              Width = 435
               Anchors = [akTop, akLeft, akRight]
               BorderSpacing.Left = 4
               BorderSpacing.Right = 4

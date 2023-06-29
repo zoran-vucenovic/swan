@@ -178,6 +178,7 @@ type
   strict private
     class var
       SzxBlocksMap: TSzxBlocksMap;
+      FSkipJoystickInfoLoad: Boolean;
 
   strict private                  
     Mem: TMemoryStream;
@@ -200,6 +201,8 @@ type
     class function GetDefaultExtension: String; override;
     function LoadFromStream(const Stream: TStream): Boolean; override;
     function SaveToStream(const Stream: TStream): Boolean; override;
+
+    class property SkipJoystickInfoLoad: Boolean read FSkipJoystickInfoLoad write FSkipJoystickInfoLoad;
   end;
 
 implementation
@@ -229,6 +232,7 @@ begin
       Stream.Seek(N, TSeekOrigin.soCurrent);
     Rec.DwFlags := LEtoN(Rec.DwFlags);
     Szx.IsIssue2 := Rec.DwFlags and 1 <> 0;
+
     Szx.JoystickAttached := True;
     case Rec.ChKeyboardJoystick of
       ZXSTKJT_KEMPSTON:
@@ -654,6 +658,8 @@ class procedure TSnapshotSZX.Init;
   end;
 
 begin
+  FSkipJoystickInfoLoad := True;
+
   SzxBlocksMap := TSzxBlocksMap.Create;
 
   AddBlockClass(TZxstZ80Regs);
@@ -786,9 +792,12 @@ begin
         FSpectrum.SpectrumModel := Model;
 
         if State.SaveToSpectrum(FSpectrum) then begin
-          TJoystick.Joystick.Enabled := JoystickAttached;
-          if JoystickAttached then
-            TJoystick.Joystick.JoystickType := JoystickType;
+          if not FSkipJoystickInfoLoad then begin // otherwise ignore joystick info from szx
+            TJoystick.Joystick.Enabled := JoystickAttached;
+            if JoystickAttached then
+              TJoystick.Joystick.JoystickType := JoystickType;
+          end;
+
           GetMemStr().Position := 0;
           if FSpectrum.GetProcessor.GetMemory^.LoadRamFromStream(GetMemStr()) then
             Exit(True);
