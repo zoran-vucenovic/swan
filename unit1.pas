@@ -16,7 +16,7 @@ uses
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
   UnitBeeper, UnitChooseFile, UnitOptions, UnitFrameSpectrumModel,
-  UnitFrameSound, UnitFrameOtherOptions;
+  UnitFrameSound, UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions;
 
 type
 
@@ -1548,6 +1548,7 @@ var
   FrameSound: TFrameSound;
   FrameSoundLib: TFrameInputLibraryPath;
   FrameOtherOptions: TFrameOtherOptions;
+  FrameHistorySnapshotOptions: TFrameHistorySnapshotOptions;
 
 begin
   WasPaused := Spectrum.Paused;
@@ -1560,63 +1561,78 @@ begin
 
     OptionsDialog := TFormOptions.CreateOptionsDialog([]);
     if Assigned(OptionsDialog) then
-      try   
-        TJoystick.Joystick.GetKeys(AKeys);
-        FrameJoystickSetup := TFrameJoystickSetup.CreateForAllOptions(
-          OptionsDialog, TJoystick.Joystick.JoystickType, AKeys, TJoystick.Joystick.Enabled);
-        if not Assigned(FrameJoystickSetup) then
-          Abort;
-        //FrameJoystickSetup.ParentColor := False;
-        //FrameJoystickSetup.Color := clWhite;
+      try
+        repeat // this never loops, but allows break
+          FrameHistorySnapshotOptions :=
+            TFrameHistorySnapshotOptions.CreateForAllOptions(OptionsDialog);
+          if not Assigned(FrameHistorySnapshotOptions) then
+            Break;
+          FrameHistorySnapshotOptions.HistoryEnabled := Assigned(HistoryQueue);
+          FrameHistorySnapshotOptions.UpdateValuesFromHistoryOptions(
+            SnapshotHistoryOptions);
 
-        FrameKeyMappings := TFrameKeyMappings.CreateFrameKeyMappingsForAllOptions(OptionsDialog);
-        if not Assigned(FrameKeyMappings) then
-          Abort;
-        FrameKeyMappings.ParentColor := False;
+          FrameColourPalette := TFrameColourPalette.CreateForOptionsDialog(OptionsDialog);
+          if not Assigned(FrameColourPalette) then
+            Break;
+          Spectrum.GetSpectrumColours(Colours);
+          FrameColourPalette.LCLColours := Colours;
 
-        FrameColourPalette := TFrameColourPalette.CreateForOptionsDialog(OptionsDialog);
-        if not Assigned(FrameColourPalette) then
-          Abort;
-        Spectrum.GetSpectrumColours(Colours);
-        FrameColourPalette.LCLColours := Colours;
-        //FrameColourPalette.ParentColor := False;
-        //FrameColourPalette.Color := clwhite;
+          TJoystick.Joystick.GetKeys(AKeys);
+          FrameJoystickSetup := TFrameJoystickSetup.CreateForAllOptions(
+            OptionsDialog, TJoystick.Joystick.JoystickType, AKeys, TJoystick.Joystick.Enabled);
+          if not Assigned(FrameJoystickSetup) then
+            Break;
 
-        FrameSpectrumModel := TFrameSpectrumModel.CreateForAllOptions(
-          OptionsDialog, Spectrum);
-        if not Assigned(FrameSpectrumModel) then
-          Abort;
+          FrameKeyMappings := TFrameKeyMappings.CreateFrameKeyMappingsForAllOptions(OptionsDialog);
+          if not Assigned(FrameKeyMappings) then
+            Break;
+          FrameKeyMappings.ParentColor := False;
 
-        FrameSoundLib := TFrameInputLibraryPath.CreateLibraryPathDialog(
-          OptionsDialog, TBeeper.LibPath, @SoundLibraryDialogCheckLoad,
-          @SoundLibraryOnSave);
-        FrameSoundLib.AddFormEvents(OptionsDialog);
-        FrameSound := TFrameSound.CreateForAllOptions(OptionsDialog, Spectrum,
-          FrameSoundLib);
-        if not Assigned(FrameSound) then
-          Abort;
+          FrameSpectrumModel := TFrameSpectrumModel.CreateForAllOptions(
+            OptionsDialog, Spectrum);
+          if not Assigned(FrameSpectrumModel) then
+            Break;
 
-        FrameOtherOptions := TFrameOtherOptions.CreateForAllOptions(OptionsDialog);
-        if not Assigned(FrameOtherOptions) then
-          Abort;
-        FrameOtherOptions.AutoShowTapePlayerOnLoadTape := FAutoShowTapePlayerWhenTapeLoaded;
-        FrameOtherOptions.SkipJoystickInfoSzxLoad := TSnapshotSZX.SkipJoystickInfoLoad;
+          FrameSoundLib := TFrameInputLibraryPath.CreateLibraryPathDialog(
+            OptionsDialog, TBeeper.LibPath, @SoundLibraryDialogCheckLoad,
+            @SoundLibraryOnSave);
+          FrameSoundLib.AddFormEvents(OptionsDialog);
+          FrameSound := TFrameSound.CreateForAllOptions(OptionsDialog, Spectrum,
+            FrameSoundLib);
+          if not Assigned(FrameSound) then
+            Break;
 
-        // ...
-        //if ControlClass = nil then
-        //  ControlClass := TFrameOtherOptions;
-        OptionsDialog.SetCurrentControlByClass(ControlClass);
-        if OptionsDialog.ShowModal = mrOK then begin
-          Spectrum.SetSpectrumColours(FrameColourPalette.LCLColours);
-          Spectrum.KeyBoard.LoadFromKeyMappings;
-          FrameJoystickSetup.GetJoystickSetup(JoystickType, AKeys, JoystickEnabled);
-          TJoystick.Joystick.SetKeys(AKeys);
-          TJoystick.Joystick.Enabled := JoystickEnabled;
-          TJoystick.Joystick.JoystickType := JoystickType;
-          UpdateShowCurrentlyActiveJoystick;
-          FAutoShowTapePlayerWhenTapeLoaded := FrameOtherOptions.AutoShowTapePlayerOnLoadTape;
-          TSnapshotSZX.SkipJoystickInfoLoad := FrameOtherOptions.SkipJoystickInfoSzxLoad;
-        end;
+          FrameOtherOptions := TFrameOtherOptions.CreateForAllOptions(OptionsDialog);
+          if not Assigned(FrameOtherOptions) then
+            Break;
+          FrameOtherOptions.AutoShowTapePlayerOnLoadTape := FAutoShowTapePlayerWhenTapeLoaded;
+          FrameOtherOptions.SkipJoystickInfoSzxLoad := TSnapshotSZX.SkipJoystickInfoLoad;
+
+          // ...
+          //if ControlClass = nil then
+          //  ControlClass := TFrameOtherOptions;
+          OptionsDialog.SetCurrentControlByClass(ControlClass);
+          if OptionsDialog.ShowModal = mrOK then begin
+            Spectrum.SetSpectrumColours(FrameColourPalette.LCLColours);
+            Spectrum.KeyBoard.LoadFromKeyMappings;
+            FrameJoystickSetup.GetJoystickSetup(JoystickType, AKeys, JoystickEnabled);
+            TJoystick.Joystick.SetKeys(AKeys);
+            TJoystick.Joystick.Enabled := JoystickEnabled;
+            TJoystick.Joystick.JoystickType := JoystickType;
+            UpdateShowCurrentlyActiveJoystick;
+            FAutoShowTapePlayerWhenTapeLoaded := FrameOtherOptions.AutoShowTapePlayerOnLoadTape;
+            TSnapshotSZX.SkipJoystickInfoLoad := FrameOtherOptions.SkipJoystickInfoSzxLoad;
+
+            FrameHistorySnapshotOptions.UpdateSnapshotHistoryOptionsFromValues(SnapshotHistoryOptions);
+            ActionMoveBack.ShortCut := SnapshotHistoryOptions.KeyGoBack;
+            if Assigned(HistoryQueue) xor FrameHistorySnapshotOptions.HistoryEnabled then
+              SetSnapshotHistoryEnabled(FrameHistorySnapshotOptions.HistoryEnabled)
+            else
+              if Assigned(HistoryQueue) then
+                HistoryQueue.UpdateOptions(SnapshotHistoryOptions);
+          end;
+
+        until True;
       finally
         OptionsDialog.Free;
       end;

@@ -2,10 +2,10 @@ object FrameOtherOptions: TFrameOtherOptions
   Left = 0
   Height = 70
   Top = 0
-  Width = 323
+  Width = 307
   AutoSize = True
   ClientHeight = 70
-  ClientWidth = 323
+  ClientWidth = 307
   TabOrder = 0
   DesignLeft = 516
   DesignTop = 191

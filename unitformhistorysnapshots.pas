@@ -401,17 +401,15 @@ begin
   try
     F.HistorySnapshots := AHistorySnapshots;
     F.FrameHistorySnapshotOptions.HistoryEnabled := AHistoryEnabled;
-    F.FrameHistorySnapshotOptions.KeyBack := ASnapshotHistoryOptions.KeyGoBack;
-    F.FrameHistorySnapshotOptions.MaxNumberOfSnapshotsInMemory := ASnapshotHistoryOptions.MaxNumberOfSnapshotsInMemory;
-    F.FrameHistorySnapshotOptions.SavePeriodInFrames := ASnapshotHistoryOptions.SavePeriodInFrames;
+    F.FrameHistorySnapshotOptions.UpdateValuesFromHistoryOptions(
+      ASnapshotHistoryOptions);
     F.BgraColours := ABGRAColours;
 
     F.UpdateCheckEnabled;
 
     if F.ShowModal = mrOK then begin
-      ASnapshotHistoryOptions.KeyGoBack := F.FrameHistorySnapshotOptions.KeyBack;
-      ASnapshotHistoryOptions.MaxNumberOfSnapshotsInMemory := F.FrameHistorySnapshotOptions.MaxNumberOfSnapshotsInMemory;
-      ASnapshotHistoryOptions.SavePeriodInFrames := F.FrameHistorySnapshotOptions.SavePeriodInFrames;
+      F.FrameHistorySnapshotOptions.UpdateSnapshotHistoryOptionsFromValues(
+        ASnapshotHistoryOptions);
       AHistoryEnabled := F.FrameHistorySnapshotOptions.HistoryEnabled;
 
       if F.CheckBox2.Enabled and F.CheckBox2.Checked then begin

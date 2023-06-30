@@ -9,7 +9,8 @@ interface
 
 uses
   Classes, SysUtils, UnitKeyMaps, CommonFunctionsLCL, UnitFormPressAKey,
-  UnitHistorySnapshots, Forms, Controls, ExtCtrls, LCLType, StdCtrls, Spin;
+  UnitHistorySnapshots, UnitOptions, UnitCommon, Forms, Controls, ExtCtrls,
+  LCLType, StdCtrls, Spin;
 
 type
   TFrameHistorySnapshotOptions = class(TFrame)
@@ -51,11 +52,16 @@ type
 
   public
     constructor Create(AOwner: TComponent); override;
+    constructor Create(AOwner: TComponent; Vertical: Boolean);
 
-    property KeyBack: Word read FKeyBack write SetKeyBack;
+    procedure UpdateValuesFromHistoryOptions(
+      constref ASnapshotHistoryOptions: TSnapshotHistoryOptions);
+    procedure UpdateSnapshotHistoryOptionsFromValues(
+      var ASnapshotHistoryOptions: TSnapshotHistoryOptions);
+
+    class function CreateForAllOptions(AOptionsDialog: TFormOptions): TFrameHistorySnapshotOptions;
+
     property HistoryEnabled: Boolean read GetHistoryEnabled write SetHistoryEnabled;
-    property MaxNumberOfSnapshotsInMemory: Integer read GetMaxNumberOfSnapshotsInMemory write SetMaxNumberOfSnapshotsInMemory;
-    property SavePeriodInFrames: Integer read GetSavePeriodInFrames write SetSavePeriodInFrames;
   end;
 
 implementation
@@ -166,7 +172,30 @@ end;
 
 constructor TFrameHistorySnapshotOptions.Create(AOwner: TComponent);
 begin
+  Create(AOwner, False);
+end;
+
+constructor TFrameHistorySnapshotOptions.Create(AOwner: TComponent;
+  Vertical: Boolean);
+begin
   inherited Create(AOwner);
+
+  Name := UnitCommon.TCommonFunctions.GlobalObjectNameGenerator(Self);
+  Caption := 'Auto saving in-memory snapshots';
+
+  Width := 1;
+  if Vertical then begin
+    Panel2.BorderSpacing.Left := 8;
+
+    CheckBoxAutoCreateSnapshots.AnchorParallel(akTop, 4, Panel8);
+    Panel9.AnchorToNeighbour(akTop, 12, CheckBoxAutoCreateSnapshots);
+    Panel9.AnchorParallel(akLeft, 21, Panel8);
+
+    Panel14.BorderSpacing.Left := Panel9.BorderSpacing.Left;
+    Panel4.AnchorParallel(akTop, 9, Panel14);
+    Panel5.AnchorToNeighbour(akTop, 15, Panel4);
+    Panel5.AnchorParallel(akLeft, 0, Panel14);
+  end;
 
   Panel10.Color := $00DAE8EF;
   Panel9.BorderStyle := bsNone;
@@ -192,6 +221,40 @@ begin
 
   FKeyBack := 1;
   SetKeyBack(0);
+end;
+
+procedure TFrameHistorySnapshotOptions.UpdateValuesFromHistoryOptions(constref
+  ASnapshotHistoryOptions: TSnapshotHistoryOptions);
+begin
+  SetKeyBack(ASnapshotHistoryOptions.KeyGoBack);
+  SetMaxNumberOfSnapshotsInMemory(
+    ASnapshotHistoryOptions.MaxNumberOfSnapshotsInMemory);
+  SetSavePeriodInFrames(
+    ASnapshotHistoryOptions.SavePeriodInFrames);
+end;
+
+procedure TFrameHistorySnapshotOptions.UpdateSnapshotHistoryOptionsFromValues(
+  var ASnapshotHistoryOptions: TSnapshotHistoryOptions);
+begin
+  ASnapshotHistoryOptions.KeyGoBack := FKeyBack;
+  ASnapshotHistoryOptions.MaxNumberOfSnapshotsInMemory := GetMaxNumberOfSnapshotsInMemory;
+  ASnapshotHistoryOptions.SavePeriodInFrames := GetSavePeriodInFrames;
+end;
+
+class function TFrameHistorySnapshotOptions.CreateForAllOptions(
+  AOptionsDialog: TFormOptions): TFrameHistorySnapshotOptions;
+var
+  Fm: TFrameHistorySnapshotOptions;
+begin
+  Result := nil;
+  Fm := TFrameHistorySnapshotOptions.Create(AOptionsDialog, True);
+  try
+    AOptionsDialog.AddAnOptionControl(Fm, 'Auto saving');
+
+    Result := Fm;
+  except
+    FreeAndNil(Fm);
+  end;
 end;
 
 end.

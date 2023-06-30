@@ -2,10 +2,10 @@ object FrameInputLibraryPath: TFrameInputLibraryPath
   Left = 0
   Height = 127
   Top = 0
-  Width = 408
+  Width = 395
   AutoSize = True
   ClientHeight = 127
-  ClientWidth = 408
+  ClientWidth = 395
   TabOrder = 0
   DesignLeft = 368
   DesignTop = 295

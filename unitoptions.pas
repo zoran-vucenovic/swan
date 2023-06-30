@@ -170,7 +170,7 @@ var
 
 begin
   //Panel6.Color := clWhite;
-  Grid.Constraints.MinWidth := Panel2.ClientWidth;
+  //Grid.Constraints.MinWidth := Panel2.ClientWidth;
 
   Grid.ParentFont := False;
 
@@ -192,22 +192,16 @@ begin
     if Sz.cy > Sz2.cy then
       Sz2.cy := Sz.cy;
   end;
-  //Grid.ParentFont := True;
   Grid.Font.Style := Grid.Font.Style - [fsBold];
 
-  Sz.cx := Sz2.cx * 3 div 10 + 5;
-  Sz2.cy := Sz2.cy * 17 div 10 + 12;
-  if Sz.cx < 5 then
-    Sz.cx := 5;
+  Sz.cx := Sz2.cx div 10 + 5;
+  Sz2.cy := Sz2.cy * 7 div 5 + 7;
 
-  //ShowMessage(IntToStr(I));
   Sz2.cx := Sz2.cx + Sz.cx + GetSystemMetrics(SM_CXVSCROLL);
   CellInnerBorder := Sz.cx div 2;
 
-  if Grid.DefaultRowHeight < Sz2.cy then
-    Grid.DefaultRowHeight := Sz2.cy;
-  if Grid.ClientWidth < Sz2.cx then
-    Grid.ClientWidth := Sz2.cx;
+  Grid.DefaultRowHeight := Sz2.cy;
+  Grid.ClientWidth := Sz2.cx;
 
   AfterShow(2);
 end;

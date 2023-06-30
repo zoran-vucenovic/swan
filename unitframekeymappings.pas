@@ -396,6 +396,7 @@ begin
       AOptionsDialog.AddHandlerFirstShow(@Fm.FormFirstShow);
       AOptionsDialog.AddHandlerClose(@Fm.Close);
       AOptionsDialog.AddAnOptionControl(Fm, 'Key mappings');
+      Fm.AnchorParallel(akBottom, 0, Fm.Parent);
       Result := Fm;
     except
       FreeAndNil(Fm);

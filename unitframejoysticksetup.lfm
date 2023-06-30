@@ -1,10 +1,10 @@
 object FrameJoystickSetup: TFrameJoystickSetup
   Left = 0
-  Height = 326
+  Height = 311
   Top = 0
-  Width = 446
-  ClientHeight = 326
-  ClientWidth = 446
+  Width = 417
+  ClientHeight = 311
+  ClientWidth = 417
   TabOrder = 0
   DesignLeft = 550
   DesignTop = 260
@@ -16,13 +16,13 @@ object FrameJoystickSetup: TFrameJoystickSetup
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 0
-    Height = 326
+    Height = 311
     Top = 0
-    Width = 446
+    Width = 417
     Anchors = [akTop, akLeft, akRight, akBottom]
     AutoSize = True
-    ClientHeight = 326
-    ClientWidth = 446
+    ClientHeight = 311
+    ClientWidth = 417
     TabOrder = 0
     object Panel3: TPanel
       AnchorSideLeft.Control = Panel1
@@ -33,9 +33,9 @@ object FrameJoystickSetup: TFrameJoystickSetup
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
       Left = 9
-      Height = 231
+      Height = 216
       Top = 91
-      Width = 428
+      Width = 399
       Anchors = [akTop, akLeft, akRight, akBottom]
       AutoSize = True
       BorderSpacing.Left = 8
@@ -44,8 +44,8 @@ object FrameJoystickSetup: TFrameJoystickSetup
       BorderSpacing.Bottom = 3
       BevelOuter = bvNone
       BorderStyle = bsSingle
-      ClientHeight = 227
-      ClientWidth = 424
+      ClientHeight = 212
+      ClientWidth = 395
       TabOrder = 0
       object Panel2: TPanel
         AnchorSideLeft.Control = Panel3
@@ -67,12 +67,12 @@ object FrameJoystickSetup: TFrameJoystickSetup
         Left = 0
         Height = 18
         Top = 0
-        Width = 424
+        Width = 395
         Anchors = [akTop, akLeft, akRight]
         AutoSize = True
         BevelOuter = bvNone
         ClientHeight = 18
-        ClientWidth = 424
+        ClientWidth = 395
         TabOrder = 0
         object Label1: TLabel
           AnchorSideLeft.Control = Panel4
@@ -97,13 +97,13 @@ object FrameJoystickSetup: TFrameJoystickSetup
       Left = 9
       Height = 24
       Top = 7
-      Width = 428
+      Width = 399
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
       BorderSpacing.Top = 6
       BevelOuter = bvNone
       ClientHeight = 24
-      ClientWidth = 428
+      ClientWidth = 399
       TabOrder = 1
       object ComboBox1: TComboBox
         AnchorSideLeft.Control = Label4
@@ -153,12 +153,12 @@ object FrameJoystickSetup: TFrameJoystickSetup
       Left = 9
       Height = 50
       Top = 33
-      Width = 428
+      Width = 399
       Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Top = 2
       BevelOuter = bvNone
       ClientHeight = 50
-      ClientWidth = 428
+      ClientWidth = 399
       TabOrder = 2
       object Label2: TLabel
         AnchorSideLeft.Control = Label3
@@ -170,7 +170,7 @@ object FrameJoystickSetup: TFrameJoystickSetup
         Left = 34
         Height = 15
         Top = 0
-        Width = 394
+        Width = 365
         Anchors = [akTop, akLeft, akRight]
         Caption = 'Label2 '
         ParentColor = False

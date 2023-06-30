@@ -85,7 +85,7 @@ type
     constructor Create;
     destructor Destroy; override;
 
-    procedure UpdateOptions(const ASnapshotHistoryOptions: TSnapshotHistoryOptions);
+    procedure UpdateOptions(constref ASnapshotHistoryOptions: TSnapshotHistoryOptions);
     function LoadSnapshot(NegativeOffset: Integer; CheckDelay: Boolean): Boolean;
     function GetStream(NegativeOffset: Integer; out Stream: TStream): Boolean;
     procedure CheckSaveHistorySnapshot;
@@ -340,8 +340,8 @@ begin
   inherited Destroy;
 end;
 
-procedure TSnapshotHistoryQueue.UpdateOptions(
-  const ASnapshotHistoryOptions: TSnapshotHistoryOptions);
+procedure TSnapshotHistoryQueue.UpdateOptions(constref
+  ASnapshotHistoryOptions: TSnapshotHistoryOptions);
 begin
   SetMaxNumberOfSnapshotsInMemory(ASnapshotHistoryOptions.MaxNumberOfSnapshotsInMemory);
   SetSavePeriod(ASnapshotHistoryOptions.SavePeriodInFrames);
