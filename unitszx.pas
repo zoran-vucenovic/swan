@@ -696,8 +696,6 @@ begin
 end;
 
 function TSnapshotSZX.LoadFromStream(const Stream: TStream): Boolean;
-var
-  Model: TSpectrumModel;
 
   function LoadHeader(): Boolean;
   var
@@ -712,14 +710,14 @@ var
             TZxstHeadr.ZXSTMID_16K:
               begin
                 SetMemSize(KB16);
-                Model := TSpectrumModel.sm16K_issue_3;
+                State.SpectrumModel := TSpectrumModel.sm16K_issue_3;
                 Result := True;
               end;
 
             TZxstHeadr.ZXSTMID_48K:
               begin
                 SetMemSize(KB48);
-                Model := TSpectrumModel.sm48K_issue_3;
+                State.SpectrumModel := TSpectrumModel.sm48K_issue_3;
                 Result := True;
               end;
 
@@ -769,8 +767,8 @@ begin
   Result := False;
   Stream.Position := 0;
 
+  Self.State := Default(TSpectrumInternalState); // must be above loadheader, because of model setting
   if LoadHeader() then begin
-    Self.State := Default(TSpectrumInternalState);
     FillChar(GetMemStr().Memory^, GetMemStr().Size, 0);
     IsIssue2 := FSpectrum.IsIssue2;
     JoystickAttached := TJoystick.Joystick.Enabled;
@@ -780,16 +778,14 @@ begin
       if Stream.Position = Stream.Size then begin
 
         if IsIssue2 then begin
-          case Model of
+          case State.SpectrumModel of
             TSpectrumModel.sm16K_issue_3:
-              Model := TSpectrumModel.sm16K_issue_2;
+              State.SpectrumModel := TSpectrumModel.sm16K_issue_2;
             TSpectrumModel.sm48K_issue_3:
-              Model := TSpectrumModel.sm48K_issue_2;
+              State.SpectrumModel := TSpectrumModel.sm48K_issue_2;
           otherwise
           end;
         end;
-
-        FSpectrum.SpectrumModel := Model;
 
         if State.SaveToSpectrum(FSpectrum) then begin
           if not FSkipJoystickInfoLoad then begin // otherwise ignore joystick info from szx

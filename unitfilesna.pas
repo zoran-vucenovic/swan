@@ -34,6 +34,7 @@ type
     BorderColour: Byte;
     FlashState: UInt16;
     Ear: Byte;
+    SpectrumModel: TSpectrumModel;
 
     function LoadFromSpectrum(const ASpectrum: TSpectrum): Boolean;
     function SaveToSpectrum(const ASpectrum: TSpectrum): Boolean;
@@ -188,6 +189,8 @@ begin
       BorderColour := ASpectrum.CodedBorderColour;
       FlashState := ASpectrum.FlashState;
       Ear := ASpectrum.InternalEar;
+      SpectrumModel := ASpectrum.SpectrumModel;
+
       Exit(True);
     end;
   end;
@@ -200,8 +203,11 @@ var
   Proc: TProcessor;
 begin
   if Assigned(ASpectrum) then begin
+
     Proc := ASpectrum.GetProcessor;
     if Assigned(Proc) then begin
+      ASpectrum.SpectrumModel := SpectrumModel; // must be above all other, might trigger reset spectrum
+
       Proc.RegAF := AF;
       Proc.RegBC := BC;
       Proc.RegDE := DE;
@@ -253,13 +259,12 @@ var
   Proc: TProcessor;
   State: TSpectrumInternalState;
   WasPaused: Boolean;
+  SizeValid: Boolean;
+
 begin
   Result := False;
 
   if Stream = nil then
-    Exit;
-
-  if Stream.Size <> SizeOf(TSpectrumInternalState) + KB48 then
     Exit;
 
   if FSpectrum = nil then
@@ -275,13 +280,21 @@ begin
   WasPaused := FSpectrum.Paused;
   try
     FSpectrum.Paused := True;
-    FSpectrum.ResetSpectrum;
 
     Stream.Position := 0;
     if Stream.Read(State{%H-}, SizeOf(State)) = SizeOf(State) then begin
-      if Proc.GetMemory^.LoadRamFromStream(Stream) then begin
-        Result := State.SaveToSpectrum(FSpectrum);
+      case State.SpectrumModel of
+        TSpectrumModel.sm16K_issue_2, TSpectrumModel.sm16K_issue_3:
+          SizeValid := Stream.Size = SizeOf(State) + KB16;
+        TSpectrumModel.sm48K_issue_2, TSpectrumModel.sm48K_issue_3:
+          SizeValid := Stream.Size = SizeOf(State) + KB48;
+      otherwise
+        SizeValid := False;
       end;
+
+      Result := SizeValid
+        and State.SaveToSpectrum(FSpectrum)
+        and Proc.GetMemory^.LoadRamFromStream(Stream);
     end;
   finally
     FSpectrum.Paused := WasPaused;
@@ -528,8 +541,8 @@ begin
     Exit;
 
   WasPaused := FSpectrum.Paused;
-  FSpectrum.Paused := True;
   try
+    FSpectrum.Paused := True;
     Proc := FSpectrum.GetProcessor;
     if Assigned(Proc) then begin
       Mem := Proc.GetMemory;
