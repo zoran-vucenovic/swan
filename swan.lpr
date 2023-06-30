@@ -24,7 +24,8 @@ uses
   UnitControlScreenBitmap, UnitTapePlayer, UnitPzxPlayer,
   UnitSpectrumKeysControl, UnitKeyboardOnScreen, UnitChooseFile,
   UnitFormForOptionsBasic, UnitFrameKeyMappings, UnitOptions, 
-  UnitFrameOtherOptions, UnitFrameSpectrumModel, UnitFrameSound;
+  UnitFrameOtherOptions, UnitFrameSpectrumModel, UnitFrameSound, 
+UnitFrameHistorySnapshotOptions;
 
 {$R *.res}
 

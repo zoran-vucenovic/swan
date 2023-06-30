@@ -71,8 +71,8 @@ constructor TCommonFunctionsLCL.TLinkLabel.Create(AOwner: TComponent;
 begin
   inherited Create(AOwner);
 
-  ShowAccelChar := False;
   Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
+  ShowAccelChar := False;
   if ACaption = '' then
     Caption := ' '
   else

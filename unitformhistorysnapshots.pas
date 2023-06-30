@@ -1,5 +1,5 @@
 unit UnitFormHistorySnapshots;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
@@ -10,62 +10,37 @@ interface
 uses
   Classes, SysUtils, Types, UnitFileSna, UnitHistorySnapshots,
   CommonFunctionsLCL, UnitKeyMaps, UnitFormPressAKey, UnitControlScreenBitmap,
-  UnitSpectrumColoursBGRA, Forms, Controls, Graphics, Dialogs, ExtCtrls,
-  StdCtrls, Spin, LMessages, ButtonPanel;
+  UnitSpectrumColoursBGRA, UnitFrameHistorySnapshotOptions, Forms, Controls,
+  Graphics, Dialogs, ExtCtrls, StdCtrls, Spin, LMessages, ButtonPanel;
 
 type
   TFormHistorySnapshots = class(TForm)
     Bevel1: TBevel;
     Bevel2: TBevel;
     ButtonPanel1: TButtonPanel;
-    CheckBox1: TCheckBox;
     CheckBox2: TCheckBox;
-    Label1: TLabel;
-    Label2: TLabel;
-    Label3: TLabel;
-    Label4: TLabel;
     Label5: TLabel;
-    Label6: TLabel;
-    Label7: TLabel;
-    Label8: TLabel;
     Panel1: TPanel;
-    Panel10: TPanel;
-    Panel11: TPanel;
     Panel12: TPanel;
     Panel13: TPanel;
-    Panel14: TPanel;
     Panel15: TPanel;
     Panel2: TPanel;
-    Panel4: TPanel;
-    Panel5: TPanel;
     Panel6: TPanel;
     Panel7: TPanel;
-    Panel8: TPanel;
-    Panel9: TPanel;
-    SpinEdit1: TSpinEdit;
-    SpinEdit2: TSpinEdit;
-    procedure CheckBox1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure Panel10Paint(Sender: TObject);
-    procedure SpinEdit2Change(Sender: TObject);
-    procedure SpinEdit2EditingDone(Sender: TObject);
   strict private
     HistorySnapshots: TSnapshotHistoryQueue;
-    FKeyBack: Word;
-    LabelEdit: TCustomLabel;
     ScrollBox: TScrollBox;
     BgraColours: TBGRAColours;
     PrevCtrl: TControl;
-    SpinEdit2Changing: Boolean;
     FTimer: TFlashTimer;
+    FrameHistorySnapshotOptions: TFrameHistorySnapshotOptions;
 
+    procedure CheckBoxHistoryEnabledOnChange(Sender: TObject);
     function GetSelectedSnapshotNegOffs: Integer;
     procedure AfterShow(Data: PtrInt);
-    procedure OnEditClick(Sender: TObject);
-    procedure UpdateDisplayKeyBack;
-    procedure SetKeyBack(AValue: Word);
     procedure UpdateCheckEnabled;
     procedure FillSnapshots;
     procedure TimerOnTimer(Sender: TObject);
@@ -185,38 +160,15 @@ begin
   HistorySnapshots := nil;
   Panel1.Enabled := False;
   FTimer := nil;
-  FKeyBack := 0;
 
   Constraints.MinHeight := Height;
   Constraints.MaxHeight := Height;
 
-  SpinEdit2Changing := False;
-  SpinEdit2.Enabled := False;
-  SpinEdit2.MaxValue := UnitHistorySnapshots.TSnapshotHistoryOptions.MaxSavePeriodInFrames;
-  SpinEdit1.MaxValue := UnitHistorySnapshots.TSnapshotHistoryOptions.MaxMaxNumberOfSnapshotsInMemory;
-  SpinEdit2.Increment := UnitHistorySnapshots.TSnapshotHistoryOptions.IncrementStep;
-  SpinEdit2.MinValue := SpinEdit2.Increment;
-  SpinEdit1.MinValue := 1;
+  FrameHistorySnapshotOptions := TFrameHistorySnapshotOptions.Create(Panel2);
+  FrameHistorySnapshotOptions.Parent := Panel2;
+  Panel2.AutoSize := True;
 
-  Panel9.BorderStyle := bsNone;
-  Panel10.BorderStyle := bsNone;
-  Panel11.BorderStyle := bsNone;
-  Panel14.BorderStyle := bsNone;
-
-  UpdateDisplayKeyBack;
-  LabelEdit := TCommonFunctionsLCL.CreateLinkLabel(Panel11, 'Edit');
-  LabelEdit.Anchors := [];
-  LabelEdit.AnchorParallel(akTop, 0, Panel11);
-  LabelEdit.AnchorParallel(akLeft, 0, Panel11);
-
-  LabelEdit.Parent := Panel11;
-  LabelEdit.OnClick := @OnEditClick;
-  Panel11.AutoSize := True;
-end;
-
-procedure TFormHistorySnapshots.CheckBox1Change(Sender: TObject);
-begin
-  UpdateCheckEnabled;
+  FrameHistorySnapshotOptions.CheckBoxAutoCreateSnapshots.OnChange := @CheckBoxHistoryEnabledOnChange;
 end;
 
 procedure TFormHistorySnapshots.FormDestroy(Sender: TObject);
@@ -230,50 +182,13 @@ end;
 
 procedure TFormHistorySnapshots.FormShow(Sender: TObject);
 begin
-  Panel10.Color := $00DAE8EF;
   //FillSnapshots;
   AfterShow(2);
 end;
 
-procedure TFormHistorySnapshots.Panel10Paint(Sender: TObject);
-var
-  R: TRect;
+procedure TFormHistorySnapshots.CheckBoxHistoryEnabledOnChange(Sender: TObject);
 begin
-  inherited Paint;
-
-  R := Panel10.ClientRect;
-  R.Inflate(0, 0, -1, -1);
-  Panel10.Canvas.Pen.Color := $00ABCDDE;
-  Panel10.Canvas.Polyline([R.TopLeft, Point(R.Right, R.Top),
-     R.BottomRight, Point(R.Left, R.Bottom), R.TopLeft]);
-end;
-
-procedure TFormHistorySnapshots.SpinEdit2Change(Sender: TObject);
-var
-  N: Integer;
-  S: String;
-begin
-  if not SpinEdit2Changing then begin
-    SpinEdit2Changing := True;
-    try
-      N := SpinEdit2.Value div SpinEdit2.Increment;
-
-      S := IntToStr(N) + ' second';
-      if N <> 1 then
-        S := S + 's';
-      Label8.Caption := S + ')';
-    finally
-      SpinEdit2Changing := False;
-    end;
-  end;
-end;
-
-procedure TFormHistorySnapshots.SpinEdit2EditingDone(Sender: TObject);
-var
-  N: Integer;
-begin
-  N := SpinEdit2.Value div SpinEdit2.Increment;
-  SpinEdit2.Value := N * SpinEdit2.Increment;
+  UpdateCheckEnabled;
 end;
 
 function TFormHistorySnapshots.GetSelectedSnapshotNegOffs: Integer;
@@ -281,14 +196,6 @@ begin
   Result := 1;
   if PrevCtrl is TSnapshotControl then
     Result := TSnapshotControl(PrevCtrl).InternalNegativeSnapNo;
-end;
-
-procedure TFormHistorySnapshots.SetKeyBack(AValue: Word);
-begin
-  if FKeyBack <> AValue then begin
-    FKeyBack := AValue;
-    UpdateDisplayKeyBack;
-  end;
 end;
 
 procedure TFormHistorySnapshots.UpdateCheckEnabled;
@@ -475,34 +382,9 @@ begin
     Constraints.MinHeight := 0;
     Constraints.MaxHeight := 0;
     FillSnapshots;
-    SpinEdit2.Enabled := True;
     Panel1.Enabled := True;
   end;
 
-end;
-
-procedure TFormHistorySnapshots.OnEditClick(Sender: TObject);
-var
-  W: Word;
-begin
-  W := FKeyBack;
-  if UnitFormPressAKey.TFormPressAKey.ShowFormPressAKey(W) then begin
-    SetKeyBack(W);
-  end;
-end;
-
-procedure TFormHistorySnapshots.UpdateDisplayKeyBack;
-var
-  S: String;
-begin
-  if FKeyBack > 0 then begin
-    S := UnitKeyMaps.DecodePCKey(FKeyBack);
-    if S = '' then begin
-      S := Trim(FKeyBack.ToString);
-    end;
-    Label7.Caption := S;
-  end else
-    Label7.Caption := '  ';
 end;
 
 class function TFormHistorySnapshots.ShowFormHistorySnapshots(
@@ -518,19 +400,19 @@ begin
   F := TFormHistorySnapshots.Create(nil);
   try
     F.HistorySnapshots := AHistorySnapshots;
-    F.CheckBox1.Checked := AHistoryEnabled;
-    F.SetKeyBack(ASnapshotHistoryOptions.KeyGoBack);
-    F.SpinEdit1.Value := ASnapshotHistoryOptions.MaxNumberOfSnapshotsInMemory;
-    F.SpinEdit2.Value := ASnapshotHistoryOptions.SavePeriodInFrames;
+    F.FrameHistorySnapshotOptions.HistoryEnabled := AHistoryEnabled;
+    F.FrameHistorySnapshotOptions.KeyBack := ASnapshotHistoryOptions.KeyGoBack;
+    F.FrameHistorySnapshotOptions.MaxNumberOfSnapshotsInMemory := ASnapshotHistoryOptions.MaxNumberOfSnapshotsInMemory;
+    F.FrameHistorySnapshotOptions.SavePeriodInFrames := ASnapshotHistoryOptions.SavePeriodInFrames;
     F.BgraColours := ABGRAColours;
 
     F.UpdateCheckEnabled;
 
     if F.ShowModal = mrOK then begin
-      ASnapshotHistoryOptions.KeyGoBack := F.FKeyBack;
-      ASnapshotHistoryOptions.MaxNumberOfSnapshotsInMemory := F.SpinEdit1.Value;
-      ASnapshotHistoryOptions.SavePeriodInFrames := F.SpinEdit2.Value;
-      AHistoryEnabled := F.CheckBox1.Checked;
+      ASnapshotHistoryOptions.KeyGoBack := F.FrameHistorySnapshotOptions.KeyBack;
+      ASnapshotHistoryOptions.MaxNumberOfSnapshotsInMemory := F.FrameHistorySnapshotOptions.MaxNumberOfSnapshotsInMemory;
+      ASnapshotHistoryOptions.SavePeriodInFrames := F.FrameHistorySnapshotOptions.SavePeriodInFrames;
+      AHistoryEnabled := F.FrameHistorySnapshotOptions.HistoryEnabled;
 
       if F.CheckBox2.Enabled and F.CheckBox2.Checked then begin
         N := F.GetSelectedSnapshotNegOffs;

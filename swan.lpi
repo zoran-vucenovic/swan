@@ -623,6 +623,14 @@
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="UnitFrameSound"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitframehistorysnapshotoptions.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameHistorySnapshotOptions"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitFrameHistorySnapshotOptions"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
