@@ -70,10 +70,10 @@ type
     FramesPassed: Integer; // frames since last save
     FramesDelay: Integer; // when going back, skip the last, go to previous snapshot
     FMaxNumberOfSnapshotsInMemory: Integer;
-    FSnap: TSnapshotInternal48;
+    FSnap: TSnapshotInternalSwan;
     FCount: Integer;
 
-    function GetSnap(): TSnapshotInternal48;
+    function GetSnap(): TSnapshotInternalSwan;
     procedure SetSavePeriod(AValue: Integer);
     procedure SetMaxNumberOfSnapshotsInMemory(const AValue: Integer);
     procedure SaveSnapshot();
@@ -190,10 +190,10 @@ end;
 
 { TSnapshotHistoryQueue }
 
-function TSnapshotHistoryQueue.GetSnap: TSnapshotInternal48;
+function TSnapshotHistoryQueue.GetSnap: TSnapshotInternalSwan;
 begin
   if FSnap = nil then begin
-    FSnap := TSnapshotInternal48.Create;
+    FSnap := TSnapshotInternalSwan.Create;
     FSnap.SetSpectrum(FSpectrum);
   end;
 

@@ -145,7 +145,7 @@ type
 
   TSnapshotZ80Class = class of TSnapshotZ80;
 
-  TSnapshotInternal48 = class(TSnapshot)
+  TSnapshotInternalSwan = class(TSnapshot)
   public
     class function GetScreenMem(const Stream: TStream; var ScreenMemArr: Array of Byte): Boolean; static;
     function LoadFromStream(const Stream: TStream): Boolean; override;
@@ -241,9 +241,9 @@ begin
   Result := False;
 end;
 
-{ TSnapshotInternal48 }
+{ TSnapshotInternalSwan }
 
-class function TSnapshotInternal48.GetScreenMem(const Stream: TStream;
+class function TSnapshotInternalSwan.GetScreenMem(const Stream: TStream;
   var ScreenMemArr: array of Byte): Boolean;
 begin
   if Assigned(Stream) and (Length(ScreenMemArr) = 6912) and (Stream.Size >= SizeOf(TSpectrumInternalState) + Length(ScreenMemArr)) then begin
@@ -254,7 +254,7 @@ begin
   Result := False;
 end;
 
-function TSnapshotInternal48.LoadFromStream(const Stream: TStream): Boolean;
+function TSnapshotInternalSwan.LoadFromStream(const Stream: TStream): Boolean;
 var
   Proc: TProcessor;
   State: TSpectrumInternalState;
@@ -302,7 +302,7 @@ begin
 
 end;
 
-function TSnapshotInternal48.SaveToStream(const Stream: TStream): Boolean;
+function TSnapshotInternalSwan.SaveToStream(const Stream: TStream): Boolean;
 var
   Proc: TProcessor;
   State: TSpectrumInternalState;

@@ -249,7 +249,7 @@ begin
           C := SnapshotControl;
 
           SetLength(SnapshotControl.AB, 6912);
-          if TSnapshotInternal48.GetScreenMem(St, SnapshotControl.AB) then begin
+          if TSnapshotInternalSwan.GetScreenMem(St, SnapshotControl.AB) then begin
 
             CC2 := TCustomControl.Create(SnapshotControl);
             CC2.Caption := '';
