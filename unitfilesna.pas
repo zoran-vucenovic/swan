@@ -231,7 +231,7 @@ begin
       Proc.PrefixByte := PrefixByte;
 
       ASpectrum.RemainingIntPinUp := RemainingIntPinUp;
-      ASpectrum.CodedBorderColour := BorderColour;
+      ASpectrum.CodedBorderColour := BorderColour and %111;
       ASpectrum.FlashState := FlashState;
       ASpectrum.InternalEar := Ear;
 
@@ -1010,7 +1010,7 @@ begin
           Proc.RegSP := Word(WR);
           Proc.InterruptMode := Header.IntMode;
 
-          FSpectrum.CodedBorderColour := Header.Border;
+          FSpectrum.CodedBorderColour := Header.Border and %111;
 
           if Mem^.LoadRamFromStream(Stream) then begin
             {$push}{$R-}{$Q-}

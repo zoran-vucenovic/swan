@@ -229,8 +229,7 @@ end;
 procedure TSpectrum.SetCodedBorderColour(AValue: Byte);
 begin
   if AValue <> FCodedBorderColour then begin
-    FCodedBorderColour := AValue and %111;
-    SpectrumColoursBGRA.BorderColour2 := SpectrumColoursBGRA.BGRAColours[False, FCodedBorderColour];
+    SpectrumColoursBGRA.BorderColour2 := SpectrumColoursBGRA.BGRAColours[False, AValue];
   end;
 end;
 
@@ -244,7 +243,8 @@ begin
       SpectrumColoursBGRA.BGRAColours[Bright, C].FromColor(FLCLColours.Colours[Bright, C]);
     end;
 
-  SetCodedBorderColour(FCodedBorderColour or $F0);
+  FCodedBorderColour := FCodedBorderColour or $F0;
+  SetCodedBorderColour(FCodedBorderColour and %111);
 end;
 
 procedure TSpectrum.SetOnSync(AValue: TThreadMethod);
