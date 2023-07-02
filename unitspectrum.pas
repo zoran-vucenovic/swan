@@ -229,6 +229,7 @@ end;
 procedure TSpectrum.SetCodedBorderColour(AValue: Byte);
 begin
   if AValue <> FCodedBorderColour then begin
+    FCodedBorderColour := AValue;
     SpectrumColoursBGRA.BorderColour2 := SpectrumColoursBGRA.BGRAColours[False, AValue];
   end;
 end;
