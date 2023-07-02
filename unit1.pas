@@ -125,6 +125,7 @@ type
     Panel1: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
+    Panel4: TPanel;
     PanelStatus: TPanel;
     SaveDialog1: TSaveDialog;
     Separator1: TMenuItem;
@@ -1280,6 +1281,7 @@ begin
     Self.AutoSize := True;
     Application.QueueAsyncCall(@AfterShow, Data - 1);
   end else begin
+    Panel4.BringToFront;
     LabelSpeed.Constraints.MinWidth := PanelStatus.Canvas.GetTextWidth('Wspeed 100%');
     LabelJoystick.Constraints.MinWidth := PanelStatus.Canvas.GetTextWidth('WJoystick: Interface II right');
     LabelModel.Constraints.MinWidth := PanelStatus.Canvas.GetTextWidth('W48K issue 2');

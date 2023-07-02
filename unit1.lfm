@@ -48,21 +48,6 @@ object Form1: TForm1
     ClientHeight = 24
     ClientWidth = 443
     TabOrder = 0
-    object SpeedButton1: TSpeedButton
-      AnchorSideRight.Control = PanelStatus
-      AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = PanelStatus
-      AnchorSideBottom.Side = asrBottom
-      Left = 419
-      Height = 22
-      Top = 1
-      Width = 23
-      Anchors = [akRight, akBottom]
-      Enabled = False
-      Flat = True
-      Images = DataModuleImages.ImageList1
-      OnClick = SpeedButton1Click
-    end
     object Panel1: TPanel
       AnchorSideLeft.Control = PanelStatus
       AnchorSideTop.Control = PanelStatus
@@ -103,7 +88,7 @@ object Form1: TForm1
       BevelOuter = bvNone
       ClientHeight = 20
       ClientWidth = 86
-      TabOrder = 1
+      TabOrder = 2
       object LabelJoystick: TLabel
         AnchorSideLeft.Control = Panel2
         AnchorSideTop.Control = Panel2
@@ -128,7 +113,7 @@ object Form1: TForm1
       BevelOuter = bvNone
       ClientHeight = 20
       ClientWidth = 76
-      TabOrder = 2
+      TabOrder = 1
       object LabelModel: TLabel
         AnchorSideLeft.Control = Panel3
         AnchorSideTop.Control = Panel3
@@ -139,6 +124,34 @@ object Form1: TForm1
         BorderSpacing.Around = 2
         Caption = 'LabelModel'
         ParentColor = False
+      end
+    end
+    object Panel4: TPanel
+      AnchorSideRight.Control = PanelStatus
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = PanelStatus
+      AnchorSideBottom.Side = asrBottom
+      Left = 419
+      Height = 22
+      Top = 1
+      Width = 23
+      Anchors = [akRight, akBottom]
+      AutoSize = True
+      BevelOuter = bvNone
+      ClientHeight = 22
+      ClientWidth = 23
+      TabOrder = 3
+      object SpeedButton1: TSpeedButton
+        AnchorSideLeft.Control = Panel4
+        AnchorSideTop.Control = Panel4
+        Left = 0
+        Height = 22
+        Top = 0
+        Width = 23
+        Enabled = False
+        Flat = True
+        Images = DataModuleImages.ImageList1
+        OnClick = SpeedButton1Click
       end
     end
   end
