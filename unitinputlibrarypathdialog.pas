@@ -238,7 +238,6 @@ begin
   try
     F := TFormForOptionsBasic.CreateForControl(nil, Fm, True);
     try
-      //F.BorderStyle := bsSingle;
       Fm.AddFormEvents(F);
       if F.ShowModal = mrOK then begin
         Result := True;
