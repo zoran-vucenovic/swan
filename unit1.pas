@@ -505,14 +505,6 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
-{$ifNdef Debugging}
-  // "all options" dialog is not completed yet,
-  // don't show it unless we're in debugging mode
-  ActionAllOptions.OnExecute := nil;
-  ActionAllOptions.Visible := False;
-  Separator2.Visible := False;
-{$endif}
-
   FAutoShowTapePlayerWhenTapeLoaded := True;
   FNewModel := TSpectrumModel.smNone;
   HistoryQueue := nil;
