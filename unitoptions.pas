@@ -266,7 +266,9 @@ begin
       FOptionControls[I].Control.AnchorParallel(akRight, 0, Panel3);
     end;
 
-    //Grid.BorderSpacing.Top := Panel2.ScreenToClient(Panel3.ClientToScreen(Point(0, 0))).Y;
+    Constraints.MinWidth := Panel2.Width + Panel3.Constraints.MinWidth * 3 div 5;
+    Constraints.MinHeight := Height div 2;
+
     Panel3.Constraints.MinWidth := 0;
     Panel3.Constraints.MinHeight := 0;
 
