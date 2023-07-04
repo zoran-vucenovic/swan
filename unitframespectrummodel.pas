@@ -42,17 +42,19 @@ procedure TFrameSpectrumModel.FormCloseCallback(Sender: TObject;
 var
   ModelToSet: TSpectrumModel;
 begin
-  case RadioGroupSpectrumModel.ItemIndex of
-    0:
-      ModelToSet := TSpectrumModel.sm16K_issue_3;
-    1:
-      ModelToSet := TSpectrumModel.sm48K_issue_3;
+  if (Sender is TCustomForm) and (TCustomForm(Sender).ModalResult = mrOK) then begin
+    case RadioGroupSpectrumModel.ItemIndex of
+      0:
+        ModelToSet := TSpectrumModel.sm16K_issue_3;
+      1:
+        ModelToSet := TSpectrumModel.sm48K_issue_3;
+    end;
+
+    if RadioGroupKeyboardModel.ItemIndex = 0 then
+      Dec(ModelToSet);
+
+    FSpectrum.SpectrumModel := ModelToSet;
   end;
-
-  if RadioGroupKeyboardModel.ItemIndex = 0 then
-    Dec(ModelToSet);
-
-  FSpectrum.SpectrumModel := ModelToSet;
 end;
 
 constructor TFrameSpectrumModel.Create(TheOwner: TComponent);

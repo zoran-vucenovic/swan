@@ -75,7 +75,8 @@ end;
 procedure TFrameSound.FormCloseCallback(Sender: TObject;
   var CloseAction: TCloseAction);
 begin
-  FSpectrum.SoundMuted := GetSoundMuted;
+  if (Sender is TCustomForm) and (TCustomForm(Sender).ModalResult = mrOK) then
+    FSpectrum.SoundMuted := GetSoundMuted;
 end;
 
 constructor TFrameSound.Create(TheOwner: TComponent);
