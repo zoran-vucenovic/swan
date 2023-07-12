@@ -12,6 +12,7 @@ uses
 
 type
   TFrameOtherOptions = class(TFrame)
+    CheckBoxSkipTapeInfoSzxLoad: TCheckBox;
     CheckBoxSkipJoystickInfoSzxLoad: TCheckBox;
     CheckBoxAutoShowTapePlayerOnLoadTape: TCheckBox;
     Panel1: TPanel;
@@ -19,8 +20,10 @@ type
   private
     function GetAutoShowTapePlayerOnLoadTape: Boolean;
     function GetSkipJoystickInfoSzxLoad: Boolean;
+    function GetSkipTapeInfoSzxLoad: Boolean;
     procedure SetAutoShowTapePlayerOnLoadTape(AValue: Boolean);
     procedure SetSkipJoystickInfoSzxLoad(AValue: Boolean);
+    procedure SetSkipTapeInfoSzxLoad(AValue: Boolean);
 
   public
     constructor Create(TheOwner: TComponent); override;
@@ -29,6 +32,7 @@ type
 
     property AutoShowTapePlayerOnLoadTape: Boolean read GetAutoShowTapePlayerOnLoadTape write SetAutoShowTapePlayerOnLoadTape;
     property SkipJoystickInfoSzxLoad: Boolean read GetSkipJoystickInfoSzxLoad write SetSkipJoystickInfoSzxLoad;
+    property SkipTapeInfoSzxLoad: Boolean read GetSkipTapeInfoSzxLoad write SetSkipTapeInfoSzxLoad;
   end;
 
 implementation
@@ -47,6 +51,11 @@ begin
   Result := CheckBoxSkipJoystickInfoSzxLoad.Checked;
 end;
 
+function TFrameOtherOptions.GetSkipTapeInfoSzxLoad: Boolean;
+begin
+  Result := CheckBoxSkipTapeInfoSzxLoad.Checked;
+end;
+
 procedure TFrameOtherOptions.SetAutoShowTapePlayerOnLoadTape(AValue: Boolean);
 begin
   CheckBoxAutoShowTapePlayerOnLoadTape.Checked := AValue;
@@ -55,6 +64,11 @@ end;
 procedure TFrameOtherOptions.SetSkipJoystickInfoSzxLoad(AValue: Boolean);
 begin
   CheckBoxSkipJoystickInfoSzxLoad.Checked := AValue;
+end;
+
+procedure TFrameOtherOptions.SetSkipTapeInfoSzxLoad(AValue: Boolean);
+begin
+  CheckBoxSkipTapeInfoSzxLoad.Checked := AValue;
 end;
 
 constructor TFrameOtherOptions.Create(TheOwner: TComponent);

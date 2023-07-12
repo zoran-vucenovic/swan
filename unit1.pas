@@ -195,6 +195,7 @@ type
       cSectionOtherOptions = 'other_options';
       cSectionSkipJoystickInfoSzxLoad = 'skip_load_joystick_info_from_szx';
       cSectionAutoShowTapePlayer = 'auto_show_tape_player';
+      cSectionSkipTapeInfoSzxLoad = 'skip_load_tape_info_from_szx';
 
   strict private
     FNewModel: TSpectrumModel;
@@ -304,6 +305,11 @@ type
     procedure GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape; const IncludeZip: Boolean; out Extensions: TStringDynArray);
     procedure LoadAsk(const SnapshotOrTape: TSnapshotOrTape);
     procedure DoLoad(const SnapshotOrTape: TSnapshotOrTape; ASourceFile: String);
+    function LoadTape(const Stream: TStream; const FileName: String;
+      Extension: String): Boolean;
+    function SzxOnLoadTape(AStream: TStream; const AFileName: String;
+        const AExtension: String; ACurrentBlock: Integer): Boolean;
+    function SzxOnSaveTape(out ATapePlayer: TTapePlayer): Boolean;
     procedure RunSpectrum;
     procedure DoOnResetSpectrum;
     procedure DestroySpectrum;
@@ -407,7 +413,7 @@ begin
                 while (not ExtFound) and (II < LE) do begin
                   S := Trim(Extensions[II]);
                   if Length(S) > 0 then begin
-                    if not S.StartsWith(ExtensionSeparator) then
+                    if not S.StartsWith(ExtensionSeparator, True) then
                       S := ExtensionSeparator + S;
                     ExtFound := AnsiCompareText(Extension, S) = 0;
                   end;
@@ -554,6 +560,8 @@ begin
   Spectrum := TSpectrum.Create;
   ScreenSizeFactor := 1;
   Spectrum.OnChangeModel := @SpectrumOnChangeModel;
+  TSnapshotSZX.OnSzxLoadTape := @SzxOnLoadTape;
+  TSnapshotSZX.OnSzxSaveTape := @SzxOnSaveTape;
 
   LoadFromConf;
   TBeeper.TryLoadLib;
@@ -1106,6 +1114,7 @@ begin
 
   DestroySpectrum;
 
+  TSnapshotSZX.OnSzxLoadTape := nil;
   FreeAndNil(FormDebug);
   FreeTapePlayer;
   Bmp.Free;
@@ -1182,7 +1191,7 @@ begin
         for J := Low(Extensions) to High(Extensions) do begin
           S := Extensions[J];
           if S <> '' then begin
-            if not S.StartsWith(ExtensionSeparator) then
+            if not S.StartsWith(ExtensionSeparator, True) then
               S := ExtensionSeparator + S;
             if AnsiCompareText(S, EFN) = 0 then begin
               if Assigned(DropFiles) then begin
@@ -1386,6 +1395,15 @@ begin
       else
         K := 0;
       FAutoShowTapePlayerWhenTapeLoaded := JObj2.Get(cSectionAutoShowTapePlayer, K) <> 0;
+
+      if Assigned(TSnapshotSZX.OnSzxLoadTape) then
+        K := 0
+      else
+        K := 1;
+      if JObj2.Get(cSectionSkipTapeInfoSzxLoad, K) = 0 then
+        TSnapshotSZX.OnSzxLoadTape := @SzxOnLoadTape
+      else
+        TSnapshotSZX.OnSzxLoadTape := nil;
     end;
 
     FLastFilePath := '';
@@ -1488,6 +1506,12 @@ begin
       else
         K := 0;
       JObj2.Add(cSectionAutoShowTapePlayer, K);
+
+      if Assigned(TSnapshotSZX.OnSzxLoadTape) then
+        K := 0
+      else
+        K := 1;
+      JObj2.Add(cSectionSkipTapeInfoSzxLoad, K);
 
       if JObj.Add(cSectionOtherOptions, JObj2) >= 0 then
         JObj2 := nil;
@@ -1601,6 +1625,7 @@ begin
             Break;
           FrameOtherOptions.AutoShowTapePlayerOnLoadTape := FAutoShowTapePlayerWhenTapeLoaded;
           FrameOtherOptions.SkipJoystickInfoSzxLoad := TSnapshotSZX.SkipJoystickInfoLoad;
+          FrameOtherOptions.SkipTapeInfoSzxLoad := not Assigned(TSnapshotSZX.OnSzxLoadTape);
 
           // ...
           //if ControlClass = nil then
@@ -1616,6 +1641,10 @@ begin
             UpdateShowCurrentlyActiveJoystick;
             FAutoShowTapePlayerWhenTapeLoaded := FrameOtherOptions.AutoShowTapePlayerOnLoadTape;
             TSnapshotSZX.SkipJoystickInfoLoad := FrameOtherOptions.SkipJoystickInfoSzxLoad;
+            if FrameOtherOptions.SkipTapeInfoSzxLoad then
+              TSnapshotSZX.OnSzxLoadTape := nil
+            else
+              TSnapshotSZX.OnSzxLoadTape := @SzxOnLoadTape;
 
             FrameHistorySnapshotOptions.UpdateSnapshotHistoryOptionsFromValues(SnapshotHistoryOptions);
             ActionMoveBack.ShortCut := SnapshotHistoryOptions.KeyGoBack;
@@ -1975,7 +2004,7 @@ begin
           if FileExists(FLastFilePath) then begin
             S := ExtractFileExt(FLastFilePath);
             if S <> '' then begin
-              if not S.StartsWith(ExtensionSeparator) then
+              if not S.StartsWith(ExtensionSeparator, True) then
                 S := ExtensionSeparator + S;
               for I := Low(Extensions) to High(Extensions) do begin
                 if AnsiCompareText(S, ExtensionSeparator + Extensions[I]) = 0 then begin
@@ -2016,8 +2045,6 @@ var
   Stream: TStream;
   SnapshotFile: TSnapshotFile;
   L: Boolean;
-  TapeType: TTapeType;
-  TapePlayerClass: TTapePlayerClass;
   AcceptedExtensions: TStringDynArray;
 
 begin
@@ -2080,39 +2107,7 @@ begin
               SnapshotFile.Free;
             end;
           end else if SnapshotOrTape in [stTape, stBoth] then begin
-            FreeTapePlayer;
-
-            TapePlayerClass := TTapePlayer.CheckRealTapePlayerClass(Stream);
-            if TapePlayerClass = nil then begin
-              TapeType := UnitTapePlayer.TTapeType.ttTap;
-              if AnsiCompareText(Extension, ExtensionSeparator + 'tzx') = 0 then
-                TapeType := UnitTapePlayer.TTapeType.ttTzx
-              else if AnsiCompareText(Extension, ExtensionSeparator + 'pzx') = 0 then
-                TapeType := UnitTapePlayer.TTapeType.ttPzx;
-
-              TapePlayerClass := TTapePlayer.GetTapePlayerClassFromType(TapeType);
-            end;
-            if Assigned(TapePlayerClass) then begin
-              TapePlayer := TapePlayerClass.Create;
-              TapePlayer.FileName := FileName;
-
-              try
-                if TapePlayer.LoadFromStream(Stream) then begin
-                  TapePlayer.SetSpectrum(Spectrum);
-                  TapePlayer.Rewind;
-                  if FAutoShowTapePlayerWhenTapeLoaded then
-                    ShowTapeBrowser()
-                  else
-                    TapeBrowserAttachTape;
-                  L := True;
-                end;
-
-              finally
-                if not L then begin
-                  FreeTapePlayer;
-                end;
-              end;
-            end;
+            L := LoadTape(Stream, FileName, Extension);
             if not L then
               LoadingFailed;
           end;
@@ -2128,6 +2123,81 @@ begin
       Spectrum.Paused := WasPaused;
     end;
   end;
+end;
+
+function TForm1.LoadTape(const Stream: TStream; const FileName: String; Extension: String): Boolean;
+var
+  TapeType: TTapeType;
+  TapePlayerClass: TTapePlayerClass;
+
+begin
+  Result := False;
+
+  if Assigned(Stream) then begin
+    FreeTapePlayer;
+
+    TapePlayerClass := TTapePlayer.CheckRealTapePlayerClass(Stream);
+    if TapePlayerClass = nil then begin
+      TapeType := UnitTapePlayer.TTapeType.ttTap;
+      if not Extension.StartsWith(ExtensionSeparator, True) then
+        Extension := ExtensionSeparator + Extension;
+
+      if AnsiCompareText(Extension, ExtensionSeparator + 'tzx') = 0 then
+        TapeType := UnitTapePlayer.TTapeType.ttTzx
+      else if AnsiCompareText(Extension, ExtensionSeparator + 'pzx') = 0 then
+        TapeType := UnitTapePlayer.TTapeType.ttPzx;
+
+      TapePlayerClass := TTapePlayer.GetTapePlayerClassFromType(TapeType);
+    end;
+
+    if Assigned(TapePlayerClass) then begin
+      TapePlayer := TapePlayerClass.Create;
+      TapePlayer.FileName := FileName;
+
+      try
+        if TapePlayer.LoadFromStream(Stream) then begin
+          TapePlayer.SetSpectrum(Spectrum);
+          TapePlayer.Rewind;
+          if FAutoShowTapePlayerWhenTapeLoaded then
+            ShowTapeBrowser()
+          else
+            TapeBrowserAttachTape;
+          Result := True;
+        end;
+
+      finally
+        if not Result then begin
+          FreeTapePlayer;
+        end;
+      end;
+    end;
+  end;
+end;
+
+function TForm1.SzxOnLoadTape(AStream: TStream; const AFileName: String;
+  const AExtension: String; ACurrentBlock: Integer): Boolean;
+begin
+  Result := False;
+
+  if AStream = nil then begin
+    if AFileName <> '' then begin
+      try
+        AStream := TFileStream.Create(AFileName, fmOpenRead or fmShareDenyWrite);
+      except
+        AStream := nil;
+      end;
+    end;
+  end;
+
+  Result := LoadTape(AStream, AFileName, AExtension);
+
+  if Result then
+    TapePlayer.GoToBlock(ACurrentBlock);
+end;
+
+function TForm1.SzxOnSaveTape(out ATapePlayer: TTapePlayer): Boolean;
+begin
+  ATapePlayer := TapePlayer;
 end;
 
 procedure TForm1.RunSpectrum;

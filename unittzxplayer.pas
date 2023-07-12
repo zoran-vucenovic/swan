@@ -55,6 +55,7 @@ type
     FCallSeqCount: Integer;
     FLoopArrayCount: Integer;
     FPauseBlock: TTapeBlock;
+    FTzxVersionTwoBytes: UInt16; // on loading remember two bytes with tzx version info, used only when the tape is saved in szx
 
   protected
     procedure CheckNextBlock(); override;

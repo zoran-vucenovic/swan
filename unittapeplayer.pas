@@ -64,6 +64,7 @@ type
     Blocks: array of TTapeBlock;
     FCurrentBlockNumber: Integer;
     FCurrentBlock: TTapeBlock;
+    FStream: TMemoryStream;
 
     procedure DoOnChangeBlock; inline;
     procedure StartBlock(BlockNumber: Integer);
@@ -92,7 +93,8 @@ type
     constructor Create; virtual;
     destructor Destroy; override;
 
-    function LoadFromStream(const Stream: TStream): Boolean; virtual;
+    function LoadFromStream(const AStream: TStream): Boolean; //virtual;
+    function SaveToStream(const AStream: TStream): Boolean;
     procedure SetSpectrum(Spectrum: TSpectrum);
     function GetSpectrum: TSpectrum;
     procedure GetNextPulse; override;
@@ -206,6 +208,7 @@ constructor TTapePlayer.Create;
 begin
   inherited Create;
 
+  FStream := nil;
   SetLength(Blocks, 2);
   FBlockCount := 0;
   SetOnChangeBlock(nil);
@@ -289,20 +292,34 @@ destructor TTapePlayer.Destroy;
 begin
   SetOnChangeBlock(nil);
   ClearBlocks;
+  FStream.Free;
 
   inherited Destroy;
 end;
 
-function TTapePlayer.LoadFromStream(const Stream: TStream): Boolean;
+function TTapePlayer.LoadFromStream(const AStream: TStream): Boolean;
 begin
-  Stream.Position := 0;
-
-  if CheckHeader(Stream) then
-    while AddBlock(Stream) do
-      if Stream.Position = Stream.Size then
-        Exit(True);
+  AStream.Position := 0;
+  if FStream = nil then
+    FStream := TMemoryStream.Create;
+  FStream.Size := AStream.Size;
+  if AStream.Read(FStream.Memory^, FStream.Size) = AStream.Size then begin
+    FStream.Position := 0;
+    if CheckHeader(FStream) then
+      while AddBlock(FStream) do
+        if FStream.Position = FStream.Size then
+          Exit(True);
+  end;
 
   Result := False;
+end;
+
+function TTapePlayer.SaveToStream(const AStream: TStream): Boolean;
+begin
+  Result := Assigned(AStream)
+    and ((FStream = nil) or (FStream.Size = 0)
+        or (AStream.Write(FStream.Memory^, FStream.Size) = FStream.Size)
+        );
 end;
 
 procedure TTapePlayer.SetSpectrum(Spectrum: TSpectrum);
