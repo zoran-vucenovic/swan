@@ -131,6 +131,10 @@
           <Other>
             <CustomOptions Value="-dUseCThreads
 -dDebugging"/>
+            <OtherDefines Count="2">
+              <Define0 Value="UseCThreads"/>
+              <Define1 Value="Debugging"/>
+            </OtherDefines>
           </Other>
         </CompilerOptions>
       </Item>

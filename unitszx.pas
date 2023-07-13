@@ -25,6 +25,7 @@ type
       TOnSzxLoadTape = function(AStream: TStream; const AFileName: String;
         const AExtension: String; ACurrentBlock: Integer): Boolean of object;
       TOnSzxSaveTape = function(out ATapePlayer: TTapePlayer): Boolean of object;
+
   //strict
   private
     type
@@ -180,31 +181,32 @@ type
 
         class function GetBlockIdAsStr: RawByteString; override;
       end;
+//
+//      TZxstTape = class(TSnapshotSZX.TSzxBlock)
+//      strict private
+//        const
+//          ZXSTTP_EMBEDDED = 1;
+//          ZXSTTP_COMPRESSED = 2;
+//
+//      strict private
+//        type
+//          TRecTape = packed record
+//            CurrentBlockNo: UInt16;
+//            Flags: UInt16;
+//            UncompressedSize: UInt32;
+//            CompressedSize: UInt32;
+//            FileExtension: Array [0..15] of AnsiChar;
+//          end;
+//
+//      protected
+//        function LoadFromStream(const Stream: TStream): Boolean; override;
+//        function SaveToStream(const Stream: TStream): Boolean; override;
+//
+//        class function GetBlockIdAsStr: RawByteString; override;
+//      end;
 
-      TZxstTape = class(TSnapshotSZX.TSzxBlock)
-      strict private
-        const
-          ZXSTTP_EMBEDDED = 1;
-          ZXSTTP_COMPRESSED = 2;
-
-      strict private
-        type
-          TRecTape = packed record
-            CurrentBlockNo: UInt16;
-            Flags: UInt16;
-            UncompressedSize: UInt32;
-            CompressedSize: UInt32;
-            FileExtension: Array [0..15] of AnsiChar;
-          end;
-
-      protected
-        function LoadFromStream(const Stream: TStream): Boolean; override;
-        function SaveToStream(const Stream: TStream): Boolean; override;
-
-        class function GetBlockIdAsStr: RawByteString; override;
-      end;
-
-  strict private
+  //strict
+  private
     class var
       SzxBlocksMap: TSzxBlocksMap;
       FSkipJoystickInfoLoad: Boolean;
@@ -244,14 +246,38 @@ type
 
 implementation
 
+type
+  TZxstTape = class(TSnapshotSZX.TSzxBlock)
+  strict private
+    const
+      ZXSTTP_EMBEDDED = 1;
+      ZXSTTP_COMPRESSED = 2;
+
+  strict private
+    type
+      TRecTape = packed record
+        CurrentBlockNo: UInt16;
+        Flags: UInt16;
+        UncompressedSize: UInt32;
+        CompressedSize: UInt32;
+        FileExtension: Array [0..15] of AnsiChar;
+      end;
+
+  protected
+    function LoadFromStream(const Stream: TStream): Boolean; override;
+    function SaveToStream(const Stream: TStream): Boolean; override;
+
+    class function GetBlockIdAsStr: RawByteString; override;
+  end;
+
+
 { TSnapshotSZX.TZxstTape }
 
-function TSnapshotSZX.TZxstTape.LoadFromStream(const Stream: TStream): Boolean;
+function TZxstTape.LoadFromStream(const Stream: TStream): Boolean;
 var
   RecTape: TRecTape;
   FileExtension: RawByteString;
   DataSize: Int32;
-  BlockNo: Integer;
   IsEmbedded: Boolean;
   Str1: TMemoryStream;
   Str2: TMemoryStream;
@@ -303,6 +329,7 @@ begin
             // linked file by name
             SetLength(S, DataSize);
             if Stream.Read(S[1], DataSize) = DataSize then begin
+              S := TrimRight(S);
               FileExtension := '';
               Okay := True;
             end;
@@ -318,14 +345,9 @@ begin
   end;
 end;
 
-function TSnapshotSZX.TZxstTape.SaveToStream(const Stream: TStream): Boolean;
+function TZxstTape.SaveToStream(const Stream: TStream): Boolean;
 var
   Rec: TRecTape;
-  DataLen: Int32;
-  Str0, Str1, Str2: TMemoryStream;
-  TapePlayer: TTapePlayer;
-  FileName, FileExt: String;
-  I, L: Integer;
 
   function WriteRec: Boolean;
   begin
@@ -343,6 +365,12 @@ var
       and (Stream.Write(Rec, SizeOf(Rec)) = SizeOf(Rec));
   end;
 
+var
+  Str0, Str1, Str2: TMemoryStream;
+  TapePlayer: TTapePlayer;
+  FileName, FileExt: RawByteString;
+  I: Integer;
+
 begin
   if not Assigned(Szx.FOnSzxSaveTape) then
     Exit(True);
@@ -351,69 +379,72 @@ begin
   Rec := Default(TRecTape);
 
   if Szx.FOnSzxSaveTape(TapePlayer) and Assigned(TapePlayer) then begin
-    FileName := ExtractFileName(TapePlayer.FileName);
+    FileName := TapePlayer.FileName;
 
     FileExt := ExtractFileExt(FileName);
-    if FileExt.StartsWith(ExtensionSeparator, True) then
-      Delete(FileExt, 1, Length(ExtensionSeparator));
+    I := Length(ExtensionSeparator);
+    if AnsiCompareText(Copy(FileExt, 1, I), ExtensionSeparator) = 0 then
+      Delete(FileExt, 1, I);
 
     I := Length(FileExt);
     if I > Length(Rec.FileExtension) then
       I := Length(Rec.FileExtension);
-    if I > 0 then
+    if I > 0 then begin
       Move(FileExt[1], Rec.FileExtension[0], I);
 
-    Str0 := nil;
-    try
-      if not Szx.FSaveTapeEmbedded then begin
-        Rec.CompressedSize := Length(FileName);
-        Rec.UncompressedSize := Rec.CompressedSize;
-        Result := WriteRec and (Stream.Write(FileName[1], Length(FileName)) = Length(FileName));
-      end else begin
+      Str0 := nil;
+      try
         if TapePlayer.GetCurrentBlockNumber >= 0 then begin
           Rec.CurrentBlockNo := TapePlayer.GetCurrentBlockNumber;
-          Rec.Flags := ZXSTTP_EMBEDDED;
-          Str0 := TMemoryStream.Create;
-          if TapePlayer.SaveToStream(Str0) then begin
-            Rec.UncompressedSize := Str0.Size;
-            if Rec.UncompressedSize > 0 then begin
-              try
-                if not Szx.FSaveTapeCompressed then begin
-                  Rec.CompressedSize := Rec.UncompressedSize;
-                  Result := True;
-                end else begin
-                  Rec.Flags := Rec.Flags or ZXSTTP_COMPRESSED;
-                  Str1 := TMemoryStream.Create;
-                  try
-                    if CompressStream(Str0, Str1) then begin
-                      Rec.CompressedSize := Str1.Size;
-                      if Rec.CompressedSize > 0 then begin
-                        Str2 := Str1;
-                        Str1 := Str0;
-                        Str0 := Str2;
-                        Result := True;
+          if not Szx.FSaveTapeEmbedded then begin
+            Rec.CompressedSize := Length(FileName);
+            Rec.UncompressedSize := Rec.CompressedSize;
+            Result := WriteRec and (Stream.Write(FileName[1], Length(FileName)) = Length(FileName));
+          end else begin
+            Rec.Flags := ZXSTTP_EMBEDDED;
+            Str0 := TMemoryStream.Create;
+            if TapePlayer.SaveToStream(Str0) then begin
+              Rec.UncompressedSize := Str0.Size;
+              if Rec.UncompressedSize > 0 then begin
+                try
+                  if not Szx.FSaveTapeCompressed then begin
+                    Rec.CompressedSize := Rec.UncompressedSize;
+                    Result := True;
+                  end else begin
+                    Rec.Flags := Rec.Flags or ZXSTTP_COMPRESSED;
+                    Str1 := TMemoryStream.Create;
+                    try
+                      if CompressStream(Str0, Str1) then begin
+                        Rec.CompressedSize := Str1.Size;
+                        if Rec.CompressedSize > 0 then begin
+                          Str2 := Str1;
+                          Str1 := Str0;
+                          Str0 := Str2;
+                          Result := True;
+                        end;
                       end;
+                    finally
+                      Str1.Free;
                     end;
-                  finally
-                    Str1.Free;
                   end;
+                  Result := Result and WriteRec
+                    and (Stream.Write(Str0.Memory^, Str0.Size) = Rec.CompressedSize);
+                except
+                  Result := False;
                 end;
-                Result := Result and WriteRec
-                  and (Stream.Write(Str0.Memory^, Str0.Size) = Rec.CompressedSize);
-              except
-                Result := False;
               end;
             end;
           end;
         end;
+      finally
+        Str0.Free;
       end;
-    finally
-      Str0.Free;
+
     end;
   end;
 end;
 
-class function TSnapshotSZX.TZxstTape.GetBlockIdAsStr: RawByteString;
+class function TZxstTape.GetBlockIdAsStr: RawByteString;
 begin
   Result := 'TAPE';
 end;

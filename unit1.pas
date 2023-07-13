@@ -196,6 +196,7 @@ type
       cSectionSkipJoystickInfoSzxLoad = 'skip_load_joystick_info_from_szx';
       cSectionAutoShowTapePlayer = 'auto_show_tape_player';
       cSectionSkipTapeInfoSzxLoad = 'skip_load_tape_info_from_szx';
+      cSectionSzxSaveOptions = 'szx_save_options';
 
   strict private
     FNewModel: TSpectrumModel;
@@ -252,6 +253,9 @@ type
         Filename: String;
       end;
 
+      TSzxSaveTapeOptions = (sstoSkip, sstoEmbeddedCompressed,
+        sstoEmbeddedUncompressed, sstoFilePathOnly);
+
   strict private
     FTapeBrowser: TFormBrowseTape;
     FKeyboardOnScreen: UnitKeyboardOnScreen.TFormKeyboardOnScreen;
@@ -281,6 +285,8 @@ type
     HistoryQueue: TSnapshotHistoryQueue;
     SnapshotHistoryOptions: TSnapshotHistoryOptions;
 
+    procedure SetSzxSaveOptionsToSzx(const SzxSaveTapeOptions: TSzxSaveTapeOptions);
+    procedure GetSzxSaveOptionsFromSzx(out SzxSaveTapeOptions: TSzxSaveTapeOptions);
     procedure SoundLibraryOnSave(var LibPath: String);
     function SoundLibraryDialogCheckLoad(const APath: String): Boolean;
     procedure TryLoadFromFiles(const SnapshotOrTape: TSnapshotOrTape; const AFileNames: Array of String);
@@ -1361,6 +1367,7 @@ var
   S, S1: String;
   SPortaudioLib32, SPortaudioLib64: String;
   K: Integer;
+  SzxSaveTapeOptions: TSzxSaveTapeOptions;
 
 begin
   JObj := TConfJSON.GetJSONObject(cSection0);
@@ -1404,6 +1411,16 @@ begin
         TSnapshotSZX.OnSzxLoadTape := @SzxOnLoadTape
       else
         TSnapshotSZX.OnSzxLoadTape := nil;
+
+      GetSzxSaveOptionsFromSzx(SzxSaveTapeOptions);
+      K := Integer(SzxSaveTapeOptions);
+      K := JObj2.Get(cSectionSzxSaveOptions, K);
+      if (K >= Integer(Low(TSzxSaveTapeOptions)))
+         and (K <= Integer(High(TSzxSaveTapeOptions)))
+      then begin
+        SzxSaveTapeOptions := TSzxSaveTapeOptions(K);
+        SetSzxSaveOptionsToSzx(SzxSaveTapeOptions);
+      end;
     end;
 
     FLastFilePath := '';
@@ -1444,6 +1461,7 @@ var
   S: String;
   K: Integer;
   JObj2: TJSONObject;
+  SzxSaveTapeOptions: TSzxSaveTapeOptions;
 
 begin
   JObj := TJSONObject.Create;
@@ -1513,6 +1531,10 @@ begin
         K := 1;
       JObj2.Add(cSectionSkipTapeInfoSzxLoad, K);
 
+      GetSzxSaveOptionsFromSzx(SzxSaveTapeOptions);
+      K := Integer(SzxSaveTapeOptions);
+      JObj2.Add(cSectionSzxSaveOptions, K);
+
       if JObj.Add(cSectionOtherOptions, JObj2) >= 0 then
         JObj2 := nil;
     finally
@@ -1567,6 +1589,7 @@ var
   FrameSoundLib: TFrameInputLibraryPath;
   FrameOtherOptions: TFrameOtherOptions;
   FrameHistorySnapshotOptions: TFrameHistorySnapshotOptions;
+  SzxSaveTapeOptions: TSzxSaveTapeOptions;
 
 begin
   WasPaused := Spectrum.Paused;
@@ -1626,6 +1649,8 @@ begin
           FrameOtherOptions.AutoShowTapePlayerOnLoadTape := FAutoShowTapePlayerWhenTapeLoaded;
           FrameOtherOptions.SkipJoystickInfoSzxLoad := TSnapshotSZX.SkipJoystickInfoLoad;
           FrameOtherOptions.SkipTapeInfoSzxLoad := not Assigned(TSnapshotSZX.OnSzxLoadTape);
+          GetSzxSaveOptionsFromSzx(SzxSaveTapeOptions);
+          FrameOtherOptions.SaveTapeInfoSzxSave := Integer(SzxSaveTapeOptions);
 
           // ...
           //if ControlClass = nil then
@@ -1645,6 +1670,8 @@ begin
               TSnapshotSZX.OnSzxLoadTape := nil
             else
               TSnapshotSZX.OnSzxLoadTape := @SzxOnLoadTape;
+            SzxSaveTapeOptions := TSzxSaveTapeOptions(FrameOtherOptions.SaveTapeInfoSzxSave);
+            SetSzxSaveOptionsToSzx(SzxSaveTapeOptions);
 
             FrameHistorySnapshotOptions.UpdateSnapshotHistoryOptionsFromValues(SnapshotHistoryOptions);
             ActionMoveBack.ShortCut := SnapshotHistoryOptions.KeyGoBack;
@@ -1708,6 +1735,32 @@ begin
       Key := 0;
     end;
   end;
+end;
+
+procedure TForm1.SetSzxSaveOptionsToSzx(
+  const SzxSaveTapeOptions: TSzxSaveTapeOptions);
+begin
+  if SzxSaveTapeOptions = TSzxSaveTapeOptions.sstoSkip then
+    TSnapshotSZX.OnSzxSaveTape := nil
+  else begin
+    TSnapshotSZX.OnSzxSaveTape := @SzxOnSaveTape;
+
+    TSnapshotSZX.SaveTapeEmbedded := SzxSaveTapeOptions <> TSzxSaveTapeOptions.sstoFilePathOnly;
+    TSnapshotSZX.SaveTapeCompressed := SzxSaveTapeOptions = TSzxSaveTapeOptions.sstoEmbeddedCompressed;
+  end;
+end;
+
+procedure TForm1.GetSzxSaveOptionsFromSzx(out
+  SzxSaveTapeOptions: TSzxSaveTapeOptions);
+begin
+  if not Assigned(TSnapshotSZX.OnSzxSaveTape) then
+    SzxSaveTapeOptions := TSzxSaveTapeOptions.sstoSkip
+  else if not TSnapshotSZX.SaveTapeEmbedded then
+    SzxSaveTapeOptions := TSzxSaveTapeOptions.sstoFilePathOnly
+  else if TSnapshotSZX.SaveTapeCompressed then
+    SzxSaveTapeOptions := TSzxSaveTapeOptions.sstoEmbeddedCompressed
+  else
+    SzxSaveTapeOptions := TSzxSaveTapeOptions.sstoEmbeddedUncompressed;
 end;
 
 procedure TForm1.SoundLibraryOnSave(var LibPath: String);
@@ -2176,28 +2229,62 @@ end;
 
 function TForm1.SzxOnLoadTape(AStream: TStream; const AFileName: String;
   const AExtension: String; ACurrentBlock: Integer): Boolean;
+const
+  ErrorMessageBadTapeFile = 'The szx snapshot contains path to tape file'
+    + LineEnding + '%s,' + LineEnding + 'This tape file cannot be opened.'
+    + LineEnding + LineEnding + 'Check if the file exists and is a valid Spectrum tape file.'
+    + LineEnding + '%s will try to go on loading of the snapshot without'
+    + ' inserting this tape in cassete player.'
+    ;
+var
+  FS: TStream;
+  BadFilePath: Boolean;
+  S: String;
+
 begin
   Result := False;
 
-  if AStream = nil then begin
-    if AFileName <> '' then begin
-      try
-        AStream := TFileStream.Create(AFileName, fmOpenRead or fmShareDenyWrite);
-      except
-        AStream := nil;
+  BadFilePath := False;
+  FS := nil;
+  try
+    if AStream = nil then begin
+      BadFilePath := AFileName = '';
+      if not BadFilePath then begin
+        try
+          FS := TFileStream.Create(AFileName, fmOpenRead or fmShareDenyWrite);
+          AStream := FS;
+        except
+          on EFOpenError do begin
+            BadFilePath := True;
+          end;
+        end;
       end;
     end;
+
+    if BadFilePath then begin
+      FreeTapePlayer;
+      Result := True;
+      S := Format(ErrorMessageBadTapeFile, [
+          AnsiQuotedStr(AFileName, '"'), ApplicationName
+        ]);
+      MessageDlg(S, mtWarning, [mbClose], 0);
+    end else begin
+      if LoadTape(AStream, AFileName, AExtension) then begin
+        TapePlayer.GoToBlock(ACurrentBlock);
+        Result := True;
+      end;
+    end;
+
+  finally
+    FS.Free;
   end;
 
-  Result := LoadTape(AStream, AFileName, AExtension);
-
-  if Result then
-    TapePlayer.GoToBlock(ACurrentBlock);
 end;
 
 function TForm1.SzxOnSaveTape(out ATapePlayer: TTapePlayer): Boolean;
 begin
   ATapePlayer := TapePlayer;
+  Result := Assigned(ATapePlayer);
 end;
 
 procedure TForm1.RunSpectrum;

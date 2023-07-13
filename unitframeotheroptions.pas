@@ -11,17 +11,25 @@ uses
   Classes, SysUtils, UnitOptions, Forms, Controls, ExtCtrls, StdCtrls;
 
 type
+
+  { TFrameOtherOptions }
+
   TFrameOtherOptions = class(TFrame)
     CheckBoxSkipTapeInfoSzxLoad: TCheckBox;
     CheckBoxSkipJoystickInfoSzxLoad: TCheckBox;
     CheckBoxAutoShowTapePlayerOnLoadTape: TCheckBox;
+    ComboBox1: TComboBox;
+    Label1: TLabel;
     Panel1: TPanel;
     Panel2: TPanel;
+    Panel3: TPanel;
   private
     function GetAutoShowTapePlayerOnLoadTape: Boolean;
+    function GetSaveTapeInfoSzxSave: Integer;
     function GetSkipJoystickInfoSzxLoad: Boolean;
     function GetSkipTapeInfoSzxLoad: Boolean;
     procedure SetAutoShowTapePlayerOnLoadTape(AValue: Boolean);
+    procedure SetSaveTapeInfoSzxSave(const AValue: Integer);
     procedure SetSkipJoystickInfoSzxLoad(AValue: Boolean);
     procedure SetSkipTapeInfoSzxLoad(AValue: Boolean);
 
@@ -33,6 +41,7 @@ type
     property AutoShowTapePlayerOnLoadTape: Boolean read GetAutoShowTapePlayerOnLoadTape write SetAutoShowTapePlayerOnLoadTape;
     property SkipJoystickInfoSzxLoad: Boolean read GetSkipJoystickInfoSzxLoad write SetSkipJoystickInfoSzxLoad;
     property SkipTapeInfoSzxLoad: Boolean read GetSkipTapeInfoSzxLoad write SetSkipTapeInfoSzxLoad;
+    property SaveTapeInfoSzxSave: Integer read GetSaveTapeInfoSzxSave write SetSaveTapeInfoSzxSave;
   end;
 
 implementation
@@ -44,6 +53,11 @@ implementation
 function TFrameOtherOptions.GetAutoShowTapePlayerOnLoadTape: Boolean;
 begin
   Result := CheckBoxAutoShowTapePlayerOnLoadTape.Checked;
+end;
+
+function TFrameOtherOptions.GetSaveTapeInfoSzxSave: Integer;
+begin
+  Result := ComboBox1.ItemIndex;
 end;
 
 function TFrameOtherOptions.GetSkipJoystickInfoSzxLoad: Boolean;
@@ -59,6 +73,12 @@ end;
 procedure TFrameOtherOptions.SetAutoShowTapePlayerOnLoadTape(AValue: Boolean);
 begin
   CheckBoxAutoShowTapePlayerOnLoadTape.Checked := AValue;
+end;
+
+procedure TFrameOtherOptions.SetSaveTapeInfoSzxSave(const AValue: Integer);
+begin
+  if (AValue >= 0) and (AValue < ComboBox1.Items.Count) then
+    ComboBox1.ItemIndex := AValue;
 end;
 
 procedure TFrameOtherOptions.SetSkipJoystickInfoSzxLoad(AValue: Boolean);
