@@ -271,7 +271,7 @@ type
   end;
 
 
-{ TSnapshotSZX.TZxstTape }
+{ TZxstTape }
 
 function TZxstTape.LoadFromStream(const Stream: TStream): Boolean;
 var
@@ -282,7 +282,6 @@ var
   Str1: TMemoryStream;
   Str2: TMemoryStream;
   S: RawByteString;
-  Okay: Boolean;
 
 begin
   Result := False;
@@ -302,7 +301,6 @@ begin
       then begin
         Str1 := nil;
         try
-          Okay := False;
           IsEmbedded := (RecTape.Flags and ZXSTTP_EMBEDDED) <> 0;
           if IsEmbedded then begin
             S := '';
@@ -312,7 +310,7 @@ begin
                 Str2.Size := DataSize;
                 if Stream.Read(Str2.Memory^, DataSize) = DataSize then begin
                   Str1 := TMemoryStream.Create;
-                  Okay := DecompressStream(Str2, Str1) and (Str1.Size = RecTape.UncompressedSize);
+                  Result := DecompressStream(Str2, Str1) and (Str1.Size = RecTape.UncompressedSize);
                 end;
               finally
                 Str2.Free;
@@ -320,23 +318,23 @@ begin
             end else begin
               Str1 := TMemoryStream.Create;
               Str1.Size := DataSize;
-              Okay := Stream.Read(Str1.Memory^, DataSize) = DataSize;
+              Result := Stream.Read(Str1.Memory^, DataSize) = DataSize;
             end;
-            SetLength(FileExtension{%H-}, 16);
-            Move(RecTape.FileExtension[0], FileExtension[1], 16);
+            SetLength(FileExtension{%H-}, Length(RecTape.FileExtension));
+            Move(RecTape.FileExtension[0], FileExtension[1], Length(RecTape.FileExtension));
             FileExtension := Trim(FileExtension);
           end else begin
             // linked file by name
             SetLength(S, DataSize);
             if Stream.Read(S[1], DataSize) = DataSize then begin
               S := TrimRight(S);
-              FileExtension := '';
-              Okay := True;
+              //FileExtension := '';
+              FileExtension := ExtractFileExt(S);
+              Result := True;
             end;
           end;
           //
-          if Okay then
-            Result := Szx.FOnSzxLoadTape(Str1, S, FileExtension, RecTape.CurrentBlockNo);
+          Result := Result and Szx.FOnSzxLoadTape(Str1, S, FileExtension, RecTape.CurrentBlockNo);
         finally
           Str1.Free;
         end;
@@ -392,17 +390,16 @@ begin
     if I > 0 then begin
       Move(FileExt[1], Rec.FileExtension[0], I);
 
-      Str0 := nil;
-      try
-        if TapePlayer.GetCurrentBlockNumber >= 0 then begin
-          Rec.CurrentBlockNo := TapePlayer.GetCurrentBlockNumber;
-          if not Szx.FSaveTapeEmbedded then begin
-            Rec.CompressedSize := Length(FileName);
-            Rec.UncompressedSize := Rec.CompressedSize;
-            Result := WriteRec and (Stream.Write(FileName[1], Length(FileName)) = Length(FileName));
-          end else begin
-            Rec.Flags := ZXSTTP_EMBEDDED;
-            Str0 := TMemoryStream.Create;
+      if TapePlayer.GetCurrentBlockNumber >= 0 then begin
+        Rec.CurrentBlockNo := TapePlayer.GetCurrentBlockNumber;
+        if not Szx.FSaveTapeEmbedded then begin
+          Rec.CompressedSize := Length(FileName);
+          Rec.UncompressedSize := Rec.CompressedSize;
+          Result := WriteRec and (Stream.Write(FileName[1], Length(FileName)) = Length(FileName));
+        end else begin
+          Rec.Flags := ZXSTTP_EMBEDDED;
+          Str0 := TMemoryStream.Create;
+          try
             if TapePlayer.SaveToStream(Str0) then begin
               Rec.UncompressedSize := Str0.Size;
               if Rec.UncompressedSize > 0 then begin
@@ -434,12 +431,11 @@ begin
                 end;
               end;
             end;
+          finally
+            Str0.Free;
           end;
         end;
-      finally
-        Str0.Free;
       end;
-
     end;
   end;
 end;
