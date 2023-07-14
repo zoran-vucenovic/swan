@@ -315,7 +315,7 @@ type
       Extension: String): Boolean;
     function SzxOnLoadTape(AStream: TStream; const AFileName: String;
         const AExtension: String; ACurrentBlock: Integer): Boolean;
-    function SzxOnSaveTape(out ATapePlayer: TTapePlayer): Boolean;
+    procedure SzxOnSaveTape(out ATapePlayer: TTapePlayer);
     procedure RunSpectrum;
     procedure DoOnResetSpectrum;
     procedure DestroySpectrum;
@@ -2281,10 +2281,9 @@ begin
 
 end;
 
-function TForm1.SzxOnSaveTape(out ATapePlayer: TTapePlayer): Boolean;
+procedure TForm1.SzxOnSaveTape(out ATapePlayer: TTapePlayer);
 begin
   ATapePlayer := TapePlayer;
-  Result := Assigned(ATapePlayer);
 end;
 
 procedure TForm1.RunSpectrum;
