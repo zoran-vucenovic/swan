@@ -293,12 +293,14 @@ var
   S: RawByteString;
 
 begin
-  Result := False;
-  if BlockSize > SizeOf(RecTape) then begin
-    if not Assigned(Szx.FOnSzxLoadTape) then begin
-      Stream.Seek(BlockSize, TSeekOrigin.soCurrent);
-      Result := True;
-    end else if Stream.Read(RecTape{%H-}, SizeOf(RecTape)) = SizeOf(RecTape) then begin
+  if not Assigned(Szx.FOnSzxLoadTape) then begin
+    Stream.Seek(BlockSize, TSeekOrigin.soCurrent);
+    Result := True;
+  end else begin
+    Result := False;
+    if (BlockSize > SizeOf(RecTape))
+      and (Stream.Read(RecTape{%H-}, SizeOf(RecTape)) = SizeOf(RecTape))
+    then begin
       RecTape.Flags := LEtoN(RecTape.Flags);
       RecTape.UncompressedSize := LEtoN(RecTape.UncompressedSize);
       RecTape.CompressedSize := LEtoN(RecTape.CompressedSize);
@@ -329,17 +331,26 @@ begin
               Str1.Size := DataSize;
               Result := Stream.Read(Str1.Memory^, DataSize) = DataSize;
             end;
+
             SetLength(FileExtension{%H-}, Length(RecTape.FileExtension));
             Move(RecTape.FileExtension[0], FileExtension[1], Length(RecTape.FileExtension));
             FileExtension := Trim(FileExtension);
+
           end else begin
             // linked file by name
             SetLength(S, DataSize);
             if Stream.Read(S[1], DataSize) = DataSize then begin
-              S := TrimRight(S);
-              //FileExtension := '';
-              FileExtension := ExtractFileExt(S);
-              Result := True;
+              // When testing szx tape blocks with tape paths made by other
+              // emulators (SpecEmu), there were found null characters added at
+              // the end of the file name. So:
+              while (DataSize > 0) and (S[DataSize] = #0) do begin
+                Dec(DataSize);
+              end;
+              if DataSize > 0 then begin
+                SetLength(S, DataSize);
+                FileExtension := ExtractFileExt(S);
+                Result := True;
+              end;
             end;
           end;
           //
