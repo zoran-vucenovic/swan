@@ -1882,19 +1882,64 @@ begin
 end;
 
 procedure TForm1.SaveSnapshot(SnapshotClass: TSnapshotFileClass);
+
+  function ChooseSaveFilePath(): Boolean;
+  const
+    SConfirmOverwrite: String =
+      'The file %s' + LineEnding
+      + 'already exists. Are you sure you want to overwrite this file?';
+
+  var
+    MR: TModalResult;
+  begin
+    repeat
+      SaveDialog1.FileName := '';
+
+      if not SaveDialog1.Execute then
+        Break;
+
+      if not FileExists(SaveDialog1.FileName) then
+        Exit(True);
+
+      MR := QuestionDlg('',
+        Format(SConfirmOverwrite, [AnsiQuotedStr(SaveDialog1.FileName, '"')]),
+        mtConfirmation, [
+          mrNo, '&No, choose another', 'IsDefault',
+          mrYes, '&Yes, overwrite',
+          mrCancel, '&Cancel', 'IsCancel'
+          ], 0
+        );
+
+      if MR = mrYes then
+        Exit(True);
+
+      if MR <> mrNo then
+        Break;
+
+    until False;
+
+    Result := False;
+  end;
+
 var
   FileSnapshot: TSnapshotFile;
   WasPaused: Boolean;
   S: RawByteString;
+  Extension: String;
+
 begin
   if Spectrum.IsRunning then begin
     WasPaused := Spectrum.Paused;
     try                          
       Spectrum.Paused := True;
-      SaveDialog1.DefaultExt := ExtensionSeparator + SnapshotClass.GetDefaultExtension;
+      Extension := SnapshotClass.GetDefaultExtension;
+      if not Extension.StartsWith(ExtensionSeparator, True) then
+        Extension := ExtensionSeparator + Extension;
+
+      SaveDialog1.DefaultExt := Extension;
       SaveDialog1.Filter :=
         SnapshotClass.GetDefaultExtension
-        + '|*' + ExtensionSeparator + SnapshotClass.GetDefaultExtension
+        + '|*' + Extension
         + '|all files|' + '*';
 
       if FLastFilePath <> '' then begin
@@ -1902,9 +1947,8 @@ begin
         if DirectoryExists(S) then
           SaveDialog1.InitialDir := S;
       end;
-      SaveDialog1.FileName := '';
 
-      if SaveDialog1.Execute then begin
+      if ChooseSaveFilePath() then begin
         FileSnapshot := SnapshotClass.Create;
         try
           FileSnapshot.SetSpectrum(Spectrum);
