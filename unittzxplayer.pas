@@ -27,9 +27,13 @@ const
   //   Pheenix.tzx by Megadodo, original release (https://spectrumcomputing.co.uk/entry/3690/ZX-Spectrum/Pheenix)
   // This tzx file works when inverted level is kept for at least 4214 (does not work with 4213) ticks.
   //
-  // Let's put it on 4250 ticks, don't go much higher though, as it might make
-  // other tzx files not play well.
-  TicksBeforePause = Int64(4250);
+  // On the other hand, the file
+  //   Arkanoid.tzx by Imagine (https://spectrumcomputing.co.uk/entry/255/ZX-Spectrum/Arkanoid)
+  // seems to falsely detect that kempston joystick is attached when this opposite
+  // level pulse is played for 4220 ticks or longer (it does not happen with 4219 ticks or less).
+  //
+  // So, let's put it between 4214 and 4219:
+  TicksBeforePause = Int64(4216);
 
 type                          
 
