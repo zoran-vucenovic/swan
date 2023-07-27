@@ -37,6 +37,8 @@ type
     class function GetBlockIdAsString: String; virtual; abstract;
   end;
 
+  { TTapePlayer }
+
   TTapePlayer = class abstract (TSpectrum.TAbstractTapePlayer)
   strict private
     FOnChangeBlock: TProcedureOfObject;
@@ -108,6 +110,8 @@ type
     procedure IncBlock(const IncBy: Integer);
     procedure GoToBlock(const FBlockToGoTo: Integer);
     class function GetTapePlayerClassFromType(const TapeType: TTapeType): TTapePlayerClass; static;
+    class function GetTapePlayerClassFromExtension(Extension: String): TTapePlayerClass;
+    class function GetDefaultExtension: String;
     class function CheckRealTapePlayerClass(const Stream: TStream): TTapePlayerClass;
 
     function GetBlockCount: Integer;
@@ -436,6 +440,35 @@ class function TTapePlayer.GetTapePlayerClassFromType(const TapeType: TTapeType
 begin
   if (TapePlayerMap = nil) or (not TapePlayerMap.TryGetData(TapeType, Result)) then
     Result := nil;
+end;
+
+class function TTapePlayer.GetTapePlayerClassFromExtension(Extension: String
+  ): TTapePlayerClass;
+var
+  I: Integer;
+begin
+  if Assigned(TapePlayerMap) then begin
+    if Extension.StartsWith(ExtensionSeparator, True) then
+      Extension := Trim(Copy(Extension, Length(ExtensionSeparator) + 1));
+    if Extension <> '' then
+      for I := 0 to TapePlayerMap.Count - 1 do begin
+        Result := TapePlayerMap.Data[I];
+        if AnsiCompareText(Result.GetDefaultExtension, Extension) = 0 then
+          Exit;
+      end;
+  end;
+
+  Result := nil;
+end;
+
+class function TTapePlayer.GetDefaultExtension: String;
+var
+  TapeType: TTapeType;
+begin
+  TapeType := GetTapeType;
+  WriteStr(Result, GetTapeType);
+  Delete(Result, 1, 2);
+  Result := LowerCase(Result);
 end;
 
 class function TTapePlayer.CheckRealTapePlayerClass(const Stream: TStream

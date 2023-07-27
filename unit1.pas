@@ -2224,7 +2224,6 @@ end;
 
 function TForm1.LoadTape(const Stream: TStream; const FileName: String; Extension: String): Boolean;
 var
-  TapeType: TTapeType;
   TapePlayerClass: TTapePlayerClass;
 
 begin
@@ -2235,16 +2234,9 @@ begin
 
     TapePlayerClass := TTapePlayer.CheckRealTapePlayerClass(Stream);
     if TapePlayerClass = nil then begin
-      TapeType := UnitTapePlayer.TTapeType.ttTap;
-      if not Extension.StartsWith(ExtensionSeparator, True) then
-        Extension := ExtensionSeparator + Extension;
-
-      if AnsiCompareText(Extension, ExtensionSeparator + 'tzx') = 0 then
-        TapeType := UnitTapePlayer.TTapeType.ttTzx
-      else if AnsiCompareText(Extension, ExtensionSeparator + 'pzx') = 0 then
-        TapeType := UnitTapePlayer.TTapeType.ttPzx;
-
-      TapePlayerClass := TTapePlayer.GetTapePlayerClassFromType(TapeType);
+      TapePlayerClass := TapePlayerClass.GetTapePlayerClassFromExtension(Extension);
+      if TapePlayerClass = nil then
+        TapePlayerClass := TTapePlayer.GetTapePlayerClassFromType(TTapeType.ttTap);
     end;
 
     if Assigned(TapePlayerClass) then begin

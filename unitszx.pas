@@ -395,10 +395,13 @@ begin
 
     FileName := FTapePlayer.FileName;
 
-    FileExt := ExtractFileExt(FileName);
+    FileExt := Trim(ExtractFileExt(FileName));
+    if FileExt = '' then
+      FileExt := FTapePlayer.GetDefaultExtension();
+
     I := Length(ExtensionSeparator);
     if AnsiCompareText(Copy(FileExt, 1, I), ExtensionSeparator) = 0 then
-      Delete(FileExt, 1, I);
+      FileExt := Trim(Copy(FileExt, I + 1));
 
     I := Length(FileExt);
     if I > Length(Rec.FileExtension) then
