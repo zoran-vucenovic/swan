@@ -57,6 +57,10 @@ type
     MinSpeed = NormalSpeed * 8;
 
   strict private
+    const
+      HoldInterruptPinTicks = 32;
+
+  strict private
     // processor events
     procedure ProcessorInput;
     procedure ProcessorOutput;
@@ -652,16 +656,18 @@ begin
   if Assigned(FOnResetSpectrum) then
     Synchronize(FOnResetSpectrum);
 
-  FIntPinUpCount := 0;
+  FIntPinUpCount := HoldInterruptPinTicks;
+
   FInternalEar := 0;
   FEarFromTape := 0;
   FEar := 0;
   FMic := 0;
-  FCodedBorderColour := 0;
-  SetCodedBorderColour(7);
+  FCodedBorderColour := 7;
+  SetCodedBorderColour(0);
   TicksFrom := ScreenStart;
   FSumTicks := FSumTicks + FProcessor.TStatesInCurrentFrame;
   FProcessor.ResetCPU;
+  FProcessor.IntPin := True;
   FFlashState := 0;
   FMemory^.ClearRam;
 
@@ -731,7 +737,7 @@ procedure TSpectrum.RunSpectrum;
 
       FSumTicks := FSumTicks + TProcessor.FrameTicks;
       FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame - TProcessor.FrameTicks;
-      FIntPinUpCount := 32;
+      FIntPinUpCount := HoldInterruptPinTicks;
 
       TicksFrom := ScreenStart;
 
