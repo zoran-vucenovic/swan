@@ -148,7 +148,8 @@ begin
             Result := True;
             if (Data^ and $80) = 0 then begin
               PilotPulsesNeeded := DefaultPilotHeaderPulsesNeeded;
-              if DataLen > SizeOf(THeader) then begin
+
+              if DataLen = SizeOf(THeader) + 2 then begin
                 Move((Data + 1)^, Header, SizeOf(THeader));
                 DecodeHeader();
               end;
