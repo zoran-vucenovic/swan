@@ -16,7 +16,8 @@ uses
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
   UnitBeeper, UnitChooseFile, UnitOptions, UnitFrameSpectrumModel,
-  UnitFrameSound, UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions;
+  UnitFrameSound, UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions,
+  UnitRecentFiles, UnitCommon;
 
 type
 
@@ -116,6 +117,7 @@ type
     MenuItem49: TMenuItem;
     MenuItem5: TMenuItem;
     MenuItem50: TMenuItem;
+    MenuItemRecentFiles: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
     MenuItem8: TMenuItem;
@@ -189,7 +191,6 @@ type
       cSectionSoundMuted = 'sound_muted';
       cSectionPortAudioLibPath32 = 'portaudio_lib_path32';
       cSectionPortAudioLibPath64 = 'portaudio_lib_path64';
-      cSectionLastFilePath = 'last_file_path';
       cSectionSpectrumModel = 'spectrum_model';
       cSectionSwanVersion = 'swan_version';
       cSectionOtherOptions = 'other_options';
@@ -197,9 +198,11 @@ type
       cSectionAutoShowTapePlayer = 'auto_show_tape_player';
       cSectionSkipTapeInfoSzxLoad = 'skip_load_tape_info_from_szx';
       cSectionSzxSaveOptions = 'szx_save_options';
+      cSectionRecentFiles = 'recent_files';
 
   strict private
     FNewModel: TSpectrumModel;
+    FFileToOpen: String;
     FAutoShowTapePlayerWhenTapeLoaded: Boolean;
 
     procedure SpectrumOnChangeModel();
@@ -215,6 +218,8 @@ type
     procedure SetSoundVolume(const N: Integer);
     procedure SetSnapshotHistoryEnabled(const B: Boolean);
     procedure ShowAllOptionsDialog(ControlClass: TControlClass);
+    procedure UpdateRecentFiles;
+    procedure RecentFilesOnClick(Sender: TObject);
 
     procedure KeyFromFormKeyboardOnScreen(AKeyValue: Word; Flags: Integer);
     procedure ReleaseShifts(Sender: TObject);
@@ -280,7 +285,7 @@ type
     FWriteScreen: Boolean;
     FSkipWriteScreen: Boolean;
     FSoundVolumeForm: TFormSoundVolume;
-    FLastFilePath: RawByteString;
+    FRecentFiles: TRecentFiles;
     FPortaudioLibPathOtherBitness: RawByteString;
     HistoryQueue: TSnapshotHistoryQueue;
     SnapshotHistoryOptions: TSnapshotHistoryOptions;
@@ -521,6 +526,7 @@ begin
   FAutoShowTapePlayerWhenTapeLoaded := True;
   FNewModel := TSpectrumModel.smNone;
   HistoryQueue := nil;
+  FFileToOpen := '';
 
   ActionAbout.Caption := 'About ' + ApplicationName + '...';
   ActionEnableHistory.Hint :=
@@ -535,7 +541,9 @@ begin
 
   UpdateActiveSnapshotHistory;
 
-  FLastFilePath := '';
+  FRecentFiles := TRecentFiles.Create;
+  UpdateRecentFiles;
+
   FPortaudioLibPathOtherBitness := '';
   LabelJoystick.Caption := ' ';
   LabelSpeed.Caption := ' ';
@@ -1120,10 +1128,12 @@ begin
 
   DestroySpectrum;
 
+  MenuItemRecentFiles.Clear;
   TSnapshotSZX.OnSzxLoadTape := nil;
   FreeAndNil(FormDebug);
   FreeTapePlayer;
   Bmp.Free;
+  FRecentFiles.Free;
 end;
 
 procedure TForm1.FormDropFiles(Sender: TObject; const FileNames: array of string
@@ -1423,8 +1433,12 @@ begin
       end;
     end;
 
-    FLastFilePath := '';
-    FLastFilePath := JObj.Get(cSectionLastFilePath, FLastFilePath);
+    JD := JObj.Find(cSectionRecentFiles);
+    if JD is TJSONArray then begin
+      FRecentFiles.LoadFromJSONArray(TJSONArray(JD));
+      UpdateRecentFiles;
+    end;
+
     FSkipWriteScreen := JObj.Get(cSectionSkipWriteScr, Integer(0)) <> 0;
     UpdateCheckWriteScreen;
 
@@ -1462,6 +1476,7 @@ var
   K: Integer;
   JObj2: TJSONObject;
   SzxSaveTapeOptions: TSzxSaveTapeOptions;
+  JArr: TJSONArray;
 
 begin
   JObj := TJSONObject.Create;
@@ -1508,8 +1523,9 @@ begin
       JObj.Add(cSectionPortAudioLibPath64, SPortaudioLib64);
     end;
 
-    if FLastFilePath <> '' then
-      JObj.Add(cSectionLastFilePath, FLastFilePath);
+    FRecentFiles.SaveToJSONArray(JArr);
+    if Assigned(JArr) then
+      JObj.Add(cSectionRecentFiles, JArr);
 
     JObj2 := TJSONObject.Create;
     try
@@ -1688,6 +1704,41 @@ begin
       end;
   finally
     Spectrum.Paused := WasPaused;
+  end;
+end;
+
+procedure TForm1.UpdateRecentFiles;
+var
+  M: TMenuItem;
+  I: Integer;
+  SA: TStringDynArray;
+
+begin
+  MenuItemRecentFiles.Clear;
+
+  if FRecentFiles.Count > 0 then begin
+    FRecentFiles.GetAll(SA);
+    for I := Low(SA) to High(SA) do begin
+      M := TMenuItem.Create(nil);
+      M.Name := TCommonFunctions.GlobalObjectNameGenerator(M);
+      M.Caption := SA[I];
+      M.OnClick := @RecentFilesOnClick;
+      MenuItemRecentFiles.Add(M);
+    end;
+    MenuItemRecentFiles.Enabled := True;
+  end else begin
+    MenuItemRecentFiles.AddSeparator;
+    MenuItemRecentFiles.Enabled := False;
+  end;
+end;
+
+procedure TForm1.RecentFilesOnClick(Sender: TObject);
+begin
+  if Sender = Spectrum then begin
+    DoLoad(TSnapshotOrTape.stBoth, FFileToOpen);
+  end else if Sender is TMenuItem then begin
+    FFileToOpen := TMenuItem(Sender).Caption;
+    AddEventToQueue(@RecentFilesOnClick);
   end;
 end;
 
@@ -1926,6 +1977,7 @@ var
   WasPaused: Boolean;
   S: RawByteString;
   Extension: String;
+  LastFilePath: RawByteString;
 
 begin
   if Spectrum.IsRunning then begin
@@ -1942,18 +1994,22 @@ begin
         + '|*' + Extension
         + '|all files|' + '*';
 
-      if FLastFilePath <> '' then begin
-        S := ExtractFilePath(FLastFilePath);
+      LastFilePath := FRecentFiles.GetLastFilePath;
+      if LastFilePath <> '' then begin
+        S := ExtractFilePath(LastFilePath);
         if DirectoryExists(S) then
           SaveDialog1.InitialDir := S;
       end;
+
 
       if ChooseSaveFilePath() then begin
         FileSnapshot := SnapshotClass.Create;
         try
           FileSnapshot.SetSpectrum(Spectrum);
-          if FileSnapshot.SaveToFile(SaveDialog1.FileName) then
-            FLastFilePath := SaveDialog1.FileName;
+          if FileSnapshot.SaveToFile(SaveDialog1.FileName) then begin
+            FRecentFiles.Add(SaveDialog1.FileName);
+            UpdateRecentFiles;
+          end;
         finally
           FileSnapshot.Free;
         end;
@@ -2080,7 +2136,7 @@ var
   WasPaused: Boolean;
   L: Boolean;
   Extensions: TStringDynArray;
-  S: String;
+  S, LastFilePath: String;
   I: Integer;
 
 begin
@@ -2093,19 +2149,20 @@ begin
       OpenDialog1.FilterIndex := 1;
       OpenDialog1.Filter := MakeExtensionsFilter(Extensions);
 
+      LastFilePath := FRecentFiles.GetLastFilePath;
       L := False;
-      if FLastFilePath <> '' then begin
-        S := ExtractFilePath(FLastFilePath);
+      if LastFilePath <> '' then begin
+        S := ExtractFilePath(LastFilePath);
         if DirectoryExists(S) then begin
           OpenDialog1.InitialDir := S;
-          if FileExists(FLastFilePath) then begin
-            S := ExtractFileExt(FLastFilePath);
+          if FileExists(LastFilePath) then begin
+            S := ExtractFileExt(LastFilePath);
             if S <> '' then begin
               if not S.StartsWith(ExtensionSeparator, True) then
                 S := ExtensionSeparator + S;
               for I := Low(Extensions) to High(Extensions) do begin
                 if AnsiCompareText(S, ExtensionSeparator + Extensions[I]) = 0 then begin
-                  OpenDialog1.FileName := ExtractFileName(FLastFilePath);
+                  OpenDialog1.FileName := ExtractFileName(LastFilePath);
                   L := True;
                   Break;
                 end;
@@ -2145,6 +2202,7 @@ var
   AcceptedExtensions: TStringDynArray;
 
 begin
+  FFileToOpen := '';
   Stream := nil;
   if Spectrum.IsRunning then begin
     WasPaused := Spectrum.Paused;
@@ -2170,7 +2228,10 @@ begin
           Stream := nil;
         end;
 
-      if Assigned(Stream) then begin
+      if not Assigned(Stream) then begin
+        if FRecentFiles.Remove(ASourceFile) then
+          UpdateRecentFiles;
+      end else begin
         try
           SnapshotFile := nil;
           if SnapshotOrTape in [stSnapshot, stBoth] then begin
@@ -2209,8 +2270,10 @@ begin
               LoadingFailed;
           end;
 
-          if L then
-            FLastFilePath := ASourceFile;
+          if L then begin
+            FRecentFiles.Add(ASourceFile);
+            UpdateRecentFiles;
+          end;
         finally
           Stream.Free;
         end;

@@ -439,6 +439,9 @@ object Form1: TForm1
       object MenuItem18: TMenuItem
         Action = ActionSaveSna
       end
+      object MenuItemRecentFiles: TMenuItem
+        Caption = 'Recent files'
+      end
       object MenuItem23: TMenuItem
         Caption = '-'
       end

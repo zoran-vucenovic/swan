@@ -25,7 +25,7 @@ uses
   UnitSpectrumKeysControl, UnitKeyboardOnScreen, UnitChooseFile,
   UnitFormForOptionsBasic, UnitFrameKeyMappings, UnitOptions, 
   UnitFrameOtherOptions, UnitFrameSpectrumModel, UnitFrameSound, 
-UnitFrameHistorySnapshotOptions;
+  UnitFrameHistorySnapshotOptions, UnitRecentFiles;
 
 {$R *.res}
 

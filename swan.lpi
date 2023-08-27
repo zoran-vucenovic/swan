@@ -628,6 +628,11 @@
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="UnitFrameHistorySnapshotOptions"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitrecentfiles.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitRecentFiles"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
