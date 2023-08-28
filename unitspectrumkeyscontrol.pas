@@ -277,6 +277,7 @@ begin
               LabColour.Caption := AnsiUpperCase(TCommonSpectrum.SpectrumColourNames[Q]);
               LabColour.Font.Color := ColoursArr[Q];
               if Q = 0 then begin
+                LabColour.Transparent := False;
                 LabColour.Color := ColoursArr[7];
                 LabColour.Caption := ' ' + LabColour.Caption + ' ';
               end;
