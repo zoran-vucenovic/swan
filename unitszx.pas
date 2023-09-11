@@ -35,7 +35,22 @@ type
           // machine id:
           ZXSTMID_16K = 0;
           ZXSTMID_48K = 1;
-          // ....
+          // models currently not supported in Swan:
+          ZXSTMID_128K = 2;
+          ZXSTMID_PLUS2 = 3;
+          ZXSTMID_PLUS2A = 4;
+          ZXSTMID_PLUS3 = 5;
+          ZXSTMID_PLUS3E = 6;
+          ZXSTMID_PENTAGON128 = 7;
+          ZXSTMID_TC2048 = 8;
+          ZXSTMID_TC2068 = 9;
+          ZXSTMID_SCORPION = 10;
+          ZXSTMID_SE = 11;
+          ZXSTMID_TS2068 = 12;
+          ZXSTMID_PENTAGON512 = 13;
+          ZXSTMID_PENTAGON1024 = 14;
+          ZXSTMID_NTSC48K = 15;
+          ZXSTMID_128KE = 16;
 
           ZXSTMF_ALTERNATETIMINGS = 1; // late timings, for ChFlags
       public
@@ -995,6 +1010,14 @@ function TSnapshotSZX.LoadFromStream(const Stream: TStream): Boolean;
                 Result := True;
               end;
 
+            // Models not (yet) supported:
+            TZxstHeadr.ZXSTMID_128K, TZxstHeadr.ZXSTMID_PLUS2, TZxstHeadr.ZXSTMID_PLUS2A,
+              TZxstHeadr.ZXSTMID_PLUS3, TZxstHeadr.ZXSTMID_PLUS3E, TZxstHeadr.ZXSTMID_PENTAGON128,
+              TZxstHeadr.ZXSTMID_TC2048, TZxstHeadr.ZXSTMID_TC2068, TZxstHeadr.ZXSTMID_SCORPION,
+              TZxstHeadr.ZXSTMID_SE, TZxstHeadr.ZXSTMID_TS2068, TZxstHeadr.ZXSTMID_PENTAGON512,
+              TZxstHeadr.ZXSTMID_PENTAGON1024, TZxstHeadr.ZXSTMID_NTSC48K,
+              TZxstHeadr.ZXSTMID_128KE:
+                ;
           otherwise
           end;
         end;
