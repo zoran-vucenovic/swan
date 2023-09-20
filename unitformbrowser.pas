@@ -452,7 +452,13 @@ begin
 
     if Assigned(FTapePlayer) then begin
       S1 := ExtractFileName(FTapePlayer.FileName);
-      Label1.Caption := S1;
+      if Trim(S1) = '' then begin
+        Label1.Caption := ' ';
+        S1 := '';
+      end else begin
+        Label1.Caption := S1;
+        S1 := ' (' + S1 + ')';
+      end;
       Label2.Caption := '  ' + FTapePlayer.FileName;
       Panel1.Hint := FTapePlayer.FileName;
       Panel1.ShowHint := True;
@@ -516,12 +522,12 @@ begin
         end;
       end;
     end else begin
-      S1 := 'empty';
+      S1 := ' (empty)';
       Label1.Caption := ' ';
       Label2.Caption := ' ';
       Panel1.ShowHint := False;
     end;
-    Caption := Format('Tape player (%s)', [S1]);
+    Caption := 'Tape player' + S1;
 
   finally
     Grid.EndUpdate();

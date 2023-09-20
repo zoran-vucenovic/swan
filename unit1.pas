@@ -318,8 +318,8 @@ type
     procedure DoLoad(const SnapshotOrTape: TSnapshotOrTape; ASourceFile: String);
     function LoadTape(const Stream: TStream; const FileName: String;
       Extension: String): Boolean;
-    function SzxOnLoadTape(AStream: TStream; const AFileName: String;
-        const AExtension: String; ACurrentBlock: Integer): Boolean;
+    procedure SzxOnLoadTape(AStream: TStream; const AFileName: String;
+        const AExtension: String; ACurrentBlock: Integer);
     procedure SzxOnSaveTape(out ATapePlayer: TTapePlayer);
     procedure RunSpectrum;
     procedure DoOnResetSpectrum;
@@ -2326,13 +2326,18 @@ begin
   end;
 end;
 
-function TForm1.SzxOnLoadTape(AStream: TStream; const AFileName: String;
-  const AExtension: String; ACurrentBlock: Integer): Boolean;
+procedure TForm1.SzxOnLoadTape(AStream: TStream; const AFileName: String;
+  const AExtension: String; ACurrentBlock: Integer);
 const
-  ErrorMessageBadTapeFile = 'The szx snapshot contains path to tape file'
-    + LineEnding + '%s,' + LineEnding + 'This tape file cannot be opened.'
-    + LineEnding + LineEnding + 'Check if the file exists and is a valid Spectrum tape file.'
-    + LineEnding + '%s will try to go on loading of the snapshot without'
+  ErrorMessageBadTapeFile: String = 'The szx snapshot contains path to %s'
+    + LineEnding + 'This tape file cannot be opened.'
+    + LineEnding + LineEnding + 'Check if the file exists and is a valid Spectrum tape file.';
+
+  ErrorMessageBadTapeEmbedded: String = 'The szx snapshot contains an embedded tape file,'
+    + LineEnding + 'but it does not seem to be valid.';
+
+  ErrorMessageContinueLoading: String =
+    LineEnding + '%s will try to go on loading of the snapshot without'
     + ' inserting this tape in cassete player.'
     ;
 var
@@ -2341,8 +2346,6 @@ var
   S: String;
 
 begin
-  Result := False;
-
   BadFilePath := False;
   FS := nil;
   try
@@ -2360,18 +2363,31 @@ begin
       end;
     end;
 
+    S := '';
+    if not BadFilePath then begin
+      if LoadTape(AStream, AFileName, AExtension) then begin
+        if ACurrentBlock > 0 then
+          TapePlayer.GoToBlock(ACurrentBlock);
+      end else begin
+        BadFilePath := Assigned(FS);
+        if not BadFilePath then begin
+          S := ErrorMessageBadTapeEmbedded;
+        end;
+      end;
+    end;
+
     if BadFilePath then begin
       FreeTapePlayer;
-      Result := True;
-      S := Format(ErrorMessageBadTapeFile, [
-          AnsiQuotedStr(AFileName, '"'), ApplicationName
-        ]);
-      MessageDlg(S, mtWarning, [mbClose], 0);
-    end else begin
-      if LoadTape(AStream, AFileName, AExtension) then begin
-        TapePlayer.GoToBlock(ACurrentBlock);
-        Result := True;
-      end;
+      if AFileName <> '' then
+        S := LineEnding + 'tape file ""' + AFileName + '""'
+      else
+        S := 'a tape file.';
+      S := Format(ErrorMessageBadTapeFile, [S]);
+    end;
+
+    if S <> '' then begin
+      MessageDlg(S + Format(ErrorMessageContinueLoading, [ApplicationName]),
+        mtWarning, [mbOK], 0);
     end;
 
   finally

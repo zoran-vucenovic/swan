@@ -22,8 +22,8 @@ type
   TSnapshotSZX = class(TSnapshotFile)
   public
     type
-      TOnSzxLoadTape = function(AStream: TStream; const AFileName: String;
-        const AExtension: String; ACurrentBlock: Integer): Boolean of object;
+      TOnSzxLoadTape = procedure(AStream: TStream; const AFileName: String;
+        const AExtension: String; ACurrentBlock: Integer) of object;
       TOnSzxSaveTape = procedure(out ATapePlayer: TTapePlayer) of object;
 
   //strict
@@ -372,7 +372,8 @@ begin
             end;
           end;
           //
-          Result := Result and Szx.FOnSzxLoadTape(Str1, S, FileExtension, RecTape.CurrentBlockNo);
+          if Result then
+            Szx.FOnSzxLoadTape(Str1, S, FileExtension, RecTape.CurrentBlockNo);
         finally
           Str1.Free;
         end;

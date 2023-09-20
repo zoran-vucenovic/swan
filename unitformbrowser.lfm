@@ -11,7 +11,7 @@ object FormBrowseTape: TFormBrowseTape
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '2.2.7.0'
+  LCLVersion = '3.0.0.1'
   object Panel3: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
@@ -120,18 +120,18 @@ object FormBrowseTape: TFormBrowseTape
         AnchorSideTop.Control = Panel5
         AnchorSideRight.Control = Panel5
         AnchorSideRight.Side = asrBottom
-        Left = 438
+        Left = 440
         Height = 19
         Hint = 'When playing, selection follows the current block'
         Top = 0
-        Width = 129
+        Width = 127
         Anchors = [akTop, akRight]
         BorderSpacing.Right = 3
         Caption = 'Follow playing block'
-        OnChange = CheckBox1Change
         ParentShowHint = False
         ShowHint = True
         TabOrder = 0
+        OnChange = CheckBox1Change
       end
     end
   end
