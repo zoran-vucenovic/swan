@@ -586,7 +586,6 @@ object Form1: TForm1
     end
   end
   object OpenDialog1: TOpenDialog
-    Filter = 'snapshot files (sna, z80)|*.sna;*.z80|sna|*.sna|z80|*.z80'
     Left = 133
     Top = 25
   end
