@@ -306,6 +306,7 @@ var
   Str1: TMemoryStream;
   Str2: TMemoryStream;
   S: RawByteString;
+  I: Integer;
 
 begin
   if not Assigned(Szx.FOnSzxLoadTape) then begin
@@ -358,11 +359,13 @@ begin
               // When testing szx tape blocks with tape paths made by other
               // emulators (SpecEmu), there were found null characters added at
               // the end of the file name. So:
-              while (DataSize > 0) and (S[DataSize] = #0) do begin
-                Dec(DataSize);
-              end;
-              if DataSize > 0 then begin
-                SetLength(S, DataSize);
+              for I := 1 to DataSize do
+                if S[I] = #0 then begin
+                  SetLength(S, I - 1);
+                  Break;
+                end;
+
+              if Length(S) > 0 then begin
                 FileExtension := ExtractFileExt(S);
                 Result := True;
               end;
