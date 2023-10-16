@@ -31,12 +31,15 @@ type
     procedure SortArray(var A: Array of T);
   end;
 
+  { TCommonFunctions }
+
   TCommonFunctions = class sealed (TObject)
   public
     class function GlobalClassNameGenerator(C: TClass): String; static;
     class function GlobalObjectNameGenerator(Obj: TObject): String; static;
     class function SpectrumCharToUtf8(S: RawByteString): RawByteString; static;
     class procedure ConvertCodePageFromISO8859_1_to_Utf8(var S: AnsiString); static;
+    class procedure CallRandomizeIfNotCalledAlready();
   end;
 
 implementation
@@ -147,6 +150,19 @@ begin
 //  https://docs.microsoft.com/en-us/windows/win32/intl/code-page-identifiers
   SetCodePage(RawByteString(S), 28591, False); // set to iso-8859-1
   SetCodePage(RawByteString(S), CP_UTF8, True); // convert
+end;
+
+class procedure TCommonFunctions.CallRandomizeIfNotCalledAlready();
+{$push}
+{$J+}
+const
+  RandomizeAlreadyCalled: Boolean = False;
+{$pop}
+begin
+  if not RandomizeAlreadyCalled then begin
+    RandomizeAlreadyCalled := True;
+    Randomize;
+  end;
 end;
 
 { TGlobalCounter }

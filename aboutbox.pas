@@ -27,7 +27,6 @@ type
     Label1: TLabel;
     Label2: TLabel;
     Label3: TLabel;
-    Label4: TLabel;
     Label5: TLabel;
     Label6: TLabel;
     Label7: TLabel;
@@ -384,7 +383,8 @@ var
 
   function CreateLinkLabel(AOwner: TComponent; const AUrl: String; ACaption: String; const LeftLabelText: String = ''; const RightLabelText: String = ''): TCustomControl;
   var
-    L, LL: TCustomLabel;
+    LL: TCustomLabel;
+    L: TLabel;
   begin
     Result := TCustomControl.Create(AOwner);
     Result.Anchors := [];
@@ -399,12 +399,13 @@ var
     LL.AnchorVerticalCenterTo(Result);
 
     if LeftLabelText <> '' then begin
-      L := TCustomLabel.Create(Result);
+      L := TLabel.Create(Result);
       L.Caption := LeftLabelText;
       L.Anchors := [];
       L.AnchorVerticalCenterTo(Result);
       L.AnchorParallel(akLeft, 0, Result);
       LL.AnchorToNeighbour(akLeft, 0, L);
+      L.Transparent := True;
       L.Parent := Result;
     end else
       LL.AnchorParallel(akLeft, 0, Result);
@@ -412,11 +413,12 @@ var
     LL.Parent := Result;
 
     if RightLabelText <> '' then begin
-      L := TCustomLabel.Create(Result);
+      L := TLabel.Create(Result);
       L.Caption := RightLabelText;
       L.Anchors := [];
       L.AnchorVerticalCenterTo(Result);
       L.AnchorToNeighbour(akLeft, 0, LL);
+      L.Transparent := True;
       L.Parent := Result;
     end;
 
@@ -489,7 +491,7 @@ var
   end;
 
 var
-  C1: TCustomControl;
+  C1, C2: TCustomControl;
   S, S1: String;
   B: TFormAboutCloseButton;
 
@@ -498,7 +500,7 @@ begin
   CreateTimer;
   {$endif}
 
-  Label5.Caption := 'ZX Spectrum 48K emulator';
+  Label5.Caption := 'ZX Spectrum emulator';
 
   Color := clWhite;
 
@@ -516,13 +518,17 @@ begin
 
   Label7.Caption := 'The Swan icon created by Handoko';
 
-  Label4.Caption :=
-    'ZX Spectrum 48K rom image, included in the executable, is';
+  C2 := CreateLinkLabel(Panel7,
+    'https://github.com/zoran-vucenovic/swan/tree/main/roms', 'original rom images',
+    'ZX Spectrum ', ', included in the executable, are');
+  C2.AnchorToNeighbour(akTop, 9, Label7);
+  C2.AnchorHorizontalCenterTo(Panel7);
+  C2.Parent := Panel7;
 
   C1 := CreateLinkLabel(Panel7,
     'https://groups.google.com/g/comp.sys.amstrad.8bit/c/HtpBU2Bzv_U/m/HhNDSU3MksAJ',
-    'gave permission', 'copyright of Amstrad. Amstrad kindly ', ' to distribute it');
-  C1.AnchorToNeighbour(akTop, 2, Label4);
+    'gave permission', 'copyright of Amstrad. Amstrad kindly ', ' to distribute them');
+  C1.AnchorToNeighbour(akTop, 2, C2);
   C1.AnchorHorizontalCenterTo(Panel7);
   C1.Parent := Panel7;
 

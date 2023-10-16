@@ -17,13 +17,16 @@ uses
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
   UnitBeeper, UnitChooseFile, UnitOptions, UnitFrameSpectrumModel,
   UnitFrameSound, UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions,
-  UnitRecentFiles, UnitCommon;
+  UnitRecentFiles, UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA;
 
 type
-
+TSnapshotSNA = SnapshotSNA.TSnapshotSNA;
+//TSnapshotSNA = UnitFileSna.TSnapshotSNA;
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionModelPlus2: TAction;
+    ActionModel128K: TAction;
     ActionAllOptions: TAction;
     ActionModel16KIssue2: TAction;
     ActionModel16KIssue3: TAction;
@@ -117,6 +120,8 @@ type
     MenuItem49: TMenuItem;
     MenuItem5: TMenuItem;
     MenuItem50: TMenuItem;
+    MenuItem51: TMenuItem;
+    MenuItem52: TMenuItem;
     MenuItemRecentFiles: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
@@ -149,10 +154,12 @@ type
     procedure ActionInputPokesExecute(Sender: TObject);
     procedure ActionJoystickExecute(Sender: TObject);
     procedure ActionKeyMappingsExecute(Sender: TObject);
+    procedure ActionModel128KExecute(Sender: TObject);
     procedure ActionModel16KIssue2Execute(Sender: TObject);
     procedure ActionModel16KIssue3Execute(Sender: TObject);
     procedure ActionModel48KIssue2Execute(Sender: TObject);
     procedure ActionModel48KIssue3Execute(Sender: TObject);
+    procedure ActionModelPlus2Execute(Sender: TObject);
     procedure ActionMoveBackExecute(Sender: TObject);
     procedure ActionMuteSoundExecute(Sender: TObject);
     procedure ActionNMIExecute(Sender: TObject);
@@ -538,6 +545,8 @@ begin
   ActionModel16KIssue3.Tag := Ord(TSpectrumModel.sm16K_issue_3);
   ActionModel48KIssue2.Tag := Ord(TSpectrumModel.sm48K_issue_2);
   ActionModel48KIssue3.Tag := Ord(TSpectrumModel.sm48K_issue_3);
+  ActionModel128K.Tag := Ord(TSpectrumModel.sm128K);
+  ActionModelPlus2.Tag := Ord(TSpectrumModel.smPlus2);
 
   UpdateActiveSnapshotHistory;
 
@@ -703,7 +712,7 @@ begin
   if Sender <> Spectrum then begin
     AddEventToQueue(@ActionAllOptionsExecute);
   end else begin
-    ShowAllOptionsDialog(nil);
+    ShowAllOptionsDialog(TFrameOtherOptions);
   end;
 end;
 
@@ -780,12 +789,16 @@ begin
     try
       Spectrum.Paused := True;
       if TFormInputPokes.ShowInputPokesDialog(
-        Spectrum.GetProcessor.GetMemory^.RomSize,
-        Spectrum.GetProcessor.GetMemory^.MemSize - 1, Pokes)
+        TCommonSpectrum.KB16,
+        TCommonSpectrum.KB64 - 1,
+        Pokes
+        //Spectrum.GetProcessor.GetMemory^.RomSize,
+        //Spectrum.GetProcessor.GetMemory^.MemSize - 1, Pokes
+        )
       then begin
         for I := Low(Pokes) to High(Pokes) do begin
           PE := Pokes[I];
-          Spectrum.GetProcessor.GetMemory^.WriteByte(PE.Adr, PE.Value);
+          Spectrum.Memory.WriteByte(PE.Adr, PE.Value);
         end;
       end;
 
@@ -851,6 +864,12 @@ begin
   end;
 end;
 
+procedure TForm1.ActionModel128KExecute(Sender: TObject);
+begin
+  FNewModel := TSpectrumModel.sm128K;
+  AddEventToQueue(@DoChangeModel);
+end;
+
 procedure TForm1.ActionModel16KIssue2Execute(Sender: TObject);
 begin
   FNewModel := TSpectrumModel.sm16K_issue_2;
@@ -872,6 +891,12 @@ end;
 procedure TForm1.ActionModel48KIssue3Execute(Sender: TObject);
 begin
   FNewModel := TSpectrumModel.sm48K_issue_3;
+  AddEventToQueue(@DoChangeModel);
+end;
+
+procedure TForm1.ActionModelPlus2Execute(Sender: TObject);
+begin
+  FNewModel := TSpectrumModel.smPlus2;
   AddEventToQueue(@DoChangeModel);
 end;
 
@@ -1178,7 +1203,8 @@ var
 begin
   UpdateActionsModel();
   WriteStr(S, Spectrum.SpectrumModel);
-  LabelModel.Caption := StringReplace(Copy(S, 3), '_', ' ', [rfReplaceAll]);
+  S := StringReplace(Copy(S, 3), '_', ' ', [rfReplaceAll]);
+  LabelModel.Caption := 'Spectrum ' + StringReplace(S, 'plus', '+', [rfIgnoreCase]) + ' ';
 end;
 
 procedure TForm1.DoChangeModel(Sender: TObject);
@@ -2379,14 +2405,14 @@ begin
     if BadFilePath then begin
       FreeTapePlayer;
       if AFileName <> '' then
-        S := LineEnding + 'tape file ""' + AFileName + '""'
+        S := LineEnding + 'the tape file ""' + AFileName + '""'
       else
         S := 'a tape file.';
       S := Format(ErrorMessageBadTapeFile, [S]);
     end;
 
     if S <> '' then begin
-      MessageDlg(S + Format(ErrorMessageContinueLoading, [ApplicationName]),
+      MessageDlg(ApplicationName, S + Format(ErrorMessageContinueLoading, [ApplicationName]),
         mtWarning, [mbOK], 0);
     end;
 

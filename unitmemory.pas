@@ -1,212 +1,434 @@
 unit UnitMemory;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
-{$mode objfpc}{$H+}
+{$mode ObjFPC}{$H+}
 {$i zxinc.inc}
-
-{-$define StaticMem}
 
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, UnitCommon;
 
 type
 
   { TMemory }
 
-  TMemory = record
+  TMemory = class(TObject)
   strict private
     const
       KiloByte = 1024;
-      MinimalRomSize = KiloByte;
+      BankSize = 16 * KiloByte;
   strict private
-    FAllowWriteToRom: Boolean;
-    FMemSize: Int32;
-    FRomSize: Int32;
     FRamSize: Int32;
-    P: PByte;
-    {$ifdef StaticMem}
-    MemArr: array [0..(64 * KiloByte - 1)] of Byte;
-    {$endif}
+    MemStart: PByte;
+    FRamBanks: Array[0..7] of PByte;
+    FRomBanks: Array[0..3] of PByte;
+    FActiveRamPageNo: Byte;
+    FActiveRomPageNo: Byte;
+    FActiveScreenPageNo: Byte;
+    ActiveRamBank: PByte;
+    ActiveRomBank: PByte;
+    ActiveScreenBank: PByte;
+    Bank5: PByte;
+    Bank2: PByte;
 
-    procedure Empty;
-    procedure SetSizes(const ARomSize, ARamSize: Int32);
-    function LoadBlockFromStream(const Stream: TStream; const PositionInMemory, Len: Integer): Boolean;
+    procedure SetActiveRamPageNo(B: Byte);
+    procedure SetActiveRomPageNo(B: Byte);
+    procedure SetShadowScreenDisplay(B: Boolean);
+    function GetShadowScreenDisplay: Boolean;
+    function GetRamSizeKB: Word;
 
-    class operator Initialize(var X: TMemory);
-    class operator Finalize(var X: TMemory);
   public
-    procedure SetSizesInKB(const ARomSizeKB, ARamSizeKB: Word);
+    constructor Create;
+    destructor Destroy; override;
+
+    function LoadFromStream(const BankNum: Byte; IsRom: Boolean; const AStream: TStream): Boolean;
+    function SaveToStream(const BankNum: Byte; IsRom: Boolean; const AStream: TStream): Boolean;
+
+    // Ram to one stream - pages 5, 2, 0, 1, 3, 4, 6, 7 respectivly:
+    function LoadRamFromStream(const AStream: TStream): Boolean;
+    function SaveRamToStream(const AStream: TStream): Boolean;
+
     function ReadByte(const Address: Word): Byte; inline;
+    function ReadScreenByte(const Address: Word): Byte; inline;
     procedure WriteByte(const Address: Word; const B: Byte); inline;
 
-    function LoadRomFromStream(const Stream: TStream): Boolean;
-    function LoadRamFromStream(const Stream: TStream): Boolean;
-    function LoadRamBlockFromStream(const Stream: TStream; const Position, Len: Integer): Boolean;
-    function SaveRamToStream(const Stream: TStream): Boolean;
-    procedure ClearRam;
-    procedure RandomizeRam;
+    procedure ClearRam();
+    procedure RandomizeRam();
 
-    property MemSize: Int32 read FMemSize;
-    property RomSize: Int32 read FRomSize;
-    property RamSize: Int32 read FRamSize;
-    property AllowWriteToRom: Boolean read FAllowWriteToRom write FAllowWriteToRom;
+    procedure InitBanks(const ARamSizeKB: Word; ARomBanksCount: Integer = 0);
+    procedure InitBanks();
+    procedure FreeBanks;
+
+    property ActiveRamPageNo: Byte read FActiveRamPageNo write SetActiveRamPageNo;
+    property ActiveRomPageNo: Byte read FActiveRomPageNo write SetActiveRomPageNo;
+    //property MemSize: Word read FRamSize;
+    property RamSizeKB: Word read GetRamSizeKB;
+    property ShadowScreenDisplay: Boolean read GetShadowScreenDisplay write SetShadowScreenDisplay;
   end;
-
-  PMemory = ^TMemory;
 
 implementation
 
 { TMemory }
 
-procedure TMemory.Empty;
+function TMemory.GetRamSizeKB: Word;
 begin
-  {$ifNdef StaticMem}
-  if P <> nil then
-    FreeMemAndNil(P);
-  {$endif}
-
-  FMemSize := 0;
-  FRamSize := 0;
-  FRomSize := 0;
+  Result := FRamSize shr 10;
 end;
 
-procedure TMemory.SetSizes(const ARomSize, ARamSize: Int32);
-var
-  NewMemSize: Int32;
+procedure TMemory.SetActiveRomPageNo(B: Byte);
 begin
-  if (ARomSize < MinimalRomSize) or (ARamSize = 0) then
-    Empty
-  else
-    if (ARomSize <> FRomSize) or (ARamSize <> FRamSize) then begin
-      NewMemSize := ARomSize + ARamSize;
-      {$ifdef StaticMem}
-      if NewMemSize > SizeOf(MemArr) then begin
-        Empty;
-        Exit;
-      end;
-      {$endif}
-      FRomSize := ARomSize;
-      FRamSize := ARamSize;
+  FActiveRomPageNo := B;
+  ActiveRomBank := FRomBanks[B];
+end;
 
-      if NewMemSize <> FMemSize then begin
-        FMemSize := NewMemSize;
-        {$ifNdef StaticMem}
-        ReAllocMem(P, NewMemSize);
-        {$endif}
-      end;
+procedure TMemory.SetShadowScreenDisplay(B: Boolean);
+begin
+  if B then
+    FActiveScreenPageNo := 7
+  else
+    FActiveScreenPageNo := 5;
+  ActiveScreenBank := FRamBanks[FActiveScreenPageNo];
+end;
+
+function TMemory.GetShadowScreenDisplay: Boolean;
+begin
+  Result := FActiveScreenPageNo = 7;
+end;
+
+constructor TMemory.Create;
+var
+  I: Integer;
+begin
+  inherited Create;
+
+  FRamSize := 0;
+  MemStart := nil;
+  FActiveRomPageNo := 0;
+  FActiveRamPageNo := 0;
+  FActiveScreenPageNo := 0;
+  ActiveRomBank := nil;
+  ActiveRamBank := nil;
+  ActiveScreenBank := nil;
+
+  for I := Low(FRamBanks) to High(FRamBanks) do
+    FRamBanks[I] := nil;
+
+  for I := Low(FRomBanks) to High(FRomBanks) do
+    FRomBanks[I] := nil;
+end;
+
+destructor TMemory.Destroy;
+begin
+  FreeBanks;
+
+  inherited Destroy;
+end;
+
+function TMemory.LoadFromStream(const BankNum: Byte; IsRom: Boolean;
+  const AStream: TStream): Boolean;
+var
+  P: PByte;
+begin
+  if Assigned(AStream) and (AStream.Size - AStream.Position >= BankSize) then begin
+    P := nil;
+    if IsRom then begin
+      if BankNum < Length(FRomBanks) then
+        P := FRomBanks[BankNum];
+    end else begin
+      if BankNum < Length(FRamBanks) then
+        P := FRamBanks[BankNum];
     end;
 
+    Result := Assigned(P) and (AStream.Read(P^, BankSize) = BankSize);
+
+  end else
+    Result := False;
 end;
 
-function TMemory.LoadBlockFromStream(const Stream: TStream; const PositionInMemory,
-  Len: Integer): Boolean;
+function TMemory.SaveToStream(const BankNum: Byte; IsRom: Boolean; const AStream: TStream
+  ): Boolean;
+var
+  P: PByte;
 begin
-  Result := Assigned(Stream)
-    and (PositionInMemory + Len <= FMemSize)
-    and (Stream.Position + Len <= Stream.Size)
-    and (Stream.Read((P + PositionInMemory)^, Len) = Len);
+  if not Assigned(AStream) then
+    Exit(False);
+
+  if IsRom then begin
+    if (BankNum < Length(FRomBanks)) then
+      P := FRomBanks[BankNum];
+  end else begin
+    if BankNum < Length(FRamBanks) then
+      P := FRamBanks[BankNum]
+    else
+      P := nil;
+  end;
+
+  Result := Assigned(P) and (AStream.Write(P^, BankSize) = BankSize);
 end;
 
-class operator TMemory.Initialize(var X: TMemory);
+function TMemory.LoadRamFromStream(const AStream: TStream): Boolean;
 begin
-  X.FAllowWriteToRom := False;
-  {$ifdef StaticMem}
-  X.P := @(X.MemArr[0]);
-  {$else}
-  X.P := nil;
-  {$endif}
-
-  X.Empty;
+  Result := LoadFromStream(5, False, AStream);
+  if Result and (GetRamSizeKB >= 48) then begin
+    Result := LoadFromStream(2, False, AStream)
+      and LoadFromStream(0, False, AStream);
+    if Result and (GetRamSizeKB >= 128) then begin
+      Result := LoadFromStream(1, False, AStream)
+        and LoadFromStream(3, False, AStream)
+        and LoadFromStream(4, False, AStream)
+        and LoadFromStream(6, False, AStream)
+        and LoadFromStream(7, False, AStream);
+    end;
+  end;
 end;
 
-class operator TMemory.Finalize(var X: TMemory);
+function TMemory.SaveRamToStream(const AStream: TStream): Boolean;
 begin
-  {$ifNdef StaticMem}
-  if X.P <> nil then
-    FreeMem(X.P);
-  {$endif}
-end;
-
-procedure TMemory.SetSizesInKB(const ARomSizeKB, ARamSizeKB: Word);
-begin
-  SetSizes(ARomSizeKB * KiloByte, ARamSizeKB * KiloByte);
+  Result := SaveToStream(5, False, AStream);
+  if Result and (GetRamSizeKB >= 48) then begin
+    Result := SaveToStream(2, False, AStream)
+      and SaveToStream(0, False, AStream);
+    if Result and (GetRamSizeKB >= 128) then begin
+      Result := SaveToStream(1, False, AStream)
+        and SaveToStream(3, False, AStream)
+        and SaveToStream(4, False, AStream)
+        and SaveToStream(6, False, AStream)
+        and SaveToStream(7, False, AStream);
+    end;
+  end;
 end;
 
 function TMemory.ReadByte(const Address: Word): Byte;
+var
+  P: PByte;
 begin
-  if Address < FMemSize then begin
-    {$ifdef StaticMem}
-    Result := MemArr[Address];
-    {$else}
-    Result := (P + Address)^;
-    {$endif}
-  end else
-    //Result := 0;
-    Result := $FF
-    ; // ?
+  case Address shr 14 of
+    0:
+      P := ActiveRomBank;
+    1:
+      P := Bank5;
+    2:
+      P := Bank2;
+  otherwise
+    P := ActiveRamBank;
+  end;
+
+  if Assigned(P) then
+    Result := (P + (Address and $3FFF))^
+  else
+    Result := $FF;
+end;
+
+function TMemory.ReadScreenByte(const Address: Word): Byte;
+begin
+  Result := (ActiveScreenBank + Address)^;
 end;
 
 procedure TMemory.WriteByte(const Address: Word; const B: Byte);
-begin
-  if (Address < FMemSize) and ((Address >= FRomSize) or FAllowWriteToRom) then begin
-    {$ifdef StaticMem}
-    MemArr[Address] := B;
-    {$else}
-    (P + Address)^ := B;
-    {$endif}
-  end;
-end;
-
-function TMemory.LoadRomFromStream(const Stream: TStream): Boolean;
-begin
-  Result := LoadBlockFromStream(Stream, 0, FRomSize);
-end;
-
-function TMemory.LoadRamFromStream(const Stream: TStream): Boolean;
-begin
-  Result := LoadBlockFromStream(Stream, FRomSize, Stream.Size - Stream.Position);
-end;
-
-function TMemory.LoadRamBlockFromStream(const Stream: TStream; const Position,
-  Len: Integer): Boolean;
-begin
-  Result := LoadBlockFromStream(Stream, FRomSize + Position, Len);
-end;
-
-function TMemory.SaveRamToStream(const Stream: TStream): Boolean;
-begin
-  Result := Assigned(Stream) and (Stream.Write((P + FRomSize)^, FRamSize) = FRamSize);
-end;
-
-procedure TMemory.ClearRam;
-begin
-  FillChar((P + RomSize)^, FRamSize, 0);
-end;
-
-procedure TMemory.RandomizeRam;
-const
-  //TopByte = Int32($100);
-  TopByte = Int32(Byte.MaxValue) + 1;
-{$push}{$J+}
-const
-  RandomizeAlreadyCalled: Boolean = False;
-{$pop}
 var
-  P1, P2: PByte;
+  P: PByte;
 begin
-  if not RandomizeAlreadyCalled then begin
-    RandomizeAlreadyCalled := True;
-    Randomize;
+  case Address shr 14 of
+    0:
+      // rom bank, do nothing.
+      Exit;
+    1:
+      P := Bank5;
+    2:
+      P := Bank2;
+  otherwise // 3
+    P := ActiveRamBank;
   end;
-  P1 := P + FRomSize;
-  P2 := P1 + FRamSize;
-  while P1 < P2 do begin
-    P1^ := Byte(Random(TopByte));
-    Inc(P1);
+
+  if Assigned(P) then
+    (P + (Address and $3FFF))^ := B;
+end;
+
+procedure TMemory.ClearRam();
+
+  procedure ClearRamBank(const P: PByte);
+  begin
+    if Assigned(P) then
+      FillChar(P^, BankSize, 0);
   end;
+
+var
+  I: Integer;
+begin
+  for I := Low(FRamBanks) to High(FRamBanks) do
+    ClearRamBank(FRamBanks[I]);
+end;
+
+procedure TMemory.RandomizeRam();
+
+  procedure RandomizeRamBank(P: PByte);
+  const
+    TopByte = Int32(Byte.MaxValue) + 1;
+  var
+    P1: PByte;
+  begin
+    if Assigned(P) then begin
+      P1 := P + BankSize;
+      while P < P1 do begin
+        P^ := Byte(Random(TopByte));
+        Inc(P);
+      end;
+    end;
+  end;
+
+var
+  I: Integer;
+begin
+  UnitCommon.TCommonFunctions.CallRandomizeIfNotCalledAlready();
+
+  for I := Low(FRamBanks) to High(FRamBanks) do
+    RandomizeRamBank(FRamBanks[I]);
+end;
+
+procedure TMemory.SetActiveRamPageNo(B: Byte);
+begin
+  FActiveRamPageNo := B;
+  ActiveRamBank := FRamBanks[B];
+end;
+
+procedure TMemory.InitBanks(const ARamSizeKB: Word; ARomBanksCount: Integer);
+
+var
+  I: Integer;
+  RamBanksCount: Integer;
+  P: PByte;
+
+begin
+  case ARamSizeKB of
+    16, 48:
+      ARomBanksCount := 1;
+
+    128:
+      if ARomBanksCount <> 4 then
+        ARomBanksCount := 2;
+
+  otherwise
+    FreeBanks;
+    Exit;
+  end;
+
+  RamBanksCount := ARamSizeKB div 16;
+  FRamSize := Int32(ARamSizeKB) * KiloByte;
+  ReAllocMem(MemStart, FRamSize + ARomBanksCount * BankSize);
+
+  P := MemStart;
+  for I := Low(FRomBanks) to High(FRomBanks) do begin
+    if I >= ARomBanksCount then
+      FRomBanks[I] := nil
+    else begin
+      FRomBanks[I] := P;
+      P := P + BankSize;
+    end;
+  end;
+
+  Bank5 := P;
+  P := P + BankSize;
+
+  if RamBanksCount >= 3 then begin
+    Bank2 := P;
+    FRamBanks[0] := Bank2 + BankSize;
+    P := P + 2 * BankSize;
+  end else begin
+    Bank2 := nil;
+    FRamBanks[0] := nil;
+  end;
+  
+  FRamBanks[2] := Bank2;
+  FRamBanks[5] := Bank5;
+
+  for I := Low(FRamBanks) to High(FRamBanks) do begin
+    if I in [1, 3, 4, 6, 7] then begin
+      if ARomBanksCount > 1 then begin // 128K
+        FRamBanks[I] := P;
+        P := P + BankSize;
+      end else
+        FRamBanks[I] := nil;
+    end;
+  end;
+
+  //for I in [1, 3, 4, 6, 7] do begin
+  //  if ARomBanksCount > 1 then // 128K
+  //    InitBank(FRamBanks[I])
+  //  else if Assigned(FRamBanks[I]) then
+  //    FreeMemAndNil(FRamBanks[I]);
+  //end;
+  //
+  //for I := ARomBanksCount to High(FRomBanks) do
+  //  if FRomBanks[I] <> nil then
+  //    FreeMemAndNil(FRomBanks[I]);
+  //
+  //if RamBanksCount < 3 then
+  //  I := 2
+  //else
+  //  I := 4;
+  //
+  //ReAllocMem(MemStart, I * BankSize);
+  //FRomBanks[0] := MemStart;
+  //Bank5 := MemStart + BankSize;
+  //if RamBanksCount >= 3 then begin
+  //  Bank2 := Bank5 + BankSize;
+  //  FRamBanks[0] := Bank2 + BankSize;
+  //end else begin
+  //  Bank2 := nil;
+  //  FRamBanks[0] := nil;
+  //end;
+  //
+  //FRamBanks[2] := Bank2;
+  //FRamBanks[5] := Bank5;
+  //
+  //for I := 1 to ARomBanksCount - 1 do
+  //  InitBank(FRomBanks[I]);
+  //
+  //for I in [1, 3, 4, 6, 7] do begin
+  //  if ARomBanksCount > 1 then // 128K
+  //    InitBank(FRamBanks[I])
+  //  else if Assigned(FRamBanks[I]) then
+  //    FreeMemAndNil(FRamBanks[I]);
+  //end;
+
+  ActiveRomBank := FRomBanks[0];
+  ActiveRamBank := FRamBanks[0];
+  SetShadowScreenDisplay(False);
+end;
+
+procedure TMemory.InitBanks();
+var
+  N: Integer;
+begin
+  if FRomBanks[3] <> nil then
+    N := 4
+  else
+    N := 0;
+  InitBanks(GetRamSizeKB(), N);
+end;
+
+procedure TMemory.FreeBanks;
+var
+  I: Integer;
+begin
+  FRamSize := 0;
+  FActiveRamPageNo := 0;
+  FActiveRomPageNo := 0;
+  FActiveScreenPageNo := 0;
+  Bank2 := nil;
+  Bank5 := nil;
+  ActiveRomBank := nil;
+  ActiveRamBank := nil;
+  ActiveScreenBank := nil;
+  for I := Low(FRomBanks) to High(FRomBanks) do
+    FRomBanks[I] := nil;
+  for I := Low(FRamBanks) to High(FRamBanks) do
+    FRamBanks[I] := nil;
+
+  if MemStart <> nil then
+    FreeMemAndNil(MemStart);
 end;
 
 end.

@@ -1,3 +1,10 @@
-The file 48.rom is the image of original rom from ZX Spectrum 48K.
-Amstrad holds the copyright to this rom image, but kindly gave the permission to distribute this copyrighted material.
+The five ".rom" files in this folder are:
+
+48.rom - the image of original rom from ZX Spectrum 48K and ZX Spectrum plus (contains BASIC for 16/48K models)
+128-english-0.rom, 128-english-1.rom - the images of original english roms from ZX Spectrum 128K (128K editor and menu and 48K BASIC)
+plus2-english-0.rom, plus2-english-1.rom - the images of original roms from ZX Spectrum +2 (128K editor and menu and 48K BASIC)
+
+See: https://sinclair.wiki.zxnet.co.uk/wiki/ROM_images
+
+Amstrad holds the copyright to these rom images, but kindly gave the permission to distribute this copyrighted material.
 https://groups.google.com/g/comp.sys.amstrad.8bit/c/HtpBU2Bzv_U/m/HhNDSU3MksAJ

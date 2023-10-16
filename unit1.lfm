@@ -21,7 +21,7 @@ object Form1: TForm1
   OnDropFiles = FormDropFiles
   OnShow = FormShow
   ParentDoubleBuffered = False
-  LCLVersion = '3.0.0.1'
+  LCLVersion = '3.0.0.2'
   object PaintBox1: TPaintBox
     AnchorSideLeft.Control = Owner
     AnchorSideBottom.Control = PanelStatus
@@ -397,28 +397,38 @@ object Form1: TForm1
     end
     object ActionModel16KIssue2: TAction
       Category = 'SpectrumModel'
-      Caption = 'Spectrum 16K issue 2'
+      Caption = '16K (issue 2 keyboard)'
       OnExecute = ActionModel16KIssue2Execute
     end
     object ActionModel16KIssue3: TAction
       Category = 'SpectrumModel'
-      Caption = 'Spectrum 16K issue 3'
+      Caption = '16K (issue 3 keyboard)'
       OnExecute = ActionModel16KIssue3Execute
     end
     object ActionModel48KIssue2: TAction
       Category = 'SpectrumModel'
-      Caption = 'Spectrum 48K issue 2'
+      Caption = '48K (issue 2 keyboard)'
       OnExecute = ActionModel48KIssue2Execute
     end
     object ActionModel48KIssue3: TAction
       Category = 'SpectrumModel'
-      Caption = 'Spectrum 48K issue 3'
+      Caption = '48K (issue 3 keyboard)'
       OnExecute = ActionModel48KIssue3Execute
     end
     object ActionAllOptions: TAction
       Category = 'Options'
       Caption = 'All options...'
       OnExecute = ActionAllOptionsExecute
+    end
+    object ActionModel128K: TAction
+      Category = 'SpectrumModel'
+      Caption = '128K Sinclair'
+      OnExecute = ActionModel128KExecute
+    end
+    object ActionModelPlus2: TAction
+      Category = 'SpectrumModel'
+      Caption = '+2 Amstrad'
+      OnExecute = ActionModelPlus2Execute
     end
   end
   object MainMenu1: TMainMenu
@@ -512,6 +522,12 @@ object Form1: TForm1
         end
         object MenuItem46: TMenuItem
           Action = ActionModel48KIssue3
+        end
+        object MenuItem51: TMenuItem
+          Action = ActionModel128K
+        end
+        object MenuItem52: TMenuItem
+          Action = ActionModelPlus2
         end
       end
       object MenuItem11: TMenuItem

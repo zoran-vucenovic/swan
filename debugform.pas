@@ -10,9 +10,10 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
   Buttons, Grids, ActnList, UnitFrameWordDisplay, UnitSpectrum, Z80Processor,
-  UnitMemory, FastIntegers, CommonFunctionsLCL, Types, fgl;
+  UnitMemory, FastIntegers, CommonFunctionsLCL, UnitCommonSpectrum, Types, fgl;
 
 type
+  { #todo : update to 128k (memory pages, port 0x7ffd) }
 
   TFormDebug = class(TForm, TSpectrum.IDebugger)
     ActionUpdate: TAction;
@@ -508,24 +509,24 @@ procedure TFormDebug.StringGrid1PrepareCanvas(sender: TObject; aCol,
 var
   Gr: TCustomStringGrid;
   N: Integer;
-  Mem: PMemory;
+  Mem: TMemory;
   Proc: TProcessor;
 
 begin
   if Sender is TCustomStringGrid then begin
     Proc := FSpectrum.GetProcessor;
     if Assigned(Proc) then begin
-      Mem := Proc.GetMemory;
+      Mem := FSpectrum.Memory;
       Gr := TCustomStringGrid(Sender);
 
       if (aCol = Gr.FixedCols) and (aRow >= Gr.FixedRows) then begin
         N := aRow - Gr.FixedRows;
 
-        if N < Mem^.RomSize then
+        if N < TCommonSpectrum.KB16 then
           Gr.Canvas.Brush.Color := clSilver
-        else if N < Mem^.RomSize + 32 * 192 then
+        else if N < TCommonSpectrum.KB16 + 32 * 192 then
           Gr.Canvas.Brush.Color := clLime
-        else if N < Mem^.RomSize + 32 * 192 + 32 * 24 then
+        else if N < TCommonSpectrum.KB16 + 32 * 192 + 32 * 24 then
           Gr.Canvas.Brush.Color := clMoneyGreen;
 
       end;
@@ -603,24 +604,25 @@ end;
 procedure TFormDebug.UpdateValues;
 var
   I, N: Integer;
-  Mem: PMemory;
+  Mem: TMemory;
   Proc: TProcessor;
   B: Byte;
 begin
   if Assigned(FSpectrum) and FSpectrum.IsRunning then begin
     Proc := FSpectrum.GetProcessor;
     if Assigned(Proc) then begin
-      Mem := Proc.GetMemory;
+      Mem := FSpectrum.Memory;
 
       if FillRegisters then begin
         StringGrid1.BeginUpdate;
         try
-          StringGrid1.RowCount := StringGrid1.FixedRows + Mem^.MemSize;
+          StringGrid1.RowCount := StringGrid1.FixedRows + //Mem^.MemSize
+            TCommonSpectrum.KB64;
 
           N := 0;
           for I := StringGrid1.FixedRows to StringGrid1.RowCount - 1 do begin
             StringGrid1.Cells[1, I] := IntToHex(N, 4) + ' (' + N.ToString.PadLeft(5, '0') + ')';
-            B := Mem^.ReadByte(N);
+            B := Mem.ReadByte(N);
             StringGrid1.Cells[2, I] := IntToHex(B, 2) + ' (' + B.ToString.PadLeft(3, '0') + ')';
 
             Inc(N);

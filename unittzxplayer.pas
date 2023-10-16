@@ -12,6 +12,9 @@ uses
 
 implementation
 
+uses
+  SnapshotZ80, SnapshotSNA; // these are included for tzx block 40
+
 const
   TicksPerMilliSecond = Int64(3500);
   //

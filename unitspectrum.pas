@@ -8,9 +8,10 @@ unit UnitSpectrum;
 interface
 
 uses
-  Classes, SysUtils, BGRABitmapTypes, UnitMemory, Z80Processor,
+  Classes, SysUtils, Types, BGRABitmapTypes, UnitMemory, Z80Processor,
   UnitSpectrumKeyboard, FastIntegers, UnitSpectrumColourMap,
-  UnitSpectrumColoursBGRA, UnitJoystick, UnitBeeper, Graphics, LCLType, Forms;
+  UnitSpectrumColoursBGRA, UnitJoystick, UnitBeeper, SoundChipAY_3_8912,
+  Graphics, LCLType, Forms;
 
 const
   TopBorder = 36;
@@ -27,7 +28,7 @@ const
 type
   TSpectrumModel = (
     smNone, sm16K_issue_2, sm16K_issue_3, sm48K_issue_2, sm48K_issue_3
-    // sm128K, smPlus2, smPlus2a, smPlus3 // one day... maybe.
+      , sm128K, smPlus2, smPlus2a, smPlus3 // one day... maybe.
     );
 
   TSpectrumColour = Integer;
@@ -59,22 +60,40 @@ type
   strict private
     const
       HoldInterruptPinTicks = 32;
+      FAyPortSelectReg = $FFFD;
+      FAyPortValue = $BFFD;
 
+      BeeperRateMultiply48 = 63;
+      BeeperRateDivide48 = 5000;
+      BeeperRateMultiply128 = 7;
+      BeeperRateDivide128 = 563;
   strict private
+    procedure SetPaging; inline;
     // processor events
     procedure ProcessorInput;
     procedure ProcessorOutput;
 
   strict private
+    CentralScreenStart: Int32Fast;
+    TicksPerScanLine: Int32Fast;
+    ScreenStart: Int32Fast;
+    ScreenEnd: Int32Fast;
+
+    FloatBusFirstInterestingTick: Int32Fast;
+    FloatBusLastInterestingTick: Int32Fast;
+
+    FIs128KModel: Boolean;
+    FModelWithHALbug: Boolean;
     FOnSync: TThreadMethod;
     FPaused: Boolean;
     FSpectrumModel: TSpectrumModel;
     FBkpSpectrumModel: TSpectrumModel;
     FIssue2Keyboard: Boolean;
     FProcessor: TProcessor;
-    FMemory: PMemory;
+    FMemory: TMemory;
     FDebugger: IDebugger;
     FTapePlayer: TAbstractTapePlayer;
+    FAYSoundChip: TSoundAY_3_8912;
 
     // screen processing
     FCodedBorderColour: Byte;
@@ -101,6 +120,9 @@ type
     FIntPinUpCount: Int16Fast;
     FLatestTickUpdatedBeeper: Int64;
     FRestoringSpectrumModel: Boolean;
+
+    FBeeperRateMultiply: Int64;
+    FBeeperRateDivide: Int64;
 
     procedure StopBeeper; inline;
     procedure UpdateBeeperBuffer; inline;
@@ -133,6 +155,10 @@ type
     procedure UpdateDebuggedOrPaused;
     procedure SetInternalEar(AValue: Byte);
     procedure SetSpectrumModel(ASpectrumModel: TSpectrumModel);
+
+  strict private
+    // 128 K
+    FPagingEnabled: Boolean;
 
   protected
     procedure Execute; override;
@@ -180,14 +206,13 @@ type
     property SpectrumModel: TSpectrumModel read FSpectrumModel write SetSpectrumModel;
     property BkpSpectrumModel: TSpectrumModel read FBkpSpectrumModel write FBkpSpectrumModel;
     property InLoadingSnapshot: Boolean read FInLoadingSnapshot write FInLoadingSnapshot;
+    property Is128KModel: Boolean read FIs128KModel;
+    property Memory: TMemory read FMemory;
+    property AYSoundChip: TSoundAY_3_8912 read FAYSoundChip;
+    property IsPagingEnabled: Boolean read FPagingEnabled write FPagingEnabled;
   end;
 
 implementation
-
-const
-  CentralScreenStart = 14335;
-  ScreenStart = CentralScreenStart - TopBorder * 224 - 24; //6247
-  ScreenEnd = ScreenStart + (WholeScreenHeight - 1) * 224 + WholeScreenWidth div 2 - 1; // 65334
 
 { TSpectrum }
 
@@ -195,22 +220,37 @@ procedure TSpectrum.UpdateBeeperBuffer;
 var
   B: Byte;
   N, M: Integer;
+  P: PByte;
 begin
   if TBeeper.Playing then begin
-    N := ((FSumTicks + FProcessor.TStatesInCurrentFrame) * 63 + 2500 - FLatestTickUpdatedBeeper) div 5000;
+    N := ((FSumTicks + FProcessor.TStatesInCurrentFrame) * FBeeperRateMultiply + FBeeperRateDivide shr 1 - FLatestTickUpdatedBeeper) div FBeeperRateDivide;
     if N > 0 then begin
-      FLatestTickUpdatedBeeper := FLatestTickUpdatedBeeper + N * 5000;
+      FLatestTickUpdatedBeeper := FLatestTickUpdatedBeeper + N * FBeeperRateDivide;
 
-      B := (Integer(FEar or FMic) * TBeeper.BeeperVolume) shr 6;
+      //B := FEar or FMic;
+      //if FAYSoundChip = nil then
+        B := (Integer(FEar or FMic) * TBeeper.BeeperVolume) shr 6;
 
+      P := TBeeper.BeeperBuffer + TBeeper.CurrentPosition;
       M := TBeeper.BufferLen - TBeeper.CurrentPosition;
+
       if N >= M then begin
-        FillChar((TBeeper.BeeperBuffer + TBeeper.CurrentPosition)^, M, B);
+        //FillChar(P^, M, B);
+        if Assigned(FAYSoundChip) then
+          FAYSoundChip.Fill(B, P, M)
+        else
+          FillChar(P^, M, B);
+
         N := N - M;
         TBeeper.CurrentPosition := 0;
+        P := TBeeper.BeeperBuffer;
       end;
 
-      FillChar((TBeeper.BeeperBuffer + TBeeper.CurrentPosition)^, N, B);
+      if Assigned(FAYSoundChip) then
+        FAYSoundChip.Fill(B, P, N)
+      else
+        FillChar(P^, N, B);
+
       TBeeper.CurrentPosition := TBeeper.CurrentPosition + N;
     end;
   end;
@@ -265,15 +305,26 @@ begin
     FSpeed := AValue;
     StopBeeper;
 
-    // For 20 milliseconds (20.000 microseconds) passes 70.000 ticks.
-    // How many microseconds it actually takes for 69888 ticks?
-    // 20000 / 70000 = x / 69888
-    // x = 69888 * 2 / 7
-    // x = 19968
-    // So:
-    //SpeedCorrection := MulDiv(19968, FSpeed, 512);
-    // that is:
-    SpeedCorrection := 39 * FSpeed;
+    if FIs128KModel then begin
+      // For 1.000.000 microseconds, passes 3.546.900 ticks
+      // How many microseconds it actually takes for 70908 ticks?
+      // 1000000 / 3546900 = x / 70908
+      // x = 70908 * 10000 / 35469
+      //
+      //SpeedCorrection is (70908 * 10000) / (35469 * 512);
+      // that is:
+      SpeedCorrection := MulDiv(3693125, FSpeed, 94584);
+    end else begin
+      // For 20 milliseconds (20.000 microseconds) passes 70.000 ticks.
+      // How many microseconds it actually takes for 69888 ticks?
+      // 20000 / 70000 = x / 69888
+      // x = 69888 * 2 / 7
+      // x = 19968
+      // So:
+      //SpeedCorrection := MulDiv(19968, FSpeed, 512);
+      // that is:
+      SpeedCorrection := 39 * FSpeed;
+    end;
 
     UpdateAskForSpeedCorrection;
     CheckStartBeeper;
@@ -300,31 +351,40 @@ begin
     FDebugger.AfterStep;
 end;
 
+procedure TSpectrum.SetPaging;
+begin
+  if FPagingEnabled and (FProcessor.AddressBus and $8002 = 0) then begin
+    FMemory.ActiveRamPageNo := FProcessor.DataBus and %111;
+    FProcessor.ContendedHighBank := FProcessor.DataBus and 1 <> 0; { #todo : different on +3! }
+    FMemory.ShadowScreenDisplay := FProcessor.DataBus and %1000 <> 0;
+    FMemory.ActiveRomPageNo := (FProcessor.DataBus shr 4) and 1;
+    if FProcessor.DataBus and %100000 <> 0 then
+      FPagingEnabled := False;
+  end;
+end;
+
 procedure TSpectrum.ProcessorInput;
 
   procedure CheckFloatingBus;
-  const
-    FirstInterestingTState = 14339;
-    LastInterestingTState = FirstInterestingTState + 224 * (CentralScreenHeight - 1) + 127;
   var
     N, X, Y: Integer;
     W: Word;
     WR: WordRec absolute W;
   begin
-    if (FProcessor.TStatesInCurrentFrame <= LastInterestingTState)
-        and (FProcessor.TStatesInCurrentFrame >= FirstInterestingTState)
+    if (FProcessor.TStatesInCurrentFrame <= FloatBusLastInterestingTick)
+        and (FProcessor.TStatesInCurrentFrame >= FloatBusFirstInterestingTick)
     then begin
       //
-      N := FProcessor.TStatesInCurrentFrame - FirstInterestingTState;
-      X := N mod 224;
+      N := FProcessor.TStatesInCurrentFrame - FloatBusFirstInterestingTick;
+      X := N mod TicksPerScanLine;
       if X and $84 = 0 then begin //if (X <= 127) and (X mod 8 <= 3) then begin
-        Y := N div 224;
+        Y := N div TicksPerScanLine;
         if X and 1 = 0 then
-          WR.Hi := %01000000 or ((Y shr 3) and %00011000) or (Y and %111)
+          WR.Hi := ((Y shr 3) and %00011000) or (Y and %111)
         else
-          WR.Hi := %01011000 or ((Y shr 6) and %11);
+          WR.Hi := %00011000 or ((Y shr 6) and %11);
         WR.Lo := (((Y shl 2) and %11100000) or (X shr 2)) + ((X shr 1) and 1);
-        FProcessor.DataBus := FMemory^.ReadByte(W);
+        FProcessor.DataBus := FMemory.ReadScreenByte(W);
       end;
     end;
   end;
@@ -368,9 +428,21 @@ begin
       )
     then begin
       FProcessor.DataBus := TJoystick.Joystick.State;
+    end else if Assigned(FAYSoundChip) and (FProcessor.AddressBus = FAyPortSelectReg) then begin
+      FProcessor.DataBus := FAYSoundChip.GetRegValue();
     end else begin
       FProcessor.DataBus := $FF;
       CheckFloatingBus;
+
+      // HAL bug (https://sinclair.wiki.zxnet.co.uk/wiki/ZX_Spectrum_128#HAL_bugs):
+      // "Reads from port 0x7ffd cause a crash, as the 128's HAL10H8 chip
+      // does not distinguish between reads and writes to this port, resulting
+      // in a floating data bus being used to set the paging registers."
+      // Test: "print in 32765" from 128K basic should crash Spectrum
+      //   (see https://foro.speccy.org/viewtopic.php?t=2374)
+      // and FloatFFD test (https://github.com/redcode/ZXSpectrum/wiki/FloatFFD)
+      if FModelWithHALbug then
+        SetPaging;
     end;
   end;
 end;
@@ -395,7 +467,22 @@ begin
     FInternalEar := (Aux and %10000) shl 2;
     FMic := (not Aux) and %1000;
     FEar := FInternalEar or FEarFromTape;
-  end;
+  end else
+    if Assigned(FAYSoundChip) then begin
+      case FProcessor.AddressBus of
+        FAyPortSelectReg:
+          FAYSoundChip.SetActiveRegNum(FProcessor.DataBus);
+        FAyPortValue:
+          begin
+            UpdateBeeperBuffer;
+            FAYSoundChip.SetRegValue(FProcessor.DataBus);
+            // calculate new values for output
+          end;
+      otherwise
+      end;
+    end;
+
+  SetPaging;
 end;
 
 procedure TSpectrum.CheckStartBeeper;
@@ -403,7 +490,7 @@ begin
   if (not FSoundMuted) and AskForSpeedCorrection and FRunning and (FSpeed = NormalSpeed)
       and TBeeper.IsLibLoaded and (not TBeeper.Playing)
   then begin
-    FLatestTickUpdatedBeeper := (FSumTicks + FProcessor.TStatesInCurrentFrame) * 63;
+    FLatestTickUpdatedBeeper := (FSumTicks + FProcessor.TStatesInCurrentFrame) * FBeeperRateMultiply;
     TBeeper.StartBeeper;
   end;
 end;
@@ -441,15 +528,20 @@ var
 begin
   inherited Create(True);
 
-  FSoundMuted := False;
-
   FreeOnTerminate := False;
+
+  FPagingEnabled := False;
+  FSoundMuted := False;
 
   FDebugger := nil;
   FTapePlayer := nil;
 
+  FIs128KModel := False;
+
+  FMemory := TMemory.Create;
   FProcessor := TProcessor.Create;
-  FMemory := FProcessor.GetMemory();
+  FProcessor.SetMemory(FMemory);
+
   FSpectrumModel := smNone;
   FBkpSpectrumModel := smNone;
   FIssue2Keyboard := False;
@@ -461,6 +553,7 @@ begin
   SpectrumColoursBGRA.Bmp.SetSize(WholeScreenWidth, WholeScreenHeight);
 
   GetActiveColours(Colours);
+  FCodedBorderColour := 7;
   SetSpectrumColours(Colours);
   FSpeed := 0;
   SetSpeed(NormalSpeed);
@@ -484,8 +577,9 @@ end;
 
 destructor TSpectrum.Destroy;
 begin
-  FMemory := nil;
+  FreeAndNil(FAYSoundChip);
   FProcessor.Free;
+  FMemory.Free;
 
   inherited Destroy;
 end;
@@ -497,60 +591,138 @@ end;
 
 procedure TSpectrum.SetSpectrumModel(ASpectrumModel: TSpectrumModel);
 
-  function GetRomResName(AModel: TSpectrumModel): String;
+  function GetRomResNames(AModel: TSpectrumModel; out ARoms: TStringDynArray): Boolean;
   begin
     case AModel of
       sm16K_issue_2, sm16K_issue_3, sm48K_issue_2, sm48K_issue_3:
-        Result := 'SPECTRUM48_ROM';
-      // perhaps add 128k models one day...
+        begin
+          SetLength(ARoms, 1);
+          ARoms[0] := 'SPECTRUM48_ROM';
+        end;
+      sm128K:
+        begin
+          SetLength(ARoms, 2);
+          ARoms[0] := 'SPECTRUM128_ENGLISH_0_ROM';
+          ARoms[1] := 'SPECTRUM128_ENGLISH_1_ROM';
+        end;
+      smPlus2:
+        begin
+          SetLength(ARoms, 2);
+          ARoms[0] := 'PLUS2_ENGLISH_0_ROM';
+          ARoms[1] := 'PLUS2_ENGLISH_1_ROM';
+        end;
+      // perhaps more models one day...
     otherwise
-      Result := '';
     end;
+
+    Result := Length(ARoms) >= 1;
   end;
+
+const
+  FrameTicks48 = 69888;
+  FrameTicks128 = 70908;
+
+  CentralScreenStart48 = 14335;
+  TicksPerScanLine48 = 224;
+  //ScreenStart48 = CentralScreenStart48 - TopBorder * 224 - 24; //6247
+  //ScreenEnd48 = ScreenStart48 + (WholeScreenHeight - 1) * 224 + WholeScreenWidth div 2 - 1; // 65334
+
+  CentralScreenStart128 = 14361;
+  TicksPerScanLine128 = 228;
+  //ScreenStart128 = CentralScreenStart128 - TopBorder * 228 - 24; //6129
+  //ScreenEnd128 = ScreenStart128 + (WholeScreenHeight - 1) * 228 + WholeScreenWidth div 2 - 1; // 66268
 
 var
   RomStream: TStream;
   NewRamSize: Word;
-  RomResName: String;
+  //RomResName: String;
   SkipReset: Boolean;
+  Roms: TStringDynArray;
+  I: Integer;
+  PrevSpeed: Integer;
 
 begin
   if ASpectrumModel = FSpectrumModel then
     Exit;
 
+  SkipReset := False;
+
+  NewRamSize := 128;
+  FIs128KModel := True;
+  FModelWithHALbug := False;
+  CentralScreenStart := CentralScreenStart128;
+  TicksPerScanLine := TicksPerScanLine128;
+
   try
     case ASpectrumModel of
       sm16K_issue_2, sm16K_issue_3, sm48K_issue_2, sm48K_issue_3:
         begin
+          CentralScreenStart := CentralScreenStart48;
+          TicksPerScanLine := TicksPerScanLine48;
+          FIs128KModel := False;
+
+          FProcessor.FrameTicks := FrameTicks48;
           case ASpectrumModel of
             sm16K_issue_2, sm16K_issue_3:
               NewRamSize := 16;
           otherwise
             NewRamSize := 48;
           end;
-          FMemory^.SetSizesInKB(16, NewRamSize);
+          SkipReset := NewRamSize = FMemory.RamSizeKB;
+        end;
+      sm128K, smPlus2:
+        begin
+          FModelWithHALbug := True;
 
-          RomResName := GetRomResName(ASpectrumModel);
-          if RomResName <> GetRomResname(FSpectrumModel) then begin
-            RomStream := nil;
-            try
-              RomStream := TResourceStream.Create(HINSTANCE, RomResName, RT_RCDATA);
-
-              RomStream.Position := 0;
-              if not FMemory^.LoadRomFromStream(RomStream) then
-                Abort;
-
-            finally
-              RomStream.Free;
-            end;
-
-          end;
+          FProcessor.FrameTicks := FrameTicks128;
         end;
     otherwise
+      Abort;
+    end;
+
+    ScreenStart := CentralScreenStart - TopBorder * TicksPerScanLine - 24; //6247
+    ScreenEnd := ScreenStart + (WholeScreenHeight - 1) * TicksPerScanLine + WholeScreenWidth div 2 - 1; // 65334
+
+    FProcessor.ContentionFrom := CentralScreenStart;
+    FProcessor.TicksPerLine := TicksPerScanLine;
+    FProcessor.ContentionTo := FProcessor.ContentionFrom + (CentralScreenHeight - 1) * TicksPerScanLine + 128;
+    FloatBusFirstInterestingTick := FProcessor.ContentionFrom + 4;
+    FloatBusLastInterestingTick := FProcessor.ContentionTo + 3;
+
+    if not GetRomResNames(ASpectrumModel, Roms) then
+      Abort;
+
+    FMemory.InitBanks(NewRamSize, Length(Roms));
+    for I := Low(Roms) to High(Roms) do begin
+      RomStream := nil;
+      try
+        RomStream := TResourceStream.Create(HINSTANCE, Roms[I], RT_RCDATA);
+
+        RomStream.Position := 0;
+        if not FMemory.LoadFromStream(I, True, RomStream) then
+          Abort;
+      finally
+        RomStream.Free;
+      end;
     end;
 
   except
+    FIs128KModel := False;
     ASpectrumModel := smNone;
+  end;
+
+  if FIs128KModel then begin
+    FBeeperRateMultiply := BeeperRateMultiply128;
+    FBeeperRateDivide := BeeperRateDivide128;
+
+    if FAYSoundChip = nil then
+      FAYSoundChip := TSoundAY_3_8912.Create
+    else
+      FAYSoundChip.Reset();
+  end else begin                            
+    FreeAndNil(FAYSoundChip);
+    FBeeperRateMultiply := BeeperRateMultiply48;
+    FBeeperRateDivide := BeeperRateDivide48;
   end;
 
   if FInLoadingSnapshot then begin
@@ -560,10 +732,7 @@ begin
     FBkpSpectrumModel := smNone;
 
   SkipReset :=
-    FRestoringSpectrumModel
-    or ((ASpectrumModel in [sm16K_issue_2, sm16K_issue_3]) and (FSpectrumModel in [sm16K_issue_2, sm16K_issue_3]))
-    or ((ASpectrumModel in [sm48K_issue_2, sm48K_issue_3]) and (FSpectrumModel in [sm48K_issue_2, sm48K_issue_3]))
-    ;
+    SkipReset or FRestoringSpectrumModel;
 
   FSpectrumModel := ASpectrumModel;
   FIssue2Keyboard := FSpectrumModel in [sm16K_issue_2, sm48K_issue_2];
@@ -571,8 +740,11 @@ begin
   if Assigned(FOnChangeModel) then
     Synchronize(FOnChangeModel);
 
+  PrevSpeed := FSpeed;
+  FSpeed := 0;
   if not SkipReset then
     ResetSpectrum;
+  SetSpeed(PrevSpeed);
 end;
 
 procedure TSpectrum.UpdateDebuggedOrPaused;
@@ -638,6 +810,8 @@ begin
 end;
 
 procedure TSpectrum.ResetSpectrum;
+var
+  BufLen: Integer;
 begin
   StopBeeper;
   if not FInLoadingSnapshot then
@@ -662,20 +836,31 @@ begin
   FEarFromTape := 0;
   FEar := 0;
   FMic := 0;
-  FCodedBorderColour := 7;
-  SetCodedBorderColour(0);
+  //FCodedBorderColour := 0;
+  //SetCodedBorderColour(7);
   TicksFrom := ScreenStart;
   FSumTicks := FSumTicks + FProcessor.TStatesInCurrentFrame;
   FProcessor.ResetCPU;
   FProcessor.IntPin := True;
   FFlashState := 0;
-  FMemory^.ClearRam;
+
+  FMemory.InitBanks();
+  FMemory.ClearRam;
+  FPagingEnabled := FIs128KModel;
+  FProcessor.ContendedHighBank := False;
 
   FFrameCount := 0;
   InitTimes;
   KeyBoard.ClearKeyboard;
   TJoystick.Joystick.ResetState;
 
+  BufLen := 512 * 64;
+  if Assigned(FAYSoundChip) then begin
+    FAYSoundChip.Reset();
+    BufLen := BufLen * 4 * 2;
+  end;
+
+  TBeeper.BufferLen := BufLen;
   CheckStartBeeper;
 end;
 
@@ -728,15 +913,15 @@ procedure TSpectrum.RunSpectrum;
       end;
     end;
 
-    if FProcessor.TStatesInCurrentFrame >= TProcessor.FrameTicks then begin
+    if FProcessor.TStatesInCurrentFrame >= FProcessor.FrameTicks then begin
       FProcessor.IntPin := True;
 
       Inc(FFrameCount);
       //WriteToScreen(ScreenEnd);
       FProcessor.OnNeedWriteScreen(ScreenEnd);
 
-      FSumTicks := FSumTicks + TProcessor.FrameTicks;
-      FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame - TProcessor.FrameTicks;
+      FSumTicks := FSumTicks + FProcessor.FrameTicks;
+      FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame - FProcessor.FrameTicks;
       FIntPinUpCount := HoldInterruptPinTicks;
 
       TicksFrom := ScreenStart;
@@ -771,7 +956,7 @@ begin
   ResetSpectrum;
   FRunning := True;
 
-  TBeeper.BufferLen := 512 * 64; //43;
+  //TBeeper.BufferLen := 512 * 64; //43;
   if Assigned(FOnStartRun) then
     Synchronize(FOnStartRun);
 
@@ -857,13 +1042,13 @@ var
   begin
     AdrX := (X - LeftBorder) shr 3;
     AdrY := Y - TopBorder;
-    WRAdr.Hi := %01000000 or ((AdrY shr 3) and %00011000) or (AdrY and %111);
+    WRAdr.Hi := {%01000000 or} ((AdrY shr 3) and %00011000) or (AdrY and %111);
     WRAdr.Lo := ((AdrY shl 2) and %11100000) or AdrX;
 
-    By := FMemory^.ReadByte(Adr);
+    By := FMemory.ReadScreenByte(Adr);
 
-    WRAdr.Hi := (WRAdr.Hi shr 3) or $50;
-    Battr := FMemory^.ReadByte(Adr);
+    WRAdr.Hi := (WRAdr.Hi shr 3) {or $50} or $18;
+    Battr := FMemory.ReadScreenByte(Adr);
 
     Bright := BAttr and %01000000 <> 0;
 
@@ -894,11 +1079,11 @@ begin
 
   if TicksFrom <= TicksTo then begin
 
-    CCTicks := (TicksFrom - ScreenStart);
-    CCTicksTo := (TicksTo - ScreenStart);
+    CCTicks := TicksFrom - ScreenStart;
+    CCTicksTo := TicksTo - ScreenStart;
 
-    X := (CCTicks shl 1) mod 448;
-    Y := CCTicks div 224;
+    X := (CCTicks shl 1) mod (TicksPerScanLine shl 1);
+    Y := CCTicks div TicksPerScanLine;
 
     if X < WholeScreenWidth then
       ScreenPixel := SpectrumColoursBGRA.Bmp.ScanLine[Y] + X;
@@ -920,7 +1105,7 @@ begin
       end else begin
         // horizontal retrace
         Inc(Y);
-        CCTicks := Y * 224;
+        CCTicks := Y * TicksPerScanLine;
         if CCTicks > CCTicksTo then
           Break;
         X := 0;

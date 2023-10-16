@@ -19,8 +19,12 @@ type
   { TProcessor }
 
   TProcessor = class(TObject)
-  public const
-    FrameTicks = 69888;
+  public
+    FrameTicks: Int32Fast;
+    ContendedHighBank: Boolean;
+    ContentionFrom: Int32Fast;
+    ContentionTo: Int32Fast;
+    TicksPerLine: Int32Fast;
 
   strict private
 
@@ -280,7 +284,7 @@ type
 
     procedure DoProcess;
 
-    function GetMemory: PMemory;
+    procedure SetMemory(Mem: TMemory);
 
     property FlagsModified: Boolean read FFlagsModified write FFlagsModified;
 
@@ -370,8 +374,12 @@ var
   N: Int32Fast;
 begin
   // ULA contention (conditionally add t-states)
-  if (FTStatesInCurrentFrame < 57247) and (FTStatesInCurrentFrame >= 14335) then begin
-    N := ((FTStatesInCurrentFrame - 14335) mod 224) and $87;
+  //                             58037                                 14361
+  //if (FTStatesInCurrentFrame < 57247) and (FTStatesInCurrentFrame >= 14335) then begin
+  if (FTStatesInCurrentFrame < ContentionTo) and (FTStatesInCurrentFrame >= ContentionFrom)
+  then begin
+  //  N := ((FTStatesInCurrentFrame - 14335) mod 224) and $87;
+    N := ((FTStatesInCurrentFrame - ContentionFrom) mod TicksPerLine) and $87;
     //N := (FProcessor.TStatesInCurrentFrame - 14335) mod 224;
     //if N <= 127 then begin
     //  N := N and 7;
@@ -383,7 +391,9 @@ end;
 
 procedure TProcessor.Contention;
 begin
-  if FAddressBus and $C000 = $4000 then
+  if (FAddressBus and $C000 = $4000)
+     or (ContendedHighBank and (FAddressBus and $C000 = $C000))
+  then
     CheckContention;
 end;
 
@@ -395,7 +405,9 @@ end;
 
 procedure TProcessor.Contention2Times;
 begin
-  if FAddressBus and $C000 = $4000 then begin
+  if (FAddressBus and $C000 = $4000)
+     or (ContendedHighBank and (FAddressBus and $C000 = $C000))
+  then begin
     CheckContention;
     Inc(FTStatesInCurrentFrame);
     CheckContention;
@@ -406,7 +418,9 @@ end;
 
 procedure TProcessor.Contention5Times;
 begin
-  if FAddressBus and $C000 = $4000 then begin
+  if (FAddressBus and $C000 = $4000)
+     or (ContendedHighBank and (FAddressBus and $C000 = $C000))
+  then begin
     CheckContention;
     Inc(FTStatesInCurrentFrame);
     CheckContention;
@@ -423,7 +437,9 @@ end;
 
 procedure TProcessor.IOTimings;
 begin
-  if FAddressBus and $C000 = $4000 then begin
+  if (FAddressBus and $C000 = $4000)
+     or (ContendedHighBank and (FAddressBus and $C000 = $C000))
+  then begin
     //if FAddressBus and $FF = $FE then begin
     if FAddressBus and 1 = 0 then begin
       // C:1, C:3
@@ -1386,6 +1402,7 @@ begin
   FOnOutputRequest := @EmptyProcessorEvent;
   FOnNeedWriteScreen := @EmptyWriteScrEvent;
   InitRegPointers;
+  ContendedHighBank := False;
   ResetCPU;
 end;
 
@@ -2058,7 +2075,7 @@ var
 
     // PV set according to value of Iff2
     if FIff2 then begin
-      // there is a bug when interrupt is accepted at this point
+      // BUT, Zilog 80 has a bug when interrupt is accepted at this point
       // https://worldofspectrum.org/faq/reference/z80reference.htm#Interrupts
       // https://worldofspectrum.org/forums/discussion/4971/
       // hence this following condition (are we not about to enter interrupt?)
@@ -2348,9 +2365,9 @@ begin
 
 end;
 
-function TProcessor.GetMemory: PMemory;
+procedure TProcessor.SetMemory(Mem: TMemory);
 begin
-  Result := @FMemory;
+  FMemory := Mem;
 end;
 
 end.

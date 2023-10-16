@@ -15,7 +15,7 @@ interface
 
 uses
   Classes, SysUtils, fgl, UnitFileSna, UnitStreamCompression, UnitSpectrum,
-  UnitVer, UnitJoystick, UnitTapePlayer;
+  UnitVer, UnitJoystick, UnitTapePlayer, UnitCommonSpectrum;
 
 type
 
@@ -26,7 +26,6 @@ type
         const AExtension: String; ACurrentBlock: Integer) of object;
       TOnSzxSaveTape = procedure(out ATapePlayer: TTapePlayer) of object;
 
-  //strict
   private
     type
       TZxstHeadr = packed record
@@ -35,9 +34,9 @@ type
           // machine id:
           ZXSTMID_16K = 0;
           ZXSTMID_48K = 1;
-          // models currently not supported in Swan:
           ZXSTMID_128K = 2;
           ZXSTMID_PLUS2 = 3;
+          // models currently not supported in Swan:
           ZXSTMID_PLUS2A = 4;
           ZXSTMID_PLUS3 = 5;
           ZXSTMID_PLUS3E = 6;
@@ -88,139 +87,6 @@ type
         constructor Create;
       end;
 
-      TZxstZ80Regs = class(TSzxBlock)
-      strict private
-        const
-          ZXSTZF_EILAST = 1; // the last instruction was EI
-          ZXSTZF_HALTED = 2; // halted, nops are executed
-          ZXSTZF_FSET = 4; // last instruction sets the flags
-      strict private
-        type
-          TRecZ80Regs = packed record
-            AF, BC, DE, HL: UInt16;
-            AF1, BC1, DE1, HL1: UInt16;
-            Ix, Iy, SP, PC: UInt16;
-            I: Byte;
-            R: Byte;
-            IFF1, IFF2: Byte;
-            IM: Byte; // interrupt mode (0, 1 or 2)
-            DwCyclesStart: UInt32; // t-states in current frame
-            ChHoldIntReqCycles: Byte; // when int pin is up, for how many t-states it should remain up.
-            ChFlags: Byte; // combination of ZXSTZF_EILAST, ZXSTZF_HALTED and ZXSTZF_FSET
-            MemPtr: UInt16;
-          end;
-
-      protected
-        function LoadFromStream(const Stream: TStream): Boolean; override;
-        function SaveToStream(const Stream: TStream): Boolean; override;
-
-        class function GetBlockIdAsStr: RawByteString; override;
-      end;
-
-      TZxstSpecRegs = class(TSzxBlock)
-      strict private
-        type
-          TRecSpec = packed record
-            Border: Byte;
-            Ch7ffd: Byte; // memory paging, not used on 48k
-            Ch1ffd_or_Cheff7: Byte; // additional memory paging, not used on 48k
-            Chfe: Byte; // last byte written to port $fe
-            ChReserved: packed Array [0..3] of Byte;
-          end;
-      protected
-        function LoadFromStream(const Stream: TStream): Boolean; override;
-        function SaveToStream(const Stream: TStream): Boolean; override;
-
-        class function GetBlockIdAsStr: RawByteString; override;
-      end;
-
-      TZxstRamPage = class(TSzxBlock)
-      public
-        const
-          ZXSTRF_COMPRESSED = 1;
-      strict private
-        type
-          TRecRamPage = packed record
-            Flags: UInt16;
-            PageNo: Byte;
-          end;
-      protected
-        function LoadFromStream(const Stream: TStream): Boolean; override;
-        function SaveToStream(const Stream: TStream): Boolean; override;
-
-        class function GetBlockIdAsStr: RawByteString; override;
-      public
-        Rec: TRecRamPage;
-      end;
-
-      TZxstCreator = class(TSzxBlock)
-      strict private
-        type
-          TRecCreator = packed record
-            ZxCreator: Array [0..31] of Byte;
-            MajorVer: UInt16;
-            MinorVer: UInt16;
-          //  Data: Byte;
-          end;
-      protected
-        function LoadFromStream(const Stream: TStream): Boolean; override;
-        function SaveToStream(const Stream: TStream): Boolean; override;
-
-        class function GetBlockIdAsStr: RawByteString; override;
-      end;
-
-      TZxstKeyboard = class(TSzxBlock)
-      strict private
-        const
-          ZXSTKF_ISSUE2 = 1;
-
-          ZXSTKJT_KEMPSTON = 0;
-          ZXSTKJT_FULLER = 1;
-          ZXSTKJT_CURSOR = 2;
-          ZXSTKJT_SINCLAIR1 = 3;
-          ZXSTKJT_SINCLAIR2 = 4;
-          //ZXSTKJT_SPECTRUMPLUS = 5;
-          //ZXSTKJT_TIMEX1 = 6;
-          //ZXSTKJT_TIMEX2 = 7;
-          ZXSTKJT_NONE = 8;
-
-      strict private
-        type
-          TRecKeyBoard = packed record
-            DwFlags: DWord;
-            ChKeyboardJoystick: Byte;
-          end;
-      protected
-        function LoadFromStream(const Stream: TStream): Boolean; override;
-        function SaveToStream(const Stream: TStream): Boolean; override;
-
-        class function GetBlockIdAsStr: RawByteString; override;
-      end;
-//
-//      TZxstTape = class(TSnapshotSZX.TSzxBlock)
-//      strict private
-//        const
-//          ZXSTTP_EMBEDDED = 1;
-//          ZXSTTP_COMPRESSED = 2;
-//
-//      strict private
-//        type
-//          TRecTape = packed record
-//            CurrentBlockNo: UInt16;
-//            Flags: UInt16;
-//            UncompressedSize: UInt32;
-//            CompressedSize: UInt32;
-//            FileExtension: Array [0..15] of AnsiChar;
-//          end;
-//
-//      protected
-//        function LoadFromStream(const Stream: TStream): Boolean; override;
-//        function SaveToStream(const Stream: TStream): Boolean; override;
-//
-//        class function GetBlockIdAsStr: RawByteString; override;
-//      end;
-
-  //strict
   private
     class var
       SzxBlocksMap: TSzxBlocksMap;
@@ -230,7 +96,7 @@ type
       FSaveTapeEmbedded: Boolean;
       FSaveTapeCompressed: Boolean;
 
-  strict private                  
+  private
     Mem: TMemoryStream;
 
     IsIssue2: Boolean;
@@ -263,15 +129,124 @@ implementation
 
 type
 
+  TZxstZ80Regs = class(TSnapshotSZX.TSzxBlock)
+  private
+    const
+      ZXSTZF_EILAST = 1; // the last instruction was EI
+      ZXSTZF_HALTED = 2; // halted, nops are executed
+      ZXSTZF_FSET = 4; // last instruction sets the flags
+
+    type
+      TRecZ80Regs = packed record
+        AF, BC, DE, HL: UInt16;
+        AF1, BC1, DE1, HL1: UInt16;
+        Ix, Iy, SP, PC: UInt16;
+        I: Byte;
+        R: Byte;
+        IFF1, IFF2: Byte;
+        IM: Byte; // interrupt mode (0, 1 or 2)
+        DwCyclesStart: UInt32; // t-states in current frame
+        ChHoldIntReqCycles: Byte; // when int pin is up, for how many t-states it should remain up.
+        ChFlags: Byte; // combination of ZXSTZF_EILAST, ZXSTZF_HALTED and ZXSTZF_FSET
+        MemPtr: UInt16;
+      end;
+
+  protected
+    function LoadFromStream(const Stream: TStream): Boolean; override;
+    function SaveToStream(const Stream: TStream): Boolean; override;
+
+    class function GetBlockIdAsStr: RawByteString; override;
+  end;
+
+  TZxstSpecRegs = class(TSnapshotSZX.TSzxBlock)
+  private
+    type
+      TRecSpec = packed record
+        Border: Byte;
+        Ch7ffd: Byte; // memory paging, not used on 48k
+        Ch1ffd_or_Cheff7: Byte; // additional memory paging, used on +2A, +3
+        Chfe: Byte; // last byte written to port $fe
+        ChReserved: packed Array [0..3] of Byte;
+      end;
+
+  protected
+    function LoadFromStream(const Stream: TStream): Boolean; override;
+    function SaveToStream(const Stream: TStream): Boolean; override;
+
+    class function GetBlockIdAsStr: RawByteString; override;
+  end;
+
+  TZxstRamPage = class(TSnapshotSZX.TSzxBlock)
+  public
+    const
+      ZXSTRF_COMPRESSED = 1;
+  private
+    type
+      TRecRamPage = packed record
+        Flags: UInt16;
+        PageNo: Byte;
+      end;
+  protected
+    function LoadFromStream(const Stream: TStream): Boolean; override;
+    function SaveToStream(const Stream: TStream): Boolean; override;
+
+    class function GetBlockIdAsStr: RawByteString; override;
+  public
+    Rec: TRecRamPage;
+  end;
+
+  TZxstCreator = class(TSnapshotSZX.TSzxBlock)
+  private
+    type
+      TRecCreator = packed record
+        ZxCreator: Array [0..31] of Byte;
+        MajorVer: UInt16;
+        MinorVer: UInt16;
+      //  Data: Byte;
+      end;
+  protected
+    function LoadFromStream(const Stream: TStream): Boolean; override;
+    function SaveToStream(const Stream: TStream): Boolean; override;
+
+    class function GetBlockIdAsStr: RawByteString; override;
+  end;
+
+  TZxstKeyboard = class(TSnapshotSZX.TSzxBlock)
+  private
+    const
+      ZXSTKF_ISSUE2 = 1;
+
+      ZXSTKJT_KEMPSTON = 0;
+      ZXSTKJT_FULLER = 1;
+      ZXSTKJT_CURSOR = 2;
+      ZXSTKJT_SINCLAIR1 = 3;
+      ZXSTKJT_SINCLAIR2 = 4;
+      //ZXSTKJT_SPECTRUMPLUS = 5;
+      //ZXSTKJT_TIMEX1 = 6;
+      //ZXSTKJT_TIMEX2 = 7;
+      ZXSTKJT_NONE = 8;
+
+    type
+      TRecKeyBoard = packed record
+        DwFlags: DWord;
+        ChKeyboardJoystick: Byte;
+      end;
+
+  protected
+    function LoadFromStream(const Stream: TStream): Boolean; override;
+    function SaveToStream(const Stream: TStream): Boolean; override;
+
+    class function GetBlockIdAsStr: RawByteString; override;
+  end;
+
   { TZxstTape }
 
   TZxstTape = class(TSnapshotSZX.TSzxBlock)
-  strict private
+  private
     const
       ZXSTTP_EMBEDDED = 1;
       ZXSTTP_COMPRESSED = 2;
 
-  strict private
     type
       TRecTape = packed record
         CurrentBlockNo: UInt16;
@@ -294,6 +269,62 @@ type
     constructor Create(ATapePlayer: TTapePlayer);
   end;
 
+  TZxstAYBlock = class(TSnapshotSZX.TSzxBlock)
+  private
+    type
+      TAyBlockRec = packed record
+        Flags: Byte;
+        CurrentRegister: Byte;
+        AyRegisters: array[0..15] of Byte;
+      end;
+
+  protected
+    function LoadFromStream(const Stream: TStream): Boolean; override;
+    function SaveToStream(const Stream: TStream): Boolean; override;
+
+    class function GetBlockIdAsStr: RawByteString; override;
+  end;
+
+{ TZxstAYBlock }
+
+function TZxstAYBlock.LoadFromStream(const Stream: TStream): Boolean;
+var
+  AyRec: TAyBlockRec;
+  I: Integer;
+
+begin
+  Result := False;
+  if (BlockSize = SizeOf(AyRec))
+     and (Stream.Read(AyRec, SizeOf(AyRec)) = SizeOf(AyRec))
+  then begin
+    for I := 0 to 15 do begin
+      Szx.State.AyState.Registers[I] := AyRec.AyRegisters[I];
+    end;
+    Szx.State.AyState.ActiveRegisterNumber := AyRec.CurrentRegister;
+    Szx.State.HasAy := True;
+    Result := True;
+  end;
+end;
+
+function TZxstAYBlock.SaveToStream(const Stream: TStream): Boolean;
+var
+  AyRec: TAyBlockRec;
+  I: Integer;
+
+begin
+  AyRec.CurrentRegister := Szx.State.AyState.ActiveRegisterNumber;
+  for I := 0 to 15 do
+    AyRec.AyRegisters[I] := Szx.State.AyState.Registers[I];
+
+  BlockSize := SizeOf(AyRec);
+  Result := WriteBlockSize(Stream)
+    and (Stream.Write(AyRec, BlockSize) = BlockSize);
+end;
+
+class function TZxstAYBlock.GetBlockIdAsStr: RawByteString;
+begin
+  Result := 'AY' + #0 + #0;
+end;
 
 { TZxstTape }
 
@@ -495,9 +526,9 @@ begin
   FTapePlayer := ATapePlayer;
 end;
 
-{ TSnapshotSZX.TZxstKeyboard }
+{ TZxstKeyboard }
 
-function TSnapshotSZX.TZxstKeyboard.LoadFromStream(const Stream: TStream
+function TZxstKeyboard.LoadFromStream(const Stream: TStream
   ): Boolean;
 var
   Rec: TRecKeyBoard;
@@ -541,7 +572,7 @@ begin
   end;
 end;
 
-function TSnapshotSZX.TZxstKeyboard.SaveToStream(const Stream: TStream
+function TZxstKeyboard.SaveToStream(const Stream: TStream
   ): Boolean;
 var
   Rec: TRecKeyBoard;
@@ -571,20 +602,20 @@ begin
     and (Stream.Write(Rec, BlockSize) = BlockSize);
 end;
 
-class function TSnapshotSZX.TZxstKeyboard.GetBlockIdAsStr: RawByteString;
+class function TZxstKeyboard.GetBlockIdAsStr: RawByteString;
 begin
   Result := 'KEYB';
 end;
 
-{ TSnapshotSZX.TZxstCreator }
+{ TZxstCreator }
 
-function TSnapshotSZX.TZxstCreator.LoadFromStream(const Stream: TStream): Boolean;
+function TZxstCreator.LoadFromStream(const Stream: TStream): Boolean;
 begin
   Stream.Seek(BlockSize, TSeekOrigin.soCurrent);
   Result := True;
 end;
 
-function TSnapshotSZX.TZxstCreator.SaveToStream(const Stream: TStream): Boolean;
+function TZxstCreator.SaveToStream(const Stream: TStream): Boolean;
 const
   Creator32: RawByteString = 'Swan';
 var
@@ -607,7 +638,7 @@ begin
     and (Stream.Write(PAnsiChar(S)^, Length(S) + 1) = Length(S) + 1);
 end;
 
-class function TSnapshotSZX.TZxstCreator.GetBlockIdAsStr: RawByteString;
+class function TZxstCreator.GetBlockIdAsStr: RawByteString;
 begin
   Result := 'CRTR';
 end;
@@ -629,9 +660,9 @@ begin
   Result := UMagic;
 end;
 
-{ TSnapshotSZX.TZxstRamPage }
+{ TZxstRamPage }
 
-function TSnapshotSZX.TZxstRamPage.LoadFromStream(const Stream: TStream): Boolean;
+function TZxstRamPage.LoadFromStream(const Stream: TStream): Boolean;
 var
   MemReadLen: Integer;
   Str1: TMemoryStream;
@@ -645,61 +676,75 @@ begin
   Rec := Default(TRecRamPage);
   if Stream.Read(Rec, SizeOf(Rec)) = SizeOf(Rec) then begin
     case Rec.PageNo of
-      0, 2, 5:
-        begin
-          Okay := False;
-          StreamMem := nil;
-          try
-            Rec.Flags := LEtoN(Rec.Flags);
-            if Rec.Flags and ZXSTRF_COMPRESSED <> 0 then begin
-              MemReadLen := BlockSize - SizeOf(Rec);
-              if Stream.Size - Stream.Position >= MemReadLen then begin
-                Str1 := TMemoryStream.Create;
-                try
-                  Str1.Size := MemReadLen;
-                  Str1.Position := 0;
-                  if Stream.Read(Str1.Memory^, MemReadLen) = MemReadLen then begin
-                    StreamMem := TMemoryStream.Create;
-                    if UnitStreamCompression.DecompressStream(Str1, StreamMem) and (StreamMem.Size = KB16) then begin
-                      Okay := True;
-                    end;
-                  end;
-                finally
-                  Str1.Free;
-                end;
-              end;
-            end else begin
-              if Stream.Size - Stream.Position >= KB16 then begin
-                StreamMem := TMemoryStream.Create;
+      5:
+        Okay := True;
+      0, 2:
+        Okay := Szx.GetMemStr().Size >= KB48;
+      1, 3, 4, 6, 7:
+        Okay := Szx.GetMemStr().Size >= KB128;
+    otherwise
+      Okay := False;
+    end;
 
-                StreamMem.Size := KB16;
-                StreamMem.Position := 0;
-                if Stream.Read(StreamMem.Memory^, KB16) = KB16 then begin
+    if Okay then begin
+      Okay := False;
+      StreamMem := nil;
+      try
+        Rec.Flags := LEtoN(Rec.Flags);
+        if Rec.Flags and ZXSTRF_COMPRESSED <> 0 then begin
+          MemReadLen := BlockSize - SizeOf(Rec);
+          if Stream.Size - Stream.Position >= MemReadLen then begin
+            Str1 := TMemoryStream.Create;
+            try
+              Str1.Size := MemReadLen;
+              Str1.Position := 0;
+              if Stream.Read(Str1.Memory^, MemReadLen) = MemReadLen then begin
+                StreamMem := TMemoryStream.Create;
+                if UnitStreamCompression.DecompressStream(Str1, StreamMem) and (StreamMem.Size = KB16) then begin
                   Okay := True;
                 end;
               end;
+            finally
+              Str1.Free;
             end;
-
-            if Okay then begin
-              P := (2 - Rec.PageNo div 2) * KB16;
-              if Szx.GetMemStr().Size - P >= KB16 then begin
-                StreamMem.Position := 0;
-                if StreamMem.Read((PByte(Szx.GetMemStr().Memory) + P)^, KB16) = KB16 then
-                  Result := True;
-              end;
-            end;
-
-          finally
-            StreamMem.Free;
           end;
 
+        end else begin
+          if Stream.Size - Stream.Position >= KB16 then begin
+            StreamMem := TMemoryStream.Create;
+
+            StreamMem.Size := KB16;
+            StreamMem.Position := 0;
+            if Stream.Read(StreamMem.Memory^, KB16) = KB16 then begin
+              Okay := True;
+            end;
+          end;
         end;
-    otherwise
+
+        if Okay then begin
+          case Rec.PageNo of
+            0, 2, 5:
+              P := 2 - Rec.PageNo div 2;
+          otherwise
+            P := (7 + 2 * Rec.PageNo) div 3;
+          end;
+
+          P := P * KB16;
+          if Szx.GetMemStr().Size - P >= KB16 then begin
+            StreamMem.Position := 0;
+            if StreamMem.Read((PByte(Szx.GetMemStr().Memory) + P)^, KB16) = KB16 then
+              Result := True;
+          end;
+        end;
+
+      finally
+        StreamMem.Free;
+      end;
     end;
   end;
 end;
 
-function TSnapshotSZX.TZxstRamPage.SaveToStream(const Stream: TStream): Boolean;
+function TZxstRamPage.SaveToStream(const Stream: TStream): Boolean;
 var
   Str1, Str2: TStream;
   PB: PByte;
@@ -709,11 +754,20 @@ var
 begin
   Result := False;
   case Rec.PageNo of
-    0, 2, 5:
+    0..7:
       begin
         IsCompressed := Rec.Flags and ZXSTRF_COMPRESSED <> 0;
         Rec.Flags := NtoLE(Rec.Flags);
-        P := (2 - Rec.PageNo div 2) * KB16;
+
+        case Rec.PageNo of
+          0, 2, 5:
+            P := 2 - Rec.PageNo div 2;
+        otherwise
+          P := (7 + 2 * Rec.PageNo) div 3;
+        end;
+
+        P := P * KB16;
+
         if Szx.GetMemStr().Size - P >= KB16 then begin
           PB := PByte(Szx.GetMemStr.Memory) + P;
           if IsCompressed then begin
@@ -749,14 +803,14 @@ begin
   end;
 end;
 
-class function TSnapshotSZX.TZxstRamPage.GetBlockIdAsStr: RawByteString;
+class function TZxstRamPage.GetBlockIdAsStr: RawByteString;
 begin
   Result := 'RAMP';
 end;
 
-{ TSnapshotSZX.TZxstSpecRegs }
+{ TZxstSpecRegs }
 
-function TSnapshotSZX.TZxstSpecRegs.LoadFromStream(const Stream: TStream): Boolean;
+function TZxstSpecRegs.LoadFromStream(const Stream: TStream): Boolean;
 var
   Rec: TRecSpec;
   BlSz, N: SizeUInt;
@@ -777,12 +831,20 @@ begin
       Stream.Seek(N, TSeekOrigin.soCurrent);
     Szx.State.BorderColour := Rec.Border;
     Szx.State.Ear := (Rec.Chfe shl 2) and 64;
+    case Szx.State.SpectrumModel of
+      TSpectrumModel.sm128K, TSpectrumModel.smPlus2:
+        begin
+          Szx.State.Set7ffd(Rec.Ch7ffd);
+        end;
+    otherwise
+      Szx.State.Reset7ffd();
+    end;
     // everything else ignored...
     Result := True;
   end;
 end;
 
-function TSnapshotSZX.TZxstSpecRegs.SaveToStream(const Stream: TStream): Boolean;
+function TZxstSpecRegs.SaveToStream(const Stream: TStream): Boolean;
 var
   Rec: TRecSpec;
 
@@ -791,12 +853,25 @@ begin
   Rec.Border := Szx.State.BorderColour;
   Rec.Chfe := (Szx.State.Ear and 64) shr 2;
 
+  case Szx.State.SpectrumModel of
+    TSpectrumModel.sm128K, TSpectrumModel.smPlus2:
+      ;
+  otherwise
+    Szx.State.Reset7ffd();
+  end;
+
+  Rec.Ch7ffd := Szx.State.MountedRamPage or (Szx.State.MountedRomPage shl 4);
+  if Szx.State.ShadowScreenDisplay then
+    Rec.Ch7ffd := Rec.Ch7ffd or 8;
+  if not Szx.State.PagingEnabled then
+    Rec.Ch7ffd := Rec.Ch7ffd or 32;
+
   BlockSize := SizeOf(Rec);
   Result := WriteBlockSize(Stream)
     and (Stream.Write(Rec, BlockSize) = BlockSize);
 end;
 
-class function TSnapshotSZX.TZxstSpecRegs.GetBlockIdAsStr: RawByteString;
+class function TZxstSpecRegs.GetBlockIdAsStr: RawByteString;
 begin
   Result := 'SPCR';
 end;
@@ -811,9 +886,9 @@ begin
   Duplicates := TDuplicates.dupIgnore;
 end;
 
-{ TSnapshotSZX.TZxstZ80Regs }
+{ TZxstZ80Regs }
 
-function TSnapshotSZX.TZxstZ80Regs.LoadFromStream(const Stream: TStream): Boolean;
+function TZxstZ80Regs.LoadFromStream(const Stream: TStream): Boolean;
 var
   Rec: TRecZ80Regs;
   BlSz, N: SizeUInt;
@@ -865,7 +940,7 @@ begin
 
 end;
 
-function TSnapshotSZX.TZxstZ80Regs.SaveToStream(const Stream: TStream): Boolean;
+function TZxstZ80Regs.SaveToStream(const Stream: TStream): Boolean;
 var
   Rec: TRecZ80Regs;
 
@@ -912,7 +987,7 @@ begin
     and (Stream.Write(Rec, BlockSize) = BlockSize);
 end;
 
-class function TSnapshotSZX.TZxstZ80Regs.GetBlockIdAsStr: RawByteString;
+class function TZxstZ80Regs.GetBlockIdAsStr: RawByteString;
 begin
   Result := 'Z80R';
 end;
@@ -959,6 +1034,7 @@ begin
   AddBlockClass(TZxstRamPage);
   AddBlockClass(TZxstKeyboard);
   AddBlockClass(TZxstTape);
+  AddBlockClass(TZxstAYBlock);
 end;
 
 class procedure TSnapshotSZX.Final;
@@ -1014,14 +1090,31 @@ function TSnapshotSZX.LoadFromStream(const Stream: TStream): Boolean;
                 Result := True;
               end;
 
-            // Models not (yet) supported:
-            TZxstHeadr.ZXSTMID_128K, TZxstHeadr.ZXSTMID_PLUS2, TZxstHeadr.ZXSTMID_PLUS2A,
-              TZxstHeadr.ZXSTMID_PLUS3, TZxstHeadr.ZXSTMID_PLUS3E, TZxstHeadr.ZXSTMID_PENTAGON128,
-              TZxstHeadr.ZXSTMID_TC2048, TZxstHeadr.ZXSTMID_TC2068, TZxstHeadr.ZXSTMID_SCORPION,
-              TZxstHeadr.ZXSTMID_SE, TZxstHeadr.ZXSTMID_TS2068, TZxstHeadr.ZXSTMID_PENTAGON512,
-              TZxstHeadr.ZXSTMID_PENTAGON1024, TZxstHeadr.ZXSTMID_NTSC48K,
-              TZxstHeadr.ZXSTMID_128KE:
-                ;
+            TZxstHeadr.ZXSTMID_128K:
+              begin
+                SetMemSize(KB128);
+                State.SpectrumModel := TSpectrumModel.sm128K;
+                Result := True;
+              end;
+
+            TZxstHeadr.ZXSTMID_PLUS2:
+              begin
+                SetMemSize(KB128);
+                State.SpectrumModel := TSpectrumModel.smPlus2;
+                Result := True;
+              end;
+
+            // Models not yet supported, but most likely will be:
+            TZxstHeadr.ZXSTMID_PLUS2A, TZxstHeadr.ZXSTMID_PLUS3:
+              ;
+
+            // Models which are not likely to ever be supported in Swan...
+            TZxstHeadr.ZXSTMID_PLUS3E, TZxstHeadr.ZXSTMID_PENTAGON128,
+            TZxstHeadr.ZXSTMID_TC2048, TZxstHeadr.ZXSTMID_TC2068, TZxstHeadr.ZXSTMID_SCORPION,
+            TZxstHeadr.ZXSTMID_SE, TZxstHeadr.ZXSTMID_TS2068, TZxstHeadr.ZXSTMID_PENTAGON512,
+            TZxstHeadr.ZXSTMID_PENTAGON1024, TZxstHeadr.ZXSTMID_NTSC48K,
+            TZxstHeadr.ZXSTMID_128KE:
+              ;
           otherwise
           end;
         end;
@@ -1096,7 +1189,7 @@ begin
           end;
 
           GetMemStr().Position := 0;
-          if FSpectrum.GetProcessor.GetMemory^.LoadRamFromStream(GetMemStr()) then
+          if FSpectrum.Memory.LoadRamFromStream(GetMemStr()) then
             Exit(True);
         end;
       end;
@@ -1120,6 +1213,10 @@ var
         SzxHeader.MachineId := TZxstHeadr.ZXSTMID_16K;
       TSpectrumModel.sm48K_issue_2, TSpectrumModel.sm48K_issue_3:
         SzxHeader.MachineId := TZxstHeadr.ZXSTMID_48K;
+      TSpectrumModel.sm128K:
+        SzxHeader.MachineId := TZxstHeadr.ZXSTMID_128K;
+      TSpectrumModel.smPlus2:
+        SzxHeader.MachineId := TZxstHeadr.ZXSTMID_PLUS2;
     otherwise
       Exit(False);
     end;
@@ -1142,16 +1239,16 @@ var
 var
   BlockRP: TZxstRamPage;
   BlockTape: TZxstTape;
-  I: Integer;
+  I, J: Integer;
   TapePlayer: TTapePlayer;
 
 begin
   Result := False;
 
   if State.LoadFromSpectrum(FSpectrum) then begin
-    SetMemSize(FSpectrum.GetProcessor.GetMemory^.RamSize);
+    SetMemSize(FSpectrum.Memory.RamSizeKB * TCommonSpectrum.KiloByte);
     GetMemStr.Position := 0;
-    if FSpectrum.GetProcessor.GetMemory^.SaveRamToStream(GetMemStr()) then begin
+    if FSpectrum.Memory.SaveRamToStream(GetMemStr()) then begin
       if SaveHeader then begin
         IsIssue2 := FSpectrum.IsIssue2;
         JoystickAttached := TJoystick.Joystick.Enabled;
@@ -1162,22 +1259,39 @@ begin
           and SaveBlock(TZxstSpecRegs.Create)
           and SaveBlock(TZxstKeyboard.Create)
         then begin
-          I := 2;
-          repeat
+          case FSpectrum.Memory.RamSizeKB of
+            16:
+              J := 0;
+            48:
+              J := 2;
+          otherwise
+            J := 7;
+          end;
+
+          for I := 0 to J do begin
             BlockRP := TZxstRamPage.Create;
-            BlockRP.Rec.PageNo := 2 * I + I div 2;
+            case I of
+              0..2:
+                BlockRP.Rec.PageNo := (10 - 5 * I) div 2;
+            otherwise
+              BlockRP.Rec.PageNo := (3 * I) div 2 - 3;
+            end;
             BlockRP.Rec.Flags := TZxstRamPage.ZXSTRF_COMPRESSED;
             if not SaveBlock(BlockRP) then
               Exit(False);
+          end;
 
-            Dec(I);
-          until (I < 0) or (SzxHeader.MachineId = TZxstHeadr.ZXSTMID_16K);
+          if State.HasAy and (not SaveBlock(TZxstAYBlock.Create)) then
+            Exit(False);
 
           if Assigned(FOnSzxSaveTape) then begin
             FOnSzxSaveTape(TapePlayer);
-            Result := (not Assigned(TapePlayer)) or SaveBlock(TZxstTape.Create(TapePlayer));
-          end else
-            Result := True;
+            if Assigned(TapePlayer) then
+              if not SaveBlock(TZxstTape.Create(TapePlayer)) then
+                Exit(False);
+          end;
+
+          Result := True;
         end;
       end;
     end;

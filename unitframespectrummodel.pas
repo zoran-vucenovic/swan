@@ -12,13 +12,15 @@ uses
   StdCtrls, Graphics;
 
 type
+
+  { TFrameSpectrumModel }
+
   TFrameSpectrumModel = class(TFrame)
     Panel1: TPanel;
     RadioGroupSpectrumModel: TRadioGroup;
     RadioGroupKeyboardModel: TRadioGroup;
+    procedure RadioGroupSpectrumModelSelectionChanged(Sender: TObject);
   private
-    InitialIndexSpectrumModel: Integer;
-    InitialIndexKeyboardModel: Integer;
     FSpectrum: TSpectrum;
 
     procedure FormCloseCallback(Sender: TObject; var {%H-}CloseAction: TCloseAction);
@@ -37,6 +39,12 @@ implementation
 
 { TFrameSpectrumModel }
 
+procedure TFrameSpectrumModel.RadioGroupSpectrumModelSelectionChanged(
+  Sender: TObject);
+begin
+  RadioGroupKeyboardModel.Enabled := RadioGroupSpectrumModel.ItemIndex <= 1;
+end;
+
 procedure TFrameSpectrumModel.FormCloseCallback(Sender: TObject;
   var CloseAction: TCloseAction);
 var
@@ -48,9 +56,13 @@ begin
         ModelToSet := TSpectrumModel.sm16K_issue_3;
       1:
         ModelToSet := TSpectrumModel.sm48K_issue_3;
+      2:
+        ModelToSet := TSpectrumModel.sm128K;
+      3:
+        ModelToSet := TSpectrumModel.smPlus2;
     end;
 
-    if RadioGroupKeyboardModel.ItemIndex = 0 then
+    if RadioGroupKeyboardModel.Enabled and (RadioGroupKeyboardModel.ItemIndex = 0) then
       Dec(ModelToSet);
 
     FSpectrum.SpectrumModel := ModelToSet;
@@ -62,12 +74,12 @@ begin
   inherited Create(TheOwner);
 
   Caption := 'Spectrum model';
-  InitialIndexSpectrumModel := -1;
-  InitialIndexKeyboardModel := -1;
 end;
 
 constructor TFrameSpectrumModel.CreateFrameSpectrumModel(AOwner: TComponent;
   ASpectrum: TSpectrum);
+var
+  N: Integer;
 begin
   if ASpectrum = nil then
     Abort;
@@ -79,17 +91,23 @@ begin
       RadioGroupSpectrumModel.ItemIndex := 0;
     TSpectrumModel.sm48K_issue_2, TSpectrumModel.sm48K_issue_3:
       RadioGroupSpectrumModel.ItemIndex := 1;
+    TSpectrumModel.sm128K:
+      RadioGroupSpectrumModel.ItemIndex := 2;
+    TSpectrumModel.smPlus2:
+      RadioGroupSpectrumModel.ItemIndex := 3;
   end;
 
+  N := 1;
   case ASpectrum.SpectrumModel of
     TSpectrumModel.sm16K_issue_2, TSpectrumModel.sm48K_issue_2:
-      RadioGroupKeyboardModel.ItemIndex := 0;
+      N := 0;
     TSpectrumModel.sm16K_issue_3, TSpectrumModel.sm48K_issue_3:
-      RadioGroupKeyboardModel.ItemIndex := 1;
+      ;
+  otherwise
+    RadioGroupKeyboardModel.Enabled := False;
   end;
 
-  InitialIndexSpectrumModel := RadioGroupSpectrumModel.ItemIndex;
-  InitialIndexKeyboardModel := RadioGroupKeyboardModel.ItemIndex;
+  RadioGroupKeyboardModel.ItemIndex := N;
 end;
 
 class function TFrameSpectrumModel.CreateForAllOptions(

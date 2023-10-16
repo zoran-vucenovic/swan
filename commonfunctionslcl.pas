@@ -82,6 +82,7 @@ begin
   Font.Color := clBlue;
   Font.Style := Font.Style + [fsUnderline];
   Cursor := crHandPoint;
+  Transparent := True;
 end;
 
 constructor TCommonFunctionsLCL.TLinkLabel.Create(AOwner: TComponent);

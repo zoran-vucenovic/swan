@@ -16,16 +16,16 @@ uses
   UnitSpectrum, UnitVer, UnitConfigs, UnitTzxPlayer, UnitFormBrowser,
   UnitColourPalette, UnitSpectrumColourMap, UnitKeyMaps,
   UnitSpectrumColoursBGRA, UnitKeyMapRecords, UnitFrameOneKeyMap,
-  UnitSpectrumKeysDialog, UnitFormPressAKey, UnitCommon,
-  UnitCommonSpectrum, UnitJoystick, UnitFrameJoystickSetup, AboutBox,
-  UnitColourFunctions, UnitDataModuleImages, PortAudioHeader, UnitBeeper,
-  unitSoundVolume, FastIntegers, UnitInputLibraryPathDialog, UnitFormInputPokes,
-  UnitSZX, UnitStreamCompression, UnitFormHistorySnapshots,
-  UnitControlScreenBitmap, UnitTapePlayer, UnitPzxPlayer,
-  UnitSpectrumKeysControl, UnitKeyboardOnScreen, UnitChooseFile,
-  UnitFormForOptionsBasic, UnitFrameKeyMappings, UnitOptions, 
-  UnitFrameOtherOptions, UnitFrameSpectrumModel, UnitFrameSound, 
-  UnitFrameHistorySnapshotOptions, UnitRecentFiles;
+  UnitSpectrumKeysDialog, UnitFormPressAKey, UnitCommon, UnitCommonSpectrum,
+  UnitJoystick, UnitFrameJoystickSetup, AboutBox, UnitColourFunctions,
+  UnitDataModuleImages, PortAudioHeader, UnitBeeper, unitSoundVolume,
+  FastIntegers, UnitInputLibraryPathDialog, UnitFormInputPokes, UnitSZX,
+  UnitStreamCompression, UnitFormHistorySnapshots, UnitControlScreenBitmap,
+  UnitTapePlayer, UnitPzxPlayer, UnitSpectrumKeysControl, UnitKeyboardOnScreen,
+  UnitChooseFile, UnitFormForOptionsBasic, UnitFrameKeyMappings, UnitOptions,
+  UnitFrameOtherOptions, UnitFrameSpectrumModel, UnitFrameSound,
+  UnitFrameHistorySnapshotOptions, UnitRecentFiles, UnitMemory, SnapshotZ80,
+  SnapshotSNA, SoundChipAY_3_8912;
 
 {$R *.res}
 

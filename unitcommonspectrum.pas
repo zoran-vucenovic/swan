@@ -20,6 +20,10 @@ type
     class procedure Final;
   public
     const
+      KiloByte = 1024;
+      KB16 = KiloByte * 16;
+      KB48 = KiloByte * 48;
+      KB64 = KiloByte * 64;
       SpectrumColourNames: Array of String = ('black', 'blue', 'red', 'magenta', 'green', 'cyan', 'yellow', 'white');
   public
     class procedure SortSpectrumKeys(var AKeys: Array of Word); static;

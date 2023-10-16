@@ -1,10 +1,10 @@
 object FrameSpectrumModel: TFrameSpectrumModel
   Left = 0
-  Height = 117
+  Height = 139
   Top = 0
   Width = 330
   AutoSize = True
-  ClientHeight = 117
+  ClientHeight = 139
   ClientWidth = 330
   TabOrder = 0
   DesignLeft = 308
@@ -13,19 +13,19 @@ object FrameSpectrumModel: TFrameSpectrumModel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
     Left = 0
-    Height = 107
+    Height = 136
     Top = 0
     Width = 324
     AutoSize = True
     BevelOuter = bvNone
-    ClientHeight = 107
+    ClientHeight = 136
     ClientWidth = 324
     TabOrder = 0
     object RadioGroupSpectrumModel: TRadioGroup
       AnchorSideLeft.Control = Panel1
       AnchorSideTop.Control = Panel1
       Left = 10
-      Height = 87
+      Height = 126
       Top = 10
       Width = 147
       AutoFill = True
@@ -39,12 +39,15 @@ object FrameSpectrumModel: TFrameSpectrumModel
       ChildSizing.ShrinkVertical = crsScaleChilds
       ChildSizing.Layout = cclLeftToRightThenTopToBottom
       ChildSizing.ControlsPerLine = 1
-      ClientHeight = 67
+      ClientHeight = 106
       ClientWidth = 143
       Items.Strings = (
         'Spectrum 16K'
         'Spectrum 48K'
+        'Spectrum 128K'
+        'Spectrum +2'
       )
+      OnSelectionChanged = RadioGroupSpectrumModelSelectionChanged
       TabOrder = 0
     end
     object RadioGroupKeyboardModel: TRadioGroup
@@ -52,7 +55,8 @@ object FrameSpectrumModel: TFrameSpectrumModel
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Panel1
       Left = 167
-      Height = 87
+      Height = 82
+      Hint = 'Select keyboard model'#13#10'(only available for 16K and 48K Spectrum)'
       Top = 10
       Width = 147
       AutoFill = True
@@ -65,12 +69,14 @@ object FrameSpectrumModel: TFrameSpectrumModel
       ChildSizing.ShrinkVertical = crsScaleChilds
       ChildSizing.Layout = cclLeftToRightThenTopToBottom
       ChildSizing.ControlsPerLine = 1
-      ClientHeight = 67
+      ClientHeight = 62
       ClientWidth = 143
       Items.Strings = (
         'issue 2'
         'issue 3'
       )
+      ParentShowHint = False
+      ShowHint = True
       TabOrder = 1
     end
   end

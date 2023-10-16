@@ -70,7 +70,7 @@ type
   TPaStreamCallbackFlags = culong;
 
   TPaStreamCallback =
-    function(constref Input: Pointer; Output: Pointer;
+    function(Input: Pointer; Output: Pointer;
       FrameCount: culong; TimeInfo: PPaStreamCallbackTimeInfo;
       StatusFlags: TPaStreamCallbackFlags; UserData: Pointer): cint; cdecl;
 

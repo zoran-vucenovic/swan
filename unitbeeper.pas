@@ -11,7 +11,6 @@ uses
   Classes, SysUtils, ctypes, PortAudioHeader;
 
 type
-  TBeeperBuffer = PByte;
 
   TBeeper = class sealed (TObject)
   strict private
@@ -42,7 +41,7 @@ type
     class procedure Final; static;
   public
     class var
-      BeeperBuffer: TBeeperBuffer;
+      BeeperBuffer: PByte;
       CurrentPosition: Integer;
   public
     class function IsLibLoaded: Boolean; static;
@@ -61,7 +60,7 @@ type
 
 implementation
 
-function PortAudioCallbackFun(constref {%H-}Input: Pointer; Output: Pointer;
+function PortAudioCallbackFun({%H-}Input: Pointer; Output: Pointer;
       FrameCount: culong; {%H-}TimeInfo: PPaStreamCallbackTimeInfo;
       {%H-}StatusFlags: TPaStreamCallbackFlags; UserData: Pointer): cint; cdecl;
 var
@@ -112,7 +111,7 @@ begin
   FLibPath := '';
   BeeperBuffer := nil;
   FBufferLen := 0;
-  FBeeperVolume := 127 div 2;
+  FBeeperVolume := 127 div 3;
 end;
 
 class procedure TBeeper.Final;
