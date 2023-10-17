@@ -15,7 +15,7 @@ uses
   UnitFrameJoystickSetup, UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
-  UnitBeeper, UnitChooseFile, UnitOptions, UnitFrameSpectrumModel,
+  UnitSoundPlayer, UnitChooseFile, UnitOptions, UnitFrameSpectrumModel,
   UnitFrameSound, UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions,
   UnitRecentFiles, UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA;
 
@@ -587,7 +587,7 @@ begin
   TSnapshotSZX.OnSzxSaveTape := @SzxOnSaveTape;
 
   LoadFromConf;
-  TBeeper.TryLoadLib;
+  TSoundPlayer.TryLoadLib;
   if FNewModel = TSpectrumModel.smNone then
     FNewModel := TSpectrum.DefaultSpectrumModel;
   DoChangeModel(nil);
@@ -979,7 +979,7 @@ begin
     try
       Spectrum.Paused := True;
       TFrameInputLibraryPath.ShowLibraryPathDialog(
-        TBeeper.LibPath, @SoundLibraryDialogCheckLoad, @SoundLibraryOnSave);
+        TSoundPlayer.LibPath, @SoundLibraryDialogCheckLoad, @SoundLibraryOnSave);
     finally
       Spectrum.Paused := WasPaused;
     end;
@@ -1370,7 +1370,7 @@ var
   SoundAllowed: Boolean;
   SoundIsMuted: Boolean;
 begin
-  SoundAllowed := TBeeper.IsLibLoaded and Assigned(Spectrum);
+  SoundAllowed := TSoundPlayer.IsLibLoaded and Assigned(Spectrum);
   SoundIsMuted := (not SoundAllowed) or Spectrum.SoundMuted;
   ActionMuteSound.Checked := SoundIsMuted;
 
@@ -1484,7 +1484,7 @@ begin
       {$fatal platform not supported!}
     {$endif}
 
-    TBeeper.LibPath := S;
+    TSoundPlayer.LibPath := S;
 
     M := JObj.Get(cSectionSoundVolume, N);
     if (M >= 0) and (M <= 31) then
@@ -1534,10 +1534,10 @@ begin
 
     {$if SizeOf(SizeInt) = 4}
       SPortaudioLib64 := FPortaudioLibPathOtherBitness;
-      SPortaudioLib32 := TBeeper.LibPath;
+      SPortaudioLib32 := TSoundPlayer.LibPath;
     {$elseif SizeOf(SizeInt) = 8}
       SPortaudioLib32 := FPortaudioLibPathOtherBitness;
-      SPortaudioLib64 := TBeeper.LibPath;
+      SPortaudioLib64 := TSoundPlayer.LibPath;
     {$else}
       {$fatal platform not supported!}
     {$endif}
@@ -1593,12 +1593,12 @@ end;
 
 function TForm1.GetSoundVolume: Integer;
 begin
-  Result := TBeeper.BeeperVolume div 4;
+  Result := TSoundPlayer.Volume div 4;
 end;
 
 procedure TForm1.SetSoundVolume(const N: Integer);
 begin
-  TBeeper.BeeperVolume := N * 4;
+  TSoundPlayer.Volume := N * 4;
 end;
 
 procedure TForm1.SetSnapshotHistoryEnabled(const B: Boolean);
@@ -1677,7 +1677,7 @@ begin
             Break;
 
           FrameSoundLib := TFrameInputLibraryPath.CreateLibraryPathDialog(
-            OptionsDialog, TBeeper.LibPath, @SoundLibraryDialogCheckLoad,
+            OptionsDialog, TSoundPlayer.LibPath, @SoundLibraryDialogCheckLoad,
             @SoundLibraryOnSave);
           FrameSoundLib.AddFormEvents(OptionsDialog);
           FrameSound := TFrameSound.CreateForAllOptions(OptionsDialog, Spectrum,
@@ -1842,16 +1842,16 @@ end;
 
 procedure TForm1.SoundLibraryOnSave(var LibPath: String);
 begin
-  TBeeper.LibPath := LibPath;
-  Spectrum.CheckStartBeeper;
+  TSoundPlayer.LibPath := LibPath;
+  Spectrum.CheckStartSoundPlayer;
   UpdateSoundControls;
 end;
 
 function TForm1.SoundLibraryDialogCheckLoad(const APath: String): Boolean;
 begin
-  if TBeeper.IsLibLoaded and (APath <> TBeeper.LibPath) then
-    TBeeper.TryUnloadLib;
-  Result := TBeeper.TryLoadLib(APath);
+  if TSoundPlayer.IsLibLoaded and (APath <> TSoundPlayer.LibPath) then
+    TSoundPlayer.TryUnloadLib;
+  Result := TSoundPlayer.TryLoadLib(APath);
 end;
 
 procedure TForm1.UpdateActiveSnapshotHistory;

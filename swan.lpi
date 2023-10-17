@@ -345,9 +345,9 @@
         <UnitName Value="PortAudioHeader"/>
       </Unit>
       <Unit>
-        <Filename Value="unitbeeper.pas"/>
+        <Filename Value="unitsoundplayer.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="UnitBeeper"/>
+        <UnitName Value="UnitSoundPlayer"/>
       </Unit>
       <Unit>
         <Filename Value="unitsoundvolume.pas"/>

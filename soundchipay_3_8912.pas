@@ -8,7 +8,7 @@ unit SoundChipAY_3_8912;
 interface
 
 uses
-  Classes, SysUtils, PortAudioHeader, UnitBeeper;
+  Classes, SysUtils, PortAudioHeader, UnitSoundPlayer;
 
 type
 
@@ -228,7 +228,7 @@ var
 
 begin
   PE := P + Len;
-  //BI := Integer(B) * TBeeper.BeeperVolume shr 6;
+  //BI := Integer(B) * TSoundPlayer.Volume shr 6;
 
   while P < PE do begin
     //
@@ -249,7 +249,7 @@ begin
             if N and 1 <> 0 then
               Ndiv := (Ndiv * 1448) shr 10;
 
-            NW := NW + (TBeeper.BeeperVolume + (Ndiv shr 1)) div Ndiv;
+            NW := NW + (TSoundPlayer.Volume + (Ndiv shr 1)) div Ndiv;
           end;
         end;
 

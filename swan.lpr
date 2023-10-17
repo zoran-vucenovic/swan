@@ -18,7 +18,7 @@ uses
   UnitSpectrumColoursBGRA, UnitKeyMapRecords, UnitFrameOneKeyMap,
   UnitSpectrumKeysDialog, UnitFormPressAKey, UnitCommon, UnitCommonSpectrum,
   UnitJoystick, UnitFrameJoystickSetup, AboutBox, UnitColourFunctions,
-  UnitDataModuleImages, PortAudioHeader, UnitBeeper, unitSoundVolume,
+  UnitDataModuleImages, PortAudioHeader, UnitSoundPlayer, unitSoundVolume,
   FastIntegers, UnitInputLibraryPathDialog, UnitFormInputPokes, UnitSZX,
   UnitStreamCompression, UnitFormHistorySnapshots, UnitControlScreenBitmap,
   UnitTapePlayer, UnitPzxPlayer, UnitSpectrumKeysControl, UnitKeyboardOnScreen,

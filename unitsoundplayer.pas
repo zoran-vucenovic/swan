@@ -1,4 +1,4 @@
-unit UnitBeeper;
+unit UnitSoundPlayer;
 // Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
@@ -12,7 +12,7 @@ uses
 
 type
 
-  TBeeper = class sealed (TObject)
+  TSoundPlayer = class sealed (TObject)
   strict private
     class var
       Stream: TPaStream;
@@ -26,12 +26,12 @@ type
       FLibPath: String;
       Initialized: Boolean;
       FPlaying: Boolean;
-      FBeeperVolume: Integer;
+      FVolume: Integer;
 
     class procedure SetLibPath(const AValue: String); static;
     class function InitPortAudio(out Err: TPaError): Boolean; static;
     class function TerminatePortAudio(out Err: TPaError): Boolean; static;
-    class procedure SetBeeperVolume(AValue: Integer); static;
+    class procedure SetVolume(AValue: Integer); static;
   private
     class var
       FBufferLen: Integer;
@@ -41,20 +41,20 @@ type
     class procedure Final; static;
   public
     class var
-      BeeperBuffer: PByte;
+      SoundBuffer: PByte;
       CurrentPosition: Integer;
   public
     class function IsLibLoaded: Boolean; static;
     class function TryLoadLib(APath: String): Boolean; static;
     class function TryLoadLib: Boolean; static;
     class function TryUnloadLib: Boolean; static;
-    class function StartBeeper: String; static;
-    class function StopBeeper: String; static;
+    class function Start: String; static;
+    class function Stop: String; static;
     class function StopAndTerminate: Boolean; static;
 
     class property LibPath: String read FLibPath write SetLibPath;
     class property BufferLen: Integer read FBufferLen write SetBufferLen;
-    class property BeeperVolume: Integer read FBeeperVolume write SetBeeperVolume;
+    class property Volume: Integer read FVolume write SetVolume;
     class property Playing: Boolean read FPlaying;
   end;
 
@@ -69,52 +69,52 @@ var
   Out0: PByte absolute Output;
 
 begin
-  Data := PByte(UserData) + TBeeper.PlayPosition;
+  Data := PByte(UserData) + TSoundPlayer.PlayPosition;
   //
   N := FrameCount;
-  if TBeeper.PlayPosition + N >= TBeeper.FBufferLen then begin
-    N := TBeeper.BufferLen - TBeeper.PlayPosition;
+  if TSoundPlayer.PlayPosition + N >= TSoundPlayer.FBufferLen then begin
+    N := TSoundPlayer.BufferLen - TSoundPlayer.PlayPosition;
     Move(Data^, Out0^, N);
     Inc(Out0, N);
     Data := PByte(UserData);
     N := FrameCount - N;
-    TBeeper.PlayPosition := 0;
+    TSoundPlayer.PlayPosition := 0;
   end;
   Move(Data^, Out0^, N);
-  Inc(TBeeper.PlayPosition, N);
+  Inc(TSoundPlayer.PlayPosition, N);
 
   Result := paContinue;
 end;
 
-{ TBeeper }
+{ TSoundPlayer }
 
-class procedure TBeeper.SetBufferLen(const AValue: Integer);
+class procedure TSoundPlayer.SetBufferLen(const AValue: Integer);
 begin
   if AValue <> FBufferLen then begin
-    StopBeeper;
+    Stop;
 
     if AValue <= 0 then begin
       FBufferLen := 0;
-      if BeeperBuffer <> nil then
-        FreeMemAndNil(BeeperBuffer);
+      if SoundBuffer <> nil then
+        FreeMemAndNil(SoundBuffer);
     end else begin
       FBufferLen := AValue;
-      ReAllocMem(BeeperBuffer, FBufferLen);
+      ReAllocMem(SoundBuffer, FBufferLen);
     end;
   end;
 end;
 
-class procedure TBeeper.Init;
+class procedure TSoundPlayer.Init;
 begin
   FPlaying := False;
   Initialized := False;
   FLibPath := '';
-  BeeperBuffer := nil;
+  SoundBuffer := nil;
   FBufferLen := 0;
-  FBeeperVolume := 127 div 3;
+  FVolume := 127 div 3;
 end;
 
-class procedure TBeeper.Final;
+class procedure TSoundPlayer.Final;
 var
   Err: TPaError;
 begin
@@ -122,15 +122,15 @@ begin
   TerminatePortAudio(Err);
 end;
 
-class procedure TBeeper.SetBeeperVolume(AValue: Integer);
+class procedure TSoundPlayer.SetVolume(AValue: Integer);
 begin
   if AValue > 0 then
-    FBeeperVolume := AValue and 127
+    FVolume := AValue and 127
   else
-    FBeeperVolume := 0;
+    FVolume := 0;
 end;
 
-class procedure TBeeper.SetLibPath(const AValue: String);
+class procedure TSoundPlayer.SetLibPath(const AValue: String);
 begin
   if AValue <> FLibPath then begin
     if TryUnloadLib() then
@@ -138,7 +138,7 @@ begin
   end;
 end;
 
-class function TBeeper.InitPortAudio(out Err: TPaError): Boolean;
+class function TSoundPlayer.InitPortAudio(out Err: TPaError): Boolean;
 begin
   Err := 0;
 
@@ -153,14 +153,14 @@ begin
   Result := True;
 end;
 
-class function TBeeper.TerminatePortAudio(out Err: TPaError): Boolean;
+class function TSoundPlayer.TerminatePortAudio(out Err: TPaError): Boolean;
 begin
   Err := 0;
 
   if not Initialized then
     Exit(True);
 
-  if StopBeeper <> '' then
+  if Stop <> '' then
     Exit(False);
 
   Err := PortAudioHeader.Pa_Terminate();
@@ -171,12 +171,12 @@ begin
   Result := True;
 end;
 
-class function TBeeper.IsLibLoaded: Boolean;
+class function TSoundPlayer.IsLibLoaded: Boolean;
 begin
   Result := PortAudioHeader.IsLoaded;
 end;
 
-class function TBeeper.TryLoadLib(APath: String): Boolean;
+class function TSoundPlayer.TryLoadLib(APath: String): Boolean;
 begin
   Result := PortAudioHeader.IsLoaded;
   if not Result then begin
@@ -187,12 +187,12 @@ begin
   end;
 end;
 
-class function TBeeper.TryLoadLib: Boolean;
+class function TSoundPlayer.TryLoadLib: Boolean;
 begin
   Result := TryLoadLib(FLibPath);
 end;
 
-class function TBeeper.TryUnloadLib: Boolean;
+class function TSoundPlayer.TryUnloadLib: Boolean;
 var
   Err: TPaError;
 begin
@@ -204,7 +204,7 @@ begin
   Result := not PortAudioHeader.IsLoaded;
 end;
 
-class function TBeeper.StartBeeper: String;
+class function TSoundPlayer.Start: String;
 var
   Err: TPaError;
   ErrStr: String;
@@ -239,12 +239,12 @@ begin
   if FBufferLen <= 0 then
     Exit('Buffer size zero!');
 
-  FillChar(BeeperBuffer^, FBufferLen, #0);
+  FillChar(SoundBuffer^, FBufferLen, #0);
 
   if InError(
     PortAudioHeader.Pa_OpenDefaultStream(@Stream, 0, 1, paInt8,
     SampleRate, {256} paFramesPerBufferUnspecified,
-    @PortAudioCallbackFun, BeeperBuffer)
+    @PortAudioCallbackFun, SoundBuffer)
   )
   then
     Exit(ErrStr);
@@ -262,7 +262,7 @@ begin
   FPlaying := True;
 end;
 
-class function TBeeper.StopBeeper: String;
+class function TSoundPlayer.Stop: String;
 var
   Err: TPaError;
 begin
@@ -284,7 +284,7 @@ begin
   Result := '';
 end;
 
-class function TBeeper.StopAndTerminate: Boolean;
+class function TSoundPlayer.StopAndTerminate: Boolean;
 var
   Err: TPaError;
 begin
@@ -292,10 +292,10 @@ begin
 end;
 
 initialization
-  TBeeper.Init;
+  TSoundPlayer.Init;
 
 finalization
-  TBeeper.Final;
+  TSoundPlayer.Final;
 
 end.
 

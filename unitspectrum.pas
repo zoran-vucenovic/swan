@@ -10,7 +10,7 @@ interface
 uses
   Classes, SysUtils, Types, BGRABitmapTypes, UnitMemory, Z80Processor,
   UnitSpectrumKeyboard, FastIntegers, UnitSpectrumColourMap,
-  UnitSpectrumColoursBGRA, UnitJoystick, UnitBeeper, SoundChipAY_3_8912,
+  UnitSpectrumColoursBGRA, UnitJoystick, UnitSoundPlayer, SoundChipAY_3_8912,
   Graphics, LCLType, Forms;
 
 const
@@ -63,10 +63,10 @@ type
       FAyPortSelectReg = $FFFD;
       FAyPortValue = $BFFD;
 
-      BeeperRateMultiply48 = 63;
-      BeeperRateDivide48 = 5000;
-      BeeperRateMultiply128 = 7;
-      BeeperRateDivide128 = 563;
+      SoundPlayerRateMultiply48 = 63;
+      SoundPlayerRateDivide48 = 5000;
+      SoundPlayerRateMultiply128 = 7;
+      SoundPlayerRateDivide128 = 563;
   strict private
     procedure SetPaging; inline;
     // processor events
@@ -118,14 +118,14 @@ type
     StepInDebugger: Boolean;
     FFrameCount: Int64;
     FIntPinUpCount: Int16Fast;
-    FLatestTickUpdatedBeeper: Int64;
+    FLatestTickUpdatedSoundBuffer: Int64;
     FRestoringSpectrumModel: Boolean;
 
-    FBeeperRateMultiply: Int64;
-    FBeeperRateDivide: Int64;
+    FSoundPlayerRateMultiply: Int64;
+    FSoundPlayerRateDivide: Int64;
 
-    procedure StopBeeper; inline;
-    procedure UpdateBeeperBuffer; inline;
+    procedure StopSoundPlayer; inline;
+    procedure UpdateSoundBuffer; inline;
     procedure UpdateAskForSpeedCorrection;
     procedure SetPaused(AValue: Boolean);
     procedure WriteToScreen(TicksTo: Int32Fast);
@@ -178,7 +178,7 @@ type
     procedure GetSpectrumColours(out Colours: TLCLColourMap);
     procedure SetWriteScreen(const AValue: Boolean);
     procedure SetEarFromTape(AValue: Byte);
-    procedure CheckStartBeeper;
+    procedure CheckStartSoundPlayer;
 
     procedure StopRunning;
     procedure ResetSpectrum;
@@ -216,34 +216,31 @@ implementation
 
 { TSpectrum }
 
-procedure TSpectrum.UpdateBeeperBuffer;
+procedure TSpectrum.UpdateSoundBuffer;
 var
   B: Byte;
   N, M: Integer;
   P: PByte;
 begin
-  if TBeeper.Playing then begin
-    N := ((FSumTicks + FProcessor.TStatesInCurrentFrame) * FBeeperRateMultiply + FBeeperRateDivide shr 1 - FLatestTickUpdatedBeeper) div FBeeperRateDivide;
+  if TSoundPlayer.Playing then begin
+    N := ((FSumTicks + FProcessor.TStatesInCurrentFrame) * FSoundPlayerRateMultiply + FSoundPlayerRateDivide shr 1 - FLatestTickUpdatedSoundBuffer) div FSoundPlayerRateDivide;
     if N > 0 then begin
-      FLatestTickUpdatedBeeper := FLatestTickUpdatedBeeper + N * FBeeperRateDivide;
+      FLatestTickUpdatedSoundBuffer := FLatestTickUpdatedSoundBuffer + N * FSoundPlayerRateDivide;
 
-      //B := FEar or FMic;
-      //if FAYSoundChip = nil then
-        B := (Integer(FEar or FMic) * TBeeper.BeeperVolume) shr 6;
+      B := (Integer(FEar or FMic) * TSoundPlayer.Volume) shr 6;
 
-      P := TBeeper.BeeperBuffer + TBeeper.CurrentPosition;
-      M := TBeeper.BufferLen - TBeeper.CurrentPosition;
+      P := TSoundPlayer.SoundBuffer + TSoundPlayer.CurrentPosition;
+      M := TSoundPlayer.BufferLen - TSoundPlayer.CurrentPosition;
 
       if N >= M then begin
-        //FillChar(P^, M, B);
         if Assigned(FAYSoundChip) then
           FAYSoundChip.Fill(B, P, M)
         else
           FillChar(P^, M, B);
 
         N := N - M;
-        TBeeper.CurrentPosition := 0;
-        P := TBeeper.BeeperBuffer;
+        TSoundPlayer.CurrentPosition := 0;
+        P := TSoundPlayer.SoundBuffer;
       end;
 
       if Assigned(FAYSoundChip) then
@@ -251,17 +248,17 @@ begin
       else
         FillChar(P^, N, B);
 
-      TBeeper.CurrentPosition := TBeeper.CurrentPosition + N;
+      TSoundPlayer.CurrentPosition := TSoundPlayer.CurrentPosition + N;
     end;
   end;
 end;
 
-procedure TSpectrum.StopBeeper;
+procedure TSpectrum.StopSoundPlayer;
 begin
-  //TBeeper.StopBeeper;
+  //TSoundPlayer.Stop;
   // Terminate portaudio! After stopping without terminating portaudio, and then
   // restarting, the sound seems to make bigger and bigger delay.
-  TBeeper.StopAndTerminate;
+  TSoundPlayer.StopAndTerminate;
 end;
 
 procedure TSpectrum.InitTimes;
@@ -303,7 +300,7 @@ procedure TSpectrum.SetSpeed(AValue: Integer);
 begin
   if FSpeed <> AValue then begin
     FSpeed := AValue;
-    StopBeeper;
+    StopSoundPlayer;
 
     if FIs128KModel then begin
       // For 1.000.000 microseconds, passes 3.546.900 ticks
@@ -327,7 +324,7 @@ begin
     end;
 
     UpdateAskForSpeedCorrection;
-    CheckStartBeeper;
+    CheckStartSoundPlayer;
   end;
 end;
 
@@ -463,7 +460,7 @@ begin
     // 1 in bit 4 activates EAR, whilst 0 in bit 3 activates MIC
     // Implemented so that EAR state can be read by IN, whereas MIC not, but
     // MIC is (to lesser extent) taken into account when playing sound.
-    UpdateBeeperBuffer;
+    UpdateSoundBuffer;
     FInternalEar := (Aux and %10000) shl 2;
     FMic := (not Aux) and %1000;
     FEar := FInternalEar or FEarFromTape;
@@ -474,7 +471,7 @@ begin
           FAYSoundChip.SetActiveRegNum(FProcessor.DataBus);
         FAyPortValue:
           begin
-            UpdateBeeperBuffer;
+            UpdateSoundBuffer;
             FAYSoundChip.SetRegValue(FProcessor.DataBus);
             // calculate new values for output
           end;
@@ -485,13 +482,13 @@ begin
   SetPaging;
 end;
 
-procedure TSpectrum.CheckStartBeeper;
+procedure TSpectrum.CheckStartSoundPlayer;
 begin
   if (not FSoundMuted) and AskForSpeedCorrection and FRunning and (FSpeed = NormalSpeed)
-      and TBeeper.IsLibLoaded and (not TBeeper.Playing)
+      and TSoundPlayer.IsLibLoaded and (not TSoundPlayer.Playing)
   then begin
-    FLatestTickUpdatedBeeper := (FSumTicks + FProcessor.TStatesInCurrentFrame) * FBeeperRateMultiply;
-    TBeeper.StartBeeper;
+    FLatestTickUpdatedSoundBuffer := (FSumTicks + FProcessor.TStatesInCurrentFrame) * FSoundPlayerRateMultiply;
+    TSoundPlayer.Start;
   end;
 end;
 
@@ -712,8 +709,8 @@ begin
   end;
 
   if FIs128KModel then begin
-    FBeeperRateMultiply := BeeperRateMultiply128;
-    FBeeperRateDivide := BeeperRateDivide128;
+    FSoundPlayerRateMultiply := SoundPlayerRateMultiply128;
+    FSoundPlayerRateDivide := SoundPlayerRateDivide128;
 
     if FAYSoundChip = nil then
       FAYSoundChip := TSoundAY_3_8912.Create
@@ -721,8 +718,8 @@ begin
       FAYSoundChip.Reset();
   end else begin                            
     FreeAndNil(FAYSoundChip);
-    FBeeperRateMultiply := BeeperRateMultiply48;
-    FBeeperRateDivide := BeeperRateDivide48;
+    FSoundPlayerRateMultiply := SoundPlayerRateMultiply48;
+    FSoundPlayerRateDivide := SoundPlayerRateDivide48;
   end;
 
   if FInLoadingSnapshot then begin
@@ -750,11 +747,11 @@ end;
 procedure TSpectrum.UpdateDebuggedOrPaused;
 begin
   if (FPaused or Assigned(FDebugger)) xor FDebuggedOrPaused then begin
-    StopBeeper;
+    StopSoundPlayer;
     FDebuggedOrPaused := not FDebuggedOrPaused;
 
     UpdateAskForSpeedCorrection;
-    CheckStartBeeper;
+    CheckStartSoundPlayer;
   end;
 end;
 
@@ -793,14 +790,14 @@ end;
 procedure TSpectrum.SetWriteScreen(const AValue: Boolean);
 begin
   if AValue xor (FProcessor.OnNeedWriteScreen = @WriteToScreen) then begin
-    StopBeeper;
+    StopSoundPlayer;
     if AValue then
       FProcessor.OnNeedWriteScreen := @WriteToScreen
     else
       FProcessor.OnNeedWriteScreen := nil;
 
     UpdateAskForSpeedCorrection;
-    CheckStartBeeper;
+    CheckStartSoundPlayer;
   end;
 end;
 
@@ -813,7 +810,7 @@ procedure TSpectrum.ResetSpectrum;
 var
   BufLen: Integer;
 begin
-  StopBeeper;
+  StopSoundPlayer;
   if not FInLoadingSnapshot then
     if FBkpSpectrumModel <> smNone then begin
       if FSpectrumModel <> FBkpSpectrumModel then begin
@@ -860,8 +857,8 @@ begin
     BufLen := BufLen * 4 * 2;
   end;
 
-  TBeeper.BufferLen := BufLen;
-  CheckStartBeeper;
+  TSoundPlayer.BufferLen := BufLen;
+  CheckStartSoundPlayer;
 end;
 
 function TSpectrum.IsRunning: Boolean;
@@ -929,7 +926,7 @@ procedure TSpectrum.RunSpectrum;
       FFlashState := (FFlashState + 1) and 31;
 
       if AskForSpeedCorrection then begin
-        UpdateBeeperBuffer;
+        UpdateSoundBuffer;
         //
         MicrosecondsNeeded := MicrosecondsNeeded + SpeedCorrection;
 
@@ -956,11 +953,11 @@ begin
   ResetSpectrum;
   FRunning := True;
 
-  //TBeeper.BufferLen := 512 * 64; //43;
+  //TSoundPlayer.BufferLen := 512 * 64; //43;
   if Assigned(FOnStartRun) then
     Synchronize(FOnStartRun);
 
-  CheckStartBeeper;
+  CheckStartSoundPlayer;
 
   while FRunning do begin
     if not FDebuggedOrPaused then begin
@@ -977,7 +974,7 @@ begin
       DoSync;
     end;
   end;
-  StopBeeper;
+  StopSoundPlayer;
 
   FSumTicks := FSumTicks + FProcessor.TStatesInCurrentFrame;
 
@@ -993,9 +990,9 @@ begin
   if FSoundMuted = AValue then
     Exit;
 
-  StopBeeper;
+  StopSoundPlayer;
   FSoundMuted := AValue;
-  CheckStartBeeper;
+  CheckStartSoundPlayer;
 end;
 
 procedure TSpectrum.SetFlashState(AValue: UInt16);
@@ -1127,7 +1124,7 @@ end;
 
 procedure TSpectrum.SetInternalEar(AValue: Byte);
 begin
-  UpdateBeeperBuffer;
+  UpdateSoundBuffer;
   FInternalEar := AValue;
   FEarFromTape := 0;
   FEar := AValue;
@@ -1135,7 +1132,7 @@ end;
 
 procedure TSpectrum.SetEarFromTape(AValue: Byte);
 begin
-  UpdateBeeperBuffer;
+  UpdateSoundBuffer;
   if AValue <> FEarFromTape then begin
     FEarFromTape := AValue;
     FEar := FInternalEar or AValue;
