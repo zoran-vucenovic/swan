@@ -310,6 +310,7 @@ TSnapshotSNA = SnapshotSNA.TSnapshotSNA;
     procedure AddKeyEventToQueue(KeyIndex: Integer; BDown: Integer);
     procedure AddEventToQueue(Event: TNotifyEvent);
     procedure PaintScreen(Sender: TObject);
+    procedure PaintBmp(Sender: TObject);
     procedure DoDetachDebugger(Sender: TObject);
     procedure SaveSnapshot(SnapshotClass: TSnapshotFileClass);
     procedure SoundVolumeOnChg(Sender: TObject);
@@ -576,7 +577,7 @@ begin
   FWriteScreen := True;
 
   AutoSize := False;
-  Bmp := TBitmap.Create;
+  Bmp := nil;
 
   DropFiles := nil;
   DestroySpectrum;
@@ -1874,6 +1875,9 @@ var
   STapeRunningMsg: String;
 begin
   if not FWriteScreen then begin
+    if Bmp = nil then
+      Bmp := TBitmap.Create;
+
     Bmp.SetSize(
       PaintBox1.ClientWidth,
       PaintBox1.ClientHeight
@@ -1906,10 +1910,12 @@ begin
     Bmp.Canvas.Pen.Width := 2;
 
     Bmp.Canvas.TextRect(R, R.Left, R.Top, STapeRunningMsg, TS);
-    PaintBox1.Invalidate;
-  end else
-    if (Bmp.Width <> WholeScreenWidth) or (Bmp.Height <> WholeScreenHeight) then
-      Bmp.SetSize(WholeScreenWidth, WholeScreenHeight);
+
+    PaintBox1.OnPaint := @PaintBmp;
+  end else begin
+    PaintBox1.OnPaint := @PaintScreen;
+  end;
+  PaintBox1.Invalidate;
 end;
 
 procedure TForm1.UpdateWriteScreen;
@@ -1949,6 +1955,11 @@ begin
 end;
 
 procedure TForm1.PaintScreen(Sender: TObject);
+begin
+  Spectrum.DrawToCanvas(PaintBox1.Canvas, DrawingRect);
+end;
+
+procedure TForm1.PaintBmp(Sender: TObject);
 begin
   PaintBox1.Canvas.StretchDraw(DrawingRect, Bmp);
 end;
@@ -2523,7 +2534,7 @@ begin
   end;
 
   if FWriteScreen then begin
-    Spectrum.DrawToCanvas(Bmp.Canvas);
+    //Spectrum.DrawToCanvas(Bmp.Canvas);
     PaintBox1.Invalidate;
   end;
 

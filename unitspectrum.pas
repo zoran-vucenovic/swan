@@ -63,10 +63,12 @@ type
       FAyPortSelectReg = $FFFD;
       FAyPortValue = $BFFD;
 
-      SoundPlayerRateMultiply48 = 63;
-      SoundPlayerRateDivide48 = 5000;
-      SoundPlayerRateMultiply128 = 7;
-      SoundPlayerRateDivide128 = 563;
+      // constants used in conversion between portaudio frequency and cpu frequency
+      SoundPlayerRateMultiply48 = 63; // in 48K spectrum,
+      SoundPlayerRateDivide48 = 5000; //  it is 44100 / 3500000 = 63 / 5000
+      SoundPlayerRateMultiply128 = 7; // in 128K spectrum,
+      SoundPlayerRateDivide128 = 563; //  it is 44100 / 3546900 = 7 / 563
+
   strict private
     procedure SetPaging; inline;
     // processor events
@@ -185,7 +187,7 @@ type
     function IsRunning: Boolean;
     function GetProcessor: TProcessor;
     function GetFrameCount: Int64;
-    procedure DrawToCanvas(ACanvas: TCanvas); inline;
+    procedure DrawToCanvas(const ACanvas: TCanvas; const R: TRect); inline;
     function GetBgraColours: TBGRAColours;
     function IsIssue2: Boolean;
 
@@ -876,10 +878,10 @@ begin
   Result := FFrameCount;
 end;
 
-procedure TSpectrum.DrawToCanvas(ACanvas: TCanvas);
+procedure TSpectrum.DrawToCanvas(const ACanvas: TCanvas; const R: TRect);
 begin
   SpectrumColoursBGRA.Bmp.InvalidateBitmap;
-  SpectrumColoursBGRA.Bmp.Draw(ACanvas, 0, 0, True);
+  SpectrumColoursBGRA.Bmp.Draw(ACanvas, R, True);
 end;
 
 function TSpectrum.GetBgraColours: TBGRAColours;
@@ -953,7 +955,6 @@ begin
   ResetSpectrum;
   FRunning := True;
 
-  //TSoundPlayer.BufferLen := 512 * 64; //43;
   if Assigned(FOnStartRun) then
     Synchronize(FOnStartRun);
 
