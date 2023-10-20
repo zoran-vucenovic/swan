@@ -243,21 +243,14 @@ begin
             // envelope...
             N := FEnvelopeValue;
           end;
-          if N <> 0 then begin
-            N := 15 - N;
-            Ndiv := (1 shl (N shr 1));
-            if N and 1 <> 0 then
-              Ndiv := (Ndiv * 1448) shr 10;
-
-            NW := NW + (TSoundPlayer.Volume + (Ndiv shr 1)) div Ndiv;
-          end;
+          NW := NW + N;
         end;
 
       end;
       OutputChCurrentPositions[J] := (K + 1) mod OutputChanelsLengths[J];
     end;
 
-    NW := NW + B;
+    NW := (NW * TSoundPlayer.Volume) shr 6 + B;
     P^ := NW;
 
     if FEnvelopePeriod > 0 then begin
