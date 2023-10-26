@@ -9,9 +9,9 @@ interface
 
 uses
   Classes, SysUtils, Types, UnitFileSna, UnitHistorySnapshots,
-  CommonFunctionsLCL, UnitKeyMaps, UnitFormPressAKey, UnitControlScreenBitmap,
+  CommonFunctionsLCL, UnitControlScreenBitmap,
   UnitSpectrumColoursBGRA, UnitFrameHistorySnapshotOptions, Forms, Controls,
-  Graphics, Dialogs, ExtCtrls, StdCtrls, Spin, LMessages, ButtonPanel;
+  Graphics, Dialogs, ExtCtrls, StdCtrls, LMessages, ButtonPanel;
 
 type
   TFormHistorySnapshots = class(TForm)

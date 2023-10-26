@@ -295,7 +295,7 @@ var
 begin
   Result := False;
   if (BlockSize = SizeOf(AyRec))
-     and (Stream.Read(AyRec, SizeOf(AyRec)) = SizeOf(AyRec))
+     and (Stream.Read(AyRec{%H-}, SizeOf(AyRec)) = SizeOf(AyRec))
   then begin
     for I := 0 to 15 do begin
       Szx.State.AyState.Registers[I] := AyRec.AyRegisters[I];
@@ -1238,7 +1238,6 @@ var
 
 var
   BlockRP: TZxstRamPage;
-  BlockTape: TZxstTape;
   I, J: Integer;
   TapePlayer: TTapePlayer;
 

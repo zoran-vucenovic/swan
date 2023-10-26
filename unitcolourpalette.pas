@@ -10,7 +10,7 @@ interface
 uses
   Classes, SysUtils, Types, UnitSpectrumColourMap, CommonFunctionsLCL,
   UnitCommonSpectrum, UnitFormForOptionsBasic, UnitOptions, Forms, Controls,
-  ExtCtrls, Graphics, StdCtrls, Dialogs, Buttons, ButtonPanel, LCLType, LCLIntf,
+  ExtCtrls, Graphics, StdCtrls, Dialogs, Buttons, LCLType, LCLIntf,
   LazUTF8;
 
 type

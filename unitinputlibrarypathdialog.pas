@@ -34,7 +34,7 @@ type
     procedure MakeExtensionsFilter;
     function DoCheckLoad: Boolean;
     procedure FormOnCloseQuery(Sender: TObject; var CanClose: Boolean);
-    procedure FormOnClose(Sender: TObject; var CloseAction: TCloseAction);
+    procedure FormOnClose(Sender: TObject; var {%H-}CloseAction: TCloseAction);
   public
     constructor Create(TheOwner: TComponent); override;
     constructor CreateLibraryPathDialog(AOwner: TComponent; S: String;

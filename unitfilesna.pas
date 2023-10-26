@@ -8,8 +8,7 @@ unit UnitFileSna;
 interface
 
 uses
-  Classes, SysUtils, UnitSpectrum, UnitMemory, Z80Processor, FastIntegers,
-  SoundChipAY_3_8912;
+  Classes, SysUtils, UnitSpectrum, UnitMemory, Z80Processor, SoundChipAY_3_8912;
 
 const
   KB48 = 48 * 1024;
@@ -226,13 +225,12 @@ class function TSnapshotInternalSwan.GetScreenMem(const Stream: TStream;
   var ScreenMemArr: array of Byte): Boolean;
 var
   State: TSpectrumInternalState;
-  N: Integer;
 begin
   if Assigned(Stream) and (Length(ScreenMemArr) = 6912)
     and (Stream.Size >= SizeOf(TSpectrumInternalState) + Length(ScreenMemArr))
   then begin
     Stream.Position := 0;
-    if Stream.Read(State, SizeOf(State)) = SizeOf(State) then begin
+    if Stream.Read(State{%H-}, SizeOf(State)) = SizeOf(State) then begin
       if State.ShadowScreenDisplay then
         Stream.Seek(7 * Int64(KB16), TSeekOrigin.soCurrent);
 
@@ -250,7 +248,6 @@ var
   WasPaused: Boolean;
   RamBanksCount: Integer;
   Mem: TMemory;
-  I: Integer;
 
 begin
   Result := False;

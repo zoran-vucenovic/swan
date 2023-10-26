@@ -136,7 +136,7 @@ begin
             N := Stream.Position;
             if (Stream.Seek(Int64(KB48), TSeekOrigin.soCurrent) = KB48 + N)
               and (Stream.Read(State.PC, 2) = 2)
-              and (Stream.Read(B, 1) = 1)
+              and (Stream.Read(B{%H-}, 1) = 1)
               and (Stream.Seek(-(Int64(KB48) + 3), TSeekOrigin.soCurrent) = N)
             then begin
               State.Set7ffd(B);
@@ -239,7 +239,6 @@ var
   MS16: TMemoryStream;
               
   W: Word;
-  WR: WordRec absolute W;
 
 begin
   Result := False;

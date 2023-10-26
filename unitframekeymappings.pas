@@ -10,7 +10,7 @@ interface
 uses
   Classes, SysUtils, UnitFrameOneKeyMap, UnitKeyMapRecords, UnitFormPressAKey,
   CommonFunctionsLCL, UnitFormForOptionsBasic, UnitOptions, Forms, Controls,
-  Graphics, Dialogs, ExtCtrls, ButtonPanel, StdCtrls, LazUTF8;
+  Graphics, Dialogs, ExtCtrls, StdCtrls, LazUTF8;
 
 type
   TFrameKeyMappings = class(TFrame)
@@ -56,7 +56,7 @@ type
     procedure SaveSchemeOnClick(Sender: TObject);
     procedure RemoveSchemeOnClick(Sender: TObject);
     procedure ResetToDefaultOnClick(Sender: TObject);
-    procedure Close(Sender: TObject; var CloseAction: TCloseAction);
+    procedure Close(Sender: TObject; var {%H-}CloseAction: TCloseAction);
 
   public
     constructor Create(TheOwner: TComponent); override;

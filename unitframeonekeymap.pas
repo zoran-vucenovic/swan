@@ -278,7 +278,6 @@ procedure TControlKeyMappings.RemovePCKey(AValue: Word);
 var
   N: Integer;
   F: TFrameOnePCKeyMapping;
-  I: Integer;
 begin
   N := FrameMappingsMap.IndexOf(AValue);
   if N >= 0 then begin
@@ -319,7 +318,7 @@ var
   SKL: TFrameOnePCKeyMapping.TSpectrumKeyControls;
 begin
   N := (FrameMappingsMap.Count * 7) div 5 + 2;
-  SetLength(KMRecs, N);
+  SetLength(KMRecs{%H-}, N);
   K := 0;
   for I := 0 to FrameMappingsMap.Count - 1 do begin
     SKL := FrameMappingsMap.Data[I].SpectrumKeys;
@@ -554,7 +553,7 @@ begin
       WE := 0;
       for I := 0 to High(SpectrumKeys) do begin
         OSC := SpectrumKeys[I];
-        OSC.GetPreferredSize(W, H);
+        OSC.GetPreferredSize(W{%H-}, H{%H-});
         WE := WE + W;
         if Assigned(OSC1) then begin
           WE := WE + SpcW;

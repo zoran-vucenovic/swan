@@ -77,7 +77,7 @@ type
     class function GetTapeType: TTapeType; virtual; abstract;
 
     class procedure RegisterTapePlayerClass(TapePlayerClass: TTapePlayerClass); static;
-    class function GetNextBlockClass(const Stream: TStream): TTapeBlockClass; virtual;
+    class function GetNextBlockClass(const {%H-}Stream: TStream): TTapeBlockClass; virtual;
     class function CheckIsMyClass(const Stream: TStream): Boolean; virtual; abstract;
 
   private
@@ -462,10 +462,7 @@ begin
 end;
 
 class function TTapePlayer.GetDefaultExtension: String;
-var
-  TapeType: TTapeType;
 begin
-  TapeType := GetTapeType;
   WriteStr(Result, GetTapeType);
   Delete(Result, 1, 2);
   Result := LowerCase(Result);

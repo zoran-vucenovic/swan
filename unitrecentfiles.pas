@@ -126,7 +126,7 @@ var
 begin
   Result := False;
   K := Length(FRecentFiles);
-  SetLength(Arr, K);
+  SetLength(Arr{%H-}, K);
   J := 0;
   for I := Low(FRecentFiles) to High(FRecentFiles) do begin
     if not SameFileName(FRecentFiles[I], S) then begin

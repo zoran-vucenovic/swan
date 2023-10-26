@@ -325,7 +325,7 @@ begin
                   // read one more byte if LeH3 = 55
                   if Header2.LeH3 <> 55 then
                     HeadersRead := 3
-                  else if Stream.Read(B, 1) = 1 then
+                  else if Stream.Read(B{%H-}, 1) = 1 then
                     HeadersRead := 4;
                 end;
               end else
@@ -527,7 +527,7 @@ begin
       Header1.IFF2 := 1;
 
     Header1.ViB := (WordRec(State.IR).Lo shr 7)
-      or ((State.BorderColour and %111) shl 1)
+      or ((State.BorderColour and Byte(%111)) shl 1)
       or %100000
       ;
 

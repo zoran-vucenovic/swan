@@ -9,7 +9,7 @@ interface
 
 uses
   Classes, SysUtils, UnitSpectrum, UnitOptions, Forms, Controls, ExtCtrls,
-  StdCtrls, Graphics;
+  Graphics;
 
 type
 

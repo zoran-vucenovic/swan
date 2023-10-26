@@ -9,7 +9,7 @@ object FormHistorySnapshots: TFormHistorySnapshots
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '2.2.7.0'
+  LCLVersion = '3.0.0.2'
   object Panel15: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
@@ -139,10 +139,10 @@ object FormHistorySnapshots: TFormHistorySnapshots
             AnchorSideTop.Control = Panel12
             AnchorSideRight.Control = Panel12
             AnchorSideRight.Side = asrBottom
-            Left = 435
+            Left = 437
             Height = 19
             Top = 0
-            Width = 156
+            Width = 154
             Anchors = [akTop, akRight]
             Caption = 'Restore selected snapshot'
             TabOrder = 0
