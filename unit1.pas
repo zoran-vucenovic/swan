@@ -218,6 +218,7 @@ TSnapshotSNA = SnapshotSNA.TSnapshotSNA;
     procedure AfterShow(Data: PtrInt);
     procedure UpdateActionsModel();
     procedure UpdateShowCurrentlyActiveJoystick;
+    procedure UpdateCheckPaused;
     procedure UpdateSoundControls;
     procedure LoadFromConf;
     procedure SaveToConf;
@@ -955,6 +956,7 @@ begin
     AddEventToQueue(@ActionPauseExecute);
   end else begin
     Spectrum.Paused := not Spectrum.Paused;
+    UpdateCheckPaused;
   end;
 end;
 
@@ -1364,6 +1366,11 @@ begin
   else
     LabelJoystick.Caption := 'Joystick disabled';
   ActionEnableJoystick.Checked := TJoystick.Joystick.Enabled;
+end;
+
+procedure TForm1.UpdateCheckPaused;
+begin
+  ActionPause.Checked := Spectrum.Paused;
 end;
 
 procedure TForm1.UpdateSoundControls;
