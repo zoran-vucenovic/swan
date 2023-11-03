@@ -38,10 +38,10 @@ type
     FActiveRegisterPointer: PByte;
     FActiveRegisterMask: Byte;
 
-    OutputChanelsLengths: array [0..2] of Integer;
+    OutputChannelsLengths: array [0..2] of Integer;
     OutputChCurrentPositions: array [0..2] of Integer;
 
-    OutputChanelsVolumes: array [0..2] of Byte;
+    OutputChannelsVolumes: array [0..2] of Byte;
 
     FEnvelopePosition: Integer;
     FEnvelopeValue: Byte;
@@ -62,7 +62,7 @@ type
     StartFadingTicks: Int64;
 
     procedure InitRegPointers();
-    procedure RecalcOutputChanels;
+    procedure RecalcOutputChannels;
 
     procedure ResetEnvelope;
     procedure SetOnCheckTicks(AValue: TFuncTicks);
@@ -140,9 +140,9 @@ begin
   FRegPointers[15] := @FReg15;
 end;
 
-procedure TSoundAY_3_8912.RecalcOutputChanels;
+procedure TSoundAY_3_8912.RecalcOutputChannels;
 
-  procedure RecalcOutChanel(Ch: Integer; Reg: Word; Vol: Byte);
+  procedure RecalcOutChannel(Ch: Integer; Reg: Word; Vol: Byte);
   var
     Le2: Integer;
   begin
@@ -153,17 +153,16 @@ procedure TSoundAY_3_8912.RecalcOutputChanels;
 
       Le2 := (Integer(Reg) * 224 + 281) div 563;
       if Le2 < 1 then begin
-        OutputChanelsLengths[Ch] := 1;
+        OutputChannelsLengths[Ch] := 1;
       end else begin
-        OutputChanelsLengths[Ch] := Le2;
+        OutputChannelsLengths[Ch] := Le2;
       end;
 
     end else begin
-      OutputChanelsLengths[Ch] := 1;
-      Vol := 15;
+      OutputChannelsLengths[Ch] := 1;
     end;
 
-    OutputChanelsVolumes[Ch] := Vol;
+    OutputChannelsVolumes[Ch] := Vol;
 
   end;
 
@@ -178,9 +177,9 @@ begin
   NoiseHalfPeriod := FNoiseWidth;
   NoiseHalfPeriod := (NoiseHalfPeriod * 112 + 281) div 563;
 
-  RecalcOutChanel(0, FRegA, FVolumeA);
-  RecalcOutChanel(1, FRegB, FVolumeB);
-  RecalcOutChanel(2, FRegC, FVolumeC);
+  RecalcOutChannel(0, FRegA, FVolumeA);
+  RecalcOutChannel(1, FRegB, FVolumeB);
+  RecalcOutChannel(2, FRegC, FVolumeC);
 end;
 
 class procedure TSoundAY_3_8912.Init;
@@ -281,7 +280,7 @@ begin
     end;
 
     for J := 0 to 2 do begin
-      L := OutputChanelsLengths[J];
+      L := OutputChannelsLengths[J];
       K := OutputChCurrentPositions[J] mod L;
 
       if K shl 1 < L then begin
@@ -290,7 +289,7 @@ begin
           // envelope...
           N := FEnvelopeValue;
         end else
-          N := OutputChanelsVolumes[J];
+          N := OutputChannelsVolumes[J];
 
         N := N and (NoiseLevel or NoiseOnCh[J]);
 
@@ -377,7 +376,7 @@ begin
 
     if AValue <> FActiveRegisterPointer^ then begin
       FActiveRegisterPointer^ := AValue;
-      RecalcOutputChanels;
+      RecalcOutputChannels;
     end;
 
     // Setting envelope shape is the only event that resets envelope.
@@ -396,9 +395,9 @@ var
   I: Integer;
 begin
   for I := 0 to 2 do begin
-    OutputChanelsLengths[I] := 1;
+    OutputChannelsLengths[I] := 1;
     OutputChCurrentPositions[I] := 0;
-    OutputChanelsVolumes[I] := $0F;
+    OutputChannelsVolumes[I] := $0F;
     NoiseOnCh[I] := $0F;
     FEnvelopeOnCh[I] := False;
   end;

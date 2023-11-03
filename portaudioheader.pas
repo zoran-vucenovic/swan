@@ -94,8 +94,8 @@ const
 var
   Pa_Initialize: function(): TPaError; cdecl;
   Pa_Terminate: function(): TPaError; cdecl;
-  Pa_OpenDefaultStream: function(Stream: PPaStream; NumInputChanels: cint;
-    NumOutputChanels: cint; SampleFormat: TPaSampleFormat; SampleRate: cdouble;
+  Pa_OpenDefaultStream: function(Stream: PPaStream; NumInputChannels: cint;
+    NumOutputChannels: cint; SampleFormat: TPaSampleFormat; SampleRate: cdouble;
     FramesPerBuffer: culong; StreamCallback: TPaStreamCallback; UserData: Pointer): TPaError; cdecl;
   Pa_StartStream: function(Stream: TPaStream): TPaError; cdecl;
   Pa_StopStream: function(Stream: TPaStream): TPaError; cdecl;
@@ -124,8 +124,8 @@ end;
 {$push}
 {$warn 5024 off : Parameter "$1" not used}
 function EmptyOpenDefaultStreamFun(
-  Stream: PPaStream; NumInputChanels: cint;
-  NumOutputChanels: cint; SampleFormat: TPaSampleFormat; SampleRate: cdouble;
+  Stream: PPaStream; NumInputChannels: cint;
+  NumOutputChannels: cint; SampleFormat: TPaSampleFormat; SampleRate: cdouble;
   FramesPerBuffer: culong; StreamCallback: TPaStreamCallback; UserData: Pointer
   ): TPaError; cdecl;
 begin

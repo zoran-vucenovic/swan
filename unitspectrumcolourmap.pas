@@ -290,13 +290,13 @@ begin
   Result := IsBW(AColours.Colours);
 end;
 
-procedure InitColoursFromByte(var Cl: TLCLColourMap; const ClName: String; ClrChanel: Byte);
+procedure InitColoursFromByte(var Cl: TLCLColourMap; const ClName: String; ClrChannel: Byte);
 var
-  ClrChanels: LongInt;
+  ClrChannels: LongInt;
   I: Integer;
 begin
-  ClrChanels := ClrChanel;
-  ClrChanels := ClrChanels or (ClrChanels shl 8) or (ClrChanels shl 16);
+  ClrChannels := ClrChannel;
+  ClrChannels := ClrChannels or (ClrChannels shl 8) or (ClrChannels shl 16);
   Cl.Name := ClName;
 
   Cl.Colours[True, 0] := $000000; // black
@@ -309,7 +309,7 @@ begin
   Cl.Colours[True, 7] := $FFFFFF; // white
 
   for I := 0 to 7 do
-    Cl.Colours[False, I] := Cl.Colours[True, I] and ClrChanels;
+    Cl.Colours[False, I] := Cl.Colours[True, I] and ClrChannels;
 end;
 
 procedure InitDefaultColours;
