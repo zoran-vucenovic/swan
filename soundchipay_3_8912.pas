@@ -502,6 +502,7 @@ var
   I: Integer;
 begin
   if Assigned(Ay) then begin
+    Ay.Reset();
     for I := 0 to 15 do begin
       Ay.FRegPointers[I]^ := FRegisters[I] and TSoundAY_3_8912.RegMasks[I];
     end;
