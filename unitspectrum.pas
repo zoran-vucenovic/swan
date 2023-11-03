@@ -60,14 +60,12 @@ type
   strict private
     const
       HoldInterruptPinTicks = 32;
-      FAyPortSelectReg = $FFFD;
-      FAyPortValue = $BFFD;
 
       // constants used in conversion between portaudio frequency and cpu frequency
-      SoundPlayerRateMultiply48 = 63; // in 48K spectrum,
-      SoundPlayerRateDivide48 = 5000; //  it is 44100 / 3500000 = 63 / 5000
-      SoundPlayerRateMultiply128 = 7; // in 128K spectrum,
-      SoundPlayerRateDivide128 = 563; //  it is 44100 / 3546900 = 7 / 563
+      SoundPlayerRatePortAudio48 = 63; // in 48K spectrum,
+      SoundPlayerRateProcessor48 = 5000; //  it is 44100 / 3500000 = 63 / 5000
+      SoundPlayerRatePortAudio128 = 7; // in 128K spectrum,
+      SoundPlayerRateProcessor128 = 563; //  it is 44100 / 3546900 = 7 / 563
 
   strict private
     procedure SetPaging; inline;
@@ -123,8 +121,8 @@ type
     FLatestTickUpdatedSoundBuffer: Int64;
     FRestoringSpectrumModel: Boolean;
 
-    FSoundPlayerRateMultiply: Int64;
-    FSoundPlayerRateDivide: Int64;
+    FSoundPlayerRatePortAudio: Int64;
+    FSoundPlayerRateProcessor: Int64;
 
     procedure StopSoundPlayer; inline;
     procedure UpdateSoundBuffer; inline;
@@ -190,6 +188,7 @@ type
     procedure DrawToCanvas(const ACanvas: TCanvas; const R: TRect); inline;
     function GetBgraColours: TBGRAColours;
     function IsIssue2: Boolean;
+    function GetTotalTicks(): Int64;
 
     property RemainingIntPinUp: Integer // for szx file
       read GetRemainingIntPinUp write SetRemainingIntPinUp;
@@ -220,25 +219,29 @@ implementation
 
 procedure TSpectrum.UpdateSoundBuffer;
 var
-  B: Byte;
   N, M: Integer;
   P: PByte;
+  F: Single;
+  BB: DWord absolute F;
+
 begin
   if TSoundPlayer.Playing then begin
-    N := ((FSumTicks + FProcessor.TStatesInCurrentFrame) * FSoundPlayerRateMultiply + FSoundPlayerRateDivide shr 1 - FLatestTickUpdatedSoundBuffer) div FSoundPlayerRateDivide;
+    N := ((FSumTicks + FProcessor.TStatesInCurrentFrame) * FSoundPlayerRatePortAudio + FSoundPlayerRateProcessor shr 1 - FLatestTickUpdatedSoundBuffer) div FSoundPlayerRateProcessor;
     if N > 0 then begin
-      FLatestTickUpdatedSoundBuffer := FLatestTickUpdatedSoundBuffer + N * FSoundPlayerRateDivide;
+      FLatestTickUpdatedSoundBuffer := FLatestTickUpdatedSoundBuffer + N * FSoundPlayerRateProcessor;
 
-      B := (Integer(FEar or FMic) * TSoundPlayer.Volume) shr 6;
+      F := FEar + FMic;
+      F := F * TSoundPlayer.Volume / (127 * 64);
 
       P := TSoundPlayer.SoundBuffer + TSoundPlayer.CurrentPosition;
       M := TSoundPlayer.BufferLen - TSoundPlayer.CurrentPosition;
 
-      if N >= M then begin
+      if N * 4 >= M then begin
+        M := M div 4;
         if Assigned(FAYSoundChip) then
-          FAYSoundChip.Fill(B, P, M)
+          FAYSoundChip.Fill(F, PSingle(P), M)
         else
-          FillChar(P^, M, B);
+          FillDWord(P^, M, BB);
 
         N := N - M;
         TSoundPlayer.CurrentPosition := 0;
@@ -246,11 +249,11 @@ begin
       end;
 
       if Assigned(FAYSoundChip) then
-        FAYSoundChip.Fill(B, P, N)
+        FAYSoundChip.Fill(F, PSingle(P), N)
       else
-        FillChar(P^, N, B);
+        FillDWord(P^, N, BB);
 
-      TSoundPlayer.CurrentPosition := TSoundPlayer.CurrentPosition + N;
+      TSoundPlayer.CurrentPosition := TSoundPlayer.CurrentPosition + N * 4;
     end;
   end;
 end;
@@ -352,14 +355,12 @@ end;
 
 procedure TSpectrum.SetPaging;
 begin
-  if FPagingEnabled and (FProcessor.AddressBus and $8002 = 0) then begin
-    FMemory.ActiveRamPageNo := FProcessor.DataBus and %111;
-    FProcessor.ContendedHighBank := FProcessor.DataBus and 1 <> 0; { #todo : different on +3! }
-    FMemory.ShadowScreenDisplay := FProcessor.DataBus and %1000 <> 0;
-    FMemory.ActiveRomPageNo := (FProcessor.DataBus shr 4) and 1;
-    if FProcessor.DataBus and %100000 <> 0 then
-      FPagingEnabled := False;
-  end;
+  FMemory.ActiveRamPageNo := FProcessor.DataBus and %111;
+  FProcessor.ContendedHighBank := FProcessor.DataBus and 1 <> 0; { #todo : different on +3! }
+  FMemory.ShadowScreenDisplay := FProcessor.DataBus and %1000 <> 0;
+  FMemory.ActiveRomPageNo := (FProcessor.DataBus shr 4) and 1;
+  if FProcessor.DataBus and %100000 <> 0 then
+    FPagingEnabled := False;
 end;
 
 procedure TSpectrum.ProcessorInput;
@@ -398,15 +399,13 @@ begin
 
 //  if FProcessor.AddressBus and $FF = $FE then begin
   if FProcessor.AddressBus and 1 = 0 then begin
-    // read KeyBoard...
+    // read keyboard...
     B := %00011111;
 
-    //if Application.Active then begin
-      Ba := WordRec(FProcessor.AddressBus).Hi;
-      for I := Low(KeyBoard.HalfRows) to High(KeyBoard.HalfRows) do
-        if (Ba shr I) and 1 = 0 then
-          B := B and KeyBoard.HalfRows[I];
-    //end;
+    Ba := WordRec(FProcessor.AddressBus).Hi;
+    for I := Low(KeyBoard.HalfRows) to High(KeyBoard.HalfRows) do
+      if (Ba shr I) and 1 = 0 then
+        B := B and KeyBoard.HalfRows[I];
 
     if Assigned(FTapePlayer) then
       FTapePlayer.GetNextPulse();
@@ -414,7 +413,7 @@ begin
       B := B or ((not FMic shl 3) and %01000000);
 
     FProcessor.DataBus :=
-      B // KeyBoard can set LOW bits 0-4
+      B // keyboard can set LOW bits 0-4
       or FEar // and bit 6 is read from ear socket
       or %10100000
       ;
@@ -427,7 +426,9 @@ begin
       )
     then begin
       FProcessor.DataBus := TJoystick.Joystick.State;
-    end else if Assigned(FAYSoundChip) and (FProcessor.AddressBus = FAyPortSelectReg) then begin
+    end else if Assigned(FAYSoundChip)
+        and (FProcessor.AddressBus and $C002 = $C000)
+    then begin
       FProcessor.DataBus := FAYSoundChip.GetRegValue();
     end else begin
       FProcessor.DataBus := $FF;
@@ -439,9 +440,10 @@ begin
       // in a floating data bus being used to set the paging registers."
       // Test: "print in 32765" from 128K basic should crash Spectrum
       //   (see https://foro.speccy.org/viewtopic.php?t=2374)
-      // and FloatFFD test (https://github.com/redcode/ZXSpectrum/wiki/FloatFFD)
+      // and FloatFFD test https://github.com/redcode/ZXSpectrum/wiki/FloatFFD
       if FModelWithHALbug then
-        SetPaging;
+        if FPagingEnabled and (FProcessor.AddressBus and $8002 = 0) then
+          SetPaging;
     end;
   end;
 end;
@@ -466,22 +468,31 @@ begin
     FInternalEar := (Aux and %10000) shl 2;
     FMic := (not Aux) and %1000;
     FEar := FInternalEar or FEarFromTape;
-  end else
-    if Assigned(FAYSoundChip) then begin
-      case FProcessor.AddressBus of
-        FAyPortSelectReg:
-          FAYSoundChip.SetActiveRegNum(FProcessor.DataBus);
-        FAyPortValue:
-          begin
-            UpdateSoundBuffer;
-            FAYSoundChip.SetRegValue(FProcessor.DataBus);
-            // calculate new values for output
-          end;
-      otherwise
+  end else begin
+    if FPagingEnabled and (FProcessor.AddressBus and $8002 = 0) then begin
+      SetPaging;
+    end else begin
+      if Assigned(FAYSoundChip) then begin
+        case FProcessor.AddressBus and $C002 of
+          $C000:
+            FAYSoundChip.SetActiveRegNum(FProcessor.DataBus);
+          $8000:
+            begin
+              UpdateSoundBuffer;
+              FAYSoundChip.SetRegValue(FProcessor.DataBus);
+              // calculate new values for output
+            end;
+        otherwise
+        end;
       end;
     end;
+  end;
 
-  SetPaging;
+end;
+
+function TSpectrum.GetTotalTicks(): Int64;
+begin
+  Result := FSumTicks + FProcessor.TStatesInCurrentFrame;
 end;
 
 procedure TSpectrum.CheckStartSoundPlayer;
@@ -489,7 +500,7 @@ begin
   if (not FSoundMuted) and AskForSpeedCorrection and FRunning and (FSpeed = NormalSpeed)
       and TSoundPlayer.IsLibLoaded and (not TSoundPlayer.Playing)
   then begin
-    FLatestTickUpdatedSoundBuffer := (FSumTicks + FProcessor.TStatesInCurrentFrame) * FSoundPlayerRateMultiply;
+    FLatestTickUpdatedSoundBuffer := (FSumTicks + FProcessor.TStatesInCurrentFrame) * FSoundPlayerRatePortAudio;
     TSoundPlayer.Start;
   end;
 end;
@@ -595,7 +606,7 @@ procedure TSpectrum.SetSpectrumModel(ASpectrumModel: TSpectrumModel);
     case AModel of
       sm16K_issue_2, sm16K_issue_3, sm48K_issue_2, sm48K_issue_3:
         begin
-          SetLength(ARoms, 1);
+          SetLength(ARoms{%H-}, 1);
           ARoms[0] := 'SPECTRUM48_ROM';
         end;
       sm128K:
@@ -623,18 +634,14 @@ const
 
   CentralScreenStart48 = 14335;
   TicksPerScanLine48 = 224;
-  //ScreenStart48 = CentralScreenStart48 - TopBorder * 224 - 24; //6247
-  //ScreenEnd48 = ScreenStart48 + (WholeScreenHeight - 1) * 224 + WholeScreenWidth div 2 - 1; // 65334
 
   CentralScreenStart128 = 14361;
   TicksPerScanLine128 = 228;
-  //ScreenStart128 = CentralScreenStart128 - TopBorder * 228 - 24; //6129
-  //ScreenEnd128 = ScreenStart128 + (WholeScreenHeight - 1) * 228 + WholeScreenWidth div 2 - 1; // 66268
 
 var
   RomStream: TStream;
   NewRamSize: Word;
-  //RomResName: String;
+
   SkipReset: Boolean;
   Roms: TStringDynArray;
   I: Integer;
@@ -711,17 +718,18 @@ begin
   end;
 
   if FIs128KModel then begin
-    FSoundPlayerRateMultiply := SoundPlayerRateMultiply128;
-    FSoundPlayerRateDivide := SoundPlayerRateDivide128;
+    FSoundPlayerRatePortAudio := SoundPlayerRatePortAudio128;
+    FSoundPlayerRateProcessor := SoundPlayerRateProcessor128;
 
-    if FAYSoundChip = nil then
-      FAYSoundChip := TSoundAY_3_8912.Create
-    else
+    if FAYSoundChip = nil then begin
+      FAYSoundChip := TSoundAY_3_8912.Create;
+      FAYSoundChip.OnCheckTicks := @GetTotalTicks;
+    end else
       FAYSoundChip.Reset();
   end else begin                            
     FreeAndNil(FAYSoundChip);
-    FSoundPlayerRateMultiply := SoundPlayerRateMultiply48;
-    FSoundPlayerRateDivide := SoundPlayerRateDivide48;
+    FSoundPlayerRatePortAudio := SoundPlayerRatePortAudio48;
+    FSoundPlayerRateProcessor := SoundPlayerRateProcessor48;
   end;
 
   if FInLoadingSnapshot then begin
@@ -809,8 +817,6 @@ begin
 end;
 
 procedure TSpectrum.ResetSpectrum;
-var
-  BufLen: Integer;
 begin
   StopSoundPlayer;
   if not FInLoadingSnapshot then
@@ -853,13 +859,11 @@ begin
   KeyBoard.ClearKeyboard;
   TJoystick.Joystick.ResetState;
 
-  BufLen := 512 * 64;
   if Assigned(FAYSoundChip) then begin
     FAYSoundChip.Reset();
-    BufLen := BufLen * 4 * 2;
   end;
 
-  TSoundPlayer.BufferLen := BufLen;
+  TSoundPlayer.BufferLen := 512 * 64 * 4;
   CheckStartSoundPlayer;
 end;
 

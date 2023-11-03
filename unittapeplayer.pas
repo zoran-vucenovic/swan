@@ -161,7 +161,7 @@ end;
 
 function TTapeBlock.GetCurrentTotalSpectrumTicks: Int64;
 begin
-  Result := FTapePlayer.FSpectrum.SumTicks + FTapePlayer.FSpectrum.GetProcessor.TStatesInCurrentFrame;
+  Result := FTapePlayer.FSpectrum.GetTotalTicks();
 end;
 
 procedure TTapeBlock.Start;

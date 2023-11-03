@@ -14,24 +14,23 @@ type
 
   TSoundPlayer = class sealed (TObject)
   strict private
-    class var
-      Stream: TPaStream;
-
-    class procedure SetBufferLen(const AValue: Integer); static;
-  strict private
     const
       SampleRate = 44100;
+
   strict private
     class var
       FLibPath: String;
       Initialized: Boolean;
       FPlaying: Boolean;
       FVolume: Integer;
+      Stream: TPaStream;
 
     class procedure SetLibPath(const AValue: String); static;
     class function InitPortAudio(out Err: TPaError): Boolean; static;
     class function TerminatePortAudio(out Err: TPaError): Boolean; static;
     class procedure SetVolume(AValue: Integer); static;
+    class procedure SetBufferLen(const AValue: Integer); static;
+
   private
     class var
       FBufferLen: Integer;
@@ -39,10 +38,12 @@ type
 
     class procedure Init; static;
     class procedure Final; static;
+
   public
     class var
       SoundBuffer: PByte;
       CurrentPosition: Integer;
+
   public
     class function IsLibLoaded: Boolean; static;
     class function TryLoadLib(APath: String): Boolean; static;
@@ -62,22 +63,24 @@ implementation
 
 function PortAudioCallbackFun({%H-}Input: Pointer; Output: Pointer;
       FrameCount: culong; {%H-}TimeInfo: PPaStreamCallbackTimeInfo;
-      {%H-}StatusFlags: TPaStreamCallbackFlags; UserData: Pointer): cint; cdecl;
+      {%H-}StatusFlags: TPaStreamCallbackFlags; {%H-}UserData: Pointer): cint; cdecl;
 var
   Data: PByte;
-  N: Integer;
+  N, M: Integer;
   Out0: PByte absolute Output;
 
 begin
-  Data := PByte(UserData) + TSoundPlayer.PlayPosition;
+  Data := TSoundPlayer.SoundBuffer + TSoundPlayer.PlayPosition;
   //
-  N := FrameCount;
-  if TSoundPlayer.PlayPosition + N >= TSoundPlayer.FBufferLen then begin
-    N := TSoundPlayer.BufferLen - TSoundPlayer.PlayPosition;
-    Move(Data^, Out0^, N);
-    Inc(Out0, N);
-    Data := PByte(UserData);
-    N := FrameCount - N;
+  N := FrameCount shl 2;
+
+  M := TSoundPlayer.FBufferLen - TSoundPlayer.PlayPosition;
+  if N >= M then begin
+    Move(Data^, Out0^, M);
+    Inc(Out0, M);
+
+    N := N - M;
+    Data := TSoundPlayer.SoundBuffer;
     TSoundPlayer.PlayPosition := 0;
   end;
   Move(Data^, Out0^, N);
@@ -111,7 +114,7 @@ begin
   FLibPath := '';
   SoundBuffer := nil;
   FBufferLen := 0;
-  FVolume := 127 div 3;
+  FVolume := 127 div 2;
 end;
 
 class procedure TSoundPlayer.Final;
@@ -242,7 +245,7 @@ begin
   FillChar(SoundBuffer^, FBufferLen, #0);
 
   if InError(
-    PortAudioHeader.Pa_OpenDefaultStream(@Stream, 0, 1, paInt8,
+    PortAudioHeader.Pa_OpenDefaultStream(@Stream, 0, 1, paFloat32,
     SampleRate, {256} paFramesPerBufferUnspecified,
     @PortAudioCallbackFun, SoundBuffer)
   )
