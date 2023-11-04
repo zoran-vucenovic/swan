@@ -8,7 +8,7 @@ unit SoundChipAY_3_8912;
 interface
 
 uses
-  Classes, SysUtils, LCLType, UnitSoundPlayer;
+  Classes, SysUtils, UnitSoundPlayer;
 
 type
 
