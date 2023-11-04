@@ -580,7 +580,7 @@ begin
   FSumTicks := 0;
   ResetSpectrum;
 
-  FKeepRunning := False;
+  FKeepRunning := True;
   FPaused := True;
   SetPaused(False);
 end;
