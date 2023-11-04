@@ -109,7 +109,7 @@ type
     SpeedCorrection: Int16Fast;
     AskForSpeedCorrection: Boolean;
     FRunning: Boolean;
-    FDebuggedOrPaused: Boolean;
+    FKeepRunning: Boolean;
     FEar: Byte;
     FInternalEar: Byte;
     FEarFromTape: Byte;
@@ -507,9 +507,9 @@ end;
 
 procedure TSpectrum.UpdateAskForSpeedCorrection;
 begin
-  if AskForSpeedCorrection =
-      (FDebuggedOrPaused or (SpeedCorrection = 0)
-      or (FProcessor.OnNeedWriteScreen <> @WriteToScreen))
+  if AskForSpeedCorrection xor
+      (FKeepRunning and (SpeedCorrection <> 0)
+      and (FProcessor.OnNeedWriteScreen = @WriteToScreen))
   then begin
     KeyBoard.ClearKeyboard;
     TJoystick.Joystick.ResetState;
@@ -580,7 +580,7 @@ begin
   FSumTicks := 0;
   ResetSpectrum;
 
-  FDebuggedOrPaused := False;
+  FKeepRunning := False;
   FPaused := True;
   SetPaused(False);
 end;
@@ -756,9 +756,9 @@ end;
 
 procedure TSpectrum.UpdateDebuggedOrPaused;
 begin
-  if (FPaused or Assigned(FDebugger)) xor FDebuggedOrPaused then begin
+  if (FPaused or Assigned(FDebugger)) = FKeepRunning then begin
     StopSoundPlayer;
-    FDebuggedOrPaused := not FDebuggedOrPaused;
+    FKeepRunning := FRunning and not FKeepRunning;
 
     UpdateAskForSpeedCorrection;
     CheckStartSoundPlayer;
@@ -814,6 +814,7 @@ end;
 procedure TSpectrum.StopRunning;
 begin
   FRunning := False;
+  FKeepRunning := False;
 end;
 
 procedure TSpectrum.ResetSpectrum;
@@ -958,6 +959,7 @@ begin
 
   ResetSpectrum;
   FRunning := True;
+  FKeepRunning := True;
 
   if Assigned(FOnStartRun) then
     Synchronize(FOnStartRun);
@@ -965,9 +967,10 @@ begin
   CheckStartSoundPlayer;
 
   while FRunning do begin
-    if not FDebuggedOrPaused then begin
+    while FKeepRunning do
       DoStep;
-    end else begin
+
+    while FRunning and not FKeepRunning do begin
       if Assigned(FDebugger) then begin
         Synchronize(@CheckDebuggerStep);
         if StepInDebugger then begin
