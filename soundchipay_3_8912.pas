@@ -65,7 +65,7 @@ type
     procedure RecalcOutputChannels;
 
     procedure ResetEnvelope;
-    procedure SetOnCheckTicks(AValue: TFuncTicks);
+    procedure SetOnCheckTicks(const AValue: TFuncTicks);
     function EmptyCheckTicks(): Int64;
 
   private
@@ -84,10 +84,10 @@ type
       Vols: array [0..15] of Single;
 
   private
-    class procedure Init;
+    class procedure Init; static;
 
   public
-    procedure Fill(F: Single; P: PSingle; Len: Integer);
+    procedure Fill(const F: Single; P: PSingle; const Len: Integer);
 
     constructor Create;
     function GetRegValue(): Byte;
@@ -215,7 +215,7 @@ begin
   end;
 end;
 
-procedure TSoundAY_3_8912.SetOnCheckTicks(AValue: TFuncTicks);
+procedure TSoundAY_3_8912.SetOnCheckTicks(const AValue: TFuncTicks);
 begin
   if not Assigned(AValue) then
     FOnCheckTicks := @EmptyCheckTicks
@@ -266,7 +266,7 @@ begin
   FEnvelopeAlter := (FEnvelopeShape and %0010) <> 0;
 end;
 
-procedure TSoundAY_3_8912.Fill(F: Single; P: PSingle; Len: Integer);
+procedure TSoundAY_3_8912.Fill(const F: Single; P: PSingle; const Len: Integer);
 var
   J, K, Q, L: Integer;
   N: Integer;
@@ -310,9 +310,7 @@ begin
       OutputChCurrentPositions[J] := K + 1;
     end;
 
-    NW := (NW * TSoundPlayer.Volume + F) / 2.0625 - 1.0;
-
-    P^ := NW;
+    P^ := (NW * TSoundPlayer.Volume + F) / 2.0625 - 1.0;
 
     Inc(FEnvelopePosition);
     if FEnvelopeDirection <> 0 then begin
@@ -447,7 +445,7 @@ end;
 
 procedure TSoundAY_3_8912.SetActiveRegNum(const ARegNumber: Byte);
 begin
-  //if ARegNumber <> FActiveRegisterNum then begin
+  if ARegNumber <> FActiveRegisterNum then begin
     FActiveRegisterNum := ARegNumber;
     if ARegNumber <= 15 then begin
       FActiveRegisterPointer := FRegPointers[ARegNumber];
@@ -459,7 +457,7 @@ begin
       FActiveRegisterPointer := @FFadingValue;
       FActiveRegisterMask := $FF;
     end;
-  //end;
+  end;
 end;
 
 { TAyState }
