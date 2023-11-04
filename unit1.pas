@@ -5,6 +5,10 @@ unit unit1;
 {$mode objfpc}{$H+}
 {$i zxinc.inc}
 
+{$ifdef unix}
+{$define UseАuxiliaryBmp}
+{$endif}
+
 interface
 
 uses
@@ -20,8 +24,7 @@ uses
   UnitRecentFiles, UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA;
 
 type
-TSnapshotSNA = SnapshotSNA.TSnapshotSNA;
-//TSnapshotSNA = UnitFileSna.TSnapshotSNA;
+
   { TForm1 }
 
   TForm1 = class(TForm)
@@ -310,7 +313,9 @@ TSnapshotSNA = SnapshotSNA.TSnapshotSNA;
     procedure UpdateCheckWriteScreen;
     procedure AddKeyEventToQueue(KeyIndex: Integer; BDown: Integer);
     procedure AddEventToQueue(Event: TNotifyEvent);
+    {$ifNdef UseАuxiliaryBmp}
     procedure PaintScreen(Sender: TObject);
+    {$endif}
     procedure PaintBmp(Sender: TObject);
     procedure DoDetachDebugger(Sender: TObject);
     procedure SaveSnapshot(SnapshotClass: TSnapshotFileClass);
@@ -578,7 +583,12 @@ begin
   FWriteScreen := True;
 
   AutoSize := False;
+
+  {$ifdef UseАuxiliaryBmp}
+  Bmp := TBitmap.Create;
+  {$else}
   Bmp := nil;
+  {$endif}
 
   DropFiles := nil;
   DestroySpectrum;
@@ -1920,8 +1930,14 @@ begin
 
     PaintBox1.OnPaint := @PaintBmp;
   end else begin
+    {$ifdef UseАuxiliaryBmp}
+    if (Bmp.Width <> WholeScreenWidth) or (Bmp.Height <> WholeScreenHeight) then
+      Bmp.SetSize(WholeScreenWidth, WholeScreenHeight);
+    {$else}
     PaintBox1.OnPaint := @PaintScreen;
+    {$endif}
   end;
+
   PaintBox1.Invalidate;
 end;
 
@@ -1961,10 +1977,12 @@ begin
   Inc(EventsQueueCount);
 end;
 
+{$ifNdef UseАuxiliaryBmp}
 procedure TForm1.PaintScreen(Sender: TObject);
 begin
   Spectrum.DrawToCanvas(PaintBox1.Canvas, DrawingRect);
 end;
+{$endif}
 
 procedure TForm1.PaintBmp(Sender: TObject);
 begin
@@ -2541,7 +2559,9 @@ begin
   end;
 
   if FWriteScreen then begin
-    //Spectrum.DrawToCanvas(Bmp.Canvas);
+    {$ifdef UseАuxiliaryBmp}
+    Spectrum.DrawToCanvas(Bmp.Canvas, Rect(0, 0, WholeScreenWidth, WholeScreenHeight));
+    {$endif}
     PaintBox1.Invalidate;
   end;
 
@@ -2582,7 +2602,11 @@ var
   Arr: TStringDynArray;
 begin
   UpdateSoundControls;
+  {$ifdef UseАuxiliaryBmp}
+  PaintBox1.OnPaint := @PaintBmp;
+  {$else}
   PaintBox1.OnPaint := @PaintScreen;
+  {$endif}
   Application.AddOnDeactivateHandler(@FormDeactivate);
 
   SetLength(Arr{%H-}, ParamCount);
