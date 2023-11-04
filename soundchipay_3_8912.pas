@@ -183,11 +183,14 @@ begin
 end;
 
 class procedure TSoundAY_3_8912.Init;
-const
-  CDiv: Double = 65535.0 * 127;
-  CVols: array [0..15] of UInt16 = (
-    $0000, $028F, $03B3, $0564, $07DC, $0BA9, $1083, $1B7C, $2068, $347A, $4ACE, $5F72, $7E16, $A2A4, $CE3A, $FFFF
-  );
+// The actual values measured, listed on this site:
+//   [archived on 2021-01-18, as the original link is not available now (2023-11-04)]:
+// https://web.archive.org/web/20210118234335/https://forum.tslabs.info/viewtopic.php?f=6&t=539
+//const
+//  CVols: array [0..15] of UInt16 = (
+//    $0000, $028F, $03B3, $0564, $07DC, $0BA9, $1083, $1B7C, $2068, $347A, $4ACE, $5F72, $7E16, $A2A4, $CE3A, $FFFF
+//  );
+//  CDiv: Double = 65535.0 * 127;
 
 var
   I: Integer;
@@ -196,8 +199,15 @@ var
 
 begin
   for I := 0 to 15 do begin
+    // use the values from the link above
     //Vols[I] := CVols[I] / CDiv;
-    N := Int32(127) shl ((15 - I) shr 1);
+
+    // or the formula (described here: https://www.cpcwiki.eu/index.php/PSG#0Ah_-_Channel_C_Volume_.280-0Fh.3Dvolume.2C_10h.3Duse_envelope_instead.29)
+    // amplitude = maxVolume / sqrt(2)^(15-i)
+    // where maxVolume is the highest volume level.
+    // This formula matches the diagram shown in AY datasheet
+    N := 127; // max
+    N := N shl ((15 - I) shr 1);
     X := 1.0 / N;
     if I and 1 = 0 then
       X := X / Sqrt(2.0);
