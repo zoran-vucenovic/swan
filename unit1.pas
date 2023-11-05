@@ -5,10 +5,6 @@ unit unit1;
 {$mode objfpc}{$H+}
 {$i zxinc.inc}
 
-{$ifdef unix}
-{$define UseАuxiliaryBmp}
-{$endif}
-
 interface
 
 uses
@@ -22,6 +18,17 @@ uses
   UnitSoundPlayer, UnitChooseFile, UnitOptions, UnitFrameSpectrumModel,
   UnitFrameSound, UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions,
   UnitRecentFiles, UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA;
+
+// On Linux, bgra drawing directly to PaintBox in its OnPaint event seems to be
+// extremly slow. However, we get better time when we have an auxiliary bitmap
+// and let bgra draw to this bitmap instead, and then copy this bitmap to
+// PaintBox in OnPaint.
+// On Windows it is quicker to let bgra draw directly.
+// Still, drawing screen remains much slower in Linux than in Windows, although
+// this workaround with auxiliary bitmap makes real improvment.
+{$ifdef unix}
+{$define UseАuxiliaryBmp}
+{$endif}
 
 type
 
