@@ -63,7 +63,6 @@ type
 
     property ActiveRamPageNo: Byte read FActiveRamPageNo write SetActiveRamPageNo;
     property ActiveRomPageNo: Byte read FActiveRomPageNo write SetActiveRomPageNo;
-    //property MemSize: Word read FRamSize;
     property RamSizeKB: Word read GetRamSizeKB;
     property ShadowScreenDisplay: Boolean read GetShadowScreenDisplay write SetShadowScreenDisplay;
   end;
@@ -352,46 +351,6 @@ begin
         FRamBanks[I] := nil;
     end;
   end;
-
-  //for I in [1, 3, 4, 6, 7] do begin
-  //  if ARomBanksCount > 1 then // 128K
-  //    InitBank(FRamBanks[I])
-  //  else if Assigned(FRamBanks[I]) then
-  //    FreeMemAndNil(FRamBanks[I]);
-  //end;
-  //
-  //for I := ARomBanksCount to High(FRomBanks) do
-  //  if FRomBanks[I] <> nil then
-  //    FreeMemAndNil(FRomBanks[I]);
-  //
-  //if RamBanksCount < 3 then
-  //  I := 2
-  //else
-  //  I := 4;
-  //
-  //ReAllocMem(MemStart, I * BankSize);
-  //FRomBanks[0] := MemStart;
-  //Bank5 := MemStart + BankSize;
-  //if RamBanksCount >= 3 then begin
-  //  Bank2 := Bank5 + BankSize;
-  //  FRamBanks[0] := Bank2 + BankSize;
-  //end else begin
-  //  Bank2 := nil;
-  //  FRamBanks[0] := nil;
-  //end;
-  //
-  //FRamBanks[2] := Bank2;
-  //FRamBanks[5] := Bank5;
-  //
-  //for I := 1 to ARomBanksCount - 1 do
-  //  InitBank(FRomBanks[I]);
-  //
-  //for I in [1, 3, 4, 6, 7] do begin
-  //  if ARomBanksCount > 1 then // 128K
-  //    InitBank(FRamBanks[I])
-  //  else if Assigned(FRamBanks[I]) then
-  //    FreeMemAndNil(FRamBanks[I]);
-  //end;
 
   ActiveRomBank := FRomBanks[0];
   ActiveRamBank := FRamBanks[0];

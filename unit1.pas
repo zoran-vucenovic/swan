@@ -27,7 +27,7 @@ uses
 // Still, drawing screen remains much slower in Linux than in Windows, although
 // this workaround with auxiliary bitmap makes real improvment.
 {$ifdef unix}
-{$define UseАuxiliaryBmp}
+  {$define UseАuxiliaryBmp}
 {$endif}
 
 type
