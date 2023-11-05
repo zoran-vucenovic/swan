@@ -33,20 +33,20 @@ object Form1: TForm1
   end
   object PanelStatus: TPanel
     AnchorSideLeft.Control = Owner
-    AnchorSideRight.Control = Owner
+    AnchorSideRight.Control = PaintBox1
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 0
     Height = 24
     Top = 191
-    Width = 443
+    Width = 105
     Anchors = [akLeft, akRight, akBottom]
     AutoSize = True
     BevelInner = bvLowered
     BevelOuter = bvNone
     ClientHeight = 24
-    ClientWidth = 443
+    ClientWidth = 105
     ParentBackground = False
     TabOrder = 0
     object Panel1: TPanel
@@ -135,7 +135,7 @@ object Form1: TForm1
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Control = PanelStatus
       AnchorSideBottom.Side = asrBottom
-      Left = 419
+      Left = 81
       Height = 22
       Top = 1
       Width = 23
