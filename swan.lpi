@@ -656,6 +656,14 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="SoundChipAY_3_8912"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitframechoosefile.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameChooseFile"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitFrameChooseFile"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

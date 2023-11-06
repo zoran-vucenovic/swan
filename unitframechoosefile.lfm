@@ -1,0 +1,59 @@
+object FrameChooseFile: TFrameChooseFile
+  Left = 0
+  Height = 28
+  Top = 0
+  Width = 320
+  AutoSize = True
+  ClientHeight = 28
+  ClientWidth = 320
+  TabOrder = 0
+  DesignLeft = 666
+  DesignTop = 257
+  object Panel4: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 0
+    Height = 23
+    Top = 0
+    Width = 320
+    Anchors = [akTop, akLeft, akRight]
+    AutoSize = True
+    BevelOuter = bvNone
+    ClientHeight = 23
+    ClientWidth = 320
+    TabOrder = 0
+    object Edit1: TEdit
+      AnchorSideLeft.Control = Panel4
+      AnchorSideTop.Control = Panel4
+      AnchorSideRight.Control = BitBtn1
+      Left = 0
+      Height = 23
+      Top = 0
+      Width = 285
+      Anchors = [akTop, akLeft, akRight]
+      TabOrder = 0
+    end
+    object BitBtn1: TBitBtn
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Edit1
+      AnchorSideRight.Control = Panel4
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = Edit1
+      AnchorSideBottom.Side = asrBottom
+      Left = 285
+      Height = 23
+      Top = 0
+      Width = 35
+      Anchors = [akTop, akRight, akBottom]
+      AutoSize = True
+      Caption = '...'
+      OnClick = BitBtn1Click
+      TabOrder = 1
+    end
+  end
+  object OpenDialog1: TOpenDialog
+    Left = 152
+  end
+end

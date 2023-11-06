@@ -25,7 +25,7 @@ uses
   UnitChooseFile, UnitFormForOptionsBasic, UnitFrameKeyMappings, UnitOptions,
   UnitFrameOtherOptions, UnitFrameSpectrumModel, UnitFrameSound,
   UnitFrameHistorySnapshotOptions, UnitRecentFiles, UnitMemory, SnapshotZ80,
-  SnapshotSNA, SoundChipAY_3_8912;
+  SnapshotSNA, SoundChipAY_3_8912, UnitFrameChooseFile;
 
 {$R *.res}
 

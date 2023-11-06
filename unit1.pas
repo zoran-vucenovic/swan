@@ -1231,7 +1231,7 @@ procedure TForm1.DoChangeModel(Sender: TObject);
 begin
   if FNewModel <> TSpectrumModel.smNone then begin
     if FNewModel <> Spectrum.SpectrumModel then begin
-      Spectrum.SpectrumModel := FNewModel;
+      Spectrum.SetSpectrumModel(FNewModel, nil);
     end;
     FNewModel := TSpectrumModel.smNone;
   end;

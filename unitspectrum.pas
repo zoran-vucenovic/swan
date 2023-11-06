@@ -147,6 +147,9 @@ type
     FOnStartRun: TThreadMethod;
     FSoundMuted: Boolean;
     SpectrumColoursBGRA: TSpectrumColoursBGRA;
+    CustomRomsMounted: Boolean;
+    FCustomRomsFileNames: TStringDynArray;
+
     function GetFlashState: UInt16;
     function GetRemainingIntPinUp: Integer;
     procedure SetFlashState(AValue: UInt16);
@@ -154,7 +157,6 @@ type
     procedure SetSoundMuted(AValue: Boolean);
     procedure UpdateDebuggedOrPaused;
     procedure SetInternalEar(AValue: Byte);
-    procedure SetSpectrumModel(ASpectrumModel: TSpectrumModel);
 
   strict private
     // 128 K
@@ -171,6 +173,7 @@ type
 
     class function DefaultSpectrumModel: TSpectrumModel; static;
 
+    procedure SetSpectrumModel(ASpectrumModel: TSpectrumModel; ACustomRoms: TStream);
     procedure AttachDebugger(ADebugger: IDebugger);
     procedure DettachDebugger;
     procedure SetTapePlayer(ATapePlayer: TAbstractTapePlayer);
@@ -189,6 +192,8 @@ type
     function GetBgraColours: TBGRAColours;
     function IsIssue2: Boolean;
     function GetTotalTicks(): Int64;
+    function GetCustomRomFiles(out ARomFiles: TStringDynArray): Integer;
+    procedure SetCustomRomFiles(const ARomFiles: TStringDynArray);
 
     property RemainingIntPinUp: Integer // for szx file
       read GetRemainingIntPinUp write SetRemainingIntPinUp;
@@ -204,7 +209,7 @@ type
     property SoundMuted: Boolean read FSoundMuted write SetSoundMuted;
     property InternalEar: Byte read FInternalEar write SetInternalEar;
     property FlashState: UInt16 read GetFlashState write SetFlashState;
-    property SpectrumModel: TSpectrumModel read FSpectrumModel write SetSpectrumModel;
+    property SpectrumModel: TSpectrumModel read FSpectrumModel;
     property BkpSpectrumModel: TSpectrumModel read FBkpSpectrumModel write FBkpSpectrumModel;
     property InLoadingSnapshot: Boolean read FInLoadingSnapshot write FInLoadingSnapshot;
     property Is128KModel: Boolean read FIs128KModel;
@@ -495,6 +500,27 @@ begin
   Result := FSumTicks + FProcessor.TStatesInCurrentFrame;
 end;
 
+function TSpectrum.GetCustomRomFiles(out ARomFiles: TStringDynArray): Integer;
+var
+  I: Integer;
+begin
+  Result := Length(FCustomRomsFileNames);
+  SetLength(ARomFiles{%H-}, Result);
+  for I := Low(FCustomRomsFileNames) to High(FCustomRomsFileNames) do
+    ARomFiles[I] := FCustomRomsFileNames[I];
+end;
+
+procedure TSpectrum.SetCustomRomFiles(const ARomFiles: TStringDynArray);
+var
+  I: Integer;
+begin
+  if Length(ARomFiles) <= 4 then begin
+    SetLength(FCustomRomsFileNames, Length(ARomFiles));
+    for I := Low(ARomFiles) to High(ARomFiles) do
+      FCustomRomsFileNames[I] := ARomFiles[I];
+  end;
+end;
+
 procedure TSpectrum.CheckStartSoundPlayer;
 begin
   if (not FSoundMuted) and AskForSpeedCorrection and FRunning and (FSpeed = NormalSpeed)
@@ -540,12 +566,14 @@ begin
 
   FreeOnTerminate := False;
 
+  SetLength(FCustomRomsFileNames, 0);
   FPagingEnabled := False;
   FSoundMuted := False;
 
   FDebugger := nil;
   FTapePlayer := nil;
 
+  CustomRomsMounted := False;
   FIs128KModel := False;
 
   FMemory := TMemory.Create;
@@ -599,7 +627,8 @@ begin
   Result := sm48K_issue_3;
 end;
 
-procedure TSpectrum.SetSpectrumModel(ASpectrumModel: TSpectrumModel);
+procedure TSpectrum.SetSpectrumModel(ASpectrumModel: TSpectrumModel;
+  ACustomRoms: TStream);
 
   function GetRomResNames(AModel: TSpectrumModel; out ARoms: TStringDynArray): Boolean;
   begin
@@ -646,10 +675,12 @@ var
   Roms: TStringDynArray;
   I: Integer;
   PrevSpeed: Integer;
+  RomsCount: Integer;
 
 begin
-  if ASpectrumModel = FSpectrumModel then
-    Exit;
+  if (ACustomRoms = nil) and (not CustomRomsMounted) then
+    if ASpectrumModel = FSpectrumModel then
+      Exit;
 
   SkipReset := False;
 
@@ -658,6 +689,7 @@ begin
   FModelWithHALbug := False;
   CentralScreenStart := CentralScreenStart128;
   TicksPerScanLine := TicksPerScanLine128;
+  RomsCount := 1;
 
   try
     case ASpectrumModel of
@@ -674,11 +706,14 @@ begin
           otherwise
             NewRamSize := 48;
           end;
-          SkipReset := NewRamSize = FMemory.RamSizeKB;
+
+          SkipReset := (ACustomRoms = nil) and (not CustomRomsMounted)
+            and (NewRamSize = FMemory.RamSizeKB);
         end;
       sm128K, smPlus2:
         begin
           FModelWithHALbug := True;
+          RomsCount := 2;
 
           FProcessor.FrameTicks := FrameTicks128;
         end;
@@ -695,21 +730,37 @@ begin
     FloatBusFirstInterestingTick := FProcessor.ContentionFrom + 4;
     FloatBusLastInterestingTick := FProcessor.ContentionTo + 3;
 
-    if not GetRomResNames(ASpectrumModel, Roms) then
-      Abort;
+    FMemory.InitBanks(NewRamSize, RomsCount);
+    SetLength(Roms{%H-}, 0);
+    if Assigned(ACustomRoms) then begin
+      if ACustomRoms.Size <> (RomsCount shl 14) then
+        Abort;
 
-    FMemory.InitBanks(NewRamSize, Length(Roms));
-    for I := Low(Roms) to High(Roms) do begin
-      RomStream := nil;
-      try
-        RomStream := TResourceStream.Create(HINSTANCE, Roms[I], RT_RCDATA);
+      for I := 0 to RomsCount - 1 do begin
+        ACustomRoms.Position := I shl 14;
 
-        RomStream.Position := 0;
-        if not FMemory.LoadFromStream(I, True, RomStream) then
+        if not FMemory.LoadFromStream(I, True, ACustomRoms) then
           Abort;
-      finally
-        RomStream.Free;
       end;
+      CustomRomsMounted := True;
+
+    end else begin
+      if not (GetRomResNames(ASpectrumModel, Roms) and (Length(Roms) = RomsCount)) then
+        Abort;
+
+      for I := 0 to RomsCount - 1 do begin
+        RomStream := nil;
+        try
+          RomStream := TResourceStream.Create(HINSTANCE, Roms[I], RT_RCDATA);
+          RomStream.Position := 0;
+
+          if not FMemory.LoadFromStream(I, True, RomStream) then
+            Abort;
+        finally
+          RomStream.Free;
+        end;
+      end;
+      CustomRomsMounted := False;
     end;
 
   except
@@ -825,7 +876,7 @@ begin
       if FSpectrumModel <> FBkpSpectrumModel then begin
         FRestoringSpectrumModel := True;
         try
-          SetSpectrumModel(FBkpSpectrumModel);
+          SetSpectrumModel(FBkpSpectrumModel, nil);
         finally
           FRestoringSpectrumModel := False;
         end;

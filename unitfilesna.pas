@@ -172,7 +172,7 @@ begin
 
     Proc := ASpectrum.GetProcessor;
     if Assigned(Proc) then begin
-      ASpectrum.SpectrumModel := SpectrumModel; // must be above all other, might trigger reset spectrum
+      ASpectrum.SetSpectrumModel(SpectrumModel, nil); // must be above all other, might trigger reset spectrum
 
       Proc.RegAF := AF;
       Proc.RegBC := BC;
