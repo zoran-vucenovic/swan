@@ -1,10 +1,10 @@
 object FrameSpectrumModel: TFrameSpectrumModel
   Left = 0
-  Height = 244
+  Height = 268
   Top = 0
   Width = 324
   AutoSize = True
-  ClientHeight = 244
+  ClientHeight = 268
   ClientWidth = 324
   TabOrder = 0
   DesignLeft = 308
@@ -13,12 +13,12 @@ object FrameSpectrumModel: TFrameSpectrumModel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
     Left = 0
-    Height = 236
+    Height = 252
     Top = 0
     Width = 314
     AutoSize = True
     BevelOuter = bvNone
-    ClientHeight = 236
+    ClientHeight = 252
     ClientWidth = 314
     TabOrder = 0
     object Panel1: TPanel
@@ -99,7 +99,7 @@ object FrameSpectrumModel: TFrameSpectrumModel
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
       Left = 10
-      Height = 90
+      Height = 106
       Top = 146
       Width = 304
       Anchors = [akTop, akLeft, akRight]
@@ -107,7 +107,7 @@ object FrameSpectrumModel: TFrameSpectrumModel
       BorderSpacing.Top = 10
       BevelOuter = bvNone
       BorderStyle = bsSingle
-      ClientHeight = 86
+      ClientHeight = 102
       ClientWidth = 300
       TabOrder = 1
       object Panel4: TPanel
@@ -116,12 +116,12 @@ object FrameSpectrumModel: TFrameSpectrumModel
         AnchorSideRight.Control = Panel3
         AnchorSideRight.Side = asrBottom
         Left = 6
-        Height = 74
+        Height = 90
         Top = 6
         Width = 288
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Around = 6
-        ClientHeight = 74
+        ClientHeight = 90
         ClientWidth = 288
         TabOrder = 0
         object CheckBox1: TCheckBox
@@ -134,6 +134,36 @@ object FrameSpectrumModel: TFrameSpectrumModel
           Caption = 'Custom roms:'
           TabOrder = 0
           OnChange = CheckBox1Change
+        end
+        object Label1: TLabel
+          AnchorSideLeft.Control = Panel4
+          AnchorSideTop.Control = Label2
+          AnchorSideTop.Side = asrBottom
+          AnchorSideRight.Control = Panel4
+          AnchorSideRight.Side = asrBottom
+          Left = 9
+          Height = 15
+          Top = 41
+          Width = 278
+          Anchors = [akTop, akLeft, akRight]
+          BorderSpacing.Left = 8
+          BorderSpacing.Top = 2
+          Caption = 'Label1'
+          WordWrap = True
+        end
+        object Label2: TLabel
+          AnchorSideLeft.Control = Panel4
+          AnchorSideTop.Control = CheckBox1
+          AnchorSideTop.Side = asrBottom
+          AnchorSideRight.Control = Panel4
+          AnchorSideRight.Side = asrBottom
+          Left = 1
+          Height = 15
+          Top = 24
+          Width = 286
+          Anchors = [akTop, akLeft, akRight]
+          BorderSpacing.Top = 4
+          Caption = 'Label2'
         end
       end
     end

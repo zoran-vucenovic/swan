@@ -17,6 +17,8 @@ type
 
   TFrameSpectrumModel = class(TFrame)
     CheckBox1: TCheckBox;
+    Label1: TLabel;
+    Label2: TLabel;
     Panel1: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
@@ -140,16 +142,13 @@ begin
                   try
                     if Stream.Size <> RomBankSize then begin
                       ErrMsg := 'Bad custom rom file'
-                        + LineEnding + RomFile + LineEnding
+                        + LineEnding + RomFile + LineEnding + LineEnding
                         + 'The size of rom file must be exactly 16K';
 
                     end else begin
                       Stream.Position := 0;
                       if Stream.Read((Roms.Memory + (I shl 14))^, RomBankSize) = RomBankSize then
-                        BadFile := False
-                      else
-                        ErrMsg := 'Problems with loading custom rom file'
-                          + LineEnding + RomFile;
+                        BadFile := False;
                     end;
                   finally
                     Stream.Free;
@@ -157,8 +156,8 @@ begin
                 except
                   BadFile := True;
                   ErrMsg := 'Cannot load custom rom file'
-                    + LineEnding + RomFile + LineEnding
-                    + 'Check if file exists.';
+                    + LineEnding + RomFile + LineEnding + LineEnding
+                    + 'Check if the file exists.';
                 end;
               end;
 
@@ -172,8 +171,7 @@ begin
               FreeAndNil(Roms);
               if ErrMsg = '' then
                 ErrMsg := 'Cannot load custom rom file'
-                  + LineEnding + RomFile + LineEnding
-                  + 'The size of rom file must be exactly 16K';
+                  + LineEnding + RomFile;
 
               MessageDlg(ErrMsg, mtError, [mbClose], 0);
             end;
@@ -204,6 +202,11 @@ begin
 
   Caption := 'Spectrum model';
 
+  Label2.Caption := 'Choose non-standard roms.' + LineEnding
+    + 'Each rom file must have exactly 16K';
+  Label1.Caption := ' 16 and 48 K models need one rom file.' + LineEnding
+    + ' 128K and +2 need two rom files' + LineEnding
+    + ' +3 and +2a need four rom files.';
   S := '';
   I := 0;
   while I <= 3 do begin
@@ -212,7 +215,7 @@ begin
     FramesChooseFile[I] := Fm;
     Fm.Anchors := [];
     if I = 0 then
-      Fm.AnchorToNeighbour(akTop, 4, CheckBox1)
+      Fm.AnchorToNeighbour(akTop, 4, Label1)
     else
       Fm.AnchorToNeighbour(akTop, 4, FramesChooseFile[I - 1]);
 

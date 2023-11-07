@@ -430,6 +430,11 @@ object Form1: TForm1
       Caption = '+2 Amstrad'
       OnExecute = ActionModelPlus2Execute
     end
+    object ActionModelMoreOptions: TAction
+      Category = 'SpectrumModel'
+      Caption = 'More options (custom roms)...'
+      OnExecute = ActionModelMoreOptionsExecute
+    end
   end
   object MainMenu1: TMainMenu
     Images = DataModuleImages.ImageList1
@@ -528,6 +533,9 @@ object Form1: TForm1
         end
         object MenuItem52: TMenuItem
           Action = ActionModelPlus2
+        end
+        object MenuItem53: TMenuItem
+          Action = ActionModelMoreOptions
         end
       end
       object MenuItem11: TMenuItem

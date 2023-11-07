@@ -35,6 +35,7 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionModelMoreOptions: TAction;
     ActionModelPlus2: TAction;
     ActionModel128K: TAction;
     ActionAllOptions: TAction;
@@ -132,6 +133,7 @@ type
     MenuItem50: TMenuItem;
     MenuItem51: TMenuItem;
     MenuItem52: TMenuItem;
+    MenuItem53: TMenuItem;
     MenuItemRecentFiles: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
@@ -169,6 +171,7 @@ type
     procedure ActionModel16KIssue3Execute(Sender: TObject);
     procedure ActionModel48KIssue2Execute(Sender: TObject);
     procedure ActionModel48KIssue3Execute(Sender: TObject);
+    procedure ActionModelMoreOptionsExecute(Sender: TObject);
     procedure ActionModelPlus2Execute(Sender: TObject);
     procedure ActionMoveBackExecute(Sender: TObject);
     procedure ActionMuteSoundExecute(Sender: TObject);
@@ -911,6 +914,15 @@ procedure TForm1.ActionModel48KIssue3Execute(Sender: TObject);
 begin
   FNewModel := TSpectrumModel.sm48K_issue_3;
   AddEventToQueue(@DoChangeModel);
+end;
+
+procedure TForm1.ActionModelMoreOptionsExecute(Sender: TObject);
+begin
+  if Sender <> Spectrum then begin
+    AddEventToQueue(@ActionModelMoreOptionsExecute);
+  end else begin
+    ShowAllOptionsDialog(TFrameSpectrumModel);
+  end;
 end;
 
 procedure TForm1.ActionModelPlus2Execute(Sender: TObject);
