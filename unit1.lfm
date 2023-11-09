@@ -534,6 +534,9 @@ object Form1: TForm1
         object MenuItem52: TMenuItem
           Action = ActionModelPlus2
         end
+        object Separator3: TMenuItem
+          Caption = '-'
+        end
         object MenuItem53: TMenuItem
           Action = ActionModelMoreOptions
         end

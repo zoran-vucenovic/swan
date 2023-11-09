@@ -12,6 +12,8 @@ uses
 
 type
 
+  { TCommonFunctionsLCL }
+
   TCommonFunctionsLCL = class sealed (TObject)
   strict private
     class var
@@ -41,6 +43,7 @@ type
         const S: String; out ATextSize: TSize); static;
     class procedure RowInView(AGrid: TCustomGrid; ARow: Integer); static;
     class function GetBestContrastColorForFont(R, G, B: Integer): TColor;
+    class function MakeExtensionsFilter(const ArSt: Array of String): String;
   end;
 
   IFormAddCloseQuery = interface
@@ -138,6 +141,63 @@ begin
     Result := clWhite // $FFFFFF
   else
     Result := clBlack; // 0
+end;
+
+class function TCommonFunctionsLCL.MakeExtensionsFilter(
+  const ArSt: array of String): String;
+var
+  I, L: Integer;
+  S1, Sa, Sb: String;
+  AI: String;
+  {$ifdef LCLGtk2}
+  J: Integer;
+  AIU: String;
+  {$endif}
+begin
+  Result := '';
+
+  S1 := '';
+  Sa := '';
+  Sb := '';
+
+  L := 0;
+  for I := Low(ArSt) to High(ArSt) do begin
+    AI := LowerCase(Trim(ArSt[I]));
+    if AI <> '' then begin
+
+      {$ifdef LCLGtk2}
+      AIU := UpperCase(AI);
+      S1 := '';
+      for J := 1 to Length(AI) do
+        if AIU[J] <> AI[J] then
+          S1 := S1 + '[' + AIU[J] + AI[J] + ']'
+        else
+          S1 := S1 + AI[J];
+      {$else}
+      S1 := AI;
+      {$endif}
+
+      S1 := '*' + ExtensionSeparator + S1;
+      Result := Result + AI + '|' + S1 + '|';
+
+      Inc(L);
+      if L > 1 then begin
+        Sa := Sa + ', ';
+        Sb := Sb + ';';
+      end;
+
+      Sa := Sa + AI;
+      Sb := Sb + S1;
+
+    end;
+
+  end;
+
+  Result := Result + 'all files|*';
+
+  if L > 1 then
+    Result := Sa + '|' + Sb + '|' + Result;
+
 end;
 
 class procedure TCommonFunctionsLCL.Init;

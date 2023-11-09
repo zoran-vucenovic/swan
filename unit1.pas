@@ -17,7 +17,8 @@ uses
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
   UnitSoundPlayer, UnitChooseFile, UnitOptions, UnitFrameSpectrumModel,
   UnitFrameSound, UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions,
-  UnitRecentFiles, UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA;
+  UnitRecentFiles, UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA,
+  UnitFileZip;
 
 // On Linux, bgra drawing directly to PaintBox in its OnPaint event seems to be
 // extremly slow. However, we get better time when we have an auxiliary bitmap
@@ -149,6 +150,7 @@ type
     SaveDialog1: TSaveDialog;
     Separator1: TMenuItem;
     Separator2: TMenuItem;
+    Separator3: TMenuItem;
     SpeedButton1: TSpeedButton;
     procedure ActionAboutExecute(Sender: TObject);
     procedure ActionAllOptionsExecute(Sender: TObject);
@@ -227,7 +229,6 @@ type
 
     procedure SpectrumOnChangeModel();
     procedure DoChangeModel(Sender: TObject);
-    function MakeExtensionsFilter(ArSt: Array of String): String;
     procedure AfterShow(Data: PtrInt);
     procedure UpdateActionsModel();
     procedure UpdateShowCurrentlyActiveJoystick;
@@ -249,23 +250,6 @@ type
   strict private
     type
       TScreenSizeFactor = 1..4;
-
-      TFileUnzipper = class(TObject)
-      strict private
-        InStream: TStream;
-        OutStream: TStream;
-
-        procedure DoOpenInputStream(Sender: TObject; var AStream: TStream);
-        procedure DoCloseInputStream(Sender: TObject; var AStream: TStream);
-        procedure DoCreateOutZipStream(Sender : TObject; var AStream : TStream; {%H-}AItem : TFullZipFileEntry);
-        procedure DoDoneOutZipStream(Sender : TObject; var AStream : TStream; {%H-}AItem : TFullZipFileEntry);
-
-      public
-        class function GetFileFromZipStream(const AZipStream: TStream; const Extensions: array of String;
-          out AStream: TStream; out FileNameInZip: String): Boolean; static;
-        class function GetFileFromZipFile(const ZipFileName: String; const Extensions: array of String;
-          out AStream: TStream; out FileNameInZip: String): Boolean; static;
-      end;
 
       TSnapshotOrTape = (stSnapshot, stTape, stBoth);
 
@@ -372,176 +356,6 @@ var
 implementation
 
 {$R *.lfm}
-
-{ TForm1.TFileUnzipper }
-
-procedure TForm1.TFileUnzipper.DoOpenInputStream(Sender: TObject;
-  var AStream: TStream);
-begin
-  AStream := InStream;
-  if Assigned(InStream) then
-    InStream.Position := 0;
-end;
-
-procedure TForm1.TFileUnzipper.DoCloseInputStream(Sender: TObject;
-  var AStream: TStream);
-begin
-  AStream := nil;
-end;
-
-procedure TForm1.TFileUnzipper.DoCreateOutZipStream(Sender: TObject;
-  var AStream: TStream; AItem: TFullZipFileEntry);
-begin
-  OutStream := TMemoryStream.Create;
-  OutStream.Position := 0;
-  AStream := OutStream;
-end;
-
-procedure TForm1.TFileUnzipper.DoDoneOutZipStream(Sender: TObject;
-  var AStream: TStream; AItem: TFullZipFileEntry);
-begin
-  if Assigned(AStream) then
-    AStream.Position := 0;
-end;
-
-class function TForm1.TFileUnzipper.GetFileFromZipStream(
-  const AZipStream: TStream; const Extensions: array of String; out
-  AStream: TStream; out FileNameInZip: String): Boolean;
-var
-  UnZ: TUnZipper;
-  I, II, LE, N: Integer;
-  Entry: TFullZipFileEntry;
-  Extension: AnsiString;
-  SL: TStringList;
-  FiUnz: TFileUnzipper;
-  ExtFound: Boolean;
-  S, S2: AnsiString;
-begin
-  Result := False;
-  AStream := nil;
-  FileNameInZip := '';
-
-  if Assigned(AZipStream) then begin
-    LE := Length(Extensions);
-    if LE > 0 then begin
-      FiUnz := TFileUnzipper.Create;
-      try
-        UnZ := TUnZipper.Create;
-        try
-          UnZ.FileName := '';
-          FiUnz.InStream := AZipStream;
-          UnZ.OnOpenInputStream := @(FiUnz.DoOpenInputStream);
-          UnZ.OnCloseInputStream := @(FiUnz.DoCloseInputStream);
-          UnZ.Examine;
-
-          SL := TStringList.Create;
-          try
-            I := 0;
-            while I < UnZ.Entries.Count do begin
-              Entry := UnZ.Entries.FullEntries[I];
-              if not (Entry.IsDirectory or Entry.IsLink) then begin
-                S2 := Entry.ArchiveFileName;
-                Extension := ExtractFileExt(S2);
-
-                ExtFound := False;
-                II := 0;
-                while (not ExtFound) and (II < LE) do begin
-                  S := Trim(Extensions[II]);
-                  if Length(S) > 0 then begin
-                    if not S.StartsWith(ExtensionSeparator, True) then
-                      S := ExtensionSeparator + S;
-                    ExtFound := AnsiCompareText(Extension, S) = 0;
-                  end;
-                  Inc(II);
-                end;
-
-                if ExtFound then
-                  SL.Append(S2);
-
-              end;
-              Inc(I);
-            end;
-
-            if UnitChooseFile.TFormChooseFile.ShowFormChooseFile(SL, N) then begin
-              FileNameInZip := SL.Strings[N];
-              SL.Clear;
-              SL.Append(FileNameInZip);
-
-              FiUnz.OutStream := nil;
-              try
-                try
-                  UnZ.OnCreateStream := @(FiUnz.DoCreateOutZipStream);
-                  UnZ.OnDoneStream := @(FiUnz.DoDoneOutZipStream);
-                  UnZ.UnZipFiles(SL);
-                  if Assigned(FiUnz.OutStream) then begin
-                    if FiUnz.OutStream.Size > 0 then begin
-                      Extension := ExtractFileExt(FileNameInZip);
-                      if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
-                        if GetFileFromZipStream(FiUnz.OutStream, Extensions, AStream, S) then begin
-                          FileNameInZip := IncludeTrailingPathDelimiter(FileNameInZip) + S;
-
-                          Result := True;
-                        end else
-                          AStream := nil;
-                      end else begin
-                        AStream := FiUnz.OutStream;
-                        FiUnz.OutStream := nil;
-                        Result := True;
-                      end;
-                    end;
-                  end;
-                except
-                  AStream := nil;
-                end;
-              finally
-                FiUnz.OutStream.Free;
-              end;
-            end;
-          finally
-            SL.Free;
-          end;
-        finally
-          UnZ.Free;
-        end;
-      finally
-        FiUnz.Free;
-      end;
-    end;
-  end;
-end;
-
-class function TForm1.TFileUnzipper.GetFileFromZipFile(
-  const ZipFileName: String; const Extensions: array of String; out
-  AStream: TStream; out FileNameInZip: String): Boolean;
-var
-  FileStream: TStream;
-  ZipStream: TMemoryStream;
-begin
-  Result := False;
-  try
-    FileStream := TFileStream.Create(ZipFileName, fmOpenRead or fmShareDenyWrite);
-    try
-      // Create auxiliary in-memory stream, instead of passing the file stream
-      // directly, so that we can release file locks immediately.
-      ZipStream := TMemoryStream.Create;
-      try
-        ZipStream.Size := FileStream.Size;
-        FileStream.Position := 0;
-        ZipStream.Position := 0;
-        if FileStream.Read(ZipStream.Memory^, ZipStream.Size) = ZipStream.Size then begin
-          FreeAndNil(FileStream); // release file locks immediately
-          Result := GetFileFromZipStream(ZipStream, Extensions, AStream, FileNameInZip);
-        end;
-      finally
-        ZipStream.Free;
-      end;
-
-    finally
-      FileStream.Free;
-    end;
-  except
-  end;
-end;
 
 { TForm1 }
 
@@ -1297,62 +1111,6 @@ begin
 
     FreeAndNil(DropFiles);
   end;
-end;
-
-function TForm1.MakeExtensionsFilter(ArSt: array of String): String;
-var
-  I, L: Integer;
-  S1, Sa, Sb: String;
-  AI: String;
-  {$ifdef LCLGtk2}
-  J: Integer;
-  AIU: String;
-  {$endif}
-begin
-  Result := '';
-
-  S1 := '';
-  Sa := '';
-  Sb := '';
-
-  L := 0;
-  for I := Low(ArSt) to High(ArSt) do begin
-    AI := LowerCase(Trim(ArSt[I]));
-    if AI <> '' then begin
-
-      {$ifdef LCLGtk2}
-      AIU := UpperCase(AI);
-      S1 := '';
-      for J := 1 to Length(AI) do
-        if AIU[J] <> AI[J] then
-          S1 := S1 + '[' + AIU[J] + AI[J] + ']'
-        else
-          S1 := S1 + AI[J];
-      {$else}
-      S1 := AI;
-      {$endif}
-
-      S1 := '*' + ExtensionSeparator + S1;
-      Result := Result + AI + '|' + S1 + '|';
-
-      Inc(L);
-      if L > 1 then begin
-        Sa := Sa + ', ';
-        Sb := Sb + ';';
-      end;
-
-      Sa := Sa + AI;
-      Sb := Sb + S1;
-
-    end;
-           
-  end;
-
-  Result := Result + 'all files|*';
-
-  if L > 1 then
-    Result := Sa + '|' + Sb + '|' + Result;
-
 end;
 
 procedure TForm1.AfterShow(Data: PtrInt);
@@ -2228,7 +1986,7 @@ begin
 
       GetAcceptableExtensions(SnapshotOrTape, True, Extensions);
       OpenDialog1.FilterIndex := 1;
-      OpenDialog1.Filter := MakeExtensionsFilter(Extensions);
+      OpenDialog1.Filter := TCommonFunctionsLCL.MakeExtensionsFilter(Extensions);
 
       LastFilePath := FRecentFiles.GetLastFilePath;
       L := False;

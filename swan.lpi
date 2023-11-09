@@ -664,6 +664,11 @@
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="UnitFrameChooseFile"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitfilezip.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitFileZip"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

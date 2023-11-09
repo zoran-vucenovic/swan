@@ -203,20 +203,18 @@ begin
 end;
 
 procedure TFrameInputLibraryPath.MakeExtensionsFilter;
-const
-  DefaultLibraryFilter =
-  {$if defined(mswindows)}
-    '*.dll|*.dll'
-  {$elseif defined(darwin)}
-    '*.dylib|*.dylib'
-  {$elseif defined(unix)}
-    'shared object|*.so;*.so.*'
-  {$else}
-    {$fatal OS not supported!}
-  {$endif}
-  ;
 begin
-  OpenDialog1.Filter := DefaultLibraryFilter + '|all files|*';
+  OpenDialog1.Filter := TCommonFunctionsLCL.MakeExtensionsFilter([
+    {$if defined(mswindows)}
+      'dll'
+    {$elseif defined(darwin)}
+      'dylib'
+    {$elseif defined(unix)}
+      'so'
+    {$else}
+      {$fatal OS not supported!}
+    {$endif}
+  ]);
 end;
 
 function TFrameInputLibraryPath.DoCheckLoad: Boolean;
