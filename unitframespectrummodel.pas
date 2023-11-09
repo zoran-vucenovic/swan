@@ -9,7 +9,7 @@ interface
 
 uses
   Classes, SysUtils, UnitSpectrum, UnitOptions, UnitFrameChooseFile, UnitCommon,
-  Forms, Controls, ExtCtrls, Graphics, StdCtrls, Dialogs;
+  CommonFunctionsLCL, Forms, Controls, ExtCtrls, Graphics, StdCtrls, Dialogs;
 
 type
 
@@ -19,6 +19,7 @@ type
     CheckBox1: TCheckBox;
     Label1: TLabel;
     Label2: TLabel;
+    OpenDialog1: TOpenDialog;
     Panel1: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
@@ -67,7 +68,6 @@ procedure TFrameSpectrumModel.UpdateControls();
 var
   I: Integer;
   R: Integer;
-  BadFile: Boolean;
 
 begin
   RadioGroupKeyboardModel.Enabled := RadioGroupSpectrumModel.ItemIndex <= 1;
@@ -204,11 +204,14 @@ begin
 
   Label2.Caption := 'Choose non-standard roms.' + LineEnding
     + 'Each rom file must have exactly 16K';
-  Label1.Caption := ' 16 and 48 K models need one rom file.' + LineEnding
+  Label1.Caption := ' 16K and 48 K models need one rom file.' + LineEnding
     + ' 128K and +2 need two rom files' + LineEnding
     + ' +3 and +2a need four rom files.';
   S := '';
   I := 0;
+
+  OpenDialog1.Filter := TCommonFunctionsLCL.MakeExtensionsFilter(['rom']);
+
   while I <= 3 do begin
     Fm := TFrameChooseFile.Create(Panel4);
     Fm.Name := UnitCommon.TCommonFunctions.GlobalObjectNameGenerator(Fm);
@@ -227,12 +230,13 @@ begin
     Fm.AnchorToNeighbour(akLeft, 2, Lab);
     Fm.AnchorParallel(akRight, 0, Panel4);
 
-    Fm.InitialPath(S);
+    Fm.InitFrameChooseFile(S, OpenDialog1);
 
-    Inc(I);
     Lab.Caption := IntToStr(I) + '.';
     Lab.Parent := Panel4;
     Fm.Parent := Panel4;
+
+    Inc(I);
   end;
 
   Panel4.BevelOuter := bvNone;

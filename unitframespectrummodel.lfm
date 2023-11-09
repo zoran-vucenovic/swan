@@ -168,4 +168,8 @@ object FrameSpectrumModel: TFrameSpectrumModel
       end
     end
   end
+  object OpenDialog1: TOpenDialog
+    Left = 199
+    Top = 176
+  end
 end

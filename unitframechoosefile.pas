@@ -1,6 +1,9 @@
 unit UnitFrameChooseFile;
+// Copyright 2022, 2023 Zoran Vučenović
+// SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
+{$i zxinc.inc}
 
 interface
 
@@ -8,18 +11,25 @@ uses
   Classes, SysUtils, Forms, Controls, ExtCtrls, Dialogs, StdCtrls, Buttons;
 
 type
+
+  { TFrameChooseFile }
+
   TFrameChooseFile = class(TFrame)
     BitBtn1: TBitBtn;
     Edit1: TEdit;
-    OpenDialog1: TOpenDialog;
     Panel4: TPanel;
     procedure BitBtn1Click(Sender: TObject);
   private
+    OpenDialog: TOpenDialog;
+
     function GetPath: String;
     procedure SetPath(const AValue: String);
 
+    procedure AdjustPath(var S: String);
   public
-    procedure InitialPath(var S: String);
+    constructor Create(TheOwner: TComponent); override;
+
+    procedure InitFrameChooseFile(var S: String; AOpenDialog: TOpenDialog);
 
     property Path: String read GetPath write SetPath;
   end;
@@ -31,11 +41,16 @@ implementation
 { TFrameChooseFile }
 
 procedure TFrameChooseFile.BitBtn1Click(Sender: TObject);
+var
+  S: String;
 begin
-  if OpenDialog1.Execute then begin
-    Edit1.Text := OpenDialog1.FileName;
+  S := Edit1.Text;
+  AdjustPath(S);
+
+  if OpenDialog.Execute then begin
+    Edit1.Text := OpenDialog.FileName;
   end;
-  OpenDialog1.FileName := ExtractFileName(OpenDialog1.FileName);
+  OpenDialog.FileName := ExtractFileName(OpenDialog.FileName);
 end;
 
 function TFrameChooseFile.GetPath: String;
@@ -45,36 +60,50 @@ end;
 
 procedure TFrameChooseFile.SetPath(const AValue: String);
 begin
-  Edit1.Text
+  Edit1.Text := AValue;
 end;
 
-procedure TFrameChooseFile.InitialPath(var S: String);
+procedure TFrameChooseFile.AdjustPath(var S: String);
 var
   S1: String;
   L: Integer;
   Separators: set of AnsiChar;
 begin
-  S := Trim(S);
-  Edit1.Text := S;
-
   Separators := AllowDirectorySeparators + AllowDriveSeparators;
   S1 := S;
   repeat
-    L := Length(S1);
-    if (L > 0) and (S1[L] in Separators) then
-      Delete(S1, L, 1);
-    S1 := Trim(ExtractFilePath(S1));
-    if Length(S1) = L then begin
-      S1 := '';
+    L := Length(S);
+    if (L > 0) and (S[L] in Separators) then
+      Delete(S, L, 1);
+    S := Trim(ExtractFilePath(S1));
+    if Length(S) = L then begin
+      S := '';
     end;
-  until (S1 = '') or (DirectoryExists(S1));
+  until (S = '') or (DirectoryExists(S));
 
-  if S1 = '' then
-    OpenDialog1.InitialDir := ExtractFilePath(Application.ExeName)
-  else
-    OpenDialog1.InitialDir := S1;
+  if S <> '' then
+    OpenDialog.InitialDir := S;
 
-  OpenDialog1.FileName := ExtractFileName(S);
+  OpenDialog.FileName := ExtractFileName(S1);
+end;
+
+constructor TFrameChooseFile.Create(TheOwner: TComponent);
+begin
+  inherited Create(TheOwner);
+
+  OpenDialog := nil;
+end;
+
+procedure TFrameChooseFile.InitFrameChooseFile(var S: String;
+  AOpenDialog: TOpenDialog);
+begin
+  OpenDialog := AOpenDialog;
+  if OpenDialog = nil then begin
+    OpenDialog := TOpenDialog.Create(Self);
+  end;
+
+  S := Trim(S);
+  Edit1.Text := S;
 end;
 
 end.

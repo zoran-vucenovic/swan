@@ -53,7 +53,4 @@ object FrameChooseFile: TFrameChooseFile
       TabOrder = 1
     end
   end
-  object OpenDialog1: TOpenDialog
-    Left = 152
-  end
 end
