@@ -74,7 +74,7 @@ begin
 
   R := ((RadioGroupSpectrumModel.ItemIndex div 2) * 3) div 2;
   for I := 0 to 3 do begin
-    FramesChooseFile[I].Enabled := CheckBox1.Checked and (I <= R);
+    FramesChooseFile[I].Enabled := FramesChooseFile[I].Visible and CheckBox1.Checked and (I <= R);
   end;
 end;
 
@@ -202,11 +202,12 @@ begin
 
   Caption := 'Spectrum model';
 
-  Label2.Caption := 'Choose non-standard roms.' + LineEnding
-    + 'Each rom file must have exactly 16K';
-  Label1.Caption := ' 16K and 48 K models need one rom file.' + LineEnding
-    + ' 128K and +2 need two rom files' + LineEnding
-    + ' +3 and +2a need four rom files.';
+  Label2.Caption := 'Choose non-standard roms.'
+    + LineEnding + 'Each rom file must have exactly 16K';
+  Label1.Caption := ' 16K and 48 K models need one rom file.'
+    + LineEnding + ' 128K and +2 need two rom files'
+    //+ LineEnding + ' +3 and +2a need four rom files.' { #todo : enable this line when +3 is implemented }
+    ;
   S := '';
   I := 0;
 
@@ -234,6 +235,10 @@ begin
 
     Lab.Caption := IntToStr(I) + '.';
     Lab.Parent := Panel4;
+
+    { #todo : remove this line when +3 is implemented! }
+    Fm.Visible := I <= 1;
+
     Fm.Parent := Panel4;
 
     Inc(I);
