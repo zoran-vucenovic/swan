@@ -231,8 +231,11 @@ begin
   then begin
     Stream.Position := 0;
     if Stream.Read(State{%H-}, SizeOf(State)) = SizeOf(State) then begin
-      if State.ShadowScreenDisplay then
+      if State.ShadowScreenDisplay then begin
+        if Stream.Size < SizeOf(State) + Length(ScreenMemArr) + 7 * KB16 then
+          Exit(False);
         Stream.Seek(7 * Int64(KB16), TSeekOrigin.soCurrent);
+      end;
 
       if Stream.Read(ScreenMemArr[0], Length(ScreenMemArr)) = Length(ScreenMemArr) then
         Exit(True);
@@ -286,34 +289,10 @@ begin
         RamBanksCount := 0;
       end;
 
-      if (RamBanksCount > 0)
+      Result := (RamBanksCount > 0)
         and (Stream.Size = SizeOf(State) + RamBanksCount * KB16)
         and State.SaveToSpectrum(FSpectrum)
-        //and Mem.LoadFromStream(5, False, Stream)
-      then begin
-        Result := Mem.LoadRamFromStream(Stream);
-        //Result := RamBanksCount = 1;
-        //if not Result then begin
-        //  if Mem.LoadFromStream(2, False, Stream)
-        //    and Mem.LoadFromStream(0, False, Stream)
-        //  then begin
-        //    Result := (RamBanksCount = 3);
-        //    if not Result then begin
-        //      for I := 1 to 7 do begin
-        //        case I of
-        //          1, 3, 4, 6, 7:
-        //            begin
-        //              Result := Mem.LoadFromStream(I, False, Stream);
-        //              if not Result then
-        //                Break;
-        //            end;
-        //        end;
-        //      end;
-        //    end;
-        //  end;
-        //end;
-      end;
-        //and Proc.GetMemory.LoadRamFromStream(Stream);
+        and Mem.LoadRamFromStream(Stream);
     end;
   finally
     FSpectrum.Paused := WasPaused;
