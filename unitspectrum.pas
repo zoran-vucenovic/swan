@@ -360,12 +360,14 @@ end;
 
 procedure TSpectrum.SetPaging;
 begin
-  FMemory.ActiveRamPageNo := FProcessor.DataBus and %111;
-  FProcessor.ContendedHighBank := FProcessor.DataBus and 1 <> 0; { #todo : different on +3! }
-  FMemory.ShadowScreenDisplay := FProcessor.DataBus and %1000 <> 0;
-  FMemory.ActiveRomPageNo := (FProcessor.DataBus shr 4) and 1;
-  if FProcessor.DataBus and %100000 <> 0 then
-    FPagingEnabled := False;
+  if FPagingEnabled then begin
+    FMemory.ActiveRamPageNo := FProcessor.DataBus and %111;
+    FProcessor.ContendedHighBank := FProcessor.DataBus and 1 <> 0; { #todo : different on +3! }
+    FMemory.ShadowScreenDisplay := FProcessor.DataBus and %1000 <> 0;
+    FMemory.ActiveRomPageNo := (FProcessor.DataBus shr 4) and 1;
+    if FProcessor.DataBus and %100000 <> 0 then
+      FPagingEnabled := False;
+  end;
 end;
 
 procedure TSpectrum.ProcessorInput;
@@ -447,7 +449,7 @@ begin
       //   (see https://foro.speccy.org/viewtopic.php?t=2374)
       // and FloatFFD test https://github.com/redcode/ZXSpectrum/wiki/FloatFFD
       if FModelWithHALbug then
-        if FPagingEnabled and (FProcessor.AddressBus and $8002 = 0) then
+        if FProcessor.AddressBus and $8002 = 0 then
           SetPaging;
     end;
   end;
@@ -473,22 +475,22 @@ begin
     FInternalEar := (Aux and %10000) shl 2;
     FMic := (not Aux) and %1000;
     FEar := FInternalEar or FEarFromTape;
+  end;
+
+  if FProcessor.AddressBus and $8002 = 0 then begin
+    SetPaging;
   end else begin
-    if FPagingEnabled and (FProcessor.AddressBus and $8002 = 0) then begin
-      SetPaging;
-    end else begin
-      if Assigned(FAYSoundChip) then begin
-        case FProcessor.AddressBus and $C002 of
-          $C000:
-            FAYSoundChip.SetActiveRegNum(FProcessor.DataBus);
-          $8000:
-            begin
-              UpdateSoundBuffer;
-              FAYSoundChip.SetRegValue(FProcessor.DataBus);
-              // calculate new values for output
-            end;
-        otherwise
-        end;
+    if Assigned(FAYSoundChip) then begin
+      case FProcessor.AddressBus and $C002 of
+        $C000:
+          FAYSoundChip.SetActiveRegNum(FProcessor.DataBus);
+        $8000:
+          begin
+            UpdateSoundBuffer;
+            FAYSoundChip.SetRegValue(FProcessor.DataBus);
+            // calculate new values for output
+          end;
+      otherwise
       end;
     end;
   end;
