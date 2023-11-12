@@ -917,7 +917,7 @@ begin
     FAYSoundChip.Reset();
   end;
 
-  TSoundPlayer.BufferLen := 512 * 64 * 4;
+  TSoundPlayer.BufferLen := 512 * 64 * 4 * 8;
   CheckStartSoundPlayer;
 end;
 
