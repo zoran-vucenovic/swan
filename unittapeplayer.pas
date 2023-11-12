@@ -16,10 +16,13 @@ type
   TTapePlayer = class;
   TTapePlayerClass = class of TTapePlayer;
 
+  { TTapeBlock }
+
   TTapeBlock = class abstract (TObject)
   strict protected
     FTapePlayer: TTapePlayer;
 
+    procedure AdjustTicksIfNeeded(var NeededTicks: Int64);
     function GetCurrentTotalSpectrumTicks: Int64; inline;
   public
     constructor Create(ATapePlayer: TTapePlayer); virtual;
@@ -157,6 +160,13 @@ constructor TTapeBlock.Create(ATapePlayer: TTapePlayer);
 begin
   inherited Create;
   FTapePlayer := ATapePlayer;
+end;
+
+procedure TTapeBlock.AdjustTicksIfNeeded(var NeededTicks: Int64);
+begin
+  // When playing tape on 128K model, adjust pulse duration (just always assume that 48K wrote the file)
+  if FTapePlayer.GetSpectrum.Is128KModel then
+    NeededTicks := (NeededTicks * 5067 + 2500) div 5000;
 end;
 
 function TTapeBlock.GetCurrentTotalSpectrumTicks: Int64;

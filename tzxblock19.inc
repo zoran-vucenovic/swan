@@ -387,8 +387,10 @@ begin
 
       until True;
 
+      AdjustTicksIfNeeded(TicksNeeded0);
     end else
       FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
+
     TicksNeeded := ProcTicks + TicksNeeded0;
   end;
 

@@ -105,7 +105,7 @@ type
     TicksNeeded: Int64;
     CurrentPulseNumber: Integer;
     RepeatCount: Integer;
-    Duration: Integer;
+    Duration: Int64;
 
     FDetails: String;
 
@@ -362,6 +362,8 @@ end;
 function TPzxBlockPAUS.GetNextPulse: Boolean;
 var
   ProcTicks: Int64;
+  TicksNeeded0: Int64;
+
 begin
   if State = ppsFinished then
     Exit(False);
@@ -369,7 +371,11 @@ begin
   ProcTicks := GetCurrentTotalSpectrumTicks;
   if ProcTicks >= TicksNeeded then begin
     Inc(State);
-    TicksNeeded := ProcTicks + PauseLen;
+
+    FTapePlayer.ActiveBit := InitialPulseLevel;
+    TicksNeeded0 := PauseLen;
+    AdjustTicksIfNeeded(TicksNeeded0);
+    TicksNeeded := ProcTicks + TicksNeeded0;
   end;
   Result := True;
 end;
@@ -558,6 +564,8 @@ function TPzxBlockDATA.GetNextPulse: Boolean;
 
 var
   ProcTicks: Int64;
+  TicksNeeded0: Int64;
+
 begin
   if State = ppsFinished then
     Exit(False);
@@ -574,7 +582,9 @@ begin
     if SPulsesPos >= PulsesNeeded then begin
       GetNextDataBit;
     end;
-    TicksNeeded := ProcTicks + SPulses[SPulsesPos];
+    TicksNeeded0 := SPulses[SPulsesPos];
+    AdjustTicksIfNeeded(TicksNeeded0);
+    TicksNeeded := ProcTicks + TicksNeeded0;
   end;
 
   Result := True;
@@ -726,8 +736,10 @@ begin
         end;
         Duration := Pulses[CurrentPulseNumber].Duration; 
         RepeatCount := Pulses[CurrentPulseNumber].RepeatCount;
-        if Duration > 0 then
+        if Duration > 0 then begin
+          AdjustTicksIfNeeded(Duration);
           Break;
+        end;
         FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
       until False;
     end;

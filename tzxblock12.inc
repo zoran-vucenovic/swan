@@ -13,6 +13,7 @@ private
   NumOfPulses: Integer; // pulses needed
 
   TicksNeeded: Int64;
+  TicksNeeded0: Int64;
   PulsesNeeded: Integer;
 
 public
@@ -94,7 +95,7 @@ begin
         State := TPlayState.psFinished;
       end;
     end;
-    TicksNeeded := ProcTicks + PulseLen;
+    TicksNeeded := ProcTicks + TicksNeeded0;
   end;
   Result := True;
 end;
@@ -106,6 +107,9 @@ begin
 
   TicksNeeded := TicksNeeded.MinValue;
   PulsesNeeded := 1;
+
+  TicksNeeded0 := PulseLen;
+  AdjustTicksIfNeeded(TicksNeeded0);
 end;
 
 procedure TTzxBlock12.Details(out S: String);

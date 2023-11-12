@@ -16,6 +16,7 @@ strict private
   PauseAfterBlock: Integer;
 
   TicksNeeded: Int64;
+  TicksNeeded0: Int64;
   Data: PByte;
   P: PByte;
   PEnd: PByte;
@@ -133,7 +134,7 @@ var
       else
         FTapePlayer.ActiveBit := %01000000;
 
-      TicksNeeded := ProcTicks + PulseLen;
+      TicksNeeded := ProcTicks + TicksNeeded0;
 
       if BitPosition > 0 then
         Dec(BitPosition)
@@ -147,7 +148,6 @@ var
 
 begin
   { Here each bit represents a pulse! }
-  //Result := False;
 
   if State = TPlayState.psFinished then
     Exit(False);
@@ -174,10 +174,13 @@ end;
 procedure TTzxBlock15.Start;
 begin
   inherited Start;
+
   State := TPlayState.psStart;
   P := Data;
   TicksNeeded := TicksNeeded.MinValue;
   BitPosition := 7;
+  TicksNeeded0 := PulseLen;
+  AdjustTicksIfNeeded(TicksNeeded0);
 end;
 
 {$endif}

@@ -181,6 +181,8 @@ begin
 
         until (TicksNeeded0 <> 0) or (State > TPlayState.psData);
       end;
+
+      AdjustTicksIfNeeded(TicksNeeded0);
     end;                                 
     TicksNeeded := ProcTicks + TicksNeeded0;
   end;

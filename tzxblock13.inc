@@ -90,6 +90,8 @@ end;
 function TTzxBlock13.GetNextPulse: Boolean;
 var
   ProcTicks: Int64;
+  TicksNeeded0: Int64;
+
 begin
   if State = TPlayState.psFinished then
     Exit(False);
@@ -100,7 +102,9 @@ begin
       FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
 
     if CurrentPulseNumber < NumOfPulses then begin
-      TicksNeeded := ProcTicks + PulsesLengths[CurrentPulseNumber];
+      TicksNeeded0 := PulsesLengths[CurrentPulseNumber];
+      AdjustTicksIfNeeded(TicksNeeded0);
+      TicksNeeded := ProcTicks + TicksNeeded0;
       State := TPlayState.psPilot;
     end else begin
       State := TPlayState.psFinished;

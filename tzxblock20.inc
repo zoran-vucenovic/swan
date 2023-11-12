@@ -69,6 +69,7 @@ end;
 function {TTzxPlayer.}TTzxBlockPause.GetNextPulse: Boolean;
 var
   ProcTicks: Int64;
+  TicksToWait: Int64;
 
 begin
   if State = TPlayState.psFinished then
@@ -80,20 +81,24 @@ begin
     case State of
       TPlayState.psStart:
         begin
-          TicksNeeded := ProcTicks + TicksBeforePause;
+          TicksToWait := TicksBeforePause;
           State := TPlayState.psData;
         end;
       TPlayState.psData:
         begin
-          TicksNeeded := ProcTicks + FPauseLength * TicksPerMilliSecond;
+          TicksToWait := FPauseLength * TicksPerMilliSecond;
+          AdjustTicksIfNeeded(TicksToWait);
           FTapePlayer.ActiveBit := 0;
           FTapePlayer.InPause := True;
           State := TPlayState.psPause;
         end;
 
     otherwise
+      TicksToWait := 0;
       State := TPlayState.psFinished;
     end;
+
+    TicksNeeded := ProcTicks + TicksToWait;
   end;
 
   Result := True;
