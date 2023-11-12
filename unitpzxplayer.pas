@@ -5,6 +5,10 @@ unit UnitPzxPlayer;
 {$mode ObjFPC}{$H+}
 {$i zxinc.inc}
 
+// pzx tape format
+// homepage: http://zxds.raxoft.cz/pzx.html
+// pzx format specification: http://zxds.raxoft.cz/docs/pzx.txt
+
 interface
 
 uses
@@ -228,7 +232,7 @@ end;
 
 function TPzxBlockSTOP.GetStopPlaying: Boolean;
 begin
-  Result := True; // when non 48 models are supported, add check
+  Result := not (FlagStopOnlyIf48K and FTapePlayer.GetSpectrum.Is128KModel);
 end;
 
 { TPzxBlockBRWS }
