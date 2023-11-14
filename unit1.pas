@@ -527,19 +527,11 @@ begin
 end;
 
 procedure TForm1.ActionAboutExecute(Sender: TObject);
-var
-  WasPaused: Boolean;
 begin
   if Sender <> Spectrum then begin
     AddEventToQueue(@ActionAboutExecute);
   end else begin
-    WasPaused := Spectrum.Paused;
-    try
-      Spectrum.Paused := True;
-      TFormAbout.ShowAbout();
-    finally
-      Spectrum.Paused := WasPaused;
-    end;
+    TFormAbout.ShowAbout();
   end;
 end;
 
