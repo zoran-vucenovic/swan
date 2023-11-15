@@ -2344,8 +2344,14 @@ begin
       PrevPCTicks := CurrentPCTicks;
       PrevTimeStop := 0;
       if not Spectrum.Paused then begin
-        K := K * 35;
-        K := (Ticks - PrevTicks + (K shr 1)) div K;
+        if Spectrum.Is128KModel then begin
+          K := K * 35469;
+          K := ((Ticks - PrevTicks) * 1000 + (K shr 1)) div K;
+        end else begin
+          K := K * 35;
+          K := (Ticks - PrevTicks + (K shr 1)) div K;
+        end;
+
         LabelSpeed.Caption := 'speed ' + IntToStr(K) + '%';
       end else
         LabelSpeed.Caption := 'paused';
