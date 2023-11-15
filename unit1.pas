@@ -9,13 +9,13 @@ interface
 
 uses
   Classes, SysUtils, Types, Forms, Controls, Graphics, Dialogs, ActnList, Menus,
-  ComCtrls, LCLType, Buttons, StdCtrls, ExtCtrls, zipper, fpjson, UnitSpectrum,
+  ComCtrls, LCLType, Buttons, StdCtrls, ExtCtrls, fpjson, UnitSpectrum,
   UnitFileSna, AboutBox, DebugForm, UnitFormBrowser, UnitColourPalette,
   UnitSpectrumColourMap, CommonFunctionsLCL, UnitFrameKeyMappings, UnitJoystick,
   UnitFrameJoystickSetup, UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
-  UnitSoundPlayer, UnitChooseFile, UnitOptions, UnitFrameSpectrumModel,
+  UnitSoundPlayer, UnitOptions, UnitFrameSpectrumModel,
   UnitFrameSound, UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions,
   UnitRecentFiles, UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA,
   UnitFileZip;
