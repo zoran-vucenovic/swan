@@ -123,6 +123,7 @@ type
 
     FSoundPlayerRatePortAudio: Int64;
     FSoundPlayerRateProcessor: Int64;
+    FDivVol: Single;
 
     procedure StopSoundPlayer; inline;
     procedure UpdateSoundBuffer; inline;
@@ -236,7 +237,7 @@ begin
       FLatestTickUpdatedSoundBuffer := FLatestTickUpdatedSoundBuffer + N * FSoundPlayerRateProcessor;
 
       F := FEar + FMic;
-      F := F * TSoundPlayer.Volume / (127 * 64);
+      F := F * TSoundPlayer.Volume / FDivVol;
 
       P := TSoundPlayer.SoundBuffer + TSoundPlayer.CurrentPosition;
       M := TSoundPlayer.BufferLen - TSoundPlayer.CurrentPosition;
@@ -571,6 +572,7 @@ begin
   SetLength(FCustomRomsFileNames, 0);
   FPagingEnabled := False;
   FSoundMuted := False;
+  FDivVol := 1.0;
 
   FDebugger := nil;
   FTapePlayer := nil;
@@ -688,6 +690,7 @@ begin
 
   NewRamSize := 128;
   FIs128KModel := True;
+  FDivVol := 127 * 64;
   FModelWithHALbug := False;
   CentralScreenStart := CentralScreenStart128;
   TicksPerScanLine := TicksPerScanLine128;
@@ -700,6 +703,7 @@ begin
           CentralScreenStart := CentralScreenStart48;
           TicksPerScanLine := TicksPerScanLine48;
           FIs128KModel := False;
+          FDivVol := FDivVol * 4.1;
 
           FProcessor.FrameTicks := FrameTicks48;
           case ASpectrumModel of

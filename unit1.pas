@@ -237,7 +237,7 @@ type
     procedure LoadFromConf;
     procedure SaveToConf;
     function GetSoundVolume: Integer;
-    procedure SetSoundVolume(const N: Integer);
+    procedure SetSoundVolume(N: Integer);
     procedure SetSnapshotHistoryEnabled(const B: Boolean);
     procedure ShowAllOptionsDialog(ControlClass: TControlClass);
     procedure UpdateRecentFiles;
@@ -1383,9 +1383,13 @@ begin
   Result := TSoundPlayer.Volume div 4;
 end;
 
-procedure TForm1.SetSoundVolume(const N: Integer);
+procedure TForm1.SetSoundVolume(N: Integer);
 begin
-  TSoundPlayer.Volume := N * 4;
+  if N > 0 then begin
+    N := (N * 4) and 127;
+    TSoundPlayer.Volume := N + (N shr 5);
+  end else
+    TSoundPlayer.Volume := 0;
 end;
 
 procedure TForm1.SetSnapshotHistoryEnabled(const B: Boolean);

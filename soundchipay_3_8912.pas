@@ -310,7 +310,7 @@ begin
       OutputChCurrentPositions[J] := K + 1;
     end;
 
-    P^ := (NW * TSoundPlayer.Volume + F) / 2.0625 - 1.0;
+    P^ := (NW * TSoundPlayer.Volume + F) / 4.1;
 
     Inc(FEnvelopePosition);
     if FEnvelopeDirection <> 0 then begin
