@@ -54,7 +54,6 @@ type
     const
       BorderLineWidth = 2;
     class var
-      FBuildDate: String;
       FormAbout: TFormAbout;
 
   strict private
@@ -83,7 +82,6 @@ type
     class procedure Final; static;
   public
     class procedure ShowAbout(); static;
-    class property BuildDate: String write FBuildDate;
   end;
 
 implementation
@@ -577,7 +575,7 @@ begin
   AddALabel(S);
 
   AddALabel(
-    'Build date:', FBuildDate
+    'Build date:', TCommonSpectrum.BuildDateString
     );
 
   Panel8.BevelOuter := bvNone;

@@ -221,6 +221,7 @@ type
       cSectionSkipTapeInfoSzxLoad = 'skip_load_tape_info_from_szx';
       cSectionSzxSaveOptions = 'szx_save_options';
       cSectionRecentFiles = 'recent_files';
+      cSectionBuildDate = 'build_date';
 
   strict private
     FNewModel: TSpectrumModel;
@@ -1373,6 +1374,7 @@ begin
   JObj := TJSONObject.Create;
   try
     JObj.Add(cSectionSwanVersion, UnitVer.TVersion.FullVersionString);
+    JObj.Add(cSectionBuildDate, TCommonSpectrum.BuildDateString);
     JObj.Add(cSectionScreenSizeFactor, Integer(ScreenSizeFactor));
     if FSkipWriteScreen then
       N := 1

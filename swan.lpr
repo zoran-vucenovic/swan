@@ -32,13 +32,7 @@ uses
 procedure InitBuildDateString;
 begin
   // Keep this here in main project file, so that included values are updated.
-  TFormAbout.BuildDate :=
-    // We might display build date in localized form:
-    //DateToStr(EncodeDate({$i %dateyear%}, {$i %datemonth%}, {$i %dateday%}))
-    // or rather always use standard YYYY-MM-DD form:
-    Format('%.4d-%.2d-%.2d', [{$i %dateyear%}, {$i %datemonth%}, {$i %dateday%}])
-    //+ ' ' + {$i %Time%}
-    ;
+  TCommonSpectrum.SetBuildDate({$i %dateyear%}, {$i %datemonth%}, {$i %dateday%});
 end;
 
 procedure SetApplicationTitle;

@@ -12,10 +12,16 @@ uses
 
 type
   TCommonSpectrum = class sealed (TObject)
-  strict private
+  public
     const
-      FAuthorName: String = 'Zoran Vučenović';
+      AuthorName: String = 'Zoran Vučenović';
+  strict private
+    class var
+      FBuildYear: Word;
+      FBuildMonth: Word;
+      FBuildDay: Word;
   private
+    class function GetBuildDateString: String; static;
     class procedure Init;
     class procedure Final;
   public
@@ -29,7 +35,8 @@ type
     class procedure SortSpectrumKeys(var AKeys: Array of Word); static;
     class function CompareSpectrumKeyValues(X, Y: Word): Integer; static;
 
-    class property AuthorName: String read FAuthorName;
+    class procedure SetBuildDate(const AYear, AMonth, ADay: Word); static;
+    class property BuildDateString: String read GetBuildDateString;
   end;
 
 implementation
@@ -98,7 +105,21 @@ begin
   end;
 end;
 
-{ TSpectrumKeysSorter }
+class procedure TCommonSpectrum.SetBuildDate(const AYear, AMonth, ADay: Word);
+begin
+  FBuildYear := AYear;
+  FBuildMonth := AMonth;
+  FBuildDay := ADay;
+end;
+
+class function TCommonSpectrum.GetBuildDateString: String;
+begin
+  Result :=
+  // We might display build date in localized form:
+  //DateToStr(EncodeDate(FBuildYear, FBuildMonth, FBuildDay))
+  // or rather always use standard YYYY-MM-DD form:
+    Format('%.4d-%.2d-%.2d', [FBuildYear, FBuildMonth, FBuildDay]);
+end;
 
 class procedure TCommonSpectrum.Init;
 begin
