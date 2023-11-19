@@ -114,7 +114,7 @@ begin
   FLibPath := '';
   SoundBuffer := nil;
   FBufferLen := 0;
-  FVolume := 127 div 2;
+  FVolume := 104;
 end;
 
 class procedure TSoundPlayer.Final;

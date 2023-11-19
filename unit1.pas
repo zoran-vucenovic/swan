@@ -236,8 +236,6 @@ type
     procedure UpdateSoundControls;
     procedure LoadFromConf;
     procedure SaveToConf;
-    function GetSoundVolume: Integer;
-    procedure SetSoundVolume(N: Integer);
     procedure SetSnapshotHistoryEnabled(const B: Boolean);
     procedure ShowAllOptionsDialog(ControlClass: TControlClass);
     procedure UpdateRecentFiles;
@@ -1180,23 +1178,88 @@ begin
 end;
 
 procedure TForm1.LoadFromConf;
+
+  function UnpackVersionString(S: String): DWord;
+  var
+    P: Integer;
+    N: Integer;
+    S1: String;
+    I, K: Integer;
+    D: DWord;
+  begin
+    D := 0;
+    Result := 0;
+
+    N := 1;
+    I := 0;
+    repeat
+      P := Pos('.', S, N);
+      if P > 0 then begin
+        if I >= 2 then
+          Exit;
+
+        S1 := Copy(S, N, P - N);
+        N := P + 1;
+
+      end else
+        S1 := Copy(S, N);
+
+      if (not TCommonFunctions.TryStrToIntDecimal(S1, K))
+         or (K < 0) or ((I > 0) and (K > 99))
+      then
+        Exit;
+
+      Inc(I);
+
+      D := D * 100 + DWord(K);
+
+    until P <= 0;
+
+    case I of
+      2:
+        Result := D * 100;
+      3:
+        Result := D;
+    otherwise
+    end;
+
+  end;
+
 var
   JObj: TJSONObject;
   JObj2: TJSONObject;
   JD: TJSONData;
 
-  M, N: Integer;
+  M: Integer;
+  SoundVol: Integer;
   SModel: TSpectrumModel;
   S, S1: String;
   SPortaudioLib32, SPortaudioLib64: String;
   K: Integer;
   SzxSaveTapeOptions: TSzxSaveTapeOptions;
 
+  FullVersionFromConf: DWord;
+
 begin
   JObj := TConfJSON.GetJSONObject(cSection0);
-  N := GetSoundVolume;
+  SoundVol := TSoundPlayer.Volume;
   if Assigned(JObj) then begin
     SetScreenSizeFactor(JObj.Get(cSectionScreenSizeFactor, Integer(1)));
+
+    FullVersionFromConf := 0;
+
+    // Full version which saved the conf. We can use it in this procedure when needed.
+    // if needed, we can compare it with current TVersion.FullVersion
+    JD := JObj.Find(cSectionSwanVersion);
+    if not Assigned(JD) then begin
+      // before 0.9.4, Swan didn't save version in conf.
+      if TConfJSON.Possible092Conf then begin
+        FullVersionFromConf := 902; // might as well be 0.9.0, never mind.
+      end;
+
+    end else
+      if JD is TJSONString then
+        FullVersionFromConf := UnpackVersionString(JD.AsString);
 
     S := '';
     S := Trim(JObj.Get(cSectionSpectrumModel, S));
@@ -1273,11 +1336,26 @@ begin
 
     TSoundPlayer.LibPath := S;
 
-    M := JObj.Get(cSectionSoundVolume, N);
-    if (M >= 0) and (M <= 31) then
-      N := M;
+    M := JObj.Get(cSectionSoundVolume, SoundVol);
+
+    if (M >= 0) and (M <= 127) then begin
+      SoundVol := M;
+
+      // Since 0.9.7, volume is lower... let's raise what was saved when loading from older conf.
+      if (FullVersionFromConf > 0) and (FullVersionFromConf <= 906) and (M <= 31) then begin
+        SoundVol := 1024;
+
+        while M < 31 do begin
+          Inc(M);
+          SoundVol := (SoundVol * 800) div 729;
+        end;
+
+        SoundVol := 127 - (((SoundVol shr 10) - 1) * 127) div 16;
+      end;
+    end;
+
   end;
-  SetSoundVolume(N);
+  TSoundPlayer.Volume := SoundVol;
 end;
 
 procedure TForm1.SaveToConf;
@@ -1302,7 +1380,7 @@ begin
       N := 0;
     JObj.Add(cSectionSkipWriteScr, N);
 
-    N := GetSoundVolume;
+    N := TSoundPlayer.Volume;
     JObj.Add(cSectionSoundVolume, N);
 
     if Spectrum.SoundMuted then
@@ -1376,20 +1454,6 @@ begin
   finally
     JObj.Free;
   end;
-end;
-
-function TForm1.GetSoundVolume: Integer;
-begin
-  Result := TSoundPlayer.Volume div 4;
-end;
-
-procedure TForm1.SetSoundVolume(N: Integer);
-begin
-  if N > 0 then begin
-    N := (N * 4) and 127;
-    TSoundPlayer.Volume := N + (N shr 5);
-  end else
-    TSoundPlayer.Volume := 0;
 end;
 
 procedure TForm1.SetSnapshotHistoryEnabled(const B: Boolean);
@@ -1858,12 +1922,15 @@ begin
 end;
 
 procedure TForm1.SoundVolumeOnChg(Sender: TObject);
+var
+  N: Integer;
 begin
   if Assigned(FSoundVolumeForm) then begin
     if Sender <> Spectrum then begin
       AddEventToQueue(@SoundVolumeOnChg);
     end else begin
-      SetSoundVolume(FSoundVolumeForm.Level);
+      N := (FSoundVolumeForm.Level and 31) * 4;
+      TSoundPlayer.Volume := N + (N shr 5);
     end;
   end;
 end;
@@ -2038,12 +2105,13 @@ var
 
 begin
   FFileToOpen := '';
-  Stream := nil;
-  if Spectrum.IsRunning then begin
+
+  if (ASourceFile <> '') and Spectrum.IsRunning then begin
     WasPaused := Spectrum.Paused;
     try
       Spectrum.Paused := True;
 
+      Stream := nil;
       Extension := ExtractFileExt(ASourceFile);
       
       if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
@@ -2494,7 +2562,7 @@ begin
     end;
     FSoundVolumeForm := TFormSoundVolume.ShowSoundVolumeTracker(
       Spectrum.SoundMuted,
-      GetSoundVolume);
+      TSoundPlayer.Volume div 4);
     FSoundVolumeForm.FreeNotification(Self);
   end;
 

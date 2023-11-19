@@ -28,6 +28,7 @@ type
       FFileName: String;
       FConfDirectory: String;
       FRemappings: TRemappings;
+      FPossible092Conf: Boolean;
   private
     class procedure Init;
     class procedure Final;
@@ -39,13 +40,15 @@ type
     class function SaveToStream(Stream: TStream): Boolean;
     class function LoadFromFile(): Boolean;
     class function SaveToFile(): Boolean;
-    class procedure Remap(R: TRemapping);
+    class procedure Remap(const R: TRemapping);
     class procedure AddRemapping(RemapFrom, RemapTo: String);
   public
     class function AddToConf(const Section: String; Data: TJSONData): Boolean;
     class function GetJSONObject(const Section: String): TJSONObject;
     class function GetJSONArray(const Section: String): TJSONArray;
     class procedure RemoveSection(const Section: String);
+
+    class property Possible092Conf: Boolean read FPossible092Conf;
   end;
 
 implementation
@@ -57,6 +60,7 @@ begin
   FConf := nil;
   FConfDirectory := '';
   FFileName := '';
+  FPossible092Conf := False;
 
   SetLength(FRemappings, 0);
   AddRemapping('f1', 'general');
@@ -189,7 +193,7 @@ begin
   end;
 end;
 
-class procedure TConfJSON.Remap(R: TRemapping);
+class procedure TConfJSON.Remap(const R: TRemapping);
 var
   JD: TJSONData;
 begin
@@ -198,8 +202,13 @@ begin
     if Assigned(JD) then begin
       if GetConf.IndexOfName(R.RemapTo) <> -1 then
         JD.Free
-      else
+      else begin
+        if R.RemapFrom = 'f1' then  // Conf saved before 0.9.4 has this section.
+          FPossible092Conf := True; // We can use this to recognize the old
+                                    // conf version, as it was also 0.9.4 that
+                                    // Swan started to save its version.
         GetConf.Add(R.RemapTo, JD);
+      end;
     end;
   end;
 end;

@@ -5,8 +5,8 @@ unit UnitFormInputPokes;
 interface
 
 uses
-  Classes, SysUtils, CommonFunctionsLCL, Forms, Controls, Graphics, Dialogs,
-  Grids, LCLType, ExtCtrls, ButtonPanel;
+  Classes, SysUtils, CommonFunctionsLCL, UnitCommon, Forms, Controls, Graphics,
+  Dialogs, Grids, LCLType, ExtCtrls, ButtonPanel;
 
 type
   TPokeEntry = record
@@ -53,26 +53,6 @@ type
 
 implementation
 
-function TryStrToIntDecimal(const S: String; out N: Int32): Boolean;
-var
-  P: PAnsiChar;
-begin
-  P := PAnsiChar(TrimLeft(S));
-  if P^ = '-' then
-    Inc(P);
-  case P^ of
-    '0':
-      if not ((P + 1)^ in [#0, '0'..'9']) then
-        Exit(False);
-    '1'..'9':
-      ;
-  otherwise
-    Exit(False);
-  end;
-
-  Result := TryStrToInt(S, N);
-end;
-
 {$R *.lfm}
 
 { TFormInputPokes.TGridNums }
@@ -118,7 +98,7 @@ begin
     MaxVal := Byte.MaxValue;
   end;
 
-  Result := TryStrToIntDecimal(AValue, N)
+  Result := TCommonFunctions.TryStrToIntDecimal(AValue, N)
     and (N >= MinVal) and (N <= MaxVal);
 
 end;

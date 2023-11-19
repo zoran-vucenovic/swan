@@ -59,17 +59,21 @@ end;
 
 procedure TRecentFiles.LoadFromJSONArray(JArr: TJSONArray);
 var
-  I, J, M, II: Integer;
+  I, J, M, II, N: Integer;
   S: RawByteString;
   JD: TJSONData;
   Found: Boolean;
 begin
   M := JArr.Count;
+  N := M;
   if FMaxCount < M then
     M := FMaxCount;
+
   SetLength(FRecentFiles, M);
+
   J := 0;
-  for I := 0 to M - 1 do begin
+  I := 0;
+  while (J < M) and (I < N) do begin
     S := '';
     JD := JArr.Items[I];
     if JD is TJSONString then begin
@@ -88,6 +92,7 @@ begin
         end;
       end;
     end;
+    Inc(I);
   end;
   SetLength(FRecentFiles, J);
 end;
@@ -162,6 +167,7 @@ begin
           Break;
       end;
     end;
+    SetLength(FRecentFiles, 0);
     SetLength(Arr, J);
     Arr[0] := S;
     FRecentFiles := Arr;

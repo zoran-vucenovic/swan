@@ -40,6 +40,8 @@ type
     class function SpectrumCharToUtf8(S: RawByteString): RawByteString; static;
     class procedure ConvertCodePageFromISO8859_1_to_Utf8(var S: AnsiString); static;
     class procedure CallRandomizeIfNotCalledAlready();
+    class function TryStrToIntDecimal(const S: String; out N: Int32): Boolean; static;
+    class function TryStrToInt64Decimal(const S: String; out N: Int64): Boolean; static;
   end;
 
 implementation
@@ -163,6 +165,48 @@ begin
     RandomizeAlreadyCalled := True;
     Randomize;
   end;
+end;
+
+class function TCommonFunctions.TryStrToIntDecimal(const S: String; out N: Int32
+  ): Boolean;
+var
+  P: PAnsiChar;
+begin
+  P := PAnsiChar(TrimLeft(S));
+  if P^ = '-' then
+    Inc(P);
+  case P^ of
+    '0':
+      if not ((P + 1)^ in [#0, '0'..'9']) then
+        Exit(False);
+    '1'..'9':
+      ;
+  otherwise
+    Exit(False);
+  end;
+
+  Result := TryStrToInt(S, N);
+end;
+
+class function TCommonFunctions.TryStrToInt64Decimal(const S: String; out
+  N: Int64): Boolean;
+var
+  P: PAnsiChar;
+begin
+  P := PAnsiChar(TrimLeft(S));
+  if P^ = '-' then
+    Inc(P);
+  case P^ of
+    '0':
+      if not ((P + 1)^ in [#0, '0'..'9']) then
+        Exit(False);
+    '1'..'9':
+      ;
+  otherwise
+    Exit(False);
+  end;
+
+  Result := TryStrToInt64(S, N);
 end;
 
 { TGlobalCounter }
