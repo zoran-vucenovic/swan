@@ -1,5 +1,5 @@
 unit UnitConfigs;
-// Copyright 2022 Zoran Vučenović
+// Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
@@ -205,10 +205,11 @@ begin
       else begin
         if R.RemapFrom = 'f1' then  // Conf saved before 0.9.4 has this section.
           FPossible092Conf := True; // We can use this to recognize the old
-                                    // conf version, as it was also 0.9.4 that
+                                    // conf version, as it was also 0.9.4 when
                                     // Swan started to save its version.
         GetConf.Add(R.RemapTo, JD);
       end;
+
     end;
   end;
 end;
