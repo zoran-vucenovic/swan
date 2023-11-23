@@ -350,14 +350,15 @@ end;
 
 { True when number of set bits is even, False when odd. }
 class function TProcessor.IsByteParityEven(B: Byte): Boolean;
-//begin
-//  { http://www.graphics.stanford.edu/~seander/bithacks.html#ParityWith64Bits }
-//  // note: the original function on that link returns true when number of set bits is odd, but we return the opposite.
-//  Result :=
-//    (((QWord(B) * QWord($0101010101010101)) and QWord($8040201008040201)) mod $01FF) and 1 = 0;
-//end;
-//
-// Hm... the "naive" implementation doesn't seem slower, actually:
+{$if SizeOf(SizeInt) >= 8}
+begin
+  { http://www.graphics.stanford.edu/~seander/bithacks.html#ParityWith64Bits }
+  // note: the original function on that link returns true when number of set bits is odd, but we return the opposite.
+  Result :=
+    (((QWord(B) * QWord($0101010101010101)) and QWord($8040201008040201)) mod $01FF) and 1 = 0;
+end;
+{$else}
+// On 32-bit system the "naive" implementation seems to be faster, actually:
 var
   Aux: Byte;
 begin
@@ -368,6 +369,7 @@ begin
   end;
   Result := Aux and 1 = 0;
 end;
+{$endif}
 
 procedure TProcessor.CheckContention;
 var
