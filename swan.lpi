@@ -61,9 +61,6 @@
           </Linking>
           <Other>
             <CustomOptions Value="-dUseCThreads"/>
-            <OtherDefines Count="1">
-              <Define0 Value="UseCThreads"/>
-            </OtherDefines>
           </Other>
         </CompilerOptions>
       </Item>

@@ -1161,9 +1161,9 @@ begin
   ActionMuteSound.Checked := SoundIsMuted;
 
   if SoundIsMuted then
-    SpeedButton1.ImageIndex := 17
+    SpeedButton1.ImageIndex := 32
   else
-    SpeedButton1.ImageIndex := 18;
+    SpeedButton1.ImageIndex := 33;
 
   if not SoundAllowed then
     DestroySoundVolumeForm()

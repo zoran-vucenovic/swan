@@ -451,7 +451,7 @@ var
     CC2.AnchorHorizontalCenterTo(Panel5);
     CC2.Parent := Panel5;
 
-    Label6.Caption := ApplicationName + ' uses:';
+    Label6.Caption := ApplicationName + ' uses free software:';
     Label6.Anchors := [];
     Label6.AnchorParallel(akTop, 0, Panel6);
 
@@ -469,10 +469,15 @@ var
     CC2.AnchorParallel(akLeft, 0, CC3);
     CC2.Parent := CC3;
 
-    CC1 := CreateLinkLabel(Panel6, 'https://gitlab.com/freepascal.org/lazarus/lazarus/-/tree/main/images/general_purpose', 'General purpose icons', '', ' by Roland Hahn');
+    CC1 := CreateLinkLabel(CC3, 'https://gitlab.com/freepascal.org/lazarus/lazarus/-/tree/main/images/general_purpose', 'General purpose icons', '', ' by Roland Hahn');
     CC1.AnchorToNeighbour(akTop, 5, CC2);
     CC1.AnchorParallel(akLeft, 0, CC3);
     CC1.Parent := CC3;
+
+    CC2 := CreateLinkLabel(CC3, 'https://lucide.dev/icons/', 'Lucide icons');
+    CC2.AnchorToNeighbour(akTop, 5, CC1);
+    CC2.AnchorParallel(akLeft, 0, CC3);
+    CC2.Parent := CC3;
 
     CC1 := TCustomControl.Create(Panel6);
     CC1.Anchors := [];

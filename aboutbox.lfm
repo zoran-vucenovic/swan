@@ -18,7 +18,7 @@ object FormAbout: TFormAbout
   OnKeyDown = FormKeyDown
   OnKeyUp = FormKeyUp
   OnShow = FormShow
-  LCLVersion = '3.0.0.1'
+  LCLVersion = '3.0.0.2'
   object Shape1: TShape
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

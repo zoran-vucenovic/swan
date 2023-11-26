@@ -18,3 +18,5 @@ All files in this repository, except those stated under EXCEPTIONS at the end of
 EXCEPTIONS:
 - The files in directory roms - 48.rom, 128-english-0.rom, 128-english-1.rom, plus2-english-0.rom, plus2-english-1.rom
   See roms/COPYRIGHT.txt
+- The files in directory icons_lucide
+  See icons_lucide/COPYRIGHT.txt

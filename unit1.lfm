@@ -182,14 +182,14 @@ object Form1: TForm1
     object ActionSpeedIncrease: TAction
       Category = 'Emulation'
       Caption = 'Increase speed'
-      ImageIndex = 21
+      ImageIndex = 18
       OnExecute = ActionSpeedIncreaseExecute
       ShortCut = 121
     end
     object ActionSpeedDecrease: TAction
       Category = 'Emulation'
       Caption = 'Decrease speed'
-      ImageIndex = 22
+      ImageIndex = 19
       OnExecute = ActionSpeedDecreaseExecute
       ShortCut = 120
     end
@@ -250,6 +250,7 @@ object Form1: TForm1
     object ActionShowDebugger: TAction
       Category = 'Debug'
       Caption = 'Debugger...'
+      ImageIndex = 30
       OnExecute = ActionShowDebuggerExecute
     end
     object ActionAttachTap: TAction
@@ -269,6 +270,7 @@ object Form1: TForm1
     object ActionShowTapePlayer: TAction
       Category = 'Tape'
       Caption = 'Show tape player...'
+      ImageIndex = 23
       OnExecute = ActionShowTapePlayerExecute
     end
     object ActionRewind: TAction
@@ -295,11 +297,13 @@ object Form1: TForm1
     object ActionKeyMappings: TAction
       Category = 'Options'
       Caption = 'Key Mappings...'
+      ImageIndex = 28
       OnExecute = ActionKeyMappingsExecute
     end
     object ActionJoystick: TAction
       Category = 'Options'
       Caption = 'Joystick...'
+      ImageIndex = 24
       OnExecute = ActionJoystickExecute
     end
     object ActionDecTapeBlock: TAction
@@ -324,6 +328,7 @@ object Form1: TForm1
     object ActionDontDrawScreenWhenLoading: TAction
       Category = 'Options'
       Caption = 'Don''t draw screen while tape is running'
+      ImageIndex = 27
       OnExecute = ActionDontDrawScreenWhenLoadingExecute
     end
     object ActionMuteSound: TAction
@@ -339,6 +344,7 @@ object Form1: TForm1
     object ActionInputPokes: TAction
       Category = 'Debug'
       Caption = 'Pokes...'
+      ImageIndex = 31
       OnExecute = ActionInputPokesExecute
     end
     object ActionMoveBack: TAction
@@ -351,7 +357,7 @@ object Form1: TForm1
     object ActionHistorySnapshots: TAction
       Category = 'Options'
       Caption = 'Autosaving snapshots...'
-      ImageIndex = 20
+      ImageIndex = 17
       OnExecute = ActionHistorySnapshotsExecute
     end
     object ActionEnableHistory: TAction
@@ -382,17 +388,20 @@ object Form1: TForm1
       Category = 'Emulation'
       Caption = 'NMI'
       Hint = 'Send NMI signal to processor'
+      ImageIndex = 21
       OnExecute = ActionNMIExecute
     end
     object ActionResetCPU: TAction
       Category = 'Emulation'
       Caption = 'Reset CPU'
       Hint = 'Send RESET signal to processor ("soft reset")'
+      ImageIndex = 22
       OnExecute = ActionResetCPUExecute
     end
     object ActionShowKeyboardOnScreen: TAction
       Category = 'Options'
       Caption = 'On-screen keyboard'
+      ImageIndex = 25
       OnExecute = ActionShowKeyboardOnScreenExecute
     end
     object ActionModel16KIssue2: TAction
@@ -418,6 +427,7 @@ object Form1: TForm1
     object ActionAllOptions: TAction
       Category = 'Options'
       Caption = 'All options...'
+      ImageIndex = 29
       OnExecute = ActionAllOptionsExecute
     end
     object ActionModel128K: TAction
@@ -474,6 +484,7 @@ object Form1: TForm1
       end
       object MenuItem41: TMenuItem
         Caption = 'Signal processor'
+        ImageIndex = 20
         object MenuItem42: TMenuItem
           Action = ActionNMI
         end
@@ -502,11 +513,14 @@ object Form1: TForm1
       object MenuItem27: TMenuItem
         Action = ActionSizeDecrease
       end
-      object MenuItem15: TMenuItem
-        Action = ActionColours
+      object MenuItem47: TMenuItem
+        Action = ActionShowKeyboardOnScreen
       end
       object MenuItem10: TMenuItem
         Action = ActionKeyMappings
+      end
+      object MenuItem15: TMenuItem
+        Action = ActionColours
       end
       object MenuItem36: TMenuItem
         Action = ActionMuteSound
@@ -516,6 +530,7 @@ object Form1: TForm1
       end
       object MenuItem44: TMenuItem
         Caption = 'Model'
+        ImageIndex = 26
         object MenuItem48: TMenuItem
           Action = ActionModel16KIssue2
         end
@@ -546,9 +561,6 @@ object Form1: TForm1
       end
       object MenuItem33: TMenuItem
         Action = ActionEnableJoystick
-      end
-      object MenuItem47: TMenuItem
-        Action = ActionShowKeyboardOnScreen
       end
       object MenuItem35: TMenuItem
         Action = ActionDontDrawScreenWhenLoading
