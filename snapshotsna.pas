@@ -86,7 +86,6 @@ begin
       if Stream.Read(Header{%H-}, SizeOf(Header)) = SizeOf(Header) then begin
         State := Default(TSpectrumInternalState);
 
-        // Registers A and F (as well as A` and F` and I, R) are stored in order A, F (so we can treat AF stored as big endian)
         State.AF := LEtoN(Header.AF);
         State.AF1 := LEtoN(Header.AF1);
         State.BC := LEtoN(Header.BC);
