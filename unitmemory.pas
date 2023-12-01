@@ -46,7 +46,7 @@ type
     function LoadFromStream(const BankNum: Byte; IsRom: Boolean; const AStream: TStream): Boolean;
     function SaveToStream(const BankNum: Byte; IsRom: Boolean; const AStream: TStream): Boolean;
 
-    // Ram to one stream - pages 5, 2, 0, 1, 3, 4, 6, 7 respectivly:
+    // Ram to one stream - pages 5, 2, 0, 1, 3, 4, 6, 7 respectively:
     function LoadRamFromStream(const AStream: TStream): Boolean;
     function SaveRamToStream(const AStream: TStream): Boolean;
 
@@ -151,20 +151,26 @@ function TMemory.SaveToStream(const BankNum: Byte; IsRom: Boolean; const AStream
 var
   P: PByte;
 begin
-  if not Assigned(AStream) then
-    Exit(False);
+  Result := False;
 
+  if not Assigned(AStream) then
+    Exit;
+
+  P := nil;
   if IsRom then begin
     if (BankNum < Length(FRomBanks)) then
       P := FRomBanks[BankNum];
   end else begin
     if BankNum < Length(FRamBanks) then
-      P := FRamBanks[BankNum]
-    else
-      P := nil;
+      P := FRamBanks[BankNum];
   end;
 
-  Result := Assigned(P) and (AStream.Write(P^, BankSize) = BankSize);
+  if Assigned(P) then
+    try
+      Result := AStream.Write(P^, BankSize) = BankSize;
+    except
+      Result := False;
+    end;
 end;
 
 function TMemory.LoadRamFromStream(const AStream: TStream): Boolean;
