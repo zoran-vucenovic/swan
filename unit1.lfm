@@ -27,7 +27,7 @@ object Form1: TForm1
     AnchorSideBottom.Control = PanelStatus
     Left = 0
     Height = 105
-    Top = 86
+    Top = 84
     Width = 105
     Anchors = [akLeft, akBottom]
   end
@@ -38,14 +38,14 @@ object Form1: TForm1
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 0
-    Height = 24
-    Top = 191
+    Height = 26
+    Top = 189
     Width = 105
     Anchors = [akLeft, akRight, akBottom]
     AutoSize = True
     BevelInner = bvLowered
     BevelOuter = bvNone
-    ClientHeight = 24
+    ClientHeight = 26
     ClientWidth = 105
     ParentBackground = False
     TabOrder = 0
@@ -135,28 +135,40 @@ object Form1: TForm1
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Control = PanelStatus
       AnchorSideBottom.Side = asrBottom
-      Left = 81
-      Height = 22
+      Left = 70
+      Height = 24
       Top = 1
-      Width = 23
+      Width = 34
       Anchors = [akRight, akBottom]
       AutoSize = True
       BevelOuter = bvNone
-      ClientHeight = 22
-      ClientWidth = 23
+      ClientHeight = 24
+      ClientWidth = 34
       ParentBackground = False
+      ParentShowHint = False
       TabOrder = 3
-      object SpeedButton1: TSpeedButton
+      object ToolBar1: TToolBar
         AnchorSideLeft.Control = Panel4
         AnchorSideTop.Control = Panel4
         Left = 0
-        Height = 22
+        Height = 24
         Top = 0
-        Width = 23
-        Enabled = False
-        Flat = True
+        Width = 34
+        Align = alNone
+        Caption = 'ToolBar1'
+        EdgeBorders = []
         Images = DataModuleImages.ImageList1
-        OnClick = SpeedButton1Click
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 0
+        object ToolButton1: TToolButton
+          Left = 1
+          Top = 0
+          Caption = 'ToolButton1'
+          OnArrowClick = ToolButton1ArrowClick
+          OnClick = ToolButton1Click
+          Style = tbsDropDown
+        end
       end
     end
   end

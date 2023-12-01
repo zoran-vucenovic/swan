@@ -151,7 +151,8 @@ type
     Separator1: TMenuItem;
     Separator2: TMenuItem;
     Separator3: TMenuItem;
-    SpeedButton1: TSpeedButton;
+    ToolBar1: TToolBar;
+    ToolButton1: TToolButton;
     procedure ActionAboutExecute(Sender: TObject);
     procedure ActionAllOptionsExecute(Sender: TObject);
     procedure ActionAttachTapExecute(Sender: TObject);
@@ -203,7 +204,8 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure FormDropFiles(Sender: TObject; const FileNames: array of string);
     procedure FormShow(Sender: TObject);
-    procedure SpeedButton1Click(Sender: TObject);
+    procedure ToolButton1ArrowClick(Sender: TObject);
+    procedure ToolButton1Click(Sender: TObject);
   strict private
     const
       cSection0 = 'general';
@@ -315,6 +317,7 @@ type
     procedure SoundVolumeOnChg(Sender: TObject);
     procedure SoundVolumeAfterShow(Data: PtrInt);
     procedure SoundVolumeOnShow(Sender: TObject);
+    procedure ToolButtonOnShowHint(Sender: TObject; HintInfo: PHintInfo);
     procedure EventPlayerOnChangeBlock(Sender: TObject);
     procedure PlayerOnChangeBlock;
     procedure EventTapeBrowserGoToBlock(Sender: TObject);
@@ -339,7 +342,7 @@ type
     procedure SetSpectrumSpeed(NewSpeed: Integer);
     procedure ShowTapeBrowser();
     procedure ShowKeyboardOnScreen();
-    procedure ShowSoundVolumeForm();
+    procedure ShowSoundVolumeForm(const AToggleMute: Boolean);
     procedure DestroySoundVolumeForm();
     procedure FreeTapePlayer;
     procedure SetNewAutoSize(Sender: TObject);
@@ -433,6 +436,7 @@ begin
   UpdateCheckWriteScreen;
   //
   TCommonFunctionsLCL.FormToScreenCentre(Self);
+  ToolButton1.OnShowHint := @ToolButtonOnShowHint;
 end;
 
 procedure TForm1.FormDeactivate(Sender: TObject);
@@ -1023,13 +1027,24 @@ begin
   AfterShow(2);
 end;
 
-procedure TForm1.SpeedButton1Click(Sender: TObject);
+procedure TForm1.ToolButton1ArrowClick(Sender: TObject);
 begin
   if FSoundVolumeForm = nil then begin
     if Sender <> Spectrum then
-      AddEventToQueue(@SpeedButton1Click)
+      AddEventToQueue(@ToolButton1ArrowClick)
     else begin
-      ShowSoundVolumeForm();
+      ShowSoundVolumeForm(False);
+    end;
+  end;
+end;
+
+procedure TForm1.ToolButton1Click(Sender: TObject);
+begin
+  if FSoundVolumeForm = nil then begin
+    if Sender <> Spectrum then
+      AddEventToQueue(@ToolButton1Click)
+    else begin
+      ShowSoundVolumeForm(True);
     end;
   end;
 end;
@@ -1161,21 +1176,20 @@ begin
   ActionMuteSound.Checked := SoundIsMuted;
 
   if SoundIsMuted then
-    SpeedButton1.ImageIndex := 32
+    ToolButton1.ImageIndex := 32
   else
-    SpeedButton1.ImageIndex := 33;
+    ToolButton1.ImageIndex := 33;
 
   if not SoundAllowed then
     DestroySoundVolumeForm()
   else if Assigned(FSoundVolumeForm) then begin
-    FSoundVolumeForm.SpeedButton1.ImageIndex := SpeedButton1.ImageIndex;
-    FSoundVolumeForm.Muted := SoundIsMuted;
-    FSoundVolumeForm.SpeedButton1.Update;
+    FSoundVolumeForm.ToolButton1.ImageIndex := ToolButton1.ImageIndex;
+    FSoundVolumeForm.ToolButton1.Update;
   end;
 
   ActionMuteSound.Enabled := SoundAllowed;
-  SpeedButton1.Enabled := SoundAllowed and (FSoundVolumeForm = nil);
-  SpeedButton1.Update;
+  ToolBar1.Enabled := SoundAllowed and (FSoundVolumeForm = nil);
+  ToolButton1.Update;
 end;
 
 procedure TForm1.LoadFromConf;
@@ -1955,14 +1969,10 @@ var
   P: TPoint;
 begin
   if Assigned(FSoundVolumeForm) then begin
-    P := SpeedButton1.ControlToScreen(
-      Point(SpeedButton1.Width - FSoundVolumeForm.Width, SpeedButton1.Height)
+    P := ToolButton1.ControlToScreen(
+      Point(ToolButton1.Width - FSoundVolumeForm.Width, ToolButton1.Height)
       );
     FSoundVolumeForm.Left := P.X;
-
-    P := SpeedButton1.ControlToScreen(
-      Point(0, PanelStatus.Height)
-      );
     FSoundVolumeForm.Top := P.Y - FSoundVolumeForm.Height;
 
     if Data > 0 then
@@ -1973,6 +1983,22 @@ end;
 procedure TForm1.SoundVolumeOnShow(Sender: TObject);
 begin
   SoundVolumeAfterShow(1);
+end;
+
+procedure TForm1.ToolButtonOnShowHint(Sender: TObject; HintInfo: PHintInfo);
+var
+  Tb: TToolButton;
+begin
+  if Sender is TToolButton then begin
+    Tb := TToolButton(Sender);
+    if Tb.PointInArrow(HintInfo^.CursorPos.X, HintInfo^.CursorPos.Y) then begin
+      if Assigned(FSoundVolumeForm) and FSoundVolumeForm.IsParentOf(Tb) then
+        HintInfo^.HintStr := 'Hide sound volume'
+      else
+        HintInfo^.HintStr := 'Adjust sound volume';
+    end else
+      HintInfo^.HintStr := 'Mute sound';
+  end;
 end;
 
 procedure TForm1.EventPlayerOnChangeBlock(Sender: TObject);
@@ -2568,28 +2594,33 @@ begin
   FKeyboardOnScreen.BringToFront;
 end;
 
-procedure TForm1.ShowSoundVolumeForm;
+procedure TForm1.ShowSoundVolumeForm(const AToggleMute: Boolean);
 begin
   if FSoundVolumeForm = nil then begin
-    if Spectrum.SoundMuted then begin
-      Spectrum.SoundMuted := False;
+    if AToggleMute then begin
+      Spectrum.SoundMuted := not Spectrum.SoundMuted;
       UpdateSoundControls;
     end;
     FSoundVolumeForm := TFormSoundVolume.ShowSoundVolumeTracker(
       Spectrum.SoundMuted,
       TSoundPlayer.Volume div 4);
+    FSoundVolumeForm.Panel2.Constraints.MinWidth := ToolBar1.Width;
     FSoundVolumeForm.FreeNotification(Self);
+
+    ToolBar1.Enabled := False;
+    FSoundVolumeForm.ToolBar1.Images := ToolBar1.Images;
+    FSoundVolumeForm.ToolButton1.Style := ToolButton1.Style;
+    FSoundVolumeForm.ToolButton1.ImageIndex := ToolButton1.ImageIndex;
+    FSoundVolumeForm.ToolButton1.ShowHint := ToolButton1.ShowHint;
+    FSoundVolumeForm.ToolButton1.OnShowHint := ToolButton1.OnShowHint;
+
+    FSoundVolumeForm.OnTrackBarPositionChg := @SoundVolumeOnChg;
+    FSoundVolumeForm.OnMuteClick := @ActionMuteSoundExecute;
+
+    SoundVolumeAfterShow(0);
+    FSoundVolumeForm.OnShow := (@SoundVolumeOnShow);
+    FSoundVolumeForm.Show;
   end;
-
-  SpeedButton1.Enabled := False;
-  FSoundVolumeForm.SpeedButton1.Images := SpeedButton1.Images;
-  FSoundVolumeForm.SpeedButton1.ImageIndex := SpeedButton1.ImageIndex;
-
-  FSoundVolumeForm.OnTrackBarPositionChg := @SoundVolumeOnChg;
-  FSoundVolumeForm.OnMuteClick := @ActionMuteSoundExecute;
-  SoundVolumeAfterShow(0);
-  FSoundVolumeForm.OnShow := (@SoundVolumeOnShow);
-  FSoundVolumeForm.Show;
 end;
 
 procedure TForm1.DestroySoundVolumeForm;

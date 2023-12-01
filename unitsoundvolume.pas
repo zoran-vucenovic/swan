@@ -13,17 +13,17 @@ uses
 type
   TFormSoundVolume = class(TForm)
     Panel1: TPanel;
-    SpeedButton1: TSpeedButton;
+    Panel2: TPanel;
+    ToolBar1: TToolBar;
+    ToolButton1: TToolButton;
     TrackBar1: TTrackBar;
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormDeactivate(Sender: TObject);
+    procedure ToolButton1ArrowClick(Sender: TObject);
     procedure TrackBar1MouseWheel(Sender: TObject; {%H-}Shift: TShiftState;
       WheelDelta: Integer; {%H-}MousePos: TPoint; var Handled: Boolean);
   private
-    FMuted: Boolean;
-
     function GetLevel: Integer;
-    procedure SetMuted(const AValue: Boolean);
     procedure SetOnMuteClick(AValue: TNotifyEvent);
     procedure SetOnTrackBarPositionChg(AValue: TNotifyEvent);
 
@@ -32,7 +32,6 @@ type
     property OnTrackBarPositionChg: TNotifyEvent write SetOnTrackBarPositionChg;
     property OnMuteClick: TNotifyEvent write SetOnMuteClick;
     property Level: Integer read GetLevel;
-    property Muted: Boolean write SetMuted;
   end;
 
 implementation
@@ -42,6 +41,11 @@ implementation
 { TFormSoundVolume }
 
 procedure TFormSoundVolume.FormDeactivate(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TFormSoundVolume.ToolButton1ArrowClick(Sender: TObject);
 begin
   Close;
 end;
@@ -59,14 +63,9 @@ begin
   Result := TrackBar1.Position;
 end;
 
-procedure TFormSoundVolume.SetMuted(const AValue: Boolean);
-begin
-  FMuted := AValue;
-end;
-
 procedure TFormSoundVolume.SetOnMuteClick(AValue: TNotifyEvent);
 begin
-  SpeedButton1.OnClick := AValue;
+  ToolButton1.OnClick := AValue;
 end;
 
 procedure TFormSoundVolume.SetOnTrackBarPositionChg(AValue: TNotifyEvent);
@@ -87,7 +86,6 @@ begin
   Result.TrackBar1.Position := ALevel;
   //Result.FormStyle := fsStayOnTop;
   Result.AutoSize := True;
-  Result.SetMuted(AMuted);
 end;
 
 end.
