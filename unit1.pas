@@ -1188,6 +1188,7 @@ begin
   end;
 
   ActionMuteSound.Enabled := SoundAllowed;
+  ToolButton1.Enabled := SoundAllowed;
   ToolBar1.Enabled := SoundAllowed and (FSoundVolumeForm = nil);
   ToolButton1.Update;
 end;
