@@ -18,7 +18,7 @@ uses
   UnitSoundPlayer, UnitOptions, UnitFrameSpectrumModel,
   UnitFrameSound, UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions,
   UnitRecentFiles, UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA,
-  UnitFileZip;
+  UnitFileZip, UnitRomPaths;
 
 // On Linux, bgra drawing directly to PaintBox in its OnPaint event seems to be
 // extremly slow. However, we get better time when we have an auxiliary bitmap
@@ -224,6 +224,7 @@ type
       cSectionSzxSaveOptions = 'szx_save_options';
       cSectionRecentFiles = 'recent_files';
       cSectionBuildDate = 'build_date';
+      cSectionCustomRomPaths = 'custom_rom_paths';
 
   strict private
     FNewModel: TSpectrumModel;
@@ -1344,6 +1345,10 @@ begin
       UpdateRecentFiles;
     end;
 
+    JD := JObj.Find(cSectionCustomRomPaths);
+    if JD is TJSONObject then
+      TRomPaths.GetRomPaths.LoadFromJSON(TJSONObject(JD));
+
     FSkipWriteScreen := JObj.Get(cSectionSkipWriteScr, Integer(0)) <> 0;
     UpdateCheckWriteScreen;
 
@@ -1478,6 +1483,18 @@ begin
       JObj2.Free;
     end;
 
+    if TRomPaths.RomPathsAssigned then begin
+      JObj2 := TRomPaths.GetRomPaths.SaveToJSon;
+      if Assigned(JObj2) then begin
+        try
+          if JObj.Add(cSectionCustomRomPaths, JObj2) >= 0 then
+            JObj2 := nil;
+        finally
+          JObj2.Free;
+        end;
+      end;
+    end;
+
     TConfJSON.RemoveSection(cSection0);
     if TConfJSON.AddToConf(cSection0, JObj) then
       JObj := nil;
@@ -1557,7 +1574,7 @@ begin
           FrameKeyMappings.ParentColor := False;
 
           FrameSpectrumModel := TFrameSpectrumModel.CreateForAllOptions(
-            OptionsDialog, Spectrum);
+            OptionsDialog, Spectrum, TRomPaths.GetRomPaths);
           if not Assigned(FrameSpectrumModel) then
             Break;
 

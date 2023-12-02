@@ -716,6 +716,7 @@ begin
           SkipReset := (ACustomRoms = nil) and (not CustomRomsMounted)
             and (NewRamSize = FMemory.RamSizeKB);
         end;
+
       sm128K, smPlus2:
         begin
           FModelWithHALbug := True;
@@ -723,6 +724,7 @@ begin
 
           FProcessor.FrameTicks := FrameTicks128;
         end;
+
     otherwise
       Abort;
     end;

@@ -9,7 +9,8 @@ interface
 
 uses
   Classes, SysUtils, UnitSpectrum, UnitOptions, UnitFrameChooseFile, UnitCommon,
-  CommonFunctionsLCL, Forms, Controls, ExtCtrls, Graphics, StdCtrls, Dialogs;
+  CommonFunctionsLCL, UnitRomPaths, Forms, Controls, ExtCtrls, Graphics,
+  StdCtrls, Dialogs;
 
 type
 
@@ -29,11 +30,15 @@ type
     RadioGroupKeyboardModel: TRadioGroup;
     procedure CheckBoxCustomRomsChange(Sender: TObject);
     procedure RadioGroupSpectrumModelSelectionChanged(Sender: TObject);
+    procedure RadioGroupUlaTimingsSelectionChanged(Sender: TObject);
   private
     FSpectrum: TSpectrum;
     FramesChooseFile: array [0..3] of TFrameChooseFile;
     ModelToSet: TSpectrumModel;
     Roms: TMemoryStream;
+    FRomPaths: TRomPaths;
+
+    SkipUpdateControls: Boolean;
 
     procedure UpdateControls();
     procedure FormOnCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -41,11 +46,11 @@ type
   public
     constructor Create(TheOwner: TComponent); override;
     constructor CreateFrameSpectrumModel(AOwner: TComponent;
-      ASpectrum: TSpectrum);
+      ASpectrum: TSpectrum; ARomPaths: TRomPaths);
     destructor Destroy; override;
 
     class function CreateForAllOptions(AOptionsDialog: TFormOptions;
-      ASpectrum: TSpectrum): TFrameSpectrumModel;
+      ASpectrum: TSpectrum; ARomPaths: TRomPaths): TFrameSpectrumModel;
   end;
 
 implementation
@@ -60,6 +65,12 @@ begin
   UpdateControls();
 end;
 
+procedure TFrameSpectrumModel.RadioGroupUlaTimingsSelectionChanged(
+  Sender: TObject);
+begin
+  UpdateControls();
+end;
+
 procedure TFrameSpectrumModel.CheckBoxCustomRomsChange(Sender: TObject);
 begin
   UpdateControls();
@@ -69,13 +80,26 @@ procedure TFrameSpectrumModel.UpdateControls();
 var
   I: Integer;
   R: Integer;
+  B: TFrameChooseFile;
 
 begin
+  if SkipUpdateControls then
+    Exit;
+
   RadioGroupKeyboardModel.Enabled := RadioGroupSpectrumModel.ItemIndex <= 1;
 
   R := ((RadioGroupSpectrumModel.ItemIndex div 2) * 3) div 2;
   for I := 0 to 3 do begin
-    FramesChooseFile[I].Enabled := FramesChooseFile[I].Visible and CheckBoxCustomRoms.Checked and (I <= R);
+    B := FramesChooseFile[I];
+    B.Enabled := B.IsVisible and CheckBoxCustomRoms.Checked and (I <= R);
+    if B.IsVisible then begin
+      case R of
+        0:
+          B.Path := FRomPaths.RomPaths1[I];
+      otherwise
+        B.Path := FRomPaths.RomPaths2[I];
+      end;
+    end;
   end;
 end;
 
@@ -185,10 +209,27 @@ end;
 
 procedure TFrameSpectrumModel.FormCloseCallback(Sender: TObject;
   var CloseAction: TCloseAction);
+
+var
+  R: Integer;
+
 begin
   if (Sender is TCustomForm) and (TCustomForm(Sender).ModalResult = mrOK) then begin
     FSpectrum.SetSpectrumModel(ModelToSet, Roms);
     FSpectrum.LateTimings := RadioGroupUlaTimings.ItemIndex = 1;
+    if Assigned(Roms) and (FSpectrum.SpectrumModel = ModelToSet)
+      and Assigned(FRomPaths) and CheckBoxCustomRoms.Checked
+    then begin
+      R := ((RadioGroupSpectrumModel.ItemIndex div 2) * 3) div 2;
+      case R of
+        0:
+          FRomPaths.RomPaths1[0] := FramesChooseFile[0].Path;
+      otherwise
+        FRomPaths.RomPaths2[0] := FramesChooseFile[0].Path;
+        FRomPaths.RomPaths2[1] := FramesChooseFile[1].Path;
+      end;
+    end;
+
   end;
 end;
 
@@ -203,6 +244,10 @@ begin
   inherited Create(TheOwner);
 
   Caption := 'Spectrum model';
+  SkipUpdateControls := True;
+
+  FRomPaths := nil;
+  Roms := nil;
 
   Label2.Caption := 'Choose non-standard roms.'
     + LineEnding + 'Each rom file must have exactly 16K';
@@ -251,7 +296,7 @@ begin
 end;
 
 constructor TFrameSpectrumModel.CreateFrameSpectrumModel(AOwner: TComponent;
-  ASpectrum: TSpectrum);
+  ASpectrum: TSpectrum; ARomPaths: TRomPaths);
 var
   N: Integer;
 begin
@@ -259,6 +304,8 @@ begin
     Abort;
 
   Create(AOwner);
+
+  FRomPaths := ARomPaths;
 
   ModelToSet := ASpectrum.SpectrumModel;
   Roms := nil;
@@ -292,6 +339,7 @@ begin
 
   RadioGroupUlaTimings.ItemIndex := N;
 
+  SkipUpdateControls := False;
   UpdateControls();
 end;
 
@@ -302,13 +350,14 @@ begin
 end;
 
 class function TFrameSpectrumModel.CreateForAllOptions(
-  AOptionsDialog: TFormOptions; ASpectrum: TSpectrum): TFrameSpectrumModel;
+  AOptionsDialog: TFormOptions; ASpectrum: TSpectrum; ARomPaths: TRomPaths
+  ): TFrameSpectrumModel;
 var
   Fm: TFrameSpectrumModel;
 begin
   Result := nil;
   if Assigned(AOptionsDialog) and Assigned(ASpectrum) then begin
-    Fm := TFrameSpectrumModel.CreateFrameSpectrumModel(AOptionsDialog, ASpectrum);
+    Fm := TFrameSpectrumModel.CreateFrameSpectrumModel(AOptionsDialog, ASpectrum, ARomPaths);
     try
       Fm.FSpectrum := ASpectrum;
 

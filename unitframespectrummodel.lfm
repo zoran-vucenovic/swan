@@ -111,11 +111,11 @@ object FrameSpectrumModel: TFrameSpectrumModel
         ChildSizing.ControlsPerLine = 1
         ClientHeight = 62
         ClientWidth = 143
-        ItemIndex = 0
         Items.Strings = (
           'early'
           'late'
         )
+        OnSelectionChanged = RadioGroupUlaTimingsSelectionChanged
         TabOrder = 2
       end
     end

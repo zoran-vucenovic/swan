@@ -135,9 +135,6 @@
           <Other>
             <CustomOptions Value="-dUseCThreads
 -dDebugging"/>
-            <OtherDefines Count="1">
-              <Define0 Value="UseCThreads"/>
-            </OtherDefines>
           </Other>
         </CompilerOptions>
       </Item>
@@ -663,6 +660,11 @@
         <Filename Value="unitfilezip.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitFileZip"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitrompaths.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitRomPaths"/>
       </Unit>
     </Units>
   </ProjectOptions>
