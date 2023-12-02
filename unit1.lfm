@@ -454,6 +454,7 @@ object Form1: TForm1
     object ActionLateTimings: TAction
       Category = 'Options'
       Caption = 'Late timings'
+      ImageIndex = 34
       OnExecute = ActionLateTimingsExecute
     end
   end
