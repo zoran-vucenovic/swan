@@ -61,12 +61,6 @@ type
     const
       HoldInterruptPinTicks = 32;
 
-      // constants used in conversion between portaudio frequency and cpu frequency
-      SoundPlayerRatePortAudio48 = 63; // in 48K spectrum,
-      SoundPlayerRateProcessor48 = 5000; //  it is 44100 / 3500000 = 63 / 5000
-      SoundPlayerRatePortAudio128 = 7; // in 128K spectrum,
-      SoundPlayerRateProcessor128 = 563; //  it is 44100 / 3546900 = 7 / 563
-
   strict private
     procedure SetPaging; inline;
     // processor events
@@ -150,6 +144,7 @@ type
     SpectrumColoursBGRA: TSpectrumColoursBGRA;
     CustomRomsMounted: Boolean;
     FCustomRomsFileNames: TStringDynArray;
+    FLateTimings: Boolean;
 
     function GetFlashState: UInt16;
     function GetRemainingIntPinUp: Integer;
@@ -158,6 +153,7 @@ type
     procedure SetSoundMuted(AValue: Boolean);
     procedure UpdateDebuggedOrPaused;
     procedure SetInternalEar(AValue: Byte);
+    procedure SetLateTimings(AValue: Boolean);
 
   strict private
     // 128 K
@@ -198,6 +194,7 @@ type
 
     property RemainingIntPinUp: Integer // for szx file
       read GetRemainingIntPinUp write SetRemainingIntPinUp;
+    property LateTimings: Boolean read FLateTimings write SetLateTimings;
     property SumTicks: Int64 read FSumTicks;
     property CodedBorderColour: Byte read FCodedBorderColour write SetCodedBorderColour;
     property Speed: Integer read FSpeed write SetSpeed;
@@ -584,6 +581,7 @@ begin
   FProcessor := TProcessor.Create;
   FProcessor.SetMemory(FMemory);
 
+  FLateTimings := False;
   FSpectrumModel := smNone;
   FBkpSpectrumModel := smNone;
   FIssue2Keyboard := False;
@@ -665,11 +663,15 @@ const
   FrameTicks48 = 69888;
   FrameTicks128 = 70908;
 
-  CentralScreenStart48 = 14335;
   TicksPerScanLine48 = 224;
-
-  CentralScreenStart128 = 14361;
   TicksPerScanLine128 = 228;
+
+  // constants used in conversion between portaudio frequency and cpu frequency
+  SoundPlayerRatePortAudio48 = 63; // in 48K spectrum,
+  SoundPlayerRateProcessor48 = 5000; //  it is 44100 / 3500000 = 63 / 5000
+
+  SoundPlayerRatePortAudio128 = 7; // in 128K spectrum,
+  SoundPlayerRateProcessor128 = 563; //  it is 44100 / 3546900 = 7 / 563
 
 var
   RomStream: TStream;
@@ -692,7 +694,6 @@ begin
   FIs128KModel := True;
   FDivVol := 127 * 64;
   FModelWithHALbug := False;
-  CentralScreenStart := CentralScreenStart128;
   TicksPerScanLine := TicksPerScanLine128;
   RomsCount := 1;
 
@@ -700,7 +701,6 @@ begin
     case ASpectrumModel of
       sm16K_issue_2, sm16K_issue_3, sm48K_issue_2, sm48K_issue_3:
         begin
-          CentralScreenStart := CentralScreenStart48;
           TicksPerScanLine := TicksPerScanLine48;
           FIs128KModel := False;
           FDivVol := FDivVol * 4.1;
@@ -727,14 +727,10 @@ begin
       Abort;
     end;
 
-    ScreenStart := CentralScreenStart - TopBorder * TicksPerScanLine - 24; //6247
-    ScreenEnd := ScreenStart + (WholeScreenHeight - 1) * TicksPerScanLine + WholeScreenWidth div 2 - 1; // 65334
-
-    FProcessor.ContentionFrom := CentralScreenStart;
     FProcessor.TicksPerLine := TicksPerScanLine;
-    FProcessor.ContentionTo := FProcessor.ContentionFrom + (CentralScreenHeight - 1) * TicksPerScanLine + 128;
-    FloatBusFirstInterestingTick := FProcessor.ContentionFrom + 4;
-    FloatBusLastInterestingTick := FProcessor.ContentionTo + 3;
+
+    FLateTimings := not FLateTimings; // force recalculations made
+    SetLateTimings(not FLateTimings); // when setting early/late ula timings
 
     FMemory.InitBanks(NewRamSize, RomsCount);
     SetLength(Roms{%H-}, 0);
@@ -1193,6 +1189,33 @@ begin
   FInternalEar := AValue;
   FEarFromTape := 0;
   FEar := AValue;
+end;
+
+procedure TSpectrum.SetLateTimings(AValue: Boolean);
+const
+  CentralScreenStart48 = 14335;
+  CentralScreenStart128 = 14361;
+
+begin
+  if FLateTimings xor AValue then begin
+    FLateTimings := AValue;
+
+    if FIs128KModel then
+      CentralScreenStart := CentralScreenStart128
+    else
+      CentralScreenStart := CentralScreenStart48;
+
+    if AValue then
+      CentralScreenStart := CentralScreenStart + 1;
+
+    ScreenStart := CentralScreenStart - TopBorder * TicksPerScanLine - 24; //6247
+    ScreenEnd := ScreenStart + (WholeScreenHeight - 1) * TicksPerScanLine + WholeScreenWidth div 2 - 1; // 65334
+
+    FProcessor.ContentionFrom := CentralScreenStart;
+    FProcessor.ContentionTo := FProcessor.ContentionFrom + (CentralScreenHeight - 1) * TicksPerScanLine + 128;
+    FloatBusFirstInterestingTick := FProcessor.ContentionFrom + 4;
+    FloatBusLastInterestingTick := FProcessor.ContentionTo + 3;
+  end;
 end;
 
 procedure TSpectrum.SetEarFromTape(AValue: Byte);

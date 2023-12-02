@@ -16,7 +16,7 @@ type
   { TFrameSpectrumModel }
 
   TFrameSpectrumModel = class(TFrame)
-    CheckBox1: TCheckBox;
+    CheckBoxCustomRoms: TCheckBox;
     Label1: TLabel;
     Label2: TLabel;
     OpenDialog1: TOpenDialog;
@@ -24,9 +24,10 @@ type
     Panel2: TPanel;
     Panel3: TPanel;
     Panel4: TPanel;
+    RadioGroupUlaTimings: TRadioGroup;
     RadioGroupSpectrumModel: TRadioGroup;
     RadioGroupKeyboardModel: TRadioGroup;
-    procedure CheckBox1Change(Sender: TObject);
+    procedure CheckBoxCustomRomsChange(Sender: TObject);
     procedure RadioGroupSpectrumModelSelectionChanged(Sender: TObject);
   private
     FSpectrum: TSpectrum;
@@ -59,7 +60,7 @@ begin
   UpdateControls();
 end;
 
-procedure TFrameSpectrumModel.CheckBox1Change(Sender: TObject);
+procedure TFrameSpectrumModel.CheckBoxCustomRomsChange(Sender: TObject);
 begin
   UpdateControls();
 end;
@@ -74,7 +75,7 @@ begin
 
   R := ((RadioGroupSpectrumModel.ItemIndex div 2) * 3) div 2;
   for I := 0 to 3 do begin
-    FramesChooseFile[I].Enabled := FramesChooseFile[I].Visible and CheckBox1.Checked and (I <= R);
+    FramesChooseFile[I].Enabled := FramesChooseFile[I].Visible and CheckBoxCustomRoms.Checked and (I <= R);
   end;
 end;
 
@@ -121,7 +122,7 @@ begin
         if RadioGroupKeyboardModel.Enabled and (RadioGroupKeyboardModel.ItemIndex = 0) then
           Dec(ModelToSet);
 
-        CanClose := not CheckBox1.Checked;
+        CanClose := not CheckBoxCustomRoms.Checked;
         if not CanClose then begin
           BadFile := True;
 
@@ -187,6 +188,7 @@ procedure TFrameSpectrumModel.FormCloseCallback(Sender: TObject;
 begin
   if (Sender is TCustomForm) and (TCustomForm(Sender).ModalResult = mrOK) then begin
     FSpectrum.SetSpectrumModel(ModelToSet, Roms);
+    FSpectrum.LateTimings := RadioGroupUlaTimings.ItemIndex = 1;
   end;
 end;
 
@@ -282,6 +284,13 @@ begin
   end;
 
   RadioGroupKeyboardModel.ItemIndex := N;
+
+  if ASpectrum.LateTimings then
+    N := 1
+  else
+    N := 0;
+
+  RadioGroupUlaTimings.ItemIndex := N;
 
   UpdateControls();
 end;

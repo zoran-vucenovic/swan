@@ -1,10 +1,10 @@
 object FrameSpectrumModel: TFrameSpectrumModel
   Left = 0
-  Height = 268
+  Height = 314
   Top = 0
   Width = 324
   AutoSize = True
-  ClientHeight = 268
+  ClientHeight = 314
   ClientWidth = 324
   TabOrder = 0
   DesignLeft = 308
@@ -13,33 +13,33 @@ object FrameSpectrumModel: TFrameSpectrumModel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
     Left = 0
-    Height = 252
+    Height = 296
     Top = 0
     Width = 314
     AutoSize = True
     BevelOuter = bvNone
-    ClientHeight = 252
+    ClientHeight = 296
     ClientWidth = 314
     TabOrder = 0
     object Panel1: TPanel
       AnchorSideLeft.Control = Panel2
       AnchorSideTop.Control = Panel2
       Left = 10
-      Height = 126
+      Height = 170
       Top = 10
       Width = 304
       AutoSize = True
       BorderSpacing.Left = 10
       BorderSpacing.Top = 10
       BevelOuter = bvNone
-      ClientHeight = 126
+      ClientHeight = 170
       ClientWidth = 304
       TabOrder = 0
       object RadioGroupSpectrumModel: TRadioGroup
         AnchorSideLeft.Control = Panel1
         AnchorSideTop.Control = Panel1
         Left = 0
-        Height = 126
+        Height = 144
         Top = 0
         Width = 147
         AutoFill = True
@@ -51,7 +51,7 @@ object FrameSpectrumModel: TFrameSpectrumModel
         ChildSizing.ShrinkVertical = crsScaleChilds
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
         ChildSizing.ControlsPerLine = 1
-        ClientHeight = 106
+        ClientHeight = 124
         ClientWidth = 143
         Items.Strings = (
           'Spectrum 16K'
@@ -91,6 +91,33 @@ object FrameSpectrumModel: TFrameSpectrumModel
         ShowHint = True
         TabOrder = 1
       end
+      object RadioGroupUlaTimings: TRadioGroup
+        AnchorSideLeft.Control = RadioGroupKeyboardModel
+        AnchorSideTop.Control = RadioGroupKeyboardModel
+        AnchorSideTop.Side = asrBottom
+        Left = 157
+        Height = 82
+        Top = 88
+        Width = 147
+        AutoFill = True
+        BorderSpacing.Top = 6
+        Caption = 'ULA timings'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 62
+        ClientWidth = 143
+        ItemIndex = 0
+        Items.Strings = (
+          'early'
+          'late'
+        )
+        TabOrder = 2
+      end
     end
     object Panel3: TPanel
       AnchorSideLeft.Control = Panel1
@@ -100,7 +127,7 @@ object FrameSpectrumModel: TFrameSpectrumModel
       AnchorSideRight.Side = asrBottom
       Left = 10
       Height = 106
-      Top = 146
+      Top = 190
       Width = 304
       Anchors = [akTop, akLeft, akRight]
       AutoSize = True
@@ -124,7 +151,7 @@ object FrameSpectrumModel: TFrameSpectrumModel
         ClientHeight = 90
         ClientWidth = 288
         TabOrder = 0
-        object CheckBox1: TCheckBox
+        object CheckBoxCustomRoms: TCheckBox
           AnchorSideLeft.Control = Panel4
           AnchorSideTop.Control = Panel4
           Left = 1
@@ -133,7 +160,7 @@ object FrameSpectrumModel: TFrameSpectrumModel
           Width = 93
           Caption = 'Custom roms:'
           TabOrder = 0
-          OnChange = CheckBox1Change
+          OnChange = CheckBoxCustomRomsChange
         end
         object Label1: TLabel
           AnchorSideLeft.Control = Panel4
@@ -153,7 +180,7 @@ object FrameSpectrumModel: TFrameSpectrumModel
         end
         object Label2: TLabel
           AnchorSideLeft.Control = Panel4
-          AnchorSideTop.Control = CheckBox1
+          AnchorSideTop.Control = CheckBoxCustomRoms
           AnchorSideTop.Side = asrBottom
           AnchorSideRight.Control = Panel4
           AnchorSideRight.Side = asrBottom
