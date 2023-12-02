@@ -228,6 +228,7 @@ type
       cSectionRecentFiles = 'recent_files';
       cSectionBuildDate = 'build_date';
       cSectionCustomRomPaths = 'custom_rom_paths';
+      cSectionLateTimings = 'late_timings';
 
   strict private
     FNewModel: TSpectrumModel;
@@ -1372,6 +1373,8 @@ begin
     UpdateCheckWriteScreen;
 
     Spectrum.SoundMuted := JObj.Get(cSectionSoundMuted, Integer(0)) <> 0;
+    Spectrum.LateTimings := JObj.Get(cSectionLateTimings, Integer(0)) <> 0;
+    UpdateCheckLateTimings;
 
     SPortaudioLib64 := '';
     SPortaudioLib32 := Trim(JObj.Get(cSectionPortAudioLibPath32, SPortaudioLib64));
@@ -1450,6 +1453,12 @@ begin
       S := StringReplace(Copy(S, 3), '_', ' ', [rfReplaceAll]);
       JObj.Add(cSectionSpectrumModel, S);
     end;
+
+    if Spectrum.LateTimings then
+      N := 1
+    else
+      N := 0;
+    JObj.Add(cSectionLateTimings, N);
 
     {$if SizeOf(SizeInt) = 4}
       SPortaudioLib64 := FPortaudioLibPathOtherBitness;
