@@ -447,9 +447,14 @@ object Form1: TForm1
       OnExecute = ActionModelPlus2Execute
     end
     object ActionModelMoreOptions: TAction
-      Category = 'SpectrumModel'
+      Category = 'Options'
       Caption = 'More options (custom roms)...'
       OnExecute = ActionModelMoreOptionsExecute
+    end
+    object ActionLateTimings: TAction
+      Category = 'Options'
+      Caption = 'Late timings'
+      OnExecute = ActionLateTimingsExecute
     end
   end
   object MainMenu1: TMainMenu
@@ -561,6 +566,9 @@ object Form1: TForm1
         object MenuItem53: TMenuItem
           Action = ActionModelMoreOptions
         end
+      end
+      object MenuItem54: TMenuItem
+        Action = ActionLateTimings
       end
       object MenuItem11: TMenuItem
         Action = ActionJoystick

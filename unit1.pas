@@ -36,6 +36,7 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionLateTimings: TAction;
     ActionModelMoreOptions: TAction;
     ActionModelPlus2: TAction;
     ActionModel128K: TAction;
@@ -135,6 +136,7 @@ type
     MenuItem51: TMenuItem;
     MenuItem52: TMenuItem;
     MenuItem53: TMenuItem;
+    MenuItem54: TMenuItem;
     MenuItemRecentFiles: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
@@ -169,6 +171,7 @@ type
     procedure ActionInputPokesExecute(Sender: TObject);
     procedure ActionJoystickExecute(Sender: TObject);
     procedure ActionKeyMappingsExecute(Sender: TObject);
+    procedure ActionLateTimingsExecute(Sender: TObject);
     procedure ActionModel128KExecute(Sender: TObject);
     procedure ActionModel16KIssue2Execute(Sender: TObject);
     procedure ActionModel16KIssue3Execute(Sender: TObject);
@@ -237,6 +240,7 @@ type
     procedure UpdateActionsModel();
     procedure UpdateShowCurrentlyActiveJoystick;
     procedure UpdateCheckPaused;
+    procedure UpdateCheckLateTimings;
     procedure UpdateSoundControls;
     procedure LoadFromConf;
     procedure SaveToConf;
@@ -693,6 +697,16 @@ begin
     finally
       Spectrum.Paused := WasPaused;
     end;
+  end;
+end;
+
+procedure TForm1.ActionLateTimingsExecute(Sender: TObject);
+begin
+  if Sender <> Spectrum then begin
+    AddEventToQueue(@ActionLateTimingsExecute);
+  end else begin
+    Spectrum.LateTimings := not Spectrum.LateTimings;
+    UpdateCheckLateTimings;
   end;
 end;
 
@@ -1167,6 +1181,11 @@ begin
   ActionPause.Checked := Spectrum.Paused;
 end;
 
+procedure TForm1.UpdateCheckLateTimings;
+begin
+  ActionLateTimings.Checked := Spectrum.LateTimings;
+end;
+
 procedure TForm1.UpdateSoundControls;
 var
   SoundAllowed: Boolean;
@@ -1608,6 +1627,7 @@ begin
             TJoystick.Joystick.Enabled := JoystickEnabled;
             TJoystick.Joystick.JoystickType := JoystickType;
             UpdateShowCurrentlyActiveJoystick;
+            UpdateCheckLateTimings;
             FAutoShowTapePlayerWhenTapeLoaded := FrameOtherOptions.AutoShowTapePlayerOnLoadTape;
             TSnapshotSZX.SkipJoystickInfoLoad := FrameOtherOptions.SkipJoystickInfoSzxLoad;
             if FrameOtherOptions.SkipTapeInfoSzxLoad then
