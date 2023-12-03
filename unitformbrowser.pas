@@ -65,6 +65,7 @@ type
     Grid: TTapeGrid;
     FClosing: Boolean;
     FBlockToGoTo: Integer;
+    FToolBar: TControl;
 
     procedure LoadFromConf;
     procedure SaveToConf;
@@ -78,8 +79,7 @@ type
     function GetBlockToGoTo(): Integer;
     procedure SetTapePlayer(const ATapePlayer: TTapePlayer);
     procedure UpdateCurrentBlockNumber(const UncoditionallyPositionGrid: Boolean); inline;
-    procedure AddButtonActions(AImageWidth: Integer;
-          AActions: Array of TCustomAction);
+    function AddActionsToolBar(AToolBar: TControl): Boolean;
     property OnGoToBlock: TProcedureOfObject read FOnGoToBlock write FOnGoToBlock;
   end;
 
@@ -160,6 +160,22 @@ begin
     FCurrentBlockNumber := -1;
   Grid.Invalidate;
   Grid.Update;
+end;
+
+function TFormBrowseTape.AddActionsToolBar(AToolBar: TControl): Boolean;
+begin
+  if Assigned(FToolBar) then
+    FToolBar.Free;
+  FToolBar := AToolBar;
+  Result := True;
+
+  if Assigned(AToolBar) then begin
+    AToolBar.Anchors := [];
+    AToolBar.AnchorParallel(akLeft, 2, Panel4);
+    AToolBar.AnchorParallel(akTop, 0, Panel4);
+    AToolBar.AutoSize := True;
+    AToolBar.Parent := Panel4;
+  end;
 end;
 
 procedure TFormBrowseTape.GridDrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -315,6 +331,7 @@ begin
   FClosing := False;
   OnGoToBlock := nil;
   FBlockToGoTo := -1;
+  FToolBar := nil;
   Grid := TTapeGrid.Create(Panel2);
   Grid.AnchorParallel(akTop, 0, Panel2);
   Grid.AnchorParallel(akLeft, 0, Panel2);
@@ -352,6 +369,7 @@ begin
   SaveToConf;
   Application.RemoveAsyncCalls(Self);
   ClearGrid;
+  FToolBar.Free;
 end;
 
 procedure TFormBrowseTape.FormShow(Sender: TObject);
@@ -547,56 +565,6 @@ begin
     FTapePlayer := ATapePlayer;
 
   FillGrid;
-end;
-
-procedure TFormBrowseTape.AddButtonActions(AImageWidth: Integer;
-  AActions: array of TCustomAction);
-var
-  I: Integer;
-  SB, PrevSB: TSpeedButton;
-  W, L: Integer;
-  A: TCustomAction;
-begin
-  PrevSB := nil;
-  L := 0;
-  for I := Low(AActions) to High(AActions) do begin
-    A := AActions[I];
-
-    if Assigned(A) then begin
-      SB := TSpeedButton.Create(Panel4);
-      SB.ShowCaption := False;
-      SB.ShowHint := True;
-      SB.Flat := True;
-
-      SB.Anchors := [];
-      SB.AnchorParallel(akTop, 0, Panel4);
-
-      if PrevSB = nil then begin
-        AImageWidth := Scale96ToFont(AImageWidth);
-        W := (AImageWidth * 32 + 12) div 24;
-      end;
-
-      if L > 0 then
-        L := L * ((W + 3) div 4);
-      if PrevSB = nil then
-        SB.AnchorParallel(akLeft, L, Panel4)
-      else
-        SB.AnchorToNeighbour(akLeft, L, PrevSB);
-
-      SB.ClientWidth := W + 1;
-      SB.ClientHeight := W;
-      SB.ImageWidth := AImageWidth;
-
-      SB.Action := A;
-
-      SB.Parent := Panel4;
-      PrevSB := SB;
-      L := 0;
-    end else begin
-      // add divider
-      Inc(L);
-    end;
-  end;
 end;
 
 end.

@@ -18,7 +18,7 @@ uses
   UnitSoundPlayer, UnitOptions, UnitFrameSpectrumModel,
   UnitFrameSound, UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions,
   UnitRecentFiles, UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA,
-  UnitFileZip, UnitRomPaths;
+  UnitFileZip, UnitRomPaths, UnitSwanToolbar;
 
 // On Linux, bgra drawing directly to PaintBox in its OnPaint event seems to be
 // extremly slow. However, we get better time when we have an auxiliary bitmap
@@ -2587,7 +2587,7 @@ end;
 
 procedure TForm1.ShowTapeBrowser();
 var
-  I, W: Integer;
+  TB: TSwanToolbar;
 begin
   if FTapeBrowser = nil then begin
     FTapeBrowser := TFormBrowseTape.Create(nil);
@@ -2597,29 +2597,29 @@ begin
 
     FTapeBrowser.OnGoToBlock := @TapeBrowserGoToBlock;
 
-    W := 24;
-    I := 0;
-    while I < DataModuleImages.ImageList1.ResolutionCount do begin
-      if DataModuleImages.ImageList1.ResolutionByIndex[I].Width + 3 >= W then begin
-        W := DataModuleImages.ImageList1.ResolutionByIndex[I].Width;
-        Break;
-      end;
+    TB := TSwanToolbar.Create(nil);
+    try
+      TB.Images := UnitDataModuleImages.DataModuleImages.ImageList1;
+      TB.ImageWidth := 24;
+      TB.AddButtonActions(
+        [
+          ActionAttachTap,
+          ActionEjectTape,
+          nil, // divider
+          ActionPlay,
+          ActionStop,
+          ActionRewind,
+          ActionDecTapeBlock,
+          ActionIncTapeBlock
+        ]);
 
-      Inc(I);
+      if FTapeBrowser.AddActionsToolBar(TB) then
+        TB := nil;
+
+    finally
+      TB.Free;
     end;
 
-    FTapeBrowser.AddButtonActions(
-      W,
-      [
-        ActionAttachTap,
-        ActionEjectTape,
-        nil, // divider
-        ActionPlay,
-        ActionStop,
-        ActionRewind,
-        ActionDecTapeBlock,
-        ActionIncTapeBlock
-      ]);
   end;
 
   TapeBrowserAttachTape;

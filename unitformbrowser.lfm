@@ -11,7 +11,7 @@ object FormBrowseTape: TFormBrowseTape
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '3.0.0.1'
+  LCLVersion = '3.0.0.2'
   object Panel3: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

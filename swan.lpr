@@ -26,7 +26,7 @@ uses
   UnitFrameOtherOptions, UnitFrameSpectrumModel, UnitFrameSound,
   UnitFrameHistorySnapshotOptions, UnitRecentFiles, UnitMemory, SnapshotZ80,
   SnapshotSNA, SoundChipAY_3_8912, UnitFrameChooseFile, UnitFileZip,
-  UnitRomPaths;
+  UnitRomPaths, UnitSwanToolbar;
 
 {$R *.res}
 
