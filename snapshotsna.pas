@@ -8,7 +8,7 @@ unit SnapshotSNA;
 interface
 
 uses
-  Classes, SysUtils, UnitFileSna, UnitSpectrum;
+  Classes, SysUtils, UnitSnapshotFiles, UnitSpectrum;
 
 type
 

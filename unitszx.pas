@@ -14,7 +14,7 @@ unit UnitSZX;
 interface
 
 uses
-  Classes, SysUtils, fgl, UnitFileSna, UnitStreamCompression, UnitSpectrum,
+  Classes, SysUtils, fgl, UnitSnapshotFiles, UnitStreamCompression, UnitSpectrum,
   UnitVer, UnitJoystick, UnitTapePlayer, UnitCommonSpectrum;
 
 type

@@ -198,9 +198,9 @@
         <UnitName Value="UnitFrameWordDisplay"/>
       </Unit>
       <Unit>
-        <Filename Value="unitfilesna.pas"/>
+        <Filename Value="unitsnapshotfiles.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="UnitFileSna"/>
+        <UnitName Value="UnitSnapshotFiles"/>
       </Unit>
       <Unit>
         <Filename Value="unitspectrumkeyboard.pas"/>

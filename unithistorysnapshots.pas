@@ -8,7 +8,7 @@ unit UnitHistorySnapshots;
 interface
 
 uses
-  Classes, SysUtils, LCLType, fpjson, UnitFileSna, UnitSpectrum, UnitConfigs;
+  Classes, SysUtils, LCLType, fpjson, UnitSnapshotFiles, UnitSpectrum, UnitConfigs;
 
 type
 

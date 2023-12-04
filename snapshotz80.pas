@@ -8,7 +8,7 @@ unit SnapshotZ80;
 interface
 
 uses
-  Classes, SysUtils, UnitFileSna, UnitSpectrum;
+  Classes, SysUtils, UnitSnapshotFiles, UnitSpectrum;
 
 type
   // https://sinclair.wiki.zxnet.co.uk/wiki/Z80_format
@@ -348,7 +348,7 @@ begin
               end;
             TSpectrumModel.sm48K_issue_3:
               begin
-                MemoryPagesToRead := %00100101; // 48K, memory pages 0, 2, 5 needs to be read
+                MemoryPagesToRead := %00100101; // 48K, memory pages 0, 2, 5 need to be read
                 if Header1.ViB2 and %100 <> 0 then // issue2 emulation
                   State.SpectrumModel := sm48K_issue_2;
               end;

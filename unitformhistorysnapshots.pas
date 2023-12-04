@@ -8,7 +8,7 @@ unit UnitFormHistorySnapshots;
 interface
 
 uses
-  Classes, SysUtils, Types, UnitFileSna, UnitHistorySnapshots,
+  Classes, SysUtils, Types, UnitSnapshotFiles, UnitHistorySnapshots,
   CommonFunctionsLCL, UnitControlScreenBitmap,
   UnitSpectrumColoursBGRA, UnitFrameHistorySnapshotOptions, Forms, Controls,
   Graphics, Dialogs, ExtCtrls, StdCtrls, LMessages, ButtonPanel;

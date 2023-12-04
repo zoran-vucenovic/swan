@@ -1,4 +1,4 @@
-unit UnitFileSna;
+unit UnitSnapshotFiles;
 // Copyright 2022, 2023 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
