@@ -27,7 +27,9 @@ type
       TOnSzxSaveTape = procedure(out ATapePlayer: TTapePlayer) of object;
 
   private
+
     type
+      // zx-state header
       TZxstHeadr = packed record
       public
         const
@@ -70,12 +72,12 @@ type
         function WriteBlockSize(const Stream: TStream): Boolean;
         function LoadFromStream(const Stream: TStream): Boolean; virtual; abstract;
         function SaveToStream(const Stream: TStream): Boolean; virtual; abstract;
-        class function GetBlockId: UInt32;
 
+        class function GetBlockId: UInt32;
         class function GetBlockIdAsStr: RawByteString; virtual; abstract;
       public
         Szx: TSnapshotSZX;
-        BlockSize: SizeUInt;
+        BlockSize: Int64;
 
         constructor Create; virtual;
       end;
@@ -104,6 +106,7 @@ type
     JoystickAttached: Boolean;
 
     State: TSpectrumInternalState;
+
     function GetMemStr(): TMemoryStream;
     procedure SetMemSize(ASize: Integer);
 
@@ -129,6 +132,7 @@ implementation
 
 type
 
+  // ZXSTZ80REGS
   TZxstZ80Regs = class(TSnapshotSZX.TSzxBlock)
   private
     const
@@ -158,6 +162,7 @@ type
     class function GetBlockIdAsStr: RawByteString; override;
   end;
 
+  // ZXSTSPECREGS
   TZxstSpecRegs = class(TSnapshotSZX.TSzxBlock)
   private
     type
@@ -176,6 +181,7 @@ type
     class function GetBlockIdAsStr: RawByteString; override;
   end;
 
+  // ZXSTRAMPAGE
   TZxstRamPage = class(TSnapshotSZX.TSzxBlock)
   public
     const
@@ -195,6 +201,7 @@ type
     Rec: TRecRamPage;
   end;
 
+  // ZXSTCREATOR
   TZxstCreator = class(TSnapshotSZX.TSzxBlock)
   private
     type
@@ -211,6 +218,7 @@ type
     class function GetBlockIdAsStr: RawByteString; override;
   end;
 
+  // ZXSTKEYBOARD
   TZxstKeyboard = class(TSnapshotSZX.TSzxBlock)
   private
     const
@@ -239,8 +247,7 @@ type
     class function GetBlockIdAsStr: RawByteString; override;
   end;
 
-  { TZxstTape }
-
+  // ZXSTTAPE
   TZxstTape = class(TSnapshotSZX.TSzxBlock)
   private
     const
@@ -269,6 +276,7 @@ type
     constructor Create(ATapePlayer: TTapePlayer);
   end;
 
+  // ZXSTAYBLOCK
   TZxstAYBlock = class(TSnapshotSZX.TSzxBlock)
   private
     type
@@ -291,17 +299,25 @@ function TZxstAYBlock.LoadFromStream(const Stream: TStream): Boolean;
 var
   AyRec: TAyBlockRec;
   I: Integer;
+  N: Integer;
 
 begin
   Result := False;
-  if (BlockSize = SizeOf(AyRec))
+  if (BlockSize >= SizeOf(AyRec))
      and (Stream.Read(AyRec{%H-}, SizeOf(AyRec)) = SizeOf(AyRec))
   then begin
+    if BlockSize > SizeOf(AyRec) then
+      Stream.Seek(BlockSize - SizeOf(AyRec), TSeekOrigin.soCurrent);
+
     for I := 0 to 15 do begin
       Szx.State.AyState.Registers[I] := AyRec.AyRegisters[I];
     end;
     Szx.State.AyState.ActiveRegisterNumber := AyRec.CurrentRegister;
     Szx.State.HasAy := True;
+
+    if BlockSize > SizeOf(AyRec) then
+      Stream.Seek(BlockSize - SizeOf(AyRec), TSeekOrigin.soCurrent);
+
     Result := True;
   end;
 end;
@@ -530,45 +546,53 @@ end;
 
 function TZxstKeyboard.LoadFromStream(const Stream: TStream
   ): Boolean;
+
 var
   Rec: TRecKeyBoard;
-  BlSz, N: SizeUInt;
+  N: Integer;
+  BlSz: Integer;
+
 begin
   Result := False;
 
-  if BlockSize <= SizeOf(Rec) then begin
-    BlSz := BlockSize;
-    N := 0;
-  end else begin
-    BlSz := SizeOf(Rec);
-    N := BlockSize - BlSz;
-  end;
+  if BlockSize >= SizeOf(DWord) then begin // at least the first field must be there (it's defined since ver. 1.0)
 
-  Rec := Default(TRecKeyBoard);
-  Rec.ChKeyboardJoystick := ZXSTKJT_NONE;
-  if Stream.Read(Rec, BlSz) = BlSz then begin
-    if N > 0 then
-      Stream.Seek(N, TSeekOrigin.soCurrent);
-    Rec.DwFlags := LEtoN(Rec.DwFlags);
-    Szx.IsIssue2 := Rec.DwFlags and 1 <> 0;
-
-    Szx.JoystickAttached := True;
-    case Rec.ChKeyboardJoystick of
-      ZXSTKJT_KEMPSTON:
-        Szx.JoystickType := TJoystick.TJoystickType.jtKempston;
-      ZXSTKJT_FULLER:
-        Szx.JoystickType := TJoystick.TJoystickType.jtFuller;
-      ZXSTKJT_CURSOR:
-        Szx.JoystickType := TJoystick.TJoystickType.jtCursor;
-      ZXSTKJT_SINCLAIR1:
-        Szx.JoystickType := TJoystick.TJoystickType.jtInterface_II_left;
-      ZXSTKJT_SINCLAIR2:
-        Szx.JoystickType := TJoystick.TJoystickType.jtInterface_II_right;
-    otherwise
-      Szx.JoystickAttached := False;
+    if BlockSize <= SizeOf(Rec) then begin
+      // possible if file ver. is 1.0 -- the block size was one byte smaller.
+      BlSz := BlockSize;
+      N := 0;
+    end else begin
+      BlSz := SizeOf(Rec);
+      N := BlockSize - BlSz;
     end;
 
-    Result := True;
+    Rec := Default(TRecKeyBoard);
+    Rec.ChKeyboardJoystick := ZXSTKJT_NONE;
+    if Stream.Read(Rec, BlSz) = BlSz then begin
+      if N > 0 then
+        Stream.Seek(N, TSeekOrigin.soCurrent);
+      Rec.DwFlags := LEtoN(Rec.DwFlags);
+      Szx.IsIssue2 := Rec.DwFlags and 1 <> 0;
+
+      Szx.JoystickAttached := True;
+      case Rec.ChKeyboardJoystick of
+        ZXSTKJT_KEMPSTON:
+          Szx.JoystickType := TJoystick.TJoystickType.jtKempston;
+        ZXSTKJT_FULLER:
+          Szx.JoystickType := TJoystick.TJoystickType.jtFuller;
+        ZXSTKJT_CURSOR:
+          Szx.JoystickType := TJoystick.TJoystickType.jtCursor;
+        ZXSTKJT_SINCLAIR1:
+          Szx.JoystickType := TJoystick.TJoystickType.jtInterface_II_left;
+        ZXSTKJT_SINCLAIR2:
+          Szx.JoystickType := TJoystick.TJoystickType.jtInterface_II_right;
+      otherwise
+        Szx.JoystickAttached := False;
+      end;
+
+      Result := True;
+    end;
+
   end;
 end;
 
@@ -673,72 +697,74 @@ var
 begin
   Result := False;
 
-  Rec := Default(TRecRamPage);
-  if Stream.Read(Rec, SizeOf(Rec)) = SizeOf(Rec) then begin
-    case Rec.PageNo of
-      5:
-        Okay := True;
-      0, 2:
-        Okay := Szx.GetMemStr().Size >= KB48;
-      1, 3, 4, 6, 7:
-        Okay := Szx.GetMemStr().Size >= KB128;
-    otherwise
-      Okay := False;
-    end;
+  if BlockSize > SizeOf(Rec) then begin
+    Rec := Default(TRecRamPage);
+    if Stream.Read(Rec, SizeOf(Rec)) = SizeOf(Rec) then begin
+      case Rec.PageNo of
+        5:
+          Okay := True;
+        0, 2:
+          Okay := Szx.GetMemStr().Size >= KB48;
+        1, 3, 4, 6, 7:
+          Okay := Szx.GetMemStr().Size >= KB128;
+      otherwise
+        Okay := False;
+      end;
 
-    if Okay then begin
-      Okay := False;
-      StreamMem := nil;
-      try
-        Rec.Flags := LEtoN(Rec.Flags);
-        if Rec.Flags and ZXSTRF_COMPRESSED <> 0 then begin
-          MemReadLen := BlockSize - SizeOf(Rec);
-          if Stream.Size - Stream.Position >= MemReadLen then begin
-            Str1 := TMemoryStream.Create;
-            try
-              Str1.Size := MemReadLen;
-              Str1.Position := 0;
-              if Stream.Read(Str1.Memory^, MemReadLen) = MemReadLen then begin
-                StreamMem := TMemoryStream.Create;
-                if UnitStreamCompression.DecompressStream(Str1, StreamMem) and (StreamMem.Size = KB16) then begin
-                  Okay := True;
+      if Okay then begin
+        Okay := False;
+        StreamMem := nil;
+        try
+          Rec.Flags := LEtoN(Rec.Flags);
+          if Rec.Flags and ZXSTRF_COMPRESSED <> 0 then begin
+            MemReadLen := BlockSize - SizeOf(Rec);
+            if Stream.Size - Stream.Position >= MemReadLen then begin
+              Str1 := TMemoryStream.Create;
+              try
+                Str1.Size := MemReadLen;
+                Str1.Position := 0;
+                if Stream.Read(Str1.Memory^, MemReadLen) = MemReadLen then begin
+                  StreamMem := TMemoryStream.Create;
+                  if UnitStreamCompression.DecompressStream(Str1, StreamMem) and (StreamMem.Size = KB16) then begin
+                    Okay := True;
+                  end;
                 end;
+              finally
+                Str1.Free;
               end;
-            finally
-              Str1.Free;
+            end;
+
+          end else begin
+            if Stream.Size - Stream.Position >= KB16 then begin
+              StreamMem := TMemoryStream.Create;
+
+              StreamMem.Size := KB16;
+              StreamMem.Position := 0;
+              if Stream.Read(StreamMem.Memory^, KB16) = KB16 then begin
+                Okay := True;
+              end;
             end;
           end;
 
-        end else begin
-          if Stream.Size - Stream.Position >= KB16 then begin
-            StreamMem := TMemoryStream.Create;
+          if Okay then begin
+            case Rec.PageNo of
+              0, 2, 5:
+                P := 2 - Rec.PageNo div 2;
+            otherwise
+              P := (7 + 2 * Rec.PageNo) div 3;
+            end;
 
-            StreamMem.Size := KB16;
-            StreamMem.Position := 0;
-            if Stream.Read(StreamMem.Memory^, KB16) = KB16 then begin
-              Okay := True;
+            P := P * KB16;
+            if Szx.GetMemStr().Size - P >= KB16 then begin
+              StreamMem.Position := 0;
+              if StreamMem.Read((PByte(Szx.GetMemStr().Memory) + P)^, KB16) = KB16 then
+                Result := True;
             end;
           end;
+
+        finally
+          StreamMem.Free;
         end;
-
-        if Okay then begin
-          case Rec.PageNo of
-            0, 2, 5:
-              P := 2 - Rec.PageNo div 2;
-          otherwise
-            P := (7 + 2 * Rec.PageNo) div 3;
-          end;
-
-          P := P * KB16;
-          if Szx.GetMemStr().Size - P >= KB16 then begin
-            StreamMem.Position := 0;
-            if StreamMem.Read((PByte(Szx.GetMemStr().Memory) + P)^, KB16) = KB16 then
-              Result := True;
-          end;
-        end;
-
-      finally
-        StreamMem.Free;
       end;
     end;
   end;
@@ -811,36 +837,37 @@ end;
 { TZxstSpecRegs }
 
 function TZxstSpecRegs.LoadFromStream(const Stream: TStream): Boolean;
+
+const
+  BlSz = SizeOf(TRecSpec);
+
 var
   Rec: TRecSpec;
-  BlSz, N: SizeUInt;
+  N: SizeUInt;
+
 begin
   Result := False;
 
-  if BlockSize <= SizeOf(Rec) then begin
-    BlSz := BlockSize;
-    N := 0;
-  end else begin
-    BlSz := SizeOf(Rec);
+  if BlockSize >= BlSz then begin
     N := BlockSize - BlSz;
-  end;
 
-  Rec := Default(TRecSpec);
-  if Stream.Read(Rec, BlSz) = BlSz then begin
-    if N > 0 then
-      Stream.Seek(N, TSeekOrigin.soCurrent);
-    Szx.State.BorderColour := Rec.Border;
-    Szx.State.Ear := (Rec.Chfe shl 2) and 64;
-    case Szx.State.SpectrumModel of
-      TSpectrumModel.sm128K, TSpectrumModel.smPlus2:
-        begin
-          Szx.State.Set7ffd(Rec.Ch7ffd);
-        end;
-    otherwise
-      Szx.State.Reset7ffd();
+    Rec := Default(TRecSpec);
+    if Stream.Read(Rec, BlSz) = BlSz then begin
+      if N > 0 then
+        Stream.Seek(N, TSeekOrigin.soCurrent);
+      Szx.State.BorderColour := Rec.Border;
+      Szx.State.Ear := (Rec.Chfe shl 2) and 64;
+      case Szx.State.SpectrumModel of
+        TSpectrumModel.sm128K, TSpectrumModel.smPlus2:
+          begin
+            Szx.State.Set7ffd(Rec.Ch7ffd);
+          end;
+      otherwise
+        Szx.State.Reset7ffd();
+      end;
+      // everything else ignored...
+      Result := True;
     end;
-    // everything else ignored...
-    Result := True;
   end;
 end;
 
@@ -889,53 +916,53 @@ end;
 { TZxstZ80Regs }
 
 function TZxstZ80Regs.LoadFromStream(const Stream: TStream): Boolean;
+
 var
   Rec: TRecZ80Regs;
-  BlSz, N: SizeUInt;
+
 begin
   Result := False;
 
-  if BlockSize <= SizeOf(Rec) then begin
-    BlSz := BlockSize;
-    N := 0;
-  end else begin
-    BlSz := SizeOf(Rec);
-    N := BlockSize - BlSz;
-  end;
+  if BlockSize >= SizeOf(Rec) then begin
+    Rec := Default(TRecZ80Regs);
 
-  Rec := Default(TRecZ80Regs);
-  if Stream.Read(Rec, BlSz) = BlSz then begin
-    if N > 0 then
-      Stream.Seek(N, TSeekOrigin.soCurrent);
-    Szx.State.AF := LEtoN(Rec.AF);
-    Szx.State.BC := LEtoN(Rec.BC);
-    Szx.State.DE := LEtoN(Rec.DE);
-    Szx.State.HL := LEtoN(Rec.HL);
-    Szx.State.AF1 := LEtoN(Rec.AF1);
-    Szx.State.BC1 := LEtoN(Rec.BC1);
-    Szx.State.DE1 := LEtoN(Rec.DE1);
-    Szx.State.HL1 := LEtoN(Rec.HL1);
-    Szx.State.Ix := LEtoN(Rec.Ix);
-    Szx.State.Iy := LEtoN(Rec.Iy);
-    Szx.State.SP := LEtoN(Rec.SP);
-    Szx.State.PC := LEtoN(Rec.PC);
-    WordRec(Szx.State.IR).Hi := Rec.I;
-    WordRec(Szx.State.IR).Lo := Rec.R;
-    Szx.State.IFF1 := Rec.IFF1 <> 0;
-    Szx.State.IFF2 := Rec.IFF2 <> 0;
+    if Stream.Read(Rec, SizeOf(Rec)) = SizeOf(Rec) then begin
 
-    Szx.State.InterruptMode := Rec.IM;
-    Szx.State.T_States := LEtoN(Rec.DwCyclesStart);
-    Szx.State.RemainingIntPinUp := Rec.ChHoldIntReqCycles;
-    if (Rec.ChFlags and ZXSTZF_EILAST) <> 0 then
-      Szx.State.PrefixByte := $FB // EI opcode
-    else
-      Szx.State.PrefixByte := 0;
-    Szx.State.Halt := (Rec.ChFlags and ZXSTZF_HALTED) <> 0;
-    Szx.State.FlagsModified := (Rec.ChFlags and ZXSTZF_FSET) <> 0;
-    Szx.State.WZ := LEtoN(Rec.MemPtr);
+      if BlockSize > SizeOf(Rec) then
+        Stream.Seek(BlockSize - SizeOf(Rec), TSeekOrigin.soCurrent);
 
-    Result := True;
+      Szx.State.AF := LEtoN(Rec.AF);
+      Szx.State.BC := LEtoN(Rec.BC);
+      Szx.State.DE := LEtoN(Rec.DE);
+      Szx.State.HL := LEtoN(Rec.HL);
+      Szx.State.AF1 := LEtoN(Rec.AF1);
+      Szx.State.BC1 := LEtoN(Rec.BC1);
+      Szx.State.DE1 := LEtoN(Rec.DE1);
+      Szx.State.HL1 := LEtoN(Rec.HL1);
+      Szx.State.Ix := LEtoN(Rec.Ix);
+      Szx.State.Iy := LEtoN(Rec.Iy);
+      Szx.State.SP := LEtoN(Rec.SP);
+      Szx.State.PC := LEtoN(Rec.PC);
+      WordRec(Szx.State.IR).Hi := Rec.I;
+      WordRec(Szx.State.IR).Lo := Rec.R;
+      Szx.State.IFF1 := Rec.IFF1 <> 0;
+      Szx.State.IFF2 := Rec.IFF2 <> 0;
+
+      Szx.State.InterruptMode := Rec.IM;
+      Szx.State.T_States := LEtoN(Rec.DwCyclesStart);
+      Szx.State.RemainingIntPinUp := Rec.ChHoldIntReqCycles;
+
+      if (Rec.ChFlags and ZXSTZF_EILAST) <> 0 then
+        Szx.State.PrefixByte := $FB // EI opcode
+      else
+        Szx.State.PrefixByte := 0;
+
+      Szx.State.Halt := (Rec.ChFlags and ZXSTZF_HALTED) <> 0;
+      Szx.State.FlagsModified := (Rec.ChFlags and ZXSTZF_FSET) <> 0;
+      Szx.State.WZ := LEtoN(Rec.MemPtr);
+
+      Result := True;
+    end;
   end;
 
 end;
