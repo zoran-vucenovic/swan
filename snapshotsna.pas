@@ -85,6 +85,7 @@ begin
 
       if Stream.Read(Header{%H-}, SizeOf(Header)) = SizeOf(Header) then begin
         State := Default(TSpectrumInternalState);
+        State.LateTimings := FSpectrum.LateTimings;
 
         State.AF := LEtoN(Header.AF);
         State.AF1 := LEtoN(Header.AF1);
@@ -279,7 +280,8 @@ begin
             FillChar(P^, KB16 * 2, $FF);
           end;
 
-          {$push}{$R-}{$Q-}
+          {$push}
+          {$R-}{$Q-}
           W := State.SP - 1;
           W := W - KB16;
           P := PByte(MemStr.Memory);

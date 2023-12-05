@@ -235,6 +235,7 @@ begin
       if Stream.Read(Header1{%H-}, SizeOf(Header1)) = SizeOf(Header1) then begin
         HeadersRead := 0;
         State := Default(TSpectrumInternalState);
+        State.LateTimings := FSpectrum.LateTimings;
 
         // Registers A and F (as well as A` and F` and I, R) are stored in order A, F (so we can treat AF stored as big endian)
         State.AF := BEtoN(Header1.AF);

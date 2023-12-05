@@ -1102,6 +1102,9 @@ function TSnapshotSZX.LoadFromStream(const Stream: TStream): Boolean;
     if Stream.Size >= SizeOf(SzxHeader) then begin
       if Stream.Read(SzxHeader{%H-}, SizeOf(SzxHeader)) = SizeOf(SzxHeader) then begin
         if SzxHeader.DwMagic = TZxstHeadr.GetUMagic() then begin
+
+          State.LateTimings := (SzxHeader.ChFlags and TZxstHeadr.ZXSTMF_ALTERNATETIMINGS) <> 0;
+
           case SzxHeader.MachineId of
             TZxstHeadr.ZXSTMID_16K:
               begin
@@ -1188,7 +1191,7 @@ begin
   Result := False;
   Stream.Position := 0;
 
-  Self.State := Default(TSpectrumInternalState); // must be above loadheader, because of model setting
+  Self.State := Default(TSpectrumInternalState); // must be above loadheader, because of model setting, as well as late timings
   if LoadHeader() then begin
     FillChar(GetMemStr().Memory^, GetMemStr().Size, 0);
     IsIssue2 := FSpectrum.IsIssue2;
@@ -1235,7 +1238,7 @@ var
     SzxHeader.DwMagic := TZxstHeadr.GetUMagic;
     SzxHeader.MajorVer := 1;
     SzxHeader.MinorVer := 5;
-    case FSpectrum.SpectrumModel of
+    case State.SpectrumModel of
       TSpectrumModel.sm16K_issue_2, TSpectrumModel.sm16K_issue_3:
         SzxHeader.MachineId := TZxstHeadr.ZXSTMID_16K;
       TSpectrumModel.sm48K_issue_2, TSpectrumModel.sm48K_issue_3:
@@ -1248,6 +1251,8 @@ var
       Exit(False);
     end;
     SzxHeader.ChFlags := 0;
+    if State.LateTimings then
+      SzxHeader.ChFlags := SzxHeader.ChFlags or TZxstHeadr.ZXSTMF_ALTERNATETIMINGS;
 
     Result := Stream.Write(SzxHeader, SizeOf(SzxHeader)) = SizeOf(SzxHeader);
   end;
@@ -1333,7 +1338,7 @@ begin
   BlSize := BlockSize;
   BlSize := NtoLE(BlSize);
 
-  Result := (Stream.Write(BlSize, 4) = 4);
+  Result := Stream.Write(BlSize, 4) = 4;
 end;
 
 class function TSnapshotSZX.TSzxBlock.GetBlockId: UInt32;

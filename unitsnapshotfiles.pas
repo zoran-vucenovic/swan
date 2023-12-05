@@ -38,6 +38,7 @@ type
     FlashState: UInt16;
     Ear: Byte;
     SpectrumModel: TSpectrumModel;
+    LateTimings: Boolean;
 
     PagingEnabled: Boolean;
     MountedRamPage: Byte;
@@ -145,6 +146,7 @@ begin
       FlashState := ASpectrum.FlashState;
       Ear := ASpectrum.InternalEar;
       SpectrumModel := ASpectrum.SpectrumModel;
+      LateTimings := ASpectrum.LateTimings;
 
       if ASpectrum.Is128KModel then begin
         MountedRamPage := ASpectrum.Memory.ActiveRamPageNo;
@@ -173,6 +175,8 @@ begin
     Proc := ASpectrum.GetProcessor;
     if Assigned(Proc) then begin
       ASpectrum.SetSpectrumModel(SpectrumModel, nil); // must be above all other, might trigger reset spectrum
+
+      ASpectrum.LateTimings := LateTimings;
 
       Proc.RegAF := AF;
       Proc.RegBC := BC;

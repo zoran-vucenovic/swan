@@ -2246,6 +2246,7 @@ begin
               try
                 L := SnapshotFile.LoadFromStream(Stream);
                 UpdateShowCurrentlyActiveJoystick;
+                UpdateCheckLateTimings;
               finally
                 Spectrum.InLoadingSnapshot := False;
               end;
