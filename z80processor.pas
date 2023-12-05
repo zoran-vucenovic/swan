@@ -1201,6 +1201,7 @@ procedure TProcessor.Bli(const A, B: Byte);
   procedure DecreasePC();
   begin
     Dec(FRegPC, 2);
+    FRegWZ := FRegPC + 1;
     Contention5Times;
   end;
 
@@ -1234,7 +1235,6 @@ begin
         end;
 
         if (A and 2 <> 0) and (RegBC <> 0) then begin
-          FRegWZ := FRegPC - 1;
           DecreasePC();
           FlagsToSet := FlagsToSet or (TRec16(FRegPC).UByteHi and %00101000) or %100;
         end else begin
@@ -1257,19 +1257,22 @@ begin
         Contention5Times;
         Dec(GPRegs.BC.U16bit);
 
+        if A and 1 = 0 then begin
+          Inc(GPRegs.HL.U16bit);
+          Inc(FRegWZ);
+        end else begin
+          Dec(GPRegs.HL.U16bit);
+          Dec(FRegWZ);
+        end;
+
         if By <> RegA then begin
           if (By and $0F) > (RegA and $0F) then
             FlagsToSet := FlagsToSet or %10000; // H
 
           By := RegA - By;
           if (A and 2 <> 0) and (RegBC <> 0) then begin
-            if A and 1 = 0 then begin
-              DecreasePC();
-              FRegWZ := FRegPC;
-            end else begin
-              FRegWZ := FRegPC;
-              DecreasePC();
-            end;
+            DecreasePC();
+
             FlagsToSet := FlagsToSet or (TRec16(FRegPC).UByteHi and %00101000);
           end else begin
             { B2 = A - (HL) - H, H as in F after instruction,
@@ -1284,14 +1287,6 @@ begin
 
         if RegBC <> 0 then
           FlagsToSet := FlagsToSet or %100; // PV
-
-        if A and 1 = 0 then begin
-          Inc(GPRegs.HL.U16bit);
-          Inc(FRegWZ);
-        end else begin
-          Dec(GPRegs.HL.U16bit);
-          Dec(FRegWZ);
-        end;
 
       end;
 
