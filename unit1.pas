@@ -36,6 +36,7 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionHideToolbar: TAction;
     ActionLateTimings: TAction;
     ActionModelMoreOptions: TAction;
     ActionModelPlus2: TAction;
@@ -137,6 +138,7 @@ type
     MenuItem52: TMenuItem;
     MenuItem53: TMenuItem;
     MenuItem54: TMenuItem;
+    MenuItem55: TMenuItem;
     MenuItemRecentFiles: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
@@ -196,6 +198,7 @@ type
     procedure ActionShowDebuggerExecute(Sender: TObject);
     procedure ActionShowKeyboardOnScreenExecute(Sender: TObject);
     procedure ActionShowTapePlayerExecute(Sender: TObject);
+    procedure ActionHideToolbarExecute(Sender: TObject);
     procedure ActionSizeDecreaseExecute(Sender: TObject);
     procedure ActionSizeIncreaseExecute(Sender: TObject);
     procedure ActionSpeedDecreaseExecute(Sender: TObject);
@@ -229,11 +232,13 @@ type
       cSectionBuildDate = 'build_date';
       cSectionCustomRomPaths = 'custom_rom_paths';
       cSectionLateTimings = 'late_timings';
+      cSectionHideToolBar = 'hide_toolbar';
 
   strict private
     FNewModel: TSpectrumModel;
     FFileToOpen: String;
     FAutoShowTapePlayerWhenTapeLoaded: Boolean;
+    FInitiallyHideToolBar: Boolean;
 
     procedure SpectrumOnChangeModel();
     procedure DoChangeModel(Sender: TObject);
@@ -301,6 +306,7 @@ type
     FPortaudioLibPathOtherBitness: RawByteString;
     HistoryQueue: TSnapshotHistoryQueue;
     SnapshotHistoryOptions: TSnapshotHistoryOptions;
+    FToolBar: TSwanToolBar;
 
     procedure SetSzxSaveOptionsToSzx(const SzxSaveTapeOptions: TSzxSaveTapeOptions);
     procedure GetSzxSaveOptionsFromSzx(out SzxSaveTapeOptions: TSzxSaveTapeOptions);
@@ -312,6 +318,7 @@ type
     procedure UpdateTextTapeRunning;
     procedure UpdateWriteScreen;
     procedure UpdateCheckWriteScreen;
+    procedure UpdateCheckHideToolbar;
     procedure AddKeyEventToQueue(KeyIndex: Integer; BDown: Integer);
     procedure AddEventToQueue(Event: TNotifyEvent);
     {$ifNdef UseАuxiliaryBmp}
@@ -349,6 +356,7 @@ type
     procedure ShowTapeBrowser();
     procedure ShowKeyboardOnScreen();
     procedure ShowSoundVolumeForm(const AToggleMute: Boolean);
+    procedure ShowOrHideToolbar(AShow: Boolean);
     procedure DestroySoundVolumeForm();
     procedure FreeTapePlayer;
     procedure SetNewAutoSize(Sender: TObject);
@@ -388,6 +396,8 @@ begin
   ActionModelPlus2.Tag := Ord(TSpectrumModel.smPlus2);
 
   UpdateActiveSnapshotHistory;
+  FToolBar := nil;
+  FInitiallyHideToolBar := False;
 
   FRecentFiles := TRecentFiles.Create;
   UpdateRecentFiles;
@@ -441,6 +451,9 @@ begin
   end;
   UpdateCheckWriteScreen;
   //
+  ShowOrHideToolbar(not FInitiallyHideToolBar);
+  UpdateCheckHideToolbar;
+
   TCommonFunctionsLCL.FormToScreenCentre(Self);
   ToolButton1.OnShowHint := @ToolButtonOnShowHint;
 end;
@@ -927,6 +940,14 @@ begin
     ShowTapeBrowser();
 end;
 
+procedure TForm1.ActionHideToolbarExecute(Sender: TObject);
+begin
+  if Sender <> Spectrum then
+    AddEventToQueue(@ActionHideToolbarExecute)
+  else
+    ShowOrHideToolbar(FToolBar = nil);
+end;
+
 procedure TForm1.ActionSizeDecreaseExecute(Sender: TObject);
 begin
   if Sender <> Spectrum then
@@ -1005,6 +1026,7 @@ begin
     FTapeBrowser.RemoveFreeNotification(Self);
     FreeAndNil(FTapeBrowser);
   end;
+  FreeAndNil(FToolBar);
   DestroySoundVolumeForm();
   FreeAndNil(HistoryQueue);
 
@@ -1410,6 +1432,7 @@ begin
       end;
     end;
 
+    FInitiallyHideToolBar := JObj.Get(cSectionHideToolBar, Integer(0)) <> 0;
   end;
   TSoundPlayer.Volume := SoundVol;
 end;
@@ -1459,6 +1482,12 @@ begin
     else
       N := 0;
     JObj.Add(cSectionLateTimings, N);
+
+    if FToolBar = nil then
+      N := 1
+    else
+      N := 0;
+    JObj.Add(cSectionHideToolBar, N);
 
     {$if SizeOf(SizeInt) = 4}
       SPortaudioLib64 := FPortaudioLibPathOtherBitness;
@@ -1868,6 +1897,55 @@ procedure TForm1.UpdateCheckWriteScreen;
 begin
   ActionDontDrawScreenWhenLoading.Checked := FSkipWriteScreen;
   UpdateWriteScreen;
+end;
+
+procedure TForm1.UpdateCheckHideToolbar;
+begin
+  ActionHideToolbar.Checked := FToolBar = nil;
+end;
+
+procedure TForm1.ShowOrHideToolbar(AShow: Boolean);
+begin
+  if AShow xor Assigned(FToolBar) then begin
+    DisableAlign;
+    try
+      if AShow then begin
+        FToolBar := TSwanToolBar.Create(nil);
+        FToolBar.Align := alNone;
+        FToolBar.Anchors := [];
+        FToolBar.AnchorParallel(akTop, 0, Self);
+        FToolBar.AnchorParallel(akLeft, 0, Self);
+        FToolBar.AnchorParallel(akRight, 0, PaintBox1);
+        PaintBox1.AnchorToNeighbour(akTop, 0, FToolBar);
+        FToolBar.Images := ActionList1.Images;
+        FToolBar.Wrapable := True;
+        FToolBar.AutoSize := True;
+
+        FToolBar.Parent := Self;
+
+        FToolBar.AddButtonActions([
+          ActionOpen,
+          ActionPause,
+          ActionReset,
+          ActionShowKeyboardOnScreen,
+          ActionDontDrawScreenWhenLoading,
+          ActionHistorySnapshots,
+          ActionAllOptions,
+          ActionAbout
+        ]);
+      end else begin
+        PaintBox1.AnchorParallel(akTop, 0, Self);
+        FreeAndNil(FToolBar);
+      end;
+
+      UpdateCheckHideToolbar;
+
+    finally
+      EnableAlign;
+    end;
+
+    SetNewAutoSize(nil);
+  end;
 end;
 
 procedure TForm1.AddKeyEventToQueue(KeyIndex: Integer; BDown: Integer);
@@ -2588,7 +2666,7 @@ end;
 
 procedure TForm1.ShowTapeBrowser();
 var
-  TB: TSwanToolbar;
+  TB: TSwanSpeedButtonsBar;
 begin
   if FTapeBrowser = nil then begin
     FTapeBrowser := TFormBrowseTape.Create(nil);
@@ -2598,25 +2676,24 @@ begin
 
     FTapeBrowser.OnGoToBlock := @TapeBrowserGoToBlock;
 
-    TB := TSwanToolbar.Create(nil);
+    TB := TSwanSpeedButtonsBar.Create(nil);
     try
-      TB.Images := UnitDataModuleImages.DataModuleImages.ImageList1;
-      TB.ImageWidth := 24;
-      TB.AddButtonActions(
-        [
-          ActionAttachTap,
-          ActionEjectTape,
-          nil, // divider
-          ActionPlay,
-          ActionStop,
-          ActionRewind,
-          ActionDecTapeBlock,
-          ActionIncTapeBlock
-        ]);
-
-      if FTapeBrowser.AddActionsToolBar(TB) then
+      if FTapeBrowser.AddActionsToolBar(TB) then begin
+        TB.Images := UnitDataModuleImages.DataModuleImages.ImageList1;
+        TB.ImageWidth := 24;
+        TB.AddButtonActions(
+          [
+            ActionAttachTap,
+            ActionEjectTape,
+            nil, // divider
+            ActionPlay,
+            ActionStop,
+            ActionRewind,
+            ActionDecTapeBlock,
+            ActionIncTapeBlock
+          ]);
         TB := nil;
-
+      end;
     finally
       TB.Free;
     end;

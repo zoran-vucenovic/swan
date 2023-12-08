@@ -155,6 +155,7 @@ object Form1: TForm1
         ParentShowHint = False
         ShowHint = True
         TabOrder = 0
+        Wrapable = False
         object ToolButton1: TToolButton
           Left = 1
           Top = 0
@@ -173,11 +174,13 @@ object Form1: TForm1
     object ActionExit: TAction
       Category = 'File'
       Caption = '&Exit'
+      Hint = 'Exit'
       OnExecute = ActionExitExecute
     end
     object ActionPause: TAction
       Category = 'Emulation'
       Caption = 'Pause'
+      Hint = 'Pause Spectrum'
       ImageIndex = 2
       OnExecute = ActionPauseExecute
       SecondaryShortCuts.Strings = (
@@ -237,6 +240,7 @@ object Form1: TForm1
     object ActionOpen: TAction
       Category = 'File'
       Caption = '&Open...'
+      Hint = 'Open a file...'
       ImageIndex = 0
       OnExecute = ActionOpenExecute
       ShortCut = 113
@@ -250,12 +254,14 @@ object Form1: TForm1
     object ActionAbout: TAction
       Category = 'Help'
       Caption = '&About...'
+      Hint = 'About Swan...'
       ImageIndex = 7
       OnExecute = ActionAboutExecute
     end
     object ActionShowDebugger: TAction
       Category = 'Debug'
       Caption = 'Debugger...'
+      Hint = 'Show debugger'
       ImageIndex = 30
       OnExecute = ActionShowDebuggerExecute
     end
@@ -334,6 +340,7 @@ object Form1: TForm1
     object ActionDontDrawScreenWhenLoading: TAction
       Category = 'Options'
       Caption = 'Don''t draw screen while tape is running'
+      Hint = 'Fast tape loading (skip screen drawing while tape is playing)'
       ImageIndex = 27
       OnExecute = ActionDontDrawScreenWhenLoadingExecute
     end
@@ -377,16 +384,19 @@ object Form1: TForm1
       Hint = 'Save szx snapshot'
       ImageIndex = 15
       OnExecute = ActionSaveSzxExecute
+      ShortCut = 114
     end
     object ActionSaveZ80: TAction
       Category = 'File'
       Caption = 'Save &z80 snapshot...'
+      Hint = 'Save z80 snapshot'
       ImageIndex = 15
       OnExecute = ActionSaveZ80Execute
     end
     object ActionSaveSna: TAction
       Category = 'File'
       Caption = 'Save sna snapshot...'
+      Hint = 'Save sna snapshot'
       ImageIndex = 15
       OnExecute = ActionSaveSnaExecute
     end
@@ -433,6 +443,7 @@ object Form1: TForm1
     object ActionAllOptions: TAction
       Category = 'Options'
       Caption = 'All options...'
+      Hint = 'Options...'
       ImageIndex = 29
       OnExecute = ActionAllOptionsExecute
     end
@@ -456,6 +467,12 @@ object Form1: TForm1
       Caption = 'Late timings'
       ImageIndex = 34
       OnExecute = ActionLateTimingsExecute
+    end
+    object ActionHideToolbar: TAction
+      Category = 'Options'
+      Caption = 'Hide toolbar'
+      Hint = 'Show/Hide toolbar'
+      OnExecute = ActionHideToolbarExecute
     end
   end
   object MainMenu1: TMainMenu
@@ -585,6 +602,9 @@ object Form1: TForm1
       end
       object MenuItem38: TMenuItem
         Action = ActionEnableHistory
+      end
+      object MenuItem55: TMenuItem
+        Action = ActionHideToolbar
       end
       object Separator2: TMenuItem
         Caption = '-'

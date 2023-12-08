@@ -8,11 +8,23 @@ unit UnitSwanToolbar;
 interface
 
 uses
-  Classes, SysUtils, Controls, ActnList, Buttons;
+  Classes, SysUtils, Controls, ActnList, Buttons, ComCtrls, Graphics;
 
 type
 
-  TSwanToolbar = class(TCustomControl)
+  TSwanToolButton = class(TToolButton)
+  end;
+
+  TSwanToolBar = class(TToolBar)
+  private
+  protected
+  public
+    constructor Create(TheOwner: TComponent); override;
+    procedure AddButtonActions(AActions: Array of TCustomAction);
+    procedure Paint; override;
+  end;
+
+  TSwanSpeedButtonsBar = class(TCustomControl)
   strict private
     type
       TSwanSpeedButton = class(TSpeedButton)
@@ -40,15 +52,69 @@ type
 
 implementation
 
-{ TSwanToolbar }
+{ TSwanToolBar }
 
-procedure TSwanToolbar.SetImageWidth(AValue: Integer);
+constructor TSwanToolBar.Create(TheOwner: TComponent);
+begin
+  inherited Create(TheOwner);
+
+  Align := alNone;
+  Flat := True;
+  ShowHint := True;
+  EdgeBorders := [];
+  ShowCaptions := False;
+end;
+
+procedure TSwanToolBar.AddButtonActions(AActions: array of TCustomAction);
+var
+  C: TControl;
+  TB: TSwanToolButton;
+  I: Integer;
+
+begin
+  DisableAlign;
+  try
+    for I := Low(AActions) to High(AActions) do begin
+      if AActions[I] = nil then begin
+        C := TCustomControl.Create(Self);
+        C.Width := Self.ButtonWidth div 4;
+        C.Constraints.MinWidth := C.Width;
+      end else begin
+
+        TB := TSwanToolButton.Create(Self);
+        TB.Style := tbsButton;
+        TB.Action := AActions[I];    
+        if AActions[I].Hint = '' then
+          TB.Hint := AActions[I].Caption;
+
+        C := TB;
+      end;
+      C.Parent := Self;
+
+      C.AutoSize := True;
+    end;
+
+  finally
+    EnableAlign;
+  end;
+
+end;
+
+procedure TSwanToolBar.Paint;
+begin
+
+  inherited Paint;
+end;
+
+{ TSwanSpeedButtonsBar }
+
+procedure TSwanSpeedButtonsBar.SetImageWidth(AValue: Integer);
 begin
   if AValue > 0 then
     FImageWidth := AValue;
 end;
 
-constructor TSwanToolbar.Create(AOwner: TComponent);
+constructor TSwanSpeedButtonsBar.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
@@ -57,7 +123,7 @@ begin
   LastSB := nil;
 end;
 
-procedure TSwanToolbar.AddButtonActions(AActions: array of TCustomAction);
+procedure TSwanSpeedButtonsBar.AddButtonActions(AActions: array of TCustomAction);
 
 var
   I, J: Integer;
@@ -101,6 +167,7 @@ begin
           end;
 
           ImgW := Scale96ToFont(ImgW);
+
           W := (ImgW * 32 + 12) div 24;
 
           PrevSb := LastSB;
@@ -140,7 +207,7 @@ begin
 
 end;
 
-procedure TSwanToolbar.RemoveAllButtons;
+procedure TSwanSpeedButtonsBar.RemoveAllButtons;
 var
   SB: TSwanSpeedButton;
   ASide: TAnchorSide;
@@ -158,9 +225,9 @@ begin
   end;
 end;
 
-{ TSwanToolbar.TSwanSpeedButton }
+{ TSwanSpeedButtonsBar.TSwanSpeedButton }
 
-constructor TSwanToolbar.TSwanSpeedButton.Create(AOwner: TComponent);
+constructor TSwanSpeedButtonsBar.TSwanSpeedButton.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
