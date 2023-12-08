@@ -233,12 +233,14 @@ type
       cSectionCustomRomPaths = 'custom_rom_paths';
       cSectionLateTimings = 'late_timings';
       cSectionHideToolBar = 'hide_toolbar';
+      cSectionDontAskForPortAudioPath = 'do_not_ask_for_portaudio';
 
   strict private
     FNewModel: TSpectrumModel;
     FFileToOpen: String;
     FAutoShowTapePlayerWhenTapeLoaded: Boolean;
     FInitiallyHideToolBar: Boolean;
+    FDontAskPortAudioPath: Boolean;
 
     procedure SpectrumOnChangeModel();
     procedure DoChangeModel(Sender: TObject);
@@ -358,6 +360,7 @@ type
     procedure ShowSoundVolumeForm(const AToggleMute: Boolean);
     procedure ShowOrHideToolbar(AShow: Boolean);
     procedure DestroySoundVolumeForm();
+    procedure ShowMessageSoundLibNotLoaded(Sender: TObject);
     procedure FreeTapePlayer;
     procedure SetNewAutoSize(Sender: TObject);
 
@@ -381,6 +384,7 @@ begin
   FNewModel := TSpectrumModel.smNone;
   HistoryQueue := nil;
   FFileToOpen := '';
+  FDontAskPortAudioPath := False;
 
   ActionAbout.Caption := 'About ' + ApplicationName + '...';
   ActionEnableHistory.Hint :=
@@ -1433,6 +1437,7 @@ begin
     end;
 
     FInitiallyHideToolBar := JObj.Get(cSectionHideToolBar, Integer(0)) <> 0;
+    FDontAskPortAudioPath := JObj.Get(cSectionDontAskForPortAudioPath, Integer(0)) <> 0;
   end;
   TSoundPlayer.Volume := SoundVol;
 end;
@@ -1488,6 +1493,12 @@ begin
     else
       N := 0;
     JObj.Add(cSectionHideToolBar, N);
+
+    if FDontAskPortAudioPath then
+      N := 1
+    else
+      N := 0;
+    JObj.Add(cSectionDontAskForPortAudioPath, N);
 
     {$if SizeOf(SizeInt) = 4}
       SPortaudioLib64 := FPortaudioLibPathOtherBitness;
@@ -2628,6 +2639,9 @@ begin
     Arr[I - 1] := ParamStr(I);
   FreeAndNil(DropFiles);
   TryLoadFromFiles(TSnapshotOrTape.stBoth, Arr);
+
+  if not (FDontAskPortAudioPath or TSoundPlayer.IsLibLoaded) then
+    AddEventToQueue(@ShowMessageSoundLibNotLoaded);
 end;
 
 procedure TForm1.UpdateScreenSizeFactor;
@@ -2757,6 +2771,38 @@ begin
     FSoundVolumeForm.OnMuteClick := nil;
     FSoundVolumeForm.OnTrackBarPositionChg := nil;
     FreeAndNil(FSoundVolumeForm);
+  end;
+end;
+
+procedure TForm1.ShowMessageSoundLibNotLoaded(Sender: TObject);
+var
+  MR: TModalResult;
+  WasPaused: Boolean;
+begin
+  WasPaused := Spectrum.Paused;
+  try
+    Spectrum.Paused := True;
+    MR := QuestionDlg('Loading portaudio failed',
+      'Failed to load portaudio library.' + LineEnding
+        + 'Without portaudio you are not going to hear any sound.' + LineEnding
+        + 'Do you want to locate the library now?',
+      mtConfirmation, [
+        mrYes, '&Yes, locate the library yourself', 'IsDefault',
+        mrNo, '&Not now, start Spectrum without sound', 'IsCancel',
+        mrNoToAll, 'No, and don''t bother me with this again.'
+        ], 0
+      );
+
+    case MR of
+      mrYes:
+        ActionPortAudioLibPathExecute(Spectrum);
+      mrNoToAll:
+        FDontAskPortAudioPath := True;
+    otherwise
+    end;
+
+  finally
+    Spectrum.Paused := WasPaused;
   end;
 end;
 
