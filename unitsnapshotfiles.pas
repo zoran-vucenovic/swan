@@ -50,7 +50,7 @@ type
     procedure Set7ffd(const AValue: Byte);
     procedure Reset7ffd();
     function Get7ffd(): Byte;
-    function LoadFromSpectrum(const ASpectrum: TSpectrum): Boolean;
+    function LoadFromSpectrum(const ASpectrum: TSpectrum; AStepToInstructionEndIfNeeded: Boolean): Boolean;
     function SaveToSpectrum(const ASpectrum: TSpectrum): Boolean;
   end;
 
@@ -112,13 +112,17 @@ begin
     Result := Result or 32;
 end;
 
-function TSpectrumInternalState.LoadFromSpectrum(const ASpectrum: TSpectrum): Boolean;
+function TSpectrumInternalState.LoadFromSpectrum(const ASpectrum: TSpectrum;
+  AStepToInstructionEndIfNeeded: Boolean): Boolean;
 var
   Proc: TProcessor;
 begin
   if Assigned(ASpectrum) then begin
     Proc := ASpectrum.GetProcessor;
     if Assigned(Proc) then begin
+      if AStepToInstructionEndIfNeeded then
+        ASpectrum.StepToInstructionEndIfNeeded;
+
       AF := Proc.RegAF;
       BC := Proc.RegBC;
       DE := Proc.RegDE;
@@ -324,7 +328,7 @@ begin
   if Proc = nil then
     Exit;
 
-  if State.LoadFromSpectrum(FSpectrum) then begin
+  if State.LoadFromSpectrum(FSpectrum, False) then begin
     Stream.Position := 0;
     if Stream.Write(State, SizeOf(State)) = SizeOf(State) then
       if FSpectrum.Memory.SaveRamToStream(Stream) then

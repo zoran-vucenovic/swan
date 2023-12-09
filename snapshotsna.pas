@@ -251,7 +251,7 @@ begin
     Exit;
 
   try
-    if State.LoadFromSpectrum(FSpectrum) then begin
+    if State.LoadFromSpectrum(FSpectrum, True) then begin
 
       MemStr := TMemoryStream.Create;
       try

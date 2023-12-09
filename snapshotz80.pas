@@ -503,7 +503,7 @@ begin
   if not FSpectrum.IsRunning then
     Exit;
 
-  if State.LoadFromSpectrum(FSpectrum) then begin
+  if State.LoadFromSpectrum(FSpectrum, True) then begin
     Header1 := Default(THeader1);
 
     // Registers A and F (as well as A` and F` and I, R) are stored in order A, F (so we can treat AF stored as big endian)

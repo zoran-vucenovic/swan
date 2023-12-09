@@ -133,6 +133,7 @@ type
     procedure DoSync; inline;
     procedure CheckDebuggerStep;
     procedure AfterDebuggerStep;
+    procedure DoStep; inline;
     procedure RunSpectrum;
 
   strict private
@@ -179,6 +180,7 @@ type
     procedure SetWriteScreen(const AValue: Boolean);
     procedure SetEarFromTape(AValue: Byte);
     procedure CheckStartSoundPlayer;
+    procedure StepToInstructionEndIfNeeded;
 
     procedure StopRunning;
     procedure ResetSpectrum;
@@ -528,6 +530,24 @@ begin
   then begin
     FLatestTickUpdatedSoundBuffer := (FSumTicks + FProcessor.TStatesInCurrentFrame) * FSoundPlayerRatePortAudio;
     TSoundPlayer.Start;
+  end;
+end;
+
+procedure TSpectrum.StepToInstructionEndIfNeeded;
+begin
+  case FProcessor.PrefixByte of
+    $CB, $ED:
+      DoStep;
+    $DD, $FD:
+      begin
+        case FMemory.ReadByte(FProcessor.RegPC) of
+          $DD, $ED, $FD:
+            ;
+        otherwise
+          DoStep;
+        end;
+      end;
+  otherwise
   end;
 end;
 
@@ -954,56 +974,55 @@ begin
   Result := FIssue2Keyboard;
 end;
 
-procedure TSpectrum.RunSpectrum;
+procedure TSpectrum.DoStep;
+var
+  MilliSecondsPassed: Int64;
+  MilliSecondsToWait: Int64;
+begin
+  if Assigned(FTapePlayer) then
+    FTapePlayer.GetNextPulse();
+  FProcessor.DoProcess;
 
-  procedure DoStep; inline;
-  var                        
-    MilliSecondsPassed: Int64;
-    MilliSecondsToWait: Int64;
-  begin
-    if Assigned(FTapePlayer) then
-      FTapePlayer.GetNextPulse();
-    FProcessor.DoProcess;
-
-    if FIntPinUpCount <> 0 then begin
-      if FProcessor.TStatesInCurrentFrame >= FIntPinUpCount then begin
-        FProcessor.IntPin := False;
-        FIntPinUpCount := 0;
-      end;
-    end;
-
-    if FProcessor.TStatesInCurrentFrame >= FProcessor.FrameTicks then begin
-      FProcessor.IntPin := True;
-
-      Inc(FFrameCount);
-      //WriteToScreen(ScreenEnd);
-      FProcessor.OnNeedWriteScreen(ScreenEnd);
-
-      FSumTicks := FSumTicks + FProcessor.FrameTicks;
-      FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame - FProcessor.FrameTicks;
-      FIntPinUpCount := HoldInterruptPinTicks;
-
-      TicksFrom := ScreenStart;
-
-      FFlashState := (FFlashState + 1) and 31;
-
-      if AskForSpeedCorrection then begin
-        UpdateSoundBuffer;
-        //
-        MicrosecondsNeeded := MicrosecondsNeeded + SpeedCorrection;
-
-        // speed 100%:
-        MilliSecondsPassed := GetTickCount64 - PCTicksStart;
-        MilliSecondsToWait := MicrosecondsNeeded div 1000 - MilliSecondsPassed;
-
-        if MilliSecondsToWait > 0 then
-          Sleep(MilliSecondsToWait);
-      end;
-
-      DoSync;
+  if FIntPinUpCount <> 0 then begin
+    if FProcessor.TStatesInCurrentFrame >= FIntPinUpCount then begin
+      FProcessor.IntPin := False;
+      FIntPinUpCount := 0;
     end;
   end;
 
+  if FProcessor.TStatesInCurrentFrame >= FProcessor.FrameTicks then begin
+    FProcessor.IntPin := True;
+
+    Inc(FFrameCount);
+    //WriteToScreen(ScreenEnd);
+    FProcessor.OnNeedWriteScreen(ScreenEnd);
+
+    FSumTicks := FSumTicks + FProcessor.FrameTicks;
+    FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame - FProcessor.FrameTicks;
+    FIntPinUpCount := HoldInterruptPinTicks;
+
+    TicksFrom := ScreenStart;
+
+    FFlashState := (FFlashState + 1) and 31;
+
+    if AskForSpeedCorrection then begin
+      UpdateSoundBuffer;
+      //
+      MicrosecondsNeeded := MicrosecondsNeeded + SpeedCorrection;
+
+      // speed 100%:
+      MilliSecondsPassed := GetTickCount64 - PCTicksStart;
+      MilliSecondsToWait := MicrosecondsNeeded div 1000 - MilliSecondsPassed;
+
+      if MilliSecondsToWait > 0 then
+        Sleep(MilliSecondsToWait);
+    end;
+
+    DoSync;
+  end;
+end;
+
+procedure TSpectrum.RunSpectrum;
 begin
   if FRunning then
     Exit;

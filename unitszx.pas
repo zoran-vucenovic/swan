@@ -999,7 +999,7 @@ begin
 
   Rec.ChHoldIntReqCycles := Byte(Szx.State.RemainingIntPinUp and $FF);
   Rec.ChFlags := 0;
-  if Szx.State.PrefixByte = $FB then
+  if Szx.State.PrefixByte <> 0 then
     Rec.ChFlags := Rec.ChFlags or ZXSTZF_EILAST;
   if Szx.State.Halt then
     Rec.ChFlags := Rec.ChFlags or ZXSTZF_HALTED;
@@ -1276,7 +1276,7 @@ var
 begin
   Result := False;
 
-  if State.LoadFromSpectrum(FSpectrum) then begin
+  if State.LoadFromSpectrum(FSpectrum, True) then begin
     SetMemSize(FSpectrum.Memory.RamSizeKB * TCommonSpectrum.KiloByte);
     GetMemStr.Position := 0;
     if FSpectrum.Memory.SaveRamToStream(GetMemStr()) then begin
