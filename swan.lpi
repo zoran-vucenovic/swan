@@ -671,6 +671,14 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitSwanToolbar"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitframesoundvolume.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameSoundVolume"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitFrameSoundVolume"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

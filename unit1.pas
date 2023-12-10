@@ -390,6 +390,9 @@ begin
   ActionEnableHistory.Hint :=
     'Enable going through emulation back in time step by step';
 
+  ActionHistorySnapshots.Hint := ActionHistorySnapshots.Caption + LineEnding
+    + '(' + ActionEnableHistory.Hint + ')';
+
   ActionMoveBack.ShortCut := SnapshotHistoryOptions.KeyGoBack;
 
   ActionModel16KIssue2.Tag := Ord(TSpectrumModel.sm16K_issue_2);
@@ -1654,6 +1657,7 @@ begin
             FrameSoundLib);
           if not Assigned(FrameSound) then
             Break;
+          FrameSound.VolLevel := TSoundPlayer.Volume;
 
           FrameOtherOptions := TFrameOtherOptions.CreateForAllOptions(OptionsDialog);
           if not Assigned(FrameOtherOptions) then
@@ -1664,13 +1668,14 @@ begin
           GetSzxSaveOptionsFromSzx(SzxSaveTapeOptions);
           FrameOtherOptions.SaveTapeInfoSzxSave := Integer(SzxSaveTapeOptions);
 
-          // ...
-          //if ControlClass = nil then
-          //  ControlClass := TFrameOtherOptions;
+          if ControlClass = nil then
+            ControlClass := TFrameOtherOptions;
           OptionsDialog.SetCurrentControlByClass(ControlClass);
+
           if OptionsDialog.ShowModal = mrOK then begin
             Spectrum.SetSpectrumColours(FrameColourPalette.LCLColours);
             Spectrum.KeyBoard.LoadFromKeyMappings;
+            TSoundPlayer.Volume := FrameSound.VolLevel;
             FrameJoystickSetup.GetJoystickSetup(JoystickType, AKeys, JoystickEnabled);
             TJoystick.Joystick.SetKeys(AKeys);
             TJoystick.Joystick.Enabled := JoystickEnabled;
@@ -1938,6 +1943,7 @@ begin
           ActionOpen,
           ActionPause,
           ActionReset,
+          ActionLateTimings,
           ActionShowKeyboardOnScreen,
           ActionDontDrawScreenWhenLoading,
           ActionHistorySnapshots,
@@ -2087,15 +2093,12 @@ begin
 end;
 
 procedure TForm1.SoundVolumeOnChg(Sender: TObject);
-var
-  N: Integer;
 begin
   if Assigned(FSoundVolumeForm) then begin
     if Sender <> Spectrum then begin
       AddEventToQueue(@SoundVolumeOnChg);
     end else begin
-      N := (FSoundVolumeForm.Level and 31) * 4;
-      TSoundPlayer.Volume := N + (N shr 5);
+      TSoundPlayer.Volume := FSoundVolumeForm.Level;
     end;
   end;
 end;
@@ -2742,7 +2745,9 @@ begin
     end;
     FSoundVolumeForm := TFormSoundVolume.ShowSoundVolumeTracker(
       Spectrum.SoundMuted,
-      TSoundPlayer.Volume div 4);
+      TSoundPlayer.Volume);
+
+    FSoundVolumeForm.Color := ToolBar1.GetRGBColorResolvingParent;
     FSoundVolumeForm.Panel2.Constraints.MinWidth := ToolBar1.Width;
     FSoundVolumeForm.FreeNotification(Self);
 
@@ -2757,7 +2762,7 @@ begin
     FSoundVolumeForm.OnMuteClick := @ActionMuteSoundExecute;
 
     SoundVolumeAfterShow(0);
-    FSoundVolumeForm.OnShow := (@SoundVolumeOnShow);
+    FSoundVolumeForm.OnShow := @SoundVolumeOnShow;
     FSoundVolumeForm.Show;
   end;
 end;

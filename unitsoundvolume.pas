@@ -7,8 +7,8 @@ unit unitSoundVolume;
 interface
 
 uses
-  Classes, SysUtils, UnitDataModuleImages, Forms, Controls, Graphics, Dialogs,
-  ComCtrls, Buttons, ExtCtrls, Types, Math;
+  Classes, SysUtils, UnitFrameSoundVolume, Forms,
+  Controls, ComCtrls, ExtCtrls;
 
 type
   TFormSoundVolume = class(TForm)
@@ -16,13 +16,13 @@ type
     Panel2: TPanel;
     ToolBar1: TToolBar;
     ToolButton1: TToolButton;
-    TrackBar1: TTrackBar;
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
+    procedure FormCreate(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
     procedure ToolButton1ArrowClick(Sender: TObject);
-    procedure TrackBar1MouseWheel(Sender: TObject; {%H-}Shift: TShiftState;
-      WheelDelta: Integer; {%H-}MousePos: TPoint; var Handled: Boolean);
   private
+    FrameSoundVolume: UnitFrameSoundVolume.TFrameSoundVolume;
+
     function GetLevel: Integer;
     procedure SetOnMuteClick(AValue: TNotifyEvent);
     procedure SetOnTrackBarPositionChg(AValue: TNotifyEvent);
@@ -50,17 +50,9 @@ begin
   Close;
 end;
 
-procedure TFormSoundVolume.TrackBar1MouseWheel(Sender: TObject;
-  Shift: TShiftState; WheelDelta: Integer; MousePos: TPoint;
-  var Handled: Boolean);
-begin
-  TrackBar1.Position := TrackBar1.Position + 2 * Sign(WheelDelta);
-  Handled := True;
-end;
-
 function TFormSoundVolume.GetLevel: Integer;
 begin
-  Result := TrackBar1.Position;
+  Result := FrameSoundVolume.Level;
 end;
 
 procedure TFormSoundVolume.SetOnMuteClick(AValue: TNotifyEvent);
@@ -70,7 +62,7 @@ end;
 
 procedure TFormSoundVolume.SetOnTrackBarPositionChg(AValue: TNotifyEvent);
 begin
-  TrackBar1.OnChange := AValue;
+  FrameSoundVolume.OnTrackBarPositionChg := AValue;
 end;
 
 procedure TFormSoundVolume.FormClose(Sender: TObject;
@@ -79,12 +71,26 @@ begin
   CloseAction := caFree;
 end;
 
+procedure TFormSoundVolume.FormCreate(Sender: TObject);
+begin
+  Panel1.BorderStyle := bsNone;
+  Panel2.BorderStyle := bsNone;
+  FrameSoundVolume := TFrameSoundVolume.Create(Panel1);
+  FrameSoundVolume.VerticalOrientation := True;
+  FrameSoundVolume.Anchors := [];
+  FrameSoundVolume.AnchorParallel(akTop, 0, Panel1);
+  FrameSoundVolume.AnchorParallel(akLeft, 0, Panel1);
+  FrameSoundVolume.Parent := Panel1;
+  Panel1.OnMouseWheel := FrameSoundVolume.TrackBar1.OnMouseWheel;
+  Panel2.OnMouseWheel := FrameSoundVolume.TrackBar1.OnMouseWheel;
+  Panel1.AutoSize := True;
+end;
+
 class function TFormSoundVolume.ShowSoundVolumeTracker(const AMuted: Boolean;
   const ALevel: Integer): TFormSoundVolume;
 begin
   Result := TFormSoundVolume.Create(nil);
-  Result.TrackBar1.Position := ALevel;
-  //Result.FormStyle := fsStayOnTop;
+  Result.FrameSoundVolume.Level := ALevel;
   Result.AutoSize := True;
 end;
 

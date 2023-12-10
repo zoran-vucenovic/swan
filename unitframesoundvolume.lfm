@@ -1,0 +1,31 @@
+object FrameSoundVolume: TFrameSoundVolume
+  Left = 0
+  Height = 158
+  Top = 0
+  Width = 120
+  AutoSize = True
+  ClientHeight = 158
+  ClientWidth = 120
+  TabOrder = 0
+  DesignLeft = 693
+  DesignTop = 86
+  object TrackBar1: TTrackBar
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    Left = 0
+    Height = 152
+    Top = 0
+    Width = 19
+    AutoSize = True
+    Max = 31
+    Orientation = trVertical
+    Position = 15
+    Reversed = True
+    ScalePos = trLeft
+    ShowSelRange = False
+    TickMarks = tmBoth
+    TickStyle = tsNone
+    OnMouseWheel = TrackBar1MouseWheel
+    TabOrder = 0
+  end
+end

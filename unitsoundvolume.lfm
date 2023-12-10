@@ -1,80 +1,61 @@
 object FormSoundVolume: TFormSoundVolume
-  Left = 880
+  Left = 217
   Height = 181
-  Top = 79
+  Top = 90
   Width = 120
   BorderStyle = bsNone
   Caption = 'FormSoundVolume'
   ClientHeight = 181
   ClientWidth = 120
   OnClose = FormClose
+  OnCreate = FormCreate
   OnDeactivate = FormDeactivate
   LCLVersion = '3.0.0.2'
   object Panel2: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
     Left = 0
-    Height = 174
+    Height = 178
     Top = 0
-    Width = 24
+    Width = 28
     AutoSize = True
     BevelOuter = bvNone
+    BorderStyle = bsSingle
     ClientHeight = 174
     ClientWidth = 24
     TabOrder = 0
     object Panel1: TPanel
-      AnchorSideLeft.Control = Panel2
       AnchorSideTop.Control = Panel2
-      Left = 0
-      Height = 174
+      AnchorSideRight.Control = Panel2
+      AnchorSideRight.Side = asrBottom
+      Left = 5
+      Height = 152
       Top = 0
-      Width = 24
-      AutoSize = True
+      Width = 19
+      Anchors = [akTop, akRight]
       BevelOuter = bvNone
-      ClientHeight = 174
-      ClientWidth = 24
+      BorderStyle = bsSingle
       TabOrder = 0
-      object TrackBar1: TTrackBar
-        AnchorSideTop.Control = Panel1
-        AnchorSideRight.Control = Panel1
-        AnchorSideRight.Side = asrBottom
-        Left = 5
-        Height = 152
+    end
+    object ToolBar1: TToolBar
+      AnchorSideTop.Control = Panel1
+      AnchorSideTop.Side = asrBottom
+      AnchorSideRight.Control = Panel2
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 22
+      Top = 152
+      Width = 24
+      Align = alNone
+      Anchors = [akTop, akRight]
+      AutoSize = True
+      EdgeBorders = []
+      TabOrder = 1
+      object ToolButton1: TToolButton
+        Left = 1
         Top = 0
-        Width = 19
-        AutoSize = True
-        Max = 31
-        Orientation = trVertical
-        Position = 15
-        Reversed = True
-        ScalePos = trRight
-        ShowSelRange = False
-        TickMarks = tmTopLeft
-        TickStyle = tsNone
-        Anchors = [akTop, akRight]
-        OnMouseWheel = TrackBar1MouseWheel
-        TabOrder = 0
-      end
-      object ToolBar1: TToolBar
-        AnchorSideTop.Control = TrackBar1
-        AnchorSideTop.Side = asrBottom
-        AnchorSideRight.Control = Panel1
-        AnchorSideRight.Side = asrBottom
-        Left = 0
-        Height = 22
-        Top = 152
-        Width = 24
-        Align = alNone
-        Anchors = [akTop, akRight]
-        AutoSize = True
-        EdgeBorders = []
-        TabOrder = 1
-        object ToolButton1: TToolButton
-          Left = 1
-          Top = 0
-          Caption = 'ToolButton1'
-          OnArrowClick = ToolButton1ArrowClick
-        end
+        Caption = 'ToolButton1'
+        OnArrowClick = ToolButton1ArrowClick
       end
     end
   end

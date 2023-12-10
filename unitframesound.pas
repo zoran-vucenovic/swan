@@ -9,29 +9,37 @@ interface
 
 uses
   Classes, SysUtils, UnitInputLibraryPathDialog, UnitSpectrum, UnitOptions,
-  Forms, Controls, ExtCtrls, StdCtrls;
+  UnitFrameSoundVolume, Forms, Controls, ExtCtrls, StdCtrls;
 
 type
   TFrameSound = class(TFrame)
     Bevel1: TBevel;
     CheckBox1: TCheckBox;
+    LabelVolume: TLabel;
     Panel1: TPanel;
+    Panel2: TPanel;
+    PanelVolume: TPanel;
     PanelSoundLibrary: TPanel;
   private
     FrameSoundLib: TFrameInputLibraryPath;
     FSpectrum: TSpectrum;
+    FrameSoundVolume: TFrameSoundVolume;
 
     procedure FormOnShow(Sender: TObject);
     procedure AfterShow(Data: PtrInt);
     function GetSoundMuted: Boolean;
+    function GetVolLevel: Integer;
     procedure SetFrameSoundLib(AFrameSoundLib: TFrameInputLibraryPath);
     procedure SetSoundMuted(const AValue: Boolean);
     procedure FormCloseCallback(Sender: TObject; var {%H-}CloseAction: TCloseAction);
+    procedure SetVolLevel(AValue: Integer);
   public
     constructor Create(TheOwner: TComponent); override;
 
     class function CreateForAllOptions(AOptionsDialog: TFormOptions;
       ASpectrum: TSpectrum; AFrameSoundLib: TFrameInputLibraryPath): TFrameSound;
+
+    property VolLevel: Integer read GetVolLevel write SetVolLevel;
   end;
 
 implementation
@@ -67,6 +75,11 @@ begin
   Result := CheckBox1.Checked;
 end;
 
+function TFrameSound.GetVolLevel: Integer;
+begin
+  Result := FrameSoundVolume.Level;
+end;
+
 procedure TFrameSound.SetSoundMuted(const AValue: Boolean);
 begin
   CheckBox1.Checked := AValue;
@@ -79,6 +92,11 @@ begin
     FSpectrum.SoundMuted := GetSoundMuted;
 end;
 
+procedure TFrameSound.SetVolLevel(AValue: Integer);
+begin
+  FrameSoundVolume.Level := AValue;
+end;
+
 constructor TFrameSound.Create(TheOwner: TComponent);
 begin
   inherited Create(TheOwner);
@@ -89,9 +107,23 @@ begin
   PanelSoundLibrary.Caption := '';
   Panel1.BevelOuter := bvNone;
   Panel1.Caption := '';
+  Panel2.Caption := '';
+  PanelVolume.BevelOuter := bvNone;
+  PanelVolume.Caption := '';
 
   PanelSoundLibrary.AutoSize := True;
 
+  FrameSoundVolume := TFrameSoundVolume.Create(PanelVolume);
+  FrameSoundVolume.VerticalOrientation := False;
+  FrameSoundVolume.Anchors := [];
+  FrameSoundVolume.AnchorParallel(akTop, 0, PanelVolume);
+  FrameSoundVolume.AnchorToNeighbour(akLeft, 5, LabelVolume);
+  FrameSoundVolume.Parent := PanelVolume;
+
+  PanelVolume.OnMouseWheel := FrameSoundVolume.TrackBar1.OnMouseWheel;
+  Panel2.OnMouseWheel := FrameSoundVolume.TrackBar1.OnMouseWheel;
+
+  PanelVolume.AutoSize := True;
   Panel1.AutoSize := True;
   Self.AutoSize := True;
 end;
