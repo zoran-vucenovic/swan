@@ -533,6 +533,8 @@ begin
   end;
 end;
 
+{ This is used when saving snapshots to file - if cpu is in the middle of
+  prefixed instruction, finish it before saving the snapshot }
 procedure TSpectrum.StepToInstructionEndIfNeeded;
 begin
   case FProcessor.PrefixByte of
@@ -542,6 +544,9 @@ begin
       begin
         case FMemory.ReadByte(FProcessor.RegPC) of
           $DD, $ED, $FD:
+            // Followed by another prefix, this is NONI, so don't step further.
+            // Szx format (but not z80 or sna) will save that the interrupts
+            // are disabled in the next step.
             ;
         otherwise
           DoStep;
