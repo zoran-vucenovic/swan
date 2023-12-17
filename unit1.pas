@@ -649,8 +649,6 @@ begin
         TCommonSpectrum.KB16,
         TCommonSpectrum.KB64 - 1,
         Pokes
-        //Spectrum.GetProcessor.GetMemory^.RomSize,
-        //Spectrum.GetProcessor.GetMemory^.MemSize - 1, Pokes
         )
       then begin
         for I := Low(Pokes) to High(Pokes) do begin
