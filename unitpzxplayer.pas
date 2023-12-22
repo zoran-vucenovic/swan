@@ -55,7 +55,7 @@ type
     procedure Start; override;
   end;
 
-  TPzxBlockUnsuported = class(TPzxBlock)
+  TPzxBlockUnsupported = class(TPzxBlock)
   private
     BlockIdentifier: String;
   protected
@@ -273,7 +273,7 @@ end;
 
 { TPzxBlockUnsuported }
 
-function TPzxBlockUnsuported.LoadBlock2(const Stream: TStream): Boolean;
+function TPzxBlockUnsupported.LoadBlock2(const Stream: TStream): Boolean;
 var
   P: Int64;
 begin
@@ -288,34 +288,34 @@ begin
     Result := True;
 end;
 
-constructor TPzxBlockUnsuported.Create(ATapePlayer: TTapePlayer);
+constructor TPzxBlockUnsupported.Create(ATapePlayer: TTapePlayer);
 begin
   inherited Create(ATapePlayer);
   BlockIdentifier := '';
 end;
 
-class function TPzxBlockUnsuported.GetBlockDescription: String;
+class function TPzxBlockUnsupported.GetBlockDescription: String;
 begin
   Result := 'Block not supported';
 end;
 
-procedure TPzxBlockUnsuported.Start;
+procedure TPzxBlockUnsupported.Start;
 begin
   inherited Start;
   State := ppsFinished;
 end;
 
-class function TPzxBlockUnsuported.GetBlockIdAsString: String;
+class function TPzxBlockUnsupported.GetBlockIdAsString: String;
 begin
   Result := '';
 end;
 
-function TPzxBlockUnsuported.GetNextPulse: Boolean;
+function TPzxBlockUnsupported.GetNextPulse: Boolean;
 begin
   Result := inherited GetNextPulse;
 end;
 
-procedure TPzxBlockUnsuported.Details(out S: String);
+procedure TPzxBlockUnsupported.Details(out S: String);
 begin
   S := 'Unknown block "' + BlockIdentifier + '"';
 end;
@@ -964,7 +964,7 @@ begin
       if PzxBlocksMap.TryGetData(D, C) then
         Result := C
       else
-        Result := TPzxBlockUnsuported;
+        Result := TPzxBlockUnsupported;
     end;
   end;
 end;
