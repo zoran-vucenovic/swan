@@ -21,7 +21,7 @@ object Form1: TForm1
   OnDropFiles = FormDropFiles
   OnShow = FormShow
   ParentDoubleBuffered = False
-  LCLVersion = '3.0.0.2'
+  LCLVersion = '3.1.0.0'
   object PaintBox1: TPaintBox
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
@@ -653,7 +653,7 @@ object Form1: TForm1
       end
     end
     object MenuItem19: TMenuItem
-      Caption = 'Help'
+      Caption = '&Help'
       object MenuItem20: TMenuItem
         Action = ActionAbout
       end
