@@ -249,6 +249,7 @@ type
     procedure UpdateShowCurrentlyActiveJoystick;
     procedure UpdateCheckPaused;
     procedure UpdateCheckLateTimings;
+    procedure UpdateCheckShowKeyboard;
     procedure UpdateSoundControls;
     procedure LoadFromConf;
     procedure SaveToConf;
@@ -458,6 +459,7 @@ begin
   end;
   UpdateCheckWriteScreen;
   //
+  UpdateCheckShowKeyboard;
   ShowOrHideToolbar(not FInitiallyHideToolBar);
   UpdateCheckHideToolbar;
 
@@ -1212,6 +1214,11 @@ end;
 procedure TForm1.UpdateCheckLateTimings;
 begin
   ActionLateTimings.Checked := Spectrum.LateTimings;
+end;
+
+procedure TForm1.UpdateCheckShowKeyboard;
+begin
+  ActionShowKeyboardOnScreen.Checked := Assigned(FKeyboardOnScreen);
 end;
 
 procedure TForm1.UpdateSoundControls;
@@ -2730,8 +2737,11 @@ begin
     FKeyboardOnScreen.OnKeyUp := @DoOnKeyUp;
     FKeyboardOnScreen.OnDeactivate := @FormDeactivate;
     FKeyboardOnScreen.KeyPreview := True;
+    FKeyboardOnScreen.BringToFront;
+    UpdateCheckShowKeyboard;
+  end else begin
+    FKeyboardOnScreen.Close;
   end;
-  FKeyboardOnScreen.BringToFront;
 end;
 
 procedure TForm1.ShowSoundVolumeForm(const AToggleMute: Boolean);
@@ -2849,6 +2859,7 @@ begin
       FKeyboardOnScreen := nil;
       Spectrum.KeyBoard.ClearKeyboard;
       TJoystick.Joystick.ResetState;
+      UpdateCheckShowKeyboard;
     end else if AComponent = FSoundVolumeForm then begin
       FSoundVolumeForm := nil;
       UpdateSoundControls;
