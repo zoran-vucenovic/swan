@@ -1,5 +1,5 @@
 unit UnitCommon;
-// Copyright 2022, 2023 Zoran Vučenović
+// Copyright 2022-2024 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}

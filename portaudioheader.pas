@@ -1,5 +1,5 @@
 unit PortAudioHeader;
-// Copyright 2022, 2023 Zoran Vučenović
+// Copyright 2022-2024 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 {
   Some declarations from file portaudio.h, translated from C to Free Pascal.
