@@ -510,7 +510,7 @@ begin
                     end;
                   end;
                   Result := Result and WriteRec
-                    and (Stream.Write(Str0.Memory^, Str0.Size) = Rec.CompressedSize);
+                    and (Stream.Write(Str0.Memory^, Str0.Size) = Str0.Size);
                 except
                   Result := False;
                 end;
