@@ -2393,11 +2393,10 @@ begin
 
     if Assigned(TapePlayerClass) then begin
       TapePlayer := TapePlayerClass.Create;
+      TapePlayer.SetSpectrum(Spectrum);
       TapePlayer.FileName := FileName;
-
       try
         if TapePlayer.LoadFromStream(Stream) then begin
-          TapePlayer.SetSpectrum(Spectrum);
           TapePlayer.Rewind;
           if FAutoShowTapePlayerWhenTapeLoaded then
             ShowTapeBrowser()
