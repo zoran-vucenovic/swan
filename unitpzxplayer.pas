@@ -252,7 +252,7 @@ begin
          , #0, #13, [rfReplaceAll]);
 
     // See the comment inside TPzxBlockPZXT.FillDetails method
-    TCommonFunctions.ConvertCodePageFromISO8859_1_to_Utf8(BrwsText);
+    TCommonFunctions.ConvertCodePageFromCp1252ToUtf8(BrwsText);
   end;
 end;
 
@@ -795,14 +795,14 @@ begin
 
       // Unilike tzx, pzx specification says that texts should be utf8 encoded.
       // However, this rule is immediately broken there by the files provided
-      // for testing, which have text encoded in iso-8859-1.
+      // for testing, which have text encoded in cp1252 (iso-8859-1).
       // see the pound character in header block of these games:
       //   - World Cup Carnival
       //   - Super Scramble
       //   - Atlantis
       //   - Myth
-      // So, let's treat text as iso-8859-1, as we do with tzx files:
-      TCommonFunctions.ConvertCodePageFromISO8859_1_to_Utf8(FDetails);
+      // So, let's treat text as cp1252, as we do with tzx files:
+      TCommonFunctions.ConvertCodePageFromCp1252ToUtf8(FDetails);
 
       Result := True;
     end;

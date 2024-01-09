@@ -106,7 +106,7 @@ begin
                 if B > 0 then begin
                   if Stream.Read(TextStructures[I].Text[1], B) <> B then
                     Exit(False);
-                  TCommonFunctions.ConvertCodePageFromISO8859_1_to_Utf8(TextStructures[I].Text);
+                  TCommonFunctions.ConvertCodePageFromCp1252ToUtf8(TextStructures[I].Text);
                   L := L - B;
                 end;
               end;

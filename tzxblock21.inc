@@ -53,7 +53,7 @@ begin
         SetLength(GroupName, B);
         if not Result then begin
           if Stream.Read(GroupName[1], B) = B then begin
-            TCommonFunctions.ConvertCodePageFromISO8859_1_to_Utf8(GroupName);
+            TCommonFunctions.ConvertCodePageFromCp1252ToUtf8(GroupName);
             Result := True;
           end;
         end;

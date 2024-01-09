@@ -62,7 +62,7 @@ begin
     if Stream.Read(FIdentificationString[1], $10) = $10 then begin
         // identification string must be in ascii (so no chars above 127)?
         // Just in case:
-        TCommonFunctions.ConvertCodePageFromISO8859_1_to_Utf8(FIdentificationString);
+        TCommonFunctions.ConvertCodePageFromCp1252ToUtf8(FIdentificationString);
         if Stream.Read(LL{%H-}, 4) = 4 then begin
           LL := LEtoN(LL);
           if Stream.Size - Stream.Position >= L then begin

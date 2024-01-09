@@ -38,7 +38,7 @@ type
     class function GlobalClassNameGenerator(C: TClass): String; static;
     class function GlobalObjectNameGenerator(Obj: TObject): String; static;
     class function SpectrumCharToUtf8(const Is128K: Boolean; S: RawByteString): RawByteString; static;
-    class procedure ConvertCodePageFromISO8859_1_to_Utf8(var S: AnsiString); static;
+    class procedure ConvertCodePageFromCp1252ToUtf8(var S: AnsiString); static;
     class procedure CallRandomizeIfNotCalledAlready(); static;
   strict private
     class function CheckStartForDecimal(const S: String): Boolean; static;
@@ -201,10 +201,10 @@ begin
   SetLength(CharLengths, 0);
 end;
 
-class procedure TCommonFunctions.ConvertCodePageFromISO8859_1_to_Utf8(var S: AnsiString);
+class procedure TCommonFunctions.ConvertCodePageFromCp1252ToUtf8(var S: AnsiString);
 begin                      
-//  https://docs.microsoft.com/en-us/windows/win32/intl/code-page-identifiers
-  SetCodePage(RawByteString(S), 28591, False); // set to iso-8859-1
+// https://docs.microsoft.com/en-us/windows/win32/intl/code-page-identifiers
+  SetCodePage(RawByteString(S), 1252, False); // set to cp1252
   SetCodePage(RawByteString(S), CP_UTF8, True); // convert
 end;
 
