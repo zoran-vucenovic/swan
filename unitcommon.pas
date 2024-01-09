@@ -37,9 +37,12 @@ type
   public
     class function GlobalClassNameGenerator(C: TClass): String; static;
     class function GlobalObjectNameGenerator(Obj: TObject): String; static;
-    class function SpectrumCharToUtf8(S: RawByteString): RawByteString; static;
+    class function SpectrumCharToUtf8(const Is128K: Boolean; S: RawByteString): RawByteString; static;
     class procedure ConvertCodePageFromISO8859_1_to_Utf8(var S: AnsiString); static;
-    class procedure CallRandomizeIfNotCalledAlready();
+    class procedure CallRandomizeIfNotCalledAlready(); static;
+  strict private
+    class function CheckStartForDecimal(const S: String): Boolean; static;
+  public
     class function TryStrToIntDecimal(const S: String; out N: Int32): Boolean; static;
     class function TryStrToInt64Decimal(const S: String; out N: Int64): Boolean; static;
   end;
@@ -68,9 +71,10 @@ begin
   end;
 end;
 
-class function TCommonFunctions.SpectrumCharToUtf8(S: RawByteString): RawByteString;
+class function TCommonFunctions.SpectrumCharToUtf8(const Is128K: Boolean;
+  S: RawByteString): RawByteString;
 const
-  UdgDelta = $90 - Ord('A');
+  UdgDelta = $90 - Ord('A'); // used for UDG area ($90-$A4)
   BlockCodes: array [0..15] of RawByteString = (
     ' ',
     #$e2#$96#$9d, // quadrant upper right
@@ -89,7 +93,8 @@ const
     #$e2#$96#$99, // quadrant upper left and lower left and lower right
     #$e2#$96#$88  // full block
   );
-  BasicConstants: array [0..90] of RawByteString = (
+  BasicConstants: array [0..92] of RawByteString = (
+    'SPECTRUM', 'PLAY', // these two are additional keywords on 128k models
     'RND', 'INKEY$', 'PI', 'FN', 'POINT', 'SCREEN$', 'ATTR', 'AT', 'TAB', 'VAL$',
     'CODE', 'VAL', 'LEN', 'SIN', 'COS', 'TAN', 'ASN', 'ACS', 'ATN', 'LN', 'EXP',
     'INT', 'SQR', 'SGN', 'ABS', 'PEEK', 'IN', 'USR', 'STR$', 'CHR$', 'NOT', 'BIN',
@@ -101,50 +106,99 @@ const
     'NEXT', 'POKE', 'PRINT', 'PLOT', 'RUN', 'SAVE', 'RANDOMIZE', 'IF', 'CLS',
     'DRAW', 'CLEAR', 'RETURN', 'COPY'
   );
+
 var
-  I, L, N, LastLen: Integer;
+  I: Integer;
+  L: Integer;
+  J: Integer;
+  K: Integer;
+  KJ: Integer;
+  CharLengths: array of Integer;
   S1: RawByteString;
+
 begin
   Result := '';
-  LastLen := 0;
   L := Length(S);
+  SetLength(CharLengths{%H-}, L);
   I := 0;
+  J := -1;
   while I < L do begin
     Inc(I);
 
-    case S[I] of
-      #$0..#$07, #$09..#$0c, #$0e..#$1f:
-        S1 := '';
-      #$08:
-        begin
-          if LastLen > 0 then
-            SetLength(Result, Length(Result) - LastLen);
+    if S[I] = #08 then begin
+      if J >= 0 then begin
+        SetLength(Result, Length(Result) - CharLengths[J]);
+        Dec(J);
+      end;
+    end else begin
+      KJ := 0;
+      case S[I] of
+        #$0..#$05, #$07, #$0a..#$0c, #$0e, #$0f, #$18..#$1f:
+          S1 := '?';
+        #$06:
+          S1 := ' ';
+        #$09:
           S1 := '';
-        end;
-      #$60:
-        S1 := #$c2 + #$a3; // pound sign
-      #$7f:
-        S1 := #$c2 + #$a9; // copyright sign
-      #$80..#$8F: // block characters
-        S1 := BlockCodes[Ord(S[I]) - $80];
-      #$90..#$a4:
-        S1 := AnsiChar(Ord(S[I]) - UdgDelta);
-      #$a5..#$ff:
-        { #todo : some of these strings conditionally put spaces around, some not }
-        begin
-          N := Ord(S[I]) - $a5;
-          S1 := BasicConstants[N];
-          if (Length(Result) > 0) and (not (Result[Length(Result)] in [' ', #13])) then
-            S1 := ' ' + S1;
-          if (I < Length(S)) and (not (S[I + 1] in [' ', #13])) then
-            S1 := S1 + ' ';
-        end;
-    otherwise
-      S1 := S[I];
+        #$10..#$15:
+          begin
+            S1 := '';
+            KJ := 1;
+            Inc(I);
+          end;
+        #$16, #$17:
+          begin
+            S1 := ' ';
+            KJ := 2;
+            I := I + KJ;
+          end;
+        #$5e:
+          S1 := #$e2 + #$86 + #$91; // upwards arrow symbol
+        #$60:
+          S1 := #$c2 + #$a3; // pound sign
+        #$7f:
+          S1 := #$c2 + #$a9; // copyright sign
+        #$80..#$8F: // block characters
+          S1 := BlockCodes[Ord(S[I]) - $80];
+        #$90..#$ff:
+          if (S[I] <= #$a2) or ((not Is128K) and (S[I] <= #$a4)) then begin
+            // UDG - user defined graphics - 21 characters, by default same as letters A-U
+            // On 128K models the last two bytes in UDG area are mapped to
+            // additional two keywords, leaving 19 characters for UDG.
+            // The best we can do is use these keywords if model is 128K when loading tape
+            S1 := AnsiChar(Ord(S[I]) - UdgDelta);
+          end else begin
+            S1 := BasicConstants[Ord(S[I]) - $a3];
+            if (Length(Result) > 0) and (not (Result[Length(Result)] in [' ', #13])) then begin
+              K := J;
+              while K >= 0 do begin
+                if CharLengths[K] > 0 then begin
+                  S1 := ' ' + S1;
+                  Break;
+                end;
+                Dec(K);
+              end;
+            end;
+
+            if (I < Length(S)) and (not (S[I + 1] in [' ', #13])) then
+              S1 := S1 + ' ';
+          end;
+      otherwise
+        S1 := S[I];
+      end;
+      Result := Result + S1;
+
+      if I < L then
+        repeat
+          Inc(J);
+          if J >= Length(CharLengths) then
+            SetLength(CharLengths, J * 7 div 5 + 2);
+          CharLengths[J] := Length(S1);
+          S1 := '';
+          Dec(KJ);
+        until KJ < 0;
     end;
-    Result := Result + S1;
-    LastLen := Length(S1);
   end;
+  SetLength(CharLengths, 0);
 end;
 
 class procedure TCommonFunctions.ConvertCodePageFromISO8859_1_to_Utf8(var S: AnsiString);
@@ -167,12 +221,16 @@ begin
   end;
 end;
 
-class function TCommonFunctions.TryStrToIntDecimal(const S: String; out N: Int32
-  ): Boolean;
+class function TCommonFunctions.CheckStartForDecimal(const S: String): Boolean;
 var
-  P: PAnsiChar;
+  P, Pe: PAnsiChar;
 begin
-  P := PAnsiChar(TrimLeft(S));
+  P := PAnsiChar(S);
+  Pe := P + Length(S);
+
+  while (P < Pe) and (P^ <= AnsiChar($20)) do
+    Inc(P);
+
   if P^ = '-' then
     Inc(P);
   case P^ of
@@ -185,28 +243,19 @@ begin
     Exit(False);
   end;
 
-  Result := TryStrToInt(S, N);
+  Result := True;
+end;
+
+class function TCommonFunctions.TryStrToIntDecimal(const S: String; out N: Int32
+  ): Boolean;
+begin
+  Result := CheckStartForDecimal(S) and TryStrToInt(S, N);
 end;
 
 class function TCommonFunctions.TryStrToInt64Decimal(const S: String; out
   N: Int64): Boolean;
-var
-  P: PAnsiChar;
 begin
-  P := PAnsiChar(TrimLeft(S));
-  if P^ = '-' then
-    Inc(P);
-  case P^ of
-    '0':
-      if not ((P + 1)^ in [#0, '0'..'9']) then
-        Exit(False);
-    '1'..'9':
-      ;
-  otherwise
-    Exit(False);
-  end;
-
-  Result := TryStrToInt64(S, N);
+  Result := CheckStartForDecimal(S) and TryStrToInt64(S, N);
 end;
 
 { TGlobalCounter }
@@ -221,7 +270,6 @@ begin
   Result := GlobalCounter;
   Inc(GlobalCounter);
 end;
-
 
 { TNumArraySorter }
 

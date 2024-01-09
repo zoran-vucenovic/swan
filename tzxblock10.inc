@@ -117,7 +117,7 @@ var
 
     SetLength(FileName{%H-}, 10);
     Move(Header.FileName[1], FileName[1], 10);
-    FileName := TCommonFunctions.SpectrumCharToUtf8(FileName);
+    FileName := TCommonFunctions.SpectrumCharToUtf8(FTapePlayer.GetSpectrum.Is128KModel, FileName);
 
     FHeaderDetails :=
       FHeaderDetails + ': ' + FileName + DecodeVariableName() + #13
