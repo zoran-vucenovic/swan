@@ -118,8 +118,7 @@ class function TVersion.Load: Boolean;
       else if FVersionMinor <= 9 then
         Result := Result + ' beta';
     end;
-    // and never display build number (FPV[3]) (let it increase automatically
-    // with every build, so it is contained in resource, but don't display it).
+    // and never display build number (FPV[3]).
   end;
 
 {$push}

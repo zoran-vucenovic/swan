@@ -233,6 +233,7 @@ begin
 
   if P^ = '-' then
     Inc(P);
+
   case P^ of
     '0':
       if not ((P + 1)^ in [#0, '0'..'9']) then
