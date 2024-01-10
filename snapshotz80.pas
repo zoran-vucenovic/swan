@@ -161,20 +161,23 @@ var
             Result := True; // ignore these
           end;
 
+        if not Result then begin
+          case Pg of
+            0, 2, 5:
+              N := 2 - Pg div 2;
+          otherwise
+            N := (7 + 2 * Pg) div 3;
+          end;
+
+          if (MemoryPagesToRead shr Pg) and 1 = 0 then
+            Result := True;
+        end;
+
         if Result then begin
           Stream.Seek(Le, TSeekOrigin.soCurrent);
           Exit;
         end;
 
-        case Pg of
-          0, 2, 5:
-            N := 2 - Pg div 2;
-        otherwise
-          N := (7 + 2 * Pg) div 3;
-        end;
-
-        if (MemoryPagesToRead shr Pg) and 1 = 0 then
-          Exit;
         MemoryPagesToRead := MemoryPagesToRead and (not (1 shl Pg));
 
         N := N * KB16;
@@ -404,6 +407,7 @@ begin
               end;
 
               if MemRead then begin
+                MemStream.Position := 0;
                 Result := State.SaveToSpectrum(FSpectrum)
                   and FSpectrum.Memory.LoadRamFromStream(MemStream);
               end;
