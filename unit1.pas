@@ -270,7 +270,7 @@ type
 
       TKeyEventRec = record
         KeyIndex: Integer;
-        BDown: Integer;
+        Flags: Integer;
       end;
 
       TDropFiles = class(TObject)
@@ -322,7 +322,7 @@ type
     procedure UpdateWriteScreen;
     procedure UpdateCheckWriteScreen;
     procedure UpdateCheckHideToolbar;
-    procedure AddKeyEventToQueue(KeyIndex: Integer; BDown: Integer);
+    procedure AddKeyEventToQueue(AKeyIndex: Integer; AFlags: Integer);
     procedure AddEventToQueue(Event: TNotifyEvent);
     {$ifNdef UseАuxiliaryBmp}
     procedure PaintScreen(Sender: TObject);
@@ -1970,14 +1970,14 @@ begin
   end;
 end;
 
-procedure TForm1.AddKeyEventToQueue(KeyIndex: Integer; BDown: Integer);
+procedure TForm1.AddKeyEventToQueue(AKeyIndex: Integer; AFlags: Integer);
 var
   KeyEventRec: TKeyEventRec;
 begin
   if Length(KeyEventQueue) <= KeyEventCount then
     SetLength(KeyEventQueue, (KeyEventCount * 7) div 5 + 2);
-  KeyEventRec.KeyIndex := KeyIndex;
-  KeyEventRec.BDown := BDown;
+  KeyEventRec.KeyIndex := AKeyIndex;
+  KeyEventRec.Flags := AFlags;
   KeyEventQueue[KeyEventCount] := KeyEventRec;
   Inc(KeyEventCount);
 end;
@@ -2569,13 +2569,13 @@ begin
     I := 0;
     while I < KeyEventCount do begin
       KRec := KeyEventQueue[I];
-      if KRec.BDown and 2 = 0 then
-        Spectrum.KeyBoard.SetKeyState(KRec.KeyIndex, KRec.BDown and 1 <> 0)
-      else if KRec.BDown and 4 = 0 then
-        TJoystick.Joystick.SetState(KRec.KeyIndex, KRec.BDown and 1 <> 0, Spectrum.KeyBoard)
+      if KRec.Flags and 2 = 0 then
+        Spectrum.KeyBoard.SetKeyState(KRec.KeyIndex, KRec.Flags and 1 <> 0)
+      else if KRec.Flags and 4 = 0 then
+        TJoystick.Joystick.SetState(KRec.KeyIndex, KRec.Flags and 1 <> 0, Spectrum.KeyBoard)
       else begin
-        Spectrum.KeyBoard.SetKeyState(WordRec(LongRec(KRec.KeyIndex).Lo).Hi, WordRec(LongRec(KRec.KeyIndex).Lo).Lo, KRec.BDown and 1 <> 0);
-        if KRec.BDown and 8 <> 0 then
+        Spectrum.KeyBoard.SetKeyState(WordRec(LongRec(KRec.KeyIndex).Lo).Hi, WordRec(LongRec(KRec.KeyIndex).Lo).Lo, KRec.Flags and 1 <> 0);
+        if KRec.Flags and 8 <> 0 then
           AddEventToQueue(@ReleaseShifts);
       end;
 

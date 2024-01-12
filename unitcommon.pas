@@ -62,13 +62,10 @@ end;
 
 class function TCommonFunctions.GlobalObjectNameGenerator(Obj: TObject): String;
 begin
-  if Obj = nil then
-    Result := GlobalClassNameGenerator(TClass(nil))
-  else begin
-    Result := Obj.ClassName;
-    Result := StringReplace(Trim(Result), '.', '_', [rfReplaceAll]);
-    Result := Result + PtrUInt(Obj).ToHexString(3);
-  end;
+  if Assigned(Obj) then
+    Result := GlobalClassNameGenerator(Obj.ClassType)
+  else
+    Result := GlobalClassNameGenerator(TClass(nil));
 end;
 
 class function TCommonFunctions.SpectrumCharToUtf8(const Is128K: Boolean;
@@ -125,7 +122,7 @@ begin
   while I < L do begin
     Inc(I);
 
-    if S[I] = #08 then begin
+    if S[I] = #08 then begin // backspace, delete the previous character
       if J >= 0 then begin
         SetLength(Result, Length(Result) - CharLengths[J]);
         Dec(J);
@@ -164,7 +161,7 @@ begin
             // UDG - user defined graphics - 21 characters, by default same as letters A-U
             // On 128K models the last two bytes in UDG area are mapped to
             // additional two keywords, leaving 19 characters for UDG.
-            // The best we can do is use these keywords if model is 128K when loading tape
+            // The best we can do is use these keywords if model is 128K when inserting tape
             S1 := AnsiChar(Ord(S[I]) - UdgDelta);
           end else begin
             S1 := BasicConstants[Ord(S[I]) - $a3];

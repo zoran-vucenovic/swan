@@ -93,7 +93,6 @@ function {TTzxPlayer.}TTzxBlock19.Load2(const Stream: TStream; L: Integer
   function LoadSymDefs(var SymDefs: TSymDefs; Asx, Npx: Integer): Boolean;
   var
     I, J: Integer;
-    //SymDef: TSymDef;
     WA: Array[0..255] of Word;
     W: Word;
     B: Byte;
@@ -153,7 +152,7 @@ var
   UL: UInt32;
   Block19Header: TBlock19Header;
   I, L2: Integer;
-  //SymDef: TSymdef;
+
 begin
   Result := False;
 
