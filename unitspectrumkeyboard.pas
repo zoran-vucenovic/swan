@@ -37,7 +37,6 @@ type
     FKeyMapper: TKeyMapper;
 
     procedure MapDefaultKeys;
-    procedure UnmapKey(const AKey: Word; const HalfRowIndex: THalfRowIndex; const KeyIndex: TKeyIndex);
 
     class operator Initialize(var X: TSpectrumKeyBoard);
     class operator Finalize(var X: TSpectrumKeyBoard);
@@ -298,22 +297,6 @@ var
 begin
   for I := Low(FHalfRows) to High(FHalfRows) do
     FHalfRows[I] := %00011111;
-end;
-
-procedure TSpectrumKeyBoard.UnmapKey(const AKey: Word;
-  const HalfRowIndex: THalfRowIndex; const KeyIndex: TKeyIndex);
-var
-  I: Integer;
-  W: Word;
-  WR: WordRec absolute W;
-begin
-  if FKeyMapper.Find(AKey, I) then begin
-    WR.Hi := HalfRowIndex;
-    WR.Lo := KeyIndex;
-    FKeyMapper.Data[I].Remove(W);
-    if FKeyMapper.Data[I].Count <= 0 then
-      FKeyMapper.Delete(I);
-  end;
 end;
 
 procedure TSpectrumKeyBoard.SetKeyState(const HalfRowIndex: THalfRowIndex;
