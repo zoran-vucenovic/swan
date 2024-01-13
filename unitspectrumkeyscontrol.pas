@@ -248,6 +248,7 @@ begin
               FButtonCapsShift := B;
             $0701:
               FButtonSymbolShift := B;
+          otherwise
           end;
 
           if I = 0 then begin

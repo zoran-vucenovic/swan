@@ -229,8 +229,6 @@ begin
   if not FSpectrum.IsRunning then
     Exit;
 
-  HeadersRead := 0;
-
   WasPaused := FSpectrum.Paused;
   try
     FSpectrum.Paused := True;
@@ -356,8 +354,8 @@ begin
                 if Header1.ViB2 and %100 <> 0 then // issue2 emulation
                   State.SpectrumModel := sm48K_issue_2;
               end;
-            otherwise
-              MemoryPagesToRead := $FF; // 128K, all memory pages are there, we need to read all of them
+          otherwise
+            MemoryPagesToRead := $FF; // 128K, all memory pages are there, we need to read all of them
           end;
 
           Len1 := Stream.Size - Stream.Position;
@@ -540,6 +538,7 @@ begin
     case State.SpectrumModel of
       TSpectrumModel.sm16K_issue_2, TSpectrumModel.sm48K_issue_2:
         Header1.ViB2 := Header1.ViB2 or %100;
+    otherwise
     end;
 
     Header2 := Default(THeader2);
@@ -573,6 +572,8 @@ begin
           //Header2.B37 := $80;
           Is128K := True;
         end;
+    otherwise
+      Exit; // give up
     end;
 
     if Is128K then

@@ -1170,14 +1170,10 @@ begin
         FlagsToSet := Byte(B shr 7);
         B := Byte(B shl 1) or 1;
       end;
-    7: //SRL(B);
-      begin
-        FlagsToSet := B and 1;
-        B := B shr 1;
-      end;
-  otherwise
-    Assert(False);
-    FlagsToSet := 0;
+  otherwise //7:
+    //SRL(B);
+    FlagsToSet := B and 1;
+    B := B shr 1;
   end;
 
   if B = 0 then
@@ -1712,7 +1708,7 @@ var
               ResolveTableRP()^ := ReadNextWord;
               FFlagsModified := False;
             end;
-        otherwise //1:
+        otherwise // 1:
           // ADD HL, rp[p]
           Contention2Times;
           Contention5Times;
@@ -1776,8 +1772,9 @@ var
           case y and 1 of
             0: // INC rp[p]
               Inc(ResolveTableRP()^);
-            1: // DEC rp[p]
-              Dec(ResolveTableRP()^);
+          otherwise // 1:
+            // DEC rp[p]
+            Dec(ResolveTableRP()^);
           end;
           FFlagsModified := False;
         end;
@@ -1920,7 +1917,8 @@ var
               Exx;
             2: // JP HL
               FRegPC := ResolveHL^;
-          otherwise // 3: // LD SP, HL
+          otherwise // 3:
+            // LD SP, HL
             Contention2Times;
             FRegSP := ResolveHL^;
           end;
@@ -2205,8 +2203,8 @@ var
           // NONI + NOP
           FFlagsModified := False;
         end;
-    otherwise
-      //0, 3: // NONI + NOP
+    otherwise //0, 3:
+      // NONI + NOP
       FFlagsModified := False;
     end;
   end;
@@ -2356,8 +2354,8 @@ begin
       ProcessX1;
     2:
       ProcessX2;
-    3:
-      ProcessX3;
+  otherwise // 3:
+    ProcessX3;
   end;
 
 end;

@@ -309,7 +309,7 @@ begin
 
   ModelToSet := ASpectrum.SpectrumModel;
   Roms := nil;
-  case ASpectrum.SpectrumModel of
+  case ModelToSet of
     TSpectrumModel.sm16K_issue_2, TSpectrumModel.sm16K_issue_3:
       RadioGroupSpectrumModel.ItemIndex := 0;
     TSpectrumModel.sm48K_issue_2, TSpectrumModel.sm48K_issue_3:
@@ -318,10 +318,13 @@ begin
       RadioGroupSpectrumModel.ItemIndex := 2;
     TSpectrumModel.smPlus2:
       RadioGroupSpectrumModel.ItemIndex := 3;
+  otherwise
+    ModelToSet := TSpectrumModel.sm48K_issue_3;
+    RadioGroupSpectrumModel.ItemIndex := 1;
   end;
 
   N := 1;
-  case ASpectrum.SpectrumModel of
+  case ModelToSet of
     TSpectrumModel.sm16K_issue_2, TSpectrumModel.sm48K_issue_2:
       N := 0;
     TSpectrumModel.sm16K_issue_3, TSpectrumModel.sm48K_issue_3:

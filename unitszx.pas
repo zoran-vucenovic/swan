@@ -299,7 +299,6 @@ function TZxstAYBlock.LoadFromStream(const Stream: TStream): Boolean;
 var
   AyRec: TAyBlockRec;
   I: Integer;
-  N: Integer;
 
 begin
   Result := False;
@@ -618,6 +617,7 @@ begin
         Rec.ChKeyboardJoystick := ZXSTKJT_SINCLAIR2;
       TJoystick.TJoystickType.jtCursor:
         Rec.ChKeyboardJoystick := ZXSTKJT_CURSOR;
+    otherwise
     end;
   end;
 

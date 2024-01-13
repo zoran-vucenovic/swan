@@ -294,6 +294,7 @@ function {TTzxPlayer.}TTzxBlock19.GetNextPulse: Boolean;
         FTapePlayer.ActiveBit := 0;
       3:
         FTapePlayer.ActiveBit := %01000000;
+    otherwise
     end;
     Start1 := False;
     SymLen := SymDef.Len;

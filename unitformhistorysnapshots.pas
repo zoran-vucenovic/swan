@@ -84,6 +84,7 @@ begin
     LM_LBUTTONDOWN, LM_RBUTTONDOWN:
       if MouseInClient and CanSetFocus then
         SetFocus;
+  otherwise
   end;
 end;
 

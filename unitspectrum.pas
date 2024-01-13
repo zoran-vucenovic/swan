@@ -679,6 +679,7 @@ procedure TSpectrum.SetSpectrumModel(ASpectrumModel: TSpectrumModel;
         end;
       // perhaps more models one day...
     otherwise
+      SetLength(ARoms, 0);
     end;
 
     Result := Length(ARoms) >= 1;

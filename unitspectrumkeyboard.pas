@@ -93,13 +93,12 @@ procedure TSpectrumKeyBoard.TKeyMapper.LoadFromKeyMapRecs(
 var
   KeyMapRec: TKeyMapRec;
   I: Integer;
-  WR: WordRec;
-  W: Word absolute WR;
+  WR: WordRec absolute KeyMapRec.SpectrumKey;
+
 begin
   Clear;
   for I := Low(AKeyMapRecs) to High(AKeyMapRecs) do begin
     KeyMapRec := AKeyMapRecs[I];
-    W := KeyMapRec.SpectrumKey;
     if (WR.Hi <= High(THalfRowIndex)) and (WR.Lo <= High(TKeyIndex)) then begin
       MapKey(KeyMapRec.Key, WR.Hi, WR.Lo);
     end;

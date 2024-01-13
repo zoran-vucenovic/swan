@@ -665,6 +665,7 @@ begin
     VK_RETURN, VK_ESCAPE, VK_SPACE:
       if CloseButton is TFormAboutCloseButton then
         TFormAboutCloseButton(CloseButton).GoDown;
+  otherwise
   end;
 end;
 
@@ -685,6 +686,7 @@ begin
         end;
 
       end;
+  otherwise
   end;
 end;
 
