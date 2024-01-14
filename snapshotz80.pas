@@ -651,12 +651,12 @@ begin
             then
               Break;
 
+            Inc(I);
             if I = BanksCount then begin
               Result := True;
               Break;
             end;
 
-            Inc(I);
           until False;
 
         finally
