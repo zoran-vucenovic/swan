@@ -2076,7 +2076,6 @@ begin
           SaveDialog1.InitialDir := S;
       end;
 
-
       if ChooseSaveFilePath() then begin
         FileSnapshot := SnapshotClass.Create;
         try
@@ -2084,6 +2083,9 @@ begin
           if FileSnapshot.SaveToFile(SaveDialog1.FileName) then begin
             FRecentFiles.Add(SaveDialog1.FileName);
             UpdateRecentFiles;
+          end else begin
+            MessageDlg('Saving failed.' + LineEnding + 'Something went wrong...',
+                      mtError, [mbClose], 0);
           end;
         finally
           FileSnapshot.Free;
