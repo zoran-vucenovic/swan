@@ -576,7 +576,7 @@ begin
     end;
 
     if Is128K then
-      Header2.B36 := State.Get7ffd();
+      Header2.B35 := State.Get7ffd();
 
     Header2.B37 := Header2.B37 or %11;
 
