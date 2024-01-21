@@ -110,6 +110,8 @@ type
     function GetMemStr(): TMemoryStream;
     procedure SetMemSize(ASize: Integer);
 
+    procedure RaiseSnapshotLoadErrorSZX(const S: AnsiString);
+
   private
     class procedure Init; static;
     class procedure Final; static;
@@ -1040,6 +1042,16 @@ begin
   Mem.Size := ASize;
 end;
 
+procedure TSnapshotSZX.RaiseSnapshotLoadErrorSZX(const S: AnsiString);
+var
+  Msg: AnsiString;
+begin
+  Msg := 'SZX snapshot load error';
+  if S <> '' then
+    Msg := Msg + LineEnding + LineEnding + S;
+  RaiseSnapshotLoadError(Msg);
+end;
+
 class procedure TSnapshotSZX.Init;
 
   procedure AddBlockClass(BlockClass: TSzxBlockClass);
@@ -1135,8 +1147,7 @@ function TSnapshotSZX.LoadFromStream(const Stream: TStream): Boolean;
               end;
 
             // Models not yet supported, but most likely will be:
-            TZxstHeadr.ZXSTMID_PLUS2A, TZxstHeadr.ZXSTMID_PLUS3:
-              ;
+            TZxstHeadr.ZXSTMID_PLUS2A, TZxstHeadr.ZXSTMID_PLUS3,
 
             // Models which are not likely to ever be supported in Swan...
             TZxstHeadr.ZXSTMID_PLUS3E, TZxstHeadr.ZXSTMID_PENTAGON128,
@@ -1144,8 +1155,9 @@ function TSnapshotSZX.LoadFromStream(const Stream: TStream): Boolean;
             TZxstHeadr.ZXSTMID_SE, TZxstHeadr.ZXSTMID_TS2068, TZxstHeadr.ZXSTMID_PENTAGON512,
             TZxstHeadr.ZXSTMID_PENTAGON1024, TZxstHeadr.ZXSTMID_NTSC48K,
             TZxstHeadr.ZXSTMID_128KE:
-              ;
+              RaiseSnapshotLoadErrorSZX(Format('Model not supported (id %d).', [SzxHeader.MachineId]));
           otherwise
+            RaiseSnapshotLoadErrorSZX(Format('Model unknown (id %d).', [SzxHeader.MachineId]));
           end;
         end;
       end;

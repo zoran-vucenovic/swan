@@ -2053,6 +2053,8 @@ var
   S: RawByteString;
   Extension: String;
   LastFilePath: RawByteString;
+  Saved: Boolean;
+  ErrMsg: String;
 
 begin
   if Spectrum.IsRunning then begin
@@ -2077,19 +2079,30 @@ begin
       end;
 
       if ChooseSaveFilePath() then begin
+        ErrMsg := '';
         FileSnapshot := SnapshotClass.Create;
         try
+          Saved := False;
           FileSnapshot.SetSpectrum(Spectrum);
-          if FileSnapshot.SaveToFile(SaveDialog1.FileName) then begin
-            FRecentFiles.Add(SaveDialog1.FileName);
-            UpdateRecentFiles;
-          end else begin
-            MessageDlg('Saving failed.' + LineEnding + 'Something went wrong...',
-                      mtError, [mbClose], 0);
+          try
+            Saved := FileSnapshot.SaveToFile(SaveDialog1.FileName);
+          except
+            on E: ESnapshotSaveError do
+              ErrMsg := E.Message;
+          end;
+          if ErrMsg = '' then begin
+            if Saved then begin
+              FRecentFiles.Add(SaveDialog1.FileName);
+              UpdateRecentFiles;
+            end else begin
+              ErrMsg := 'Saving failed.' + LineEnding + 'Something went wrong...';
+            end;
           end;
         finally
           FileSnapshot.Free;
         end;
+        if ErrMsg <> '' then
+          MessageDlg(ErrMsg, mtError, [mbClose], 0);
       end;
 
     finally
@@ -2276,9 +2289,17 @@ end;
 procedure TForm1.DoLoad(const SnapshotOrTape: TSnapshotOrTape;
   ASourceFile: String);
 
-  procedure LoadingFailed;
+var
+  ErrorShown: Boolean;
+
+  procedure LoadingFailed(AMsg: String = '');
   begin
-    MessageDlg('Loading failed.' + LineEnding + 'Bad file?', mtError, [mbClose], 0);
+    if ErrorShown then
+      Exit;
+    if AMsg = '' then
+      AMsg := 'Loading failed.' + LineEnding + 'Bad file?';
+    MessageDlg(AMsg, mtError, [mbClose], 0);
+    ErrorShown := True;
   end;
 
 var
@@ -2292,6 +2313,7 @@ var
 
 begin
   FFileToOpen := '';
+  ErrorShown := False;
 
   if (ASourceFile <> '') and Spectrum.IsRunning then begin
     WasPaused := Spectrum.Paused;
@@ -2305,6 +2327,7 @@ begin
         GetAcceptableExtensions(SnapshotOrTape, True, AcceptedExtensions);
         if not TFileUnzipper.GetFileFromZipFile(ASourceFile, AcceptedExtensions, Stream, FileName) then begin
           Stream := nil;
+          LoadingFailed('No Spectrum file found in zip.');
         end else begin
           DoDirSeparators(FileName);
           Extension := ExtractFileExt(FileName);
@@ -2321,6 +2344,7 @@ begin
       if not Assigned(Stream) then begin
         if FRecentFiles.Remove(ASourceFile) then
           UpdateRecentFiles;
+        LoadingFailed;
       end else begin
         try
           SnapshotFile := nil;
@@ -2343,7 +2367,13 @@ begin
               //Spectrum.ResetSpectrum;
               Spectrum.InLoadingSnapshot := True;
               try
-                L := SnapshotFile.LoadFromStream(Stream);
+                try
+                  L := SnapshotFile.LoadFromStream(Stream);
+                except
+                  on E: ESnapshotLoadError do
+                    LoadingFailed(E.Message);
+                else
+                end;
                 UpdateShowCurrentlyActiveJoystick;
                 UpdateCheckLateTimings;
               finally

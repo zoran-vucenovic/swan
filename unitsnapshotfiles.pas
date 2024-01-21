@@ -17,6 +17,11 @@ const
 
 type
 
+
+  ESnapshotError = class(Exception);
+  ESnapshotLoadError = class(ESnapshotError);
+  ESnapshotSaveError = class(ESnapshotError);
+
   { TSpectrumInternalState }
 
   TSpectrumInternalState = record
@@ -62,6 +67,8 @@ type
   end;
 
   TSnapshot = class abstract (TSpectrumFile)
+  protected
+    procedure RaiseSnapshotLoadError(const S: AnsiString);
   public
     function LoadFromStream(const Stream: TStream): Boolean; virtual; abstract;
     function SaveToStream(const Stream: TStream): Boolean; virtual; abstract;
@@ -342,6 +349,11 @@ end;
 procedure TSpectrumFile.SetSpectrum(Value: TSpectrum);
 begin
   FSpectrum := Value;
+end;
+
+procedure TSnapshot.RaiseSnapshotLoadError(const S: AnsiString);
+begin
+  raise ESnapshotLoadError.Create(S);
 end;
 
 { TSnapshotFile }

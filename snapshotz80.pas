@@ -63,6 +63,7 @@ type
     const
       EndOfMemStream: TFourBytes = (0, $ED, $ED, 0);
 
+    procedure RaiseSnapshotLoadErrorZ80(const S: AnsiString);
   public
     class function GetDefaultExtension: String; override;
     function LoadFromStream(const Stream: TStream): Boolean; override;
@@ -72,6 +73,16 @@ type
 implementation
 
 { TSnapshotZ80 }
+
+procedure TSnapshotZ80.RaiseSnapshotLoadErrorZ80(const S: AnsiString);
+var
+  Msg: AnsiString;
+begin
+  Msg := 'Z80 snapshot load error';
+  if S <> '' then
+    Msg := Msg + LineEnding + LineEnding + S;
+  RaiseSnapshotLoadError(Msg);
+end;
 
 class function TSnapshotZ80.GetDefaultExtension: String;
 begin
@@ -97,9 +108,7 @@ function TSnapshotZ80.LoadFromStream(const Stream: TStream): Boolean;
         if (P^ = 0) and (P + 3 < PE)
           and (CompareByte(P^, EndOfMemStream[0], Length(EndOfMemStream)) = 0)
         then begin
-          Inc(P1, 4);
-          //Inc(L, 4);
-          //Break;
+          Inc(P, Length(EndOfMemStream));
         end else if (P^ = $ED) and (P + 3 < PE) and ((P + 1)^ = $ED) then begin
           Inc(P, 2);
           N := P^;
@@ -149,7 +158,7 @@ var
           else
             Result := True; // ignore these
 
-        end else
+        end else begin
           case B of
             4:
               Pg := 2;
@@ -160,18 +169,9 @@ var
           otherwise
             Result := True; // ignore these
           end;
-
-        if not Result then begin
-          case Pg of
-            0, 2, 5:
-              N := 2 - Pg div 2;
-          otherwise
-            N := (7 + 2 * Pg) div 3;
-          end;
-
-          if (MemoryPagesToRead shr Pg) and 1 = 0 then
-            Result := True;
         end;
+
+        Result := Result or ((MemoryPagesToRead shr Pg) and 1 = 0);
 
         if Result then begin
           Stream.Seek(Le, TSeekOrigin.soCurrent);
@@ -179,6 +179,13 @@ var
         end;
 
         MemoryPagesToRead := MemoryPagesToRead and (not (1 shl Pg));
+
+        case Pg of
+          0, 2, 5:
+            N := 2 - Pg div 2;
+        otherwise
+          N := (7 + 2 * Pg) div 3;
+        end;
 
         N := N * KB16;
 
@@ -202,7 +209,6 @@ var
 
 var
   HeadersRead: Integer;
-  //Proc: TProcessor;
   Header1: THeader1;
   Header2: THeader2;
   Header3: THeader3;
@@ -213,7 +219,6 @@ var
   BanksCount: Integer;
   I: Integer;
   State: TSpectrumInternalState;
-  CheckEndOfStream: TFourBytes;
   HasV3: Boolean;
   B: Byte;
   N: Int32;
@@ -280,17 +285,21 @@ begin
                 if HasV3 then
                   State.SpectrumModel := TSpectrumModel.sm48K_issue_3
                 else
-                  State.SpectrumModel := TSpectrumModel.sm128K                                                 ;
+                  State.SpectrumModel := TSpectrumModel.sm128K;
               4, 5, 6:
                 State.SpectrumModel := TSpectrumModel.sm128K;
 
-              //7, 8:  Plus3
-
               12:
                 State.SpectrumModel := TSpectrumModel.smPlus2;
-              //13: Plus 2A
+
+              7, 8,  // Plus3
+              13,    //Plus 2A
+              2, // SamRam
+              9, 10, 11, 14, 15, 128:
+                RaiseSnapshotLoadErrorZ80(Format('Model not supported (Hardware mode %d).', [Header2.HardwareMode]));
             otherwise
               State.SpectrumModel := TSpectrumModel.smNone;
+              RaiseSnapshotLoadErrorZ80(Format('Model unknown (Hardware mode %d).', [Header2.HardwareMode]));
             end;
 
             N := 17472;
@@ -373,14 +382,7 @@ begin
               MemStream.Size := Int64(BanksCount) * KB16;
               if HeadersRead = 1 then begin
                 if (Header1.ViB and %00100000) = 0 then begin // not compressed
-                  //
-                  Stream.Seek(Int64(KB48), TSeekOrigin.soCurrent);
-                  if (Stream.Read({%H-}CheckEndOfStream[0], Length(CheckEndOfStream)) = Length(CheckEndOfStream))
-                    and (CompareByte(CheckEndOfStream[0], EndOfMemStream[0], Length(CheckEndOfStream)) = 0)
-                  then begin
-                    Stream.Seek(-Int64(KB48) - Length(CheckEndOfStream), TSeekOrigin.soCurrent);
-                    MemRead := Stream.Read(MemStream.Memory^, MemStream.Size) = MemStream.Size;
-                  end;
+                  MemRead := Stream.Read(MemStream.Memory^, MemStream.Size) = MemStream.Size;
                 end else begin
                   Str := TMemoryStream.Create;
                   try
@@ -394,15 +396,9 @@ begin
                     Str.Free;
                   end;
                 end;
-              end else begin
-                while Stream.Position < Stream.Size do begin
-                  if not LoadAPage(MemStream) then
-                    Break;
-                  if Stream.Position = Stream.Size then begin
-                    MemRead := MemoryPagesToRead = 0;
-                  end;
-                end;
-              end;
+              end else
+                while (not MemRead) and LoadAPage(MemStream) do
+                  MemRead := MemoryPagesToRead = 0;
 
               if MemRead then begin
                 MemStream.Position := 0;
@@ -419,6 +415,9 @@ begin
         end;
       end;
     except
+      on E: ESnapshotLoadError do
+        raise;
+    else
     end;
   finally
     FSpectrum.Paused := WasPaused;
@@ -579,7 +578,7 @@ begin
     if Is128K then
       Header2.B36 := State.Get7ffd();
 
-    Header2.B37 := Header2.B37 or %11; // ?
+    Header2.B37 := Header2.B37 or %11;
 
     if State.HasAy then begin
       Header2.B37 := Header2.B37 or %100;
