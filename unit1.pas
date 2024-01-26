@@ -2499,7 +2499,7 @@ begin
     if BadFilePath then begin
       FreeTapePlayer;
       if AFileName <> '' then
-        S := LineEnding + 'the tape file ""' + AFileName + '""'
+        S := LineEnding + 'the tape file "' + AFileName + '"'
       else
         S := 'a tape file.';
       S := Format(ErrorMessageBadTapeFile, [S]);
