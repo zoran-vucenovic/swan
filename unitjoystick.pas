@@ -60,7 +60,6 @@ type
 
     procedure SetEnabled(AValue: Boolean);
     function GetCurrentJoystickTypeAsString: String;
-    function GetJoystickType: TJoystickType;
     function GetKeyDown: Word;
     function GetKeyFire: Word;
     function GetKeyLeft: Word;
@@ -98,7 +97,7 @@ type
     property KeyFire: Word read GetKeyFire;
 
     property CurrentJoystickTypeAsString: String read GetCurrentJoystickTypeAsString;
-    property JoystickType: TJoystickType read GetJoystickType write SetJoystickType;
+    property JoystickType: TJoystickType read FJoystickType write SetJoystickType;
     property Enabled: Boolean read FEnabled write SetEnabled;
 
     class property Joystick: TJoystick read FJoystick;
@@ -137,11 +136,6 @@ begin
       end;
 
   FEnabled := AValue;
-end;
-
-function TJoystick.GetJoystickType: TJoystickType;
-begin
-  Result := FJoystickType;
 end;
 
 function TJoystick.GetKeyDown: Word;
