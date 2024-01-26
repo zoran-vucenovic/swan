@@ -2462,11 +2462,13 @@ const
     ;
 var
   FS: TStream;
+  HasError: Boolean;
   BadFilePath: Boolean;
   S: String;
 
 begin
   BadFilePath := False;
+  HasError := False;
   FS := nil;
   try
     if AStream = nil then begin
@@ -2483,19 +2485,22 @@ begin
       end;
     end;
 
-    S := '';
     if not BadFilePath then begin
       if LoadTape(AStream, AFileName, AExtension) then begin
         if ACurrentBlock > 0 then
           TapePlayer.GoToBlock(ACurrentBlock);
       end else begin
+        HasError := True;
         BadFilePath := Assigned(FS);
-        if not BadFilePath then begin
-          S := ErrorMessageBadTapeEmbedded;
-        end;
       end;
     end;
 
+  finally
+    FS.Free;
+  end;
+
+  HasError := BadFilePath or HasError;
+  if HasError then begin
     if BadFilePath then begin
       FreeTapePlayer;
       if AFileName <> '' then
@@ -2503,17 +2508,12 @@ begin
       else
         S := 'a tape file.';
       S := Format(ErrorMessageBadTapeFile, [S]);
-    end;
+    end else
+      S := ErrorMessageBadTapeEmbedded;
 
-    if S <> '' then begin
-      MessageDlg(ApplicationName, S + Format(ErrorMessageContinueLoading, [ApplicationName]),
-        mtWarning, [mbOK], 0);
-    end;
-
-  finally
-    FS.Free;
+    MessageDlg(S + Format(ErrorMessageContinueLoading, [ApplicationName]),
+       mtWarning, [mbOK], 0);
   end;
-
 end;
 
 procedure TForm1.SzxOnSaveTape(out ATapePlayer: TTapePlayer);
