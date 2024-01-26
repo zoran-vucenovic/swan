@@ -2012,7 +2012,7 @@ procedure TForm1.SaveSnapshot(SnapshotClass: TSnapshotFileClass);
   function ChooseSaveFilePath(): Boolean;
   const
     SConfirmOverwrite: String =
-      'The file %s' + LineEnding
+      'The file "%s"' + LineEnding
       + 'already exists. Are you sure you want to overwrite this file?';
 
   var
@@ -2028,7 +2028,7 @@ procedure TForm1.SaveSnapshot(SnapshotClass: TSnapshotFileClass);
         Exit(True);
 
       MR := QuestionDlg('',
-        Format(SConfirmOverwrite, [AnsiQuotedStr(SaveDialog1.FileName, '"')]),
+        Format(SConfirmOverwrite, [SaveDialog1.FileName]),
         mtConfirmation, [
           mrNo, '&No, choose another', 'IsDefault',
           mrYes, '&Yes, overwrite',

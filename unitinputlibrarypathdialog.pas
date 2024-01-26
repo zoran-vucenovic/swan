@@ -113,11 +113,11 @@ begin
       S3 := '';
       if S <> '' then begin
         if not FileExists(S) then begin
-          S1 := 'File ' + AnsiQuotedStr(S, '"') + LineEnding
+          S1 := 'File "' + S + '"' + LineEnding
             + 'does not exist.' + LineEnding + LineEnding;
           S2 := 'loaded.';
         end else if not DoCheckLoad then begin
-          S2 := 'loaded from file ' + AnsiQuotedStr(S, '"') + '.';
+          S2 := 'loaded from file "' + S + '".';
         end else
           CanClose := True;
       end else begin
