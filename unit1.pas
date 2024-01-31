@@ -2322,16 +2322,23 @@ begin
 
       Stream := nil;
       Extension := ExtractFileExt(ASourceFile);
-      
+
+      L := False;
       if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
         GetAcceptableExtensions(SnapshotOrTape, True, AcceptedExtensions);
         if not TFileUnzipper.GetFileFromZipFile(ASourceFile, AcceptedExtensions, Stream, FileName) then begin
           Stream := nil;
           LoadingFailed('No Spectrum file found in zip.');
         end else begin
-          DoDirSeparators(FileName);
-          Extension := ExtractFileExt(FileName);
-          FileName := IncludeTrailingPathDelimiter(ASourceFile) + FileName;
+          if Stream = nil then begin
+            // Canceled by user (a dialog was offered to the user, to choose
+            // from multiple files inside zip. Then he canceled loading, so no error).
+            L := True;
+          end else begin
+            DoDirSeparators(FileName);
+            Extension := ExtractFileExt(FileName);
+            FileName := IncludeTrailingPathDelimiter(ASourceFile) + FileName;
+          end;
         end;
       end else
         try
@@ -2341,63 +2348,67 @@ begin
           Stream := nil;
         end;
 
-      if not Assigned(Stream) then begin
-        if FRecentFiles.Remove(ASourceFile) then
-          UpdateRecentFiles;
-        LoadingFailed;
-      end else begin
-        try
-          SnapshotFile := nil;
-          if SnapshotOrTape in [stSnapshot, stBoth] then begin
-            if (AnsiCompareText(Extension, ExtensionSeparator + 'szx') = 0)
-              //or (AnsiCompareText(Extension, ExtensionSeparator + 'zx-state') = 0)
-            then
-              SnapshotFile := TSnapshotSZX.Create
-            else if AnsiCompareText(Extension, ExtensionSeparator + 'z80') = 0 then
-              SnapshotFile := TSnapshotZ80.Create
-            else if AnsiCompareText(Extension, ExtensionSeparator + 'sna') = 0 then
-              SnapshotFile := TSnapshotSNA.Create;
-          end;
+      if not L then begin
 
-          L := False;
-          if Assigned(SnapshotFile) then begin
-            try
-              SnapshotFile.SetSpectrum(Spectrum);
+        if not Assigned(Stream) then begin
+          if FRecentFiles.Remove(ASourceFile) then
+            UpdateRecentFiles;
+          LoadingFailed;
 
-              //Spectrum.ResetSpectrum;
-              Spectrum.InLoadingSnapshot := True;
+        end else begin
+          try
+            SnapshotFile := nil;
+            if SnapshotOrTape in [stSnapshot, stBoth] then begin
+              if (AnsiCompareText(Extension, ExtensionSeparator + 'szx') = 0)
+                //or (AnsiCompareText(Extension, ExtensionSeparator + 'zx-state') = 0)
+              then
+                SnapshotFile := TSnapshotSZX.Create
+              else if AnsiCompareText(Extension, ExtensionSeparator + 'z80') = 0 then
+                SnapshotFile := TSnapshotZ80.Create
+              else if AnsiCompareText(Extension, ExtensionSeparator + 'sna') = 0 then
+                SnapshotFile := TSnapshotSNA.Create;
+            end;
+
+            if Assigned(SnapshotFile) then begin
               try
+                SnapshotFile.SetSpectrum(Spectrum);
+
+                //Spectrum.ResetSpectrum;
+                Spectrum.InLoadingSnapshot := True;
                 try
-                  L := SnapshotFile.LoadFromStream(Stream);
-                except
-                  on E: ESnapshotLoadError do
-                    LoadingFailed(E.Message);
-                else
+                  try
+                    L := SnapshotFile.LoadFromStream(Stream);
+                  except
+                    on E: ESnapshotLoadError do
+                      LoadingFailed(E.Message);
+                  else
+                  end;
+                  UpdateShowCurrentlyActiveJoystick;
+                  UpdateCheckLateTimings;
+                finally
+                  Spectrum.InLoadingSnapshot := False;
                 end;
-                UpdateShowCurrentlyActiveJoystick;
-                UpdateCheckLateTimings;
+                if not L then
+                  LoadingFailed;
+
               finally
-                Spectrum.InLoadingSnapshot := False;
+                SnapshotFile.Free;
               end;
+            end else if SnapshotOrTape in [stTape, stBoth] then begin
+              L := LoadTape(Stream, FileName, Extension);
               if not L then
                 LoadingFailed;
-
-            finally
-              SnapshotFile.Free;
             end;
-          end else if SnapshotOrTape in [stTape, stBoth] then begin
-            L := LoadTape(Stream, FileName, Extension);
-            if not L then
-              LoadingFailed;
-          end;
 
-          if L then begin
-            FRecentFiles.Add(ASourceFile);
-            UpdateRecentFiles;
+            if L then begin
+              FRecentFiles.Add(ASourceFile);
+              UpdateRecentFiles;
+            end;
+          finally
+            Stream.Free;
           end;
-        finally
-          Stream.Free;
         end;
+
       end;
 
     finally

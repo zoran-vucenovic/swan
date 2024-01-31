@@ -140,7 +140,9 @@ begin
     end;
     F.Grid.Row := F.Grid.FixedRows;
 
-    if F.ShowModal = mrOK then begin
+    if F.ShowModal <> mrOK then
+      Result := True // User canceled
+    else begin
       N := F.Grid.Row - F.Grid.FixedRows;
       Result := N >= 0;
     end;

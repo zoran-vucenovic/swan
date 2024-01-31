@@ -9,7 +9,7 @@ object FormChooseFile: TFormChooseFile
   ClientWidth = 350
   OnShow = FormShow
   Position = poDefaultPosOnly
-  LCLVersion = '2.2.7.0'
+  LCLVersion = '3.1.0.0'
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

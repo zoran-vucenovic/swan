@@ -124,38 +124,42 @@ begin
             end;
 
             if UnitChooseFile.TFormChooseFile.ShowFormChooseFile(SL, N) then begin
-              FileNameInZip := SL.Strings[N];
-              SL.Clear;
-              SL.Append(FileNameInZip);
+              if N < 0 then
+                Result := True
+              else begin
+                FileNameInZip := SL.Strings[N];
+                SL.Clear;
+                SL.Append(FileNameInZip);
 
-              FiUnz.OutStream := nil;
-              try
+                FiUnz.OutStream := nil;
                 try
-                  UnZ.OnCreateStream := @(FiUnz.DoCreateOutZipStream);
-                  UnZ.OnDoneStream := @(FiUnz.DoDoneOutZipStream);
-                  UnZ.UnZipFiles(SL);
-                  if Assigned(FiUnz.OutStream) then begin
-                    if FiUnz.OutStream.Size > 0 then begin
-                      Extension := ExtractFileExt(FileNameInZip);
-                      if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
-                        if GetFileFromZipStream(FiUnz.OutStream, Extensions, AStream, S) then begin
-                          FileNameInZip := IncludeTrailingPathDelimiter(FileNameInZip) + S;
+                  try
+                    UnZ.OnCreateStream := @(FiUnz.DoCreateOutZipStream);
+                    UnZ.OnDoneStream := @(FiUnz.DoDoneOutZipStream);
+                    UnZ.UnZipFiles(SL);
+                    if Assigned(FiUnz.OutStream) then begin
+                      if FiUnz.OutStream.Size > 0 then begin
+                        Extension := ExtractFileExt(FileNameInZip);
+                        if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
+                          if GetFileFromZipStream(FiUnz.OutStream, Extensions, AStream, S) then begin
+                            FileNameInZip := IncludeTrailingPathDelimiter(FileNameInZip) + S;
 
+                            Result := True;
+                          end else
+                            AStream := nil;
+                        end else begin
+                          AStream := FiUnz.OutStream;
+                          FiUnz.OutStream := nil;
                           Result := True;
-                        end else
-                          AStream := nil;
-                      end else begin
-                        AStream := FiUnz.OutStream;
-                        FiUnz.OutStream := nil;
-                        Result := True;
+                        end;
                       end;
                     end;
+                  except
+                    AStream := nil;
                   end;
-                except
-                  AStream := nil;
+                finally
+                  FiUnz.OutStream.Free;
                 end;
-              finally
-                FiUnz.OutStream.Free;
               end;
             end;
           finally
@@ -179,6 +183,7 @@ var
   ZipStream: TMemoryStream;
 begin
   Result := False;
+  AStream := nil;
   try
     FileStream := TFileStream.Create(ZipFileName, fmOpenRead or fmShareDenyWrite);
     try
