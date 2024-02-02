@@ -277,15 +277,13 @@ function TPzxBlockUnsupported.LoadBlock2(const Stream: TStream): Boolean;
 var
   P: Int64;
 begin
+  P := Stream.Position + GetBlockLength;
+
   Stream.Seek(Int64(-8), TSeekOrigin.soCurrent);
   SetLength(BlockIdentifier, 4);
   Stream.Read(BlockIdentifier[1], 4);
-  Stream.Seek(Int64(4), TSeekOrigin.soCurrent);
-  if GetBlockLength > 0 then begin
-    P := Stream.Position;
-    Result := Stream.Seek(Int64(GetBlockLength), TSeekOrigin.soCurrent) = P + GetBlockLength;
-  end else
-    Result := True;
+
+  Result := Stream.Seek(Int64(4) + GetBlockLength, TSeekOrigin.soCurrent) = P;
 end;
 
 constructor TPzxBlockUnsupported.Create(ATapePlayer: TTapePlayer);
@@ -403,7 +401,7 @@ procedure TPzxBlockDATA.FillDetails;
   function GetSArr(SArr: TArrUInt16): String;
   var
     I, N: Integer;
-    MaybeComma, Tail: String;
+    MaybeComma, S: String;
   begin
     N := Length(SArr);
     if N = 0 then
@@ -411,16 +409,16 @@ procedure TPzxBlockDATA.FillDetails;
     else begin
       if N > 26 then begin
         N := 22;
-        Tail := '... (' + IntToStr(Length(SArr) - N) + ' more)';
+        S := '... (' + IntToStr(Length(SArr) - N) + ' more)';
       end else
-        Tail := '';
+        S := '';
 
       MaybeComma := ' ';
       for I := 0 to N - 1 do begin
         Result := Result + MaybeComma + IntToStr(SArr[I]);
         MaybeComma := ', ';
       end;
-      Result := Result + Tail;
+      Result := Result + S;
     end;
   end;
 
@@ -764,7 +762,8 @@ end;
 function TPzxBlockPZXT.FillDetails(N: Integer; const Stream: TStream): Boolean;
 var
   S, S0: RawByteString;
-  I, J, P: Integer;
+  I, P: Integer;
+  IsKey: Boolean;
 
 begin
   Result := N <= 0;
@@ -772,31 +771,32 @@ begin
   if not Result then begin
     SetLength(S{%H-}, N);
     if Stream.Read(S[1], N) = N then begin
-      J := 1;
+      IsKey := False; // begin with the title, then alternate key - value
       I := 1;
       while I < N do begin
         P := Pos(#0, S, I);
         if P = 0 then
           P := N + 1;
-        S0 := Copy(S, I, P - I);
+        S0 := UTF8Trim(Copy(S, I, P - I));
 
-        if J and 1 = 0 then begin
-          S0 := #13 + UTF8Trim(S0);
-          if S0[Length(S0)] <> ':' then
-            S0 := S0 + ':';
-          S0 := S0 + ' ';
+        if IsKey then begin
+          if Length(S0) > 0 then begin
+            if S0[Length(S0)] <> ':' then
+              S0 := S0 + ':';
+            S0 := S0 + ' ';
+          end;
+          S0 := #13 + S0;
         end;
+
         FDetails := FDetails + S0;
         I := P + 1;
-        if I >= N then
-          Break;
-        Inc(J);          
+        IsKey := not IsKey;
       end;
 
       // Unilike tzx, pzx specification says that texts should be utf8 encoded.
       // However, this rule is immediately broken there by the files provided
       // for testing, which have text encoded in cp1252 (iso-8859-1).
-      // see the pound character in header block of these games:
+      // See the pound character in header block of these games:
       //   - World Cup Carnival
       //   - Super Scramble
       //   - Atlantis
