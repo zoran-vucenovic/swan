@@ -94,24 +94,42 @@ end;
 function {TTzxPlayer.}TTzxBlock40.GetNextPulse: Boolean;
 var
   S: TSnapshotFile;
+  Sp: TSpectrum;
+  WasPaused: Boolean;
 begin
   Result := False;
   if State <> TPlayState.psFinished then begin
-    if Assigned(FTapePlayer.GetSpectrum) then begin
-      if FSnapshotType = 0 then
-        S := TSnapshotZ80.Create
-      else
-        S := TSnapshotSNA.Create;
+    State := TPlayState.psFinished;
 
+    Sp := FTapePlayer.GetSpectrum;
+    if Assigned(Sp) then begin
+      WasPaused := Sp.Paused;
       try
-        S.SetSpectrum(FTapePlayer.GetSpectrum);
-        FTapePlayer.GetSpectrum.ResetSpectrum;
-        Result := S.LoadFromStream(FSnapStream);
+        Sp.Paused := True;
+        if FSnapshotType = 0 then
+          S := TSnapshotZ80.Create
+        else
+          S := TSnapshotSNA.Create;
+
+        try
+          Sp.InLoadingSnapshot := True;
+          try
+            S.SetSpectrum(Sp);
+            Sp.ResetSpectrum;
+            FSnapStream.Position := 0;
+
+            Result := S.LoadFromStream(FSnapStream);
+          finally
+            Sp.InLoadingSnapshot := False;
+          end;
+        finally
+          S.Free;
+        end;
+
       finally
-        S.Free;
+        Sp.Paused := WasPaused;
       end;
     end;
-    State := TPlayState.psFinished;
   end;
 end;
 
@@ -119,7 +137,7 @@ procedure {TTzxPlayer.}TTzxBlock40.Start;
 begin
   inherited Start;
 
-  State := psStart;
+  State := TPlayState.psStart;
   if (FSnapStream = nil) or (FSnapLen = 0) then
     State := TPlayState.psFinished;
 end;

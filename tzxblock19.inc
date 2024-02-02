@@ -422,7 +422,7 @@ begin
   else if Totd > 0 then
     State := TPlayState.psData
   else
-    State := psFinished;
+    State := TPlayState.psFinished;
 end;
 
 procedure {TTzxPlayer.}TTzxBlock19.Details(out S: String);
