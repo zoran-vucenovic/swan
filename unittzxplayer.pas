@@ -5,6 +5,9 @@ unit UnitTzxPlayer;
 {$mode ObjFPC}{$H+}
 {$i zxinc.inc}
 
+// tzx tape format
+// tzx format specification: https://worldofspectrum.net/TZXformat.html
+
 interface
 
 uses
@@ -30,13 +33,17 @@ const
   //   Pheenix.tzx by Megadodo, original release (https://spectrumcomputing.co.uk/entry/3690/ZX-Spectrum/Pheenix)
   // This tzx file works when inverted level is kept for at least 4214 (does not work with 4213) ticks.
   //
-  // On the other hand, the file
-  //   Arkanoid.tzx by Imagine (https://spectrumcomputing.co.uk/entry/255/ZX-Spectrum/Arkanoid)
-  // seems to falsely detect that kempston joystick is attached when this opposite
-  // level pulse is played for 4220 ticks or longer (it does not happen with 4219 ticks or less).
+  // Actually, it seems that all tapes work well with 945 ticks!
+  // The pulse duration of 945 ticks is mentioned in pzx specification.
+  // Quote (http://zxds.raxoft.cz/docs/pzx.txt, under DATA block):
+  //   After the very last pulse of the last bit of the data stream is output, one
+  //   last tail pulse of specified duration is output. Non zero duration is
+  //   usually necessary to terminate the last bit of the block properly, for
+  //   example for data block saved with standard ROM routine the duration of the
+  //   tail pulse is 945 T cycles and only then goes the level low again.
   //
-  // So, let's put it between 4214 and 4219:
-  TicksBeforePause = Int64(4216);
+  // So:
+  TicksBeforePause = Int64(945);
 
 type                          
 
@@ -99,6 +106,7 @@ type
   strict protected
     type
       TPlayState = (psStart, psPilot, psSync1, psSync2, psData, psPause, psFinished);
+
   strict protected
     State: TPlayState;
 
@@ -148,7 +156,7 @@ constructor TTzxBlock.Create(ATapPlayer: TTapePlayer);
 begin
   inherited Create(ATapPlayer);
 
-  State := psFinished;
+  State := TPlayState.psFinished;
 end;
 
 procedure TTzxBlock.Start;

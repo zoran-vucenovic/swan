@@ -75,6 +75,8 @@ begin
   if State = TPlayState.psFinished then
     Exit(False);
 
+  Result := True;
+
   ProcTicks := GetCurrentTotalSpectrumTicks;
   if ProcTicks >= TicksNeeded then begin
 
@@ -87,21 +89,19 @@ begin
       TPlayState.psData:
         begin
           TicksToWait := FPauseLength * TicksPerMilliSecond;
-          AdjustTicksIfNeeded(TicksToWait);
           FTapePlayer.ActiveBit := 0;
           FTapePlayer.InPause := True;
           State := TPlayState.psPause;
         end;
 
     otherwise
-      TicksToWait := 0;
       State := TPlayState.psFinished;
+      Exit;
     end;
 
+    AdjustTicksIfNeeded(TicksToWait);
     TicksNeeded := ProcTicks + TicksToWait;
   end;
-
-  Result := True;
 end;
 
 procedure {TTzxPlayer.}TTzxBlockPause.Start;
