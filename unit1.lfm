@@ -337,12 +337,12 @@ object Form1: TForm1
       ImageIndex = 16
       OnExecute = ActionEjectTapeExecute
     end
-    object ActionDontDrawScreenWhenLoading: TAction
+    object ActionFastLoading: TAction
       Category = 'Options'
-      Caption = 'Don''t draw screen while tape is running'
+      Caption = 'Fast tape loading'
       Hint = 'Fast tape loading (skip screen drawing while tape is playing)'
       ImageIndex = 27
-      OnExecute = ActionDontDrawScreenWhenLoadingExecute
+      OnExecute = ActionFastLoadingExecute
     end
     object ActionMuteSound: TAction
       Category = 'Options'
@@ -595,7 +595,7 @@ object Form1: TForm1
         Action = ActionEnableJoystick
       end
       object MenuItem35: TMenuItem
-        Action = ActionDontDrawScreenWhenLoading
+        Action = ActionFastLoading
       end
       object MenuItem40: TMenuItem
         Action = ActionHistorySnapshots

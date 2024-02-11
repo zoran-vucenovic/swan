@@ -56,7 +56,7 @@ type
     ActionInputPokes: TAction;
     ActionPortAudioLibPath: TAction;
     ActionMuteSound: TAction;
-    ActionDontDrawScreenWhenLoading: TAction;
+    ActionFastLoading: TAction;
     ActionEjectTape: TAction;
     ActionEnableJoystick: TAction;
     ActionDecTapeBlock: TAction;
@@ -162,7 +162,7 @@ type
     procedure ActionAttachTapExecute(Sender: TObject);
     procedure ActionColoursExecute(Sender: TObject);
     procedure ActionDecTapeBlockExecute(Sender: TObject);
-    procedure ActionDontDrawScreenWhenLoadingExecute(Sender: TObject);
+    procedure ActionFastLoadingExecute(Sender: TObject);
     procedure ActionEjectTapeExecute(Sender: TObject);
     procedure ActionEnableHistoryExecute(Sender: TObject);
     procedure ActionEnableJoystickExecute(Sender: TObject);
@@ -514,10 +514,10 @@ begin
   end;
 end;
 
-procedure TForm1.ActionDontDrawScreenWhenLoadingExecute(Sender: TObject);
+procedure TForm1.ActionFastLoadingExecute(Sender: TObject);
 begin
   if Sender <> Spectrum then begin
-    AddEventToQueue(@ActionDontDrawScreenWhenLoadingExecute);
+    AddEventToQueue(@ActionFastLoadingExecute);
   end else begin
     FSkipWriteScreen := not FSkipWriteScreen;
     UpdateCheckWriteScreen;
@@ -1843,7 +1843,8 @@ end;
 
 procedure TForm1.UpdateTextTapeRunning;
 const
-  cTapeRunningMsg = 'Tape running...' + LineEnding + LineEnding
+  cTapeRunningMsg =
+    'Tape running...' + LineEnding + LineEnding
     + 'You chose the option which turns off updating the screen'
     + ' while tape is running. You can turn it off in'
     + ' main menu:' + LineEnding + 'Options -> '
@@ -1884,7 +1885,7 @@ begin
     Bmp.Canvas.Font.Height := MulDiv(GetFontData(Self.Font.Handle).Height, ScreenSizeFactor * 5 , 4);
     Bmp.Canvas.Font.Color := TColor($d17700);
 
-    STapeRunningMsg := cTapeRunningMsg + ActionDontDrawScreenWhenLoading.Caption;
+    STapeRunningMsg := cTapeRunningMsg + ActionFastLoading.Caption;
 
     Bmp.Canvas.Pen.Color := Bmp.Canvas.Font.Color;
     Bmp.Canvas.Pen.Width := 2;
@@ -1916,7 +1917,7 @@ end;
 
 procedure TForm1.UpdateCheckWriteScreen;
 begin
-  ActionDontDrawScreenWhenLoading.Checked := FSkipWriteScreen;
+  ActionFastLoading.Checked := FSkipWriteScreen;
   UpdateWriteScreen;
 end;
 
@@ -1950,7 +1951,7 @@ begin
           ActionReset,
           ActionLateTimings,
           ActionShowKeyboardOnScreen,
-          ActionDontDrawScreenWhenLoading,
+          ActionFastLoading,
           ActionHistorySnapshots,
           ActionAllOptions,
           ActionAbout
