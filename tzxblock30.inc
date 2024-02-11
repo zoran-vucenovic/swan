@@ -10,7 +10,7 @@ strict private
   FTextDescription: AnsiString;
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
@@ -28,7 +28,7 @@ begin
   FTextDescription := '';
 end;
 
-class function {TTzxPlayer.}TTzxBlock30.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlock30.GetBlockId: DWord;
 begin
   Result := $30;
 end;

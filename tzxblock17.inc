@@ -6,13 +6,13 @@
 
 TTzxBlock17 = class (TTzxBlockUnsupported)
 public
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   class function GetBlockDescription: String; override;
 end;
 
 {$else}
 
-class function {TTzxPlayer.}TTzxBlock17.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlock17.GetBlockId: DWord;
 begin
   Result := $17;
 end;

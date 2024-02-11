@@ -13,7 +13,7 @@ strict protected
 
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
   class function GetBlockDescription: String; override;
   procedure Details(out S: String); override;
@@ -21,13 +21,13 @@ end;
 
 TTzxBlock10 = class (TTzxTapBlock)
 public
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
 end;
 
 {$else}
 
-class function TTzxBlock10.GetBlockId: Integer;
+class function TTzxBlock10.GetBlockId: DWord;
 begin
   Result := $10;
 end;
@@ -60,7 +60,7 @@ begin
   FHeaderDetails := '';
 end;
 
-class function TTzxTapBlock.GetBlockId: Integer;
+class function TTzxTapBlock.GetBlockId: DWord;
 begin
   Result := 0;
 end;

@@ -11,7 +11,7 @@ strict private
   NumberOfRepetitions: Integer;
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
@@ -28,7 +28,7 @@ begin
   NumberOfRepetitions := 0;
 end;
 
-class function {TTzxPlayer.}TTzxBlock24.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlock24.GetBlockId: DWord;
 begin
   Result := $24;
 end;

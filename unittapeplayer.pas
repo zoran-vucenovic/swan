@@ -36,7 +36,7 @@ type
 
     procedure Start; virtual;
     procedure Details(out S: String); virtual;
-    class function GetBlockId: Integer; virtual; abstract;
+    class function GetBlockId: DWord; virtual; abstract;
     class function GetBlockIdAsString: String; virtual; abstract;
   end;
 

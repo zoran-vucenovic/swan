@@ -64,7 +64,7 @@ public
   constructor Create(ATapePlayer: TTapePlayer); override;
   destructor Destroy; override;
 
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   class function GetBlockDescription: String; override;
   function GetNextPulse: Boolean; override;
   procedure Start; override;
@@ -262,7 +262,7 @@ begin
   inherited Destroy;
 end;
 
-class function {TTzxPlayer.}TTzxBlock19.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlock19.GetBlockId: DWord;
 begin
   Result := $19;
 end;

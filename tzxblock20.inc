@@ -11,7 +11,7 @@ private
 
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
@@ -36,7 +36,7 @@ begin
   FPauseLength := 0;
 end;
 
-class function {TTzxPlayer.}TTzxBlockPause.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlockPause.GetBlockId: DWord;
 begin
   Result := $20;
 end;

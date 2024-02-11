@@ -12,7 +12,7 @@ strict private
 strict protected
   function Load2(const Stream: TStream; L: Integer): Boolean; override;
 public
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   class function GetBlockDescription: String; override;
   function GetNextPulse: Boolean; override;
   procedure Details(out S: String); override;
@@ -28,7 +28,7 @@ begin
     SignalLevel := 64;
 end;
 
-class function {TTzxPlayer.}TTzxBlock2B.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlock2B.GetBlockId: DWord;
 begin
   Result := $2B;
 end;

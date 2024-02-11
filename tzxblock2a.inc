@@ -8,14 +8,14 @@ TTzxBlock2A = class (TTzxBlockStandard)
 strict protected                                                   
   function Load2(const {%H-}Stream: TStream; {%H-}L: Integer): Boolean; override;
 public
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   class function GetBlockDescription: String; override;
   function GetStopPlaying: Boolean; override;
 end;
 
 {$else}
 
-class function {TTzxPlayer.}TTzxBlock2A.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlock2A.GetBlockId: DWord;
 begin
   Result := $2A;
 end;

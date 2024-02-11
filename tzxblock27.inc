@@ -8,7 +8,7 @@ TTzxBlock27 = class (TTzxBlock)
 protected
   function CheckReturnFromCallSequence: Boolean; override;
 public
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
   function LoadBlock(const {%H-}Stream: TStream): Boolean; override;
@@ -22,7 +22,7 @@ begin
   Result := True;
 end;
 
-class function {TTzxPlayer.}TTzxBlock27.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlock27.GetBlockId: DWord;
 begin
   Result := $27;
 end;

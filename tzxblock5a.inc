@@ -6,7 +6,7 @@
 
 TTzxBlock5A = class (TTzxBlock)
 public
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
@@ -15,7 +15,7 @@ end;
 
 {$else}
 
-class function {TTzxPlayer.}TTzxBlock5A.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlock5A.GetBlockId: DWord;
 begin
   Result := $5A;
 end;

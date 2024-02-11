@@ -11,7 +11,7 @@ strict protected
   function Load2(const Stream: TStream; L: Integer): Boolean; override;
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   {returns whole block length, without id byte}
   class function GetBlockDescription: String; override;
   procedure Details(out S: String); override;
@@ -19,7 +19,7 @@ end;
 
 {$else}
 
-class function TTzxBlockUnsupported.GetBlockId: Integer;
+class function TTzxBlockUnsupported.GetBlockId: DWord;
 begin
   Result := 0;
 end;

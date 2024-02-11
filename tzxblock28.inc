@@ -10,7 +10,7 @@ strict private
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
 
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   class function GetBlockDescription: String; override;
   function GetBlockLength: Integer; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
@@ -24,7 +24,7 @@ begin
   FLen := 0;
 end;
 
-class function {TTzxPlayer.}TTzxBlock28.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlock28.GetBlockId: DWord;
 begin
   Result := $28;
 end;

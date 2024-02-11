@@ -12,7 +12,7 @@ strict private
   NumOfCalls: Integer;
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   {returns whole block length, without id byte}
   function GetBlockLength: Integer; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
@@ -32,7 +32,7 @@ begin
   SetLength(CallBlockNumbers, 0);
 end;
 
-class function {TTzxPlayer.}TTzxBlock26.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlock26.GetBlockId: DWord;
 begin
   Result := $26;
 end;

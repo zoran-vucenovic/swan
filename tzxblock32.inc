@@ -21,7 +21,7 @@ strict private
   class function DecodeTextIdByte(TextIdByte: Byte): String;
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   class function GetBlockDescription: String; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
   function GetBlockLength: Integer; override;
@@ -58,7 +58,7 @@ begin
   SetLength(TextStructures, 0);
 end;
 
-class function {TTzxPlayer.}TTzxBlock32.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlock32.GetBlockId: DWord;
 begin
   Result := $32;
 end;

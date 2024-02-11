@@ -51,7 +51,7 @@ type
     constructor Create(ATapePlayer: TTapePlayer); override;
     function GetBlockLength: Integer; override;
     function LoadBlock(const Stream: TStream): Boolean; override;
-    class function GetBlockId: Integer; override;
+    class function GetBlockId: DWord; override;
     procedure Start; override;
   end;
 
@@ -910,7 +910,7 @@ begin
   end;
 end;
 
-class function TPzxBlock.GetBlockId: Integer;
+class function TPzxBlock.GetBlockId: DWord;
 var
   S: AnsiString;
 begin

@@ -7,7 +7,7 @@
 TTzxBlock11 = class (TTzxBlock11abstract)
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
-  class function GetBlockId: Integer; override;
+  class function GetBlockId: DWord; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
   class function GetBlockDescription: String; override;
   procedure Details(out S: String); override;
@@ -22,7 +22,7 @@ begin
   PilotTicksNeeded := 0;
 end;
 
-class function {TTzxPlayer.}TTzxBlock11.GetBlockId: Integer;
+class function {TTzxPlayer.}TTzxBlock11.GetBlockId: DWord;
 begin
   Result := $11;
 end;
