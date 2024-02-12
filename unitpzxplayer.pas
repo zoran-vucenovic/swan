@@ -206,6 +206,7 @@ var
 begin
   if GetBlockLength = 2 then begin
     if Stream.Read(Flags{%H-}, 2) = 2 then begin
+      Flags := LEtoN(Flags);
       FlagStopOnlyIf48K := (Flags and 1) = 1;
       Exit(True);
     end;
