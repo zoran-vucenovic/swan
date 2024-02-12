@@ -58,10 +58,6 @@ type
     MinSpeed = NormalSpeed * 8;
 
   strict private
-    const
-      HoldInterruptPinTicks = 32;
-
-  strict private
     procedure SetPaging; inline;
     // processor events
     procedure ProcessorInput;
@@ -72,6 +68,7 @@ type
     TicksPerScanLine: Int32Fast;
     ScreenStart: Int32Fast;
     ScreenEnd: Int32Fast;
+    HoldInterruptPinTicks: Int16Fast;
 
     FloatBusFirstInterestingTick: Int32Fast;
     FloatBusLastInterestingTick: Int32Fast;
@@ -699,6 +696,9 @@ const
   SoundPlayerRatePortAudio128 = 7; // in 128K spectrum,
   SoundPlayerRateProcessor128 = 563; //  it is 44100 / 3546900 = 7 / 563
 
+  HoldInterruptPinTicks48 = 32; // 48K and +3 models hold interrupt for 32 t-states,
+  HoldInterruptPinTicks128 = 36; // whereas 128K hods it for 36 t-states
+
 var
   RomStream: TStream;
   NewRamSize: Word;
@@ -722,6 +722,8 @@ begin
   FModelWithHALbug := False;
   TicksPerScanLine := TicksPerScanLine128;
   RomsCount := 1;
+  FProcessor.FrameTicks := FrameTicks128;
+  HoldInterruptPinTicks := HoldInterruptPinTicks48; // 48K and +3
 
   try
     case ASpectrumModel of
@@ -745,10 +747,9 @@ begin
 
       sm128K, smPlus2:
         begin
+          HoldInterruptPinTicks := HoldInterruptPinTicks128;
           FModelWithHALbug := True;
           RomsCount := 2;
-
-          FProcessor.FrameTicks := FrameTicks128;
         end;
 
     otherwise
