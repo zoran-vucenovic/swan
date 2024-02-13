@@ -349,10 +349,15 @@ begin
       LoopCheck;
       StartBlock(FCurrentBlockNumber + 1);
     end;
+
+    if FCurrentBlock = nil then begin
+      if ActiveBit <> 0 then
+        StartPauseBlock(0)
+      else
+        StopPlaying();
+    end;
   end;
 
-  if (FCurrentBlock = nil) and (ActiveBit <> 0) then
-    StartPauseBlock(0);
 end;
 
 class function TTzxPlayer.CheckHeader(const Stream: TStream): Boolean;

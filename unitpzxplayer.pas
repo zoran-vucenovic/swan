@@ -937,6 +937,8 @@ begin
     StopPlaying
   else begin
     StartBlock(FCurrentBlockNumber + 1);
+    if FCurrentBlock = nil then
+      StopPlaying;
   end;
 end;
 
