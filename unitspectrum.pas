@@ -140,7 +140,7 @@ type
     FOnStartRun: TThreadMethod;
     FSoundMuted: Boolean;
     SpectrumColoursBGRA: TSpectrumColoursBGRA;
-    CustomRomsMounted: Boolean;
+    FCustomRomsMounted: Boolean;
     FCustomRomsFileNames: TStringDynArray;
     FLateTimings: Boolean;
 
@@ -213,6 +213,7 @@ type
     property Memory: TMemory read FMemory;
     property AYSoundChip: TSoundAY_3_8912 read FAYSoundChip;
     property IsPagingEnabled: Boolean read FPagingEnabled write FPagingEnabled;
+    property CustomRomsMounted: Boolean read FCustomRomsMounted;
   end;
 
 implementation
@@ -596,7 +597,7 @@ begin
   FDebugger := nil;
   FTapePlayer := nil;
 
-  CustomRomsMounted := False;
+  FCustomRomsMounted := False;
   FIs128KModel := False;
 
   FMemory := TMemory.Create;
@@ -710,7 +711,7 @@ var
   RomsCount: Integer;
 
 begin
-  if (ACustomRoms = nil) and (not CustomRomsMounted) then
+  if (ACustomRoms = nil) and (not FCustomRomsMounted) then
     if ASpectrumModel = FSpectrumModel then
       Exit;
 
@@ -741,7 +742,7 @@ begin
             NewRamSize := 48;
           end;
 
-          SkipReset := (ACustomRoms = nil) and (not CustomRomsMounted)
+          SkipReset := (ACustomRoms = nil) and (not FCustomRomsMounted)
             and (NewRamSize = FMemory.RamSizeKB);
         end;
 
@@ -773,7 +774,7 @@ begin
         if not FMemory.LoadFromStream(I, True, ACustomRoms) then
           Abort;
       end;
-      CustomRomsMounted := True;
+      FCustomRomsMounted := True;
 
     end else begin
       if not (GetRomResNames(ASpectrumModel, Roms) and (Length(Roms) = RomsCount)) then
@@ -791,7 +792,7 @@ begin
           RomStream.Free;
         end;
       end;
-      CustomRomsMounted := False;
+      FCustomRomsMounted := False;
     end;
 
   except
@@ -904,7 +905,7 @@ begin
   StopSoundPlayer;
   if not FInLoadingSnapshot then
     if FBkpSpectrumModel <> smNone then begin
-      if FSpectrumModel <> FBkpSpectrumModel then begin
+      if (FSpectrumModel <> FBkpSpectrumModel) or FCustomRomsMounted then begin
         FRestoringSpectrumModel := True;
         try
           SetSpectrumModel(FBkpSpectrumModel, nil);

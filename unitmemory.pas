@@ -50,6 +50,9 @@ type
     function LoadRamFromStream(const AStream: TStream): Boolean;
     function SaveRamToStream(const AStream: TStream): Boolean;
 
+    // Rom to one stream:
+    function SaveRomToStream(const AStream: TStream): Boolean;
+
     function ReadByte(const Address: Word): Byte; inline;
     function ReadScreenByte(const Address: Word): Byte; inline;
     procedure WriteByte(const Address: Word; const B: Byte); inline;
@@ -202,6 +205,21 @@ begin
         and SaveToStream(6, False, AStream)
         and SaveToStream(7, False, AStream);
     end;
+  end;
+end;
+
+function TMemory.SaveRomToStream(const AStream: TStream): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  I := 0;
+  while (I < Length(FRomBanks)) and Assigned(FRomBanks[I]) do begin
+    Result := SaveToStream(I, True, AStream);
+    if not Result then
+      Break;
+
+    Inc(I);
   end;
 end;
 

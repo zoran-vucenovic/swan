@@ -17,7 +17,6 @@ const
 
 type
 
-
   ESnapshotError = class(Exception);
   ESnapshotLoadError = class(ESnapshotError);
   ESnapshotSaveError = class(ESnapshotError);
@@ -56,6 +55,7 @@ type
     procedure Reset7ffd();
     function Get7ffd(): Byte;
     function LoadFromSpectrum(const ASpectrum: TSpectrum; AStepToInstructionEndIfNeeded: Boolean): Boolean;
+    function SaveToSpectrum(const ASpectrum: TSpectrum; const ACustomRoms: TStream): Boolean;
     function SaveToSpectrum(const ASpectrum: TSpectrum): Boolean;
   end;
 
@@ -177,15 +177,34 @@ begin
   Result := False;
 end;
 
-function TSpectrumInternalState.SaveToSpectrum(const ASpectrum: TSpectrum): Boolean;
+function TSpectrumInternalState.SaveToSpectrum(const ASpectrum: TSpectrum;
+  const ACustomRoms: TStream): Boolean;
 var
   Proc: TProcessor;
+  RomSize: Integer;
 begin
+  Result := False;
+
   if Assigned(ASpectrum) then begin
 
     Proc := ASpectrum.GetProcessor;
     if Assigned(Proc) then begin
-      ASpectrum.SetSpectrumModel(SpectrumModel, nil); // must be above all other, might trigger reset spectrum
+      if Assigned(ACustomRoms) then begin
+        case SpectrumModel of
+          TSpectrumModel.sm128K, smPlus2:
+            RomSize := 2;
+          TSpectrumModel.smPlus3, TSpectrumModel.smPlus2a:
+            RomSize := 4;
+        otherwise
+          RomSize := 1;
+        end;
+        RomSize := RomSize * KB16;
+
+        if ACustomRoms.Size <> RomSize then
+          Exit;
+      end;
+
+      ASpectrum.SetSpectrumModel(SpectrumModel, ACustomRoms); // must be above all other, might trigger reset spectrum
 
       ASpectrum.LateTimings := LateTimings;
 
@@ -228,10 +247,15 @@ begin
         AyState.Clear;
       AyState.SaveToAYChip(ASpectrum.AYSoundChip);
 
-      Exit(True);
+      Result := True;
     end;
   end;
-  Result := False;
+end;
+
+function TSpectrumInternalState.SaveToSpectrum(const ASpectrum: TSpectrum
+  ): Boolean;
+begin
+  Result := SaveToSpectrum(ASpectrum, nil);
 end;
 
 { TSnapshotInternalSwan }

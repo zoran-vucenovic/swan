@@ -100,6 +100,7 @@ type
 
   private
     Mem: TMemoryStream;
+    RomStream: TMemoryStream;
 
     IsIssue2: Boolean;
     JoystickType: TJoystick.TJoystickType;
@@ -295,6 +296,122 @@ type
     class function GetBlockIdAsStr: RawByteString; override;
   end;
 
+  // ZXSTROM
+  TZxstROM = class(TSnapshotSZX.TSzxBlock)
+  private
+    const
+      ZXSTRF_COMPRESSED = 1;
+
+    type
+      TRecRom = packed record
+        Flags: Word;
+        UncompressedSize: DWord;
+      end;
+
+  protected
+    function LoadFromStream(const Stream: TStream): Boolean; override;
+    function SaveToStream(const Stream: TStream): Boolean; override;
+
+    class function GetBlockIdAsStr: RawByteString; override;
+  end;
+
+{ TZxstROM }
+
+function TZxstROM.LoadFromStream(const Stream: TStream): Boolean;
+var
+  Rec: TRecRom;
+  DataSize: Int32;
+  UncompressedSize: Int32 absolute Rec.UncompressedSize;
+  Str1, Str2: TMemoryStream;
+
+begin
+  Result := False;
+
+  if BlockSize > SizeOf(TRecRom) then begin
+    if Stream.Read(Rec{%H-}, SizeOf(Rec)) = SizeOf(Rec) then begin
+      Rec.Flags := LEtoN(Rec.Flags);
+      Rec.UncompressedSize := LEtoN(Rec.UncompressedSize);
+
+      if (UncompressedSize > 0) and (UncompressedSize mod KB16 = 0) then begin
+        DataSize := BlockSize - SizeOf(TRecRom);
+        if Stream.Size >= Stream.Position + DataSize then begin
+          //
+          try
+            // Free RomStream -- only to prevent memory leak if the szx contains
+            // more than one ZXSTROM block. This should never happen, but it is
+            // out of our control, so keep it here:
+            FreeAndNil(Szx.RomStream);
+
+            if Rec.Flags and ZXSTRF_COMPRESSED <> 0 then begin
+              Str2 := TMemoryStream.Create;
+              try
+                Str2.Size := DataSize;
+                if Stream.Read(Str2.Memory^, DataSize) = DataSize then begin
+                  Str1 := TMemoryStream.Create;
+                  Result := DecompressStream(Str2, Str1) and (Str1.Size = UncompressedSize);
+                end;
+              finally
+                Str2.Free;
+              end;
+            end else begin
+              if DataSize = UncompressedSize then begin
+                Str1 := TMemoryStream.Create;
+                Str1.Size := DataSize;
+                Result := Stream.Read(Str1.Memory^, DataSize) = DataSize;
+              end;
+            end;
+
+            if Result then begin
+              Szx.RomStream := Str1;
+              Str1 := nil;
+            end;
+          finally
+            Str1.Free;
+          end;
+
+        end;
+      end;
+    end;
+
+  end;
+end;
+
+function TZxstROM.SaveToStream(const Stream: TStream): Boolean;
+var
+  Str1: TMemoryStream;
+  Rec: TRecRom;
+
+begin
+  Result := False;
+
+  if Assigned(Szx.RomStream) then begin
+    Str1 := TMemoryStream.Create;
+    try
+      Szx.RomStream.Position := 0;
+      if CompressStream(Szx.RomStream, Str1) then begin
+        Rec.Flags := ZXSTRF_COMPRESSED;
+        Rec.UncompressedSize := Szx.RomStream.Size;
+
+        Rec.Flags := NtoLE(Rec.Flags);
+        Rec.UncompressedSize := NtoLE(Rec.UncompressedSize);
+
+        BlockSize := Str1.Size + SizeOf(Rec);
+        Result := WriteBlockSize(Stream)
+          and (Stream.Write(Rec, SizeOf(Rec)) = SizeOf(Rec))
+          and (Stream.Write(Str1.Memory^, Str1.Size) = Str1.Size);
+      end;
+
+    finally
+      Str1.Free;
+    end;
+  end;
+end;
+
+class function TZxstROM.GetBlockIdAsStr: RawByteString;
+begin
+  Result := 'ROM' + #0;
+end;
+
 { TZxstAYBlock }
 
 function TZxstAYBlock.LoadFromStream(const Stream: TStream): Boolean;
@@ -439,7 +556,8 @@ var
     if Rec.CompressedSize = 0 then
       Exit(False);
 
-    BlockSize := SizeOf(Rec) + Rec.CompressedSize;
+    BlockSize := SizeOf(Rec);
+    BlockSize := BlockSize + Rec.CompressedSize;
 
     Rec.CurrentBlockNo := NtoLE(Rec.CurrentBlockNo);
     Rec.Flags := NtoLE(Rec.Flags);
@@ -1074,6 +1192,7 @@ begin
   AddBlockClass(TZxstKeyboard);
   AddBlockClass(TZxstTape);
   AddBlockClass(TZxstAYBlock);
+  AddBlockClass(TZxstROM);
 end;
 
 class procedure TSnapshotSZX.Final;
@@ -1089,6 +1208,7 @@ begin
   JoystickAttached := False;
   State := Default(TSpectrumInternalState);
   Mem := nil;
+  RomStream := nil;
 end;
 
 destructor TSnapshotSZX.Destroy;
@@ -1115,6 +1235,7 @@ function TSnapshotSZX.LoadFromStream(const Stream: TStream): Boolean;
       if Stream.Read(SzxHeader{%H-}, SizeOf(SzxHeader)) = SizeOf(SzxHeader) then begin
         if SzxHeader.DwMagic = TZxstHeadr.GetUMagic() then begin
 
+          State.SpectrumModel := TSpectrumModel.smNone;
           State.LateTimings := (SzxHeader.ChFlags and TZxstHeadr.ZXSTMF_ALTERNATETIMINGS) <> 0;
 
           case SzxHeader.MachineId of
@@ -1122,28 +1243,24 @@ function TSnapshotSZX.LoadFromStream(const Stream: TStream): Boolean;
               begin
                 SetMemSize(KB16);
                 State.SpectrumModel := TSpectrumModel.sm16K_issue_3;
-                Result := True;
               end;
 
             TZxstHeadr.ZXSTMID_48K:
               begin
                 SetMemSize(KB48);
                 State.SpectrumModel := TSpectrumModel.sm48K_issue_3;
-                Result := True;
               end;
 
             TZxstHeadr.ZXSTMID_128K:
               begin
                 SetMemSize(KB128);
                 State.SpectrumModel := TSpectrumModel.sm128K;
-                Result := True;
               end;
 
             TZxstHeadr.ZXSTMID_PLUS2:
               begin
                 SetMemSize(KB128);
                 State.SpectrumModel := TSpectrumModel.smPlus2;
-                Result := True;
               end;
 
             // Models not yet supported, but most likely will be:
@@ -1159,6 +1276,8 @@ function TSnapshotSZX.LoadFromStream(const Stream: TStream): Boolean;
           otherwise
             RaiseSnapshotLoadErrorSZX(Format('Model unknown (id %d).', [SzxHeader.MachineId]));
           end;
+
+          Result := State.SpectrumModel <> TSpectrumModel.smNone;
         end;
       end;
     end;
@@ -1203,6 +1322,7 @@ begin
   Result := False;
   Stream.Position := 0;
 
+  FreeAndNil(RomStream);
   Self.State := Default(TSpectrumInternalState); // must be above loadheader, because of model setting, as well as late timings
   if LoadHeader() then begin
     FillChar(GetMemStr().Memory^, GetMemStr().Size, 0);
@@ -1210,31 +1330,36 @@ begin
     JoystickAttached := TJoystick.Joystick.Enabled;
     JoystickType := TJoystick.Joystick.JoystickType;
 
-    while LoadBlock() do
-      if Stream.Position = Stream.Size then begin
+    try
+      while LoadBlock() do
+        if Stream.Position = Stream.Size then begin
 
-        if IsIssue2 then begin
-          case State.SpectrumModel of
-            TSpectrumModel.sm16K_issue_3:
-              State.SpectrumModel := TSpectrumModel.sm16K_issue_2;
-            TSpectrumModel.sm48K_issue_3:
-              State.SpectrumModel := TSpectrumModel.sm48K_issue_2;
-          otherwise
+          if IsIssue2 then begin
+            case State.SpectrumModel of
+              TSpectrumModel.sm16K_issue_3:
+                State.SpectrumModel := TSpectrumModel.sm16K_issue_2;
+              TSpectrumModel.sm48K_issue_3:
+                State.SpectrumModel := TSpectrumModel.sm48K_issue_2;
+            otherwise
+            end;
+          end;
+
+          if State.SaveToSpectrum(FSpectrum, RomStream) then begin
+            if not FSkipJoystickInfoLoad then begin // otherwise ignore joystick info from szx
+              TJoystick.Joystick.Enabled := JoystickAttached;
+              if JoystickAttached then
+                TJoystick.Joystick.JoystickType := JoystickType;
+            end;
+
+            GetMemStr().Position := 0;
+            if FSpectrum.Memory.LoadRamFromStream(GetMemStr()) then
+              Exit(True);
           end;
         end;
 
-        if State.SaveToSpectrum(FSpectrum) then begin
-          if not FSkipJoystickInfoLoad then begin // otherwise ignore joystick info from szx
-            TJoystick.Joystick.Enabled := JoystickAttached;
-            if JoystickAttached then
-              TJoystick.Joystick.JoystickType := JoystickType;
-          end;
-
-          GetMemStr().Position := 0;
-          if FSpectrum.Memory.LoadRamFromStream(GetMemStr()) then
-            Exit(True);
-        end;
-      end;
+    finally
+      FreeAndNil(RomStream);
+    end;
   end;
 
 end;
@@ -1280,6 +1405,21 @@ var
     end;
   end;
 
+  function SaveRom(): Boolean;
+  begin
+    Result := False;
+
+    FreeAndNil(RomStream);
+    RomStream := TMemoryStream.Create;
+    try
+      RomStream.Position := 0;
+      Result := FSpectrum.Memory.SaveRomToStream(RomStream)
+        and SaveBlock(TZxstROM.Create);
+    finally
+      FreeAndNil(RomStream);
+    end;
+  end;
+
 var
   BlockRP: TZxstRamPage;
   I, J: Integer;
@@ -1321,17 +1461,20 @@ begin
             end;
             BlockRP.Rec.Flags := TZxstRamPage.ZXSTRF_COMPRESSED;
             if not SaveBlock(BlockRP) then
-              Exit(False);
+              Exit;
           end;
 
+          if FSpectrum.CustomRomsMounted and (not SaveRom()) then
+            Exit;
+
           if State.HasAy and (not SaveBlock(TZxstAYBlock.Create)) then
-            Exit(False);
+            Exit;
 
           if Assigned(FOnSzxSaveTape) then begin
             FOnSzxSaveTape(TapePlayer);
             if Assigned(TapePlayer) then
               if not SaveBlock(TZxstTape.Create(TapePlayer)) then
-                Exit(False);
+                Exit;
           end;
 
           Result := True;
