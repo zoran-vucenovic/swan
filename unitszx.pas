@@ -83,7 +83,7 @@ type
       end;
 
       TSzxBlockClass = class of TSzxBlock;
-      
+
       TSzxBlocksMap = class(specialize TFPGMap<UInt32, TSzxBlockClass>)
       public
         constructor Create;
@@ -1214,6 +1214,7 @@ end;
 destructor TSnapshotSZX.Destroy;
 begin
   Mem.Free;
+  RomStream.Free;
 
   inherited Destroy;
 end;
@@ -1352,9 +1353,9 @@ begin
             end;
 
             GetMemStr().Position := 0;
-            if FSpectrum.Memory.LoadRamFromStream(GetMemStr()) then
-              Exit(True);
+            Result := FSpectrum.Memory.LoadRamFromStream(GetMemStr());
           end;
+          Break;
         end;
 
     finally
