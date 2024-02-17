@@ -111,12 +111,15 @@ const
 
 var
   F: TCustomForm;
-  I: Integer;
+  I, J: Integer;
   Stream: TStream;
   RomsCount: Integer;
   RomFile: String;
   ErrMsg: String;
   BadFile: Boolean;
+  L: Integer;
+  K: Integer;
+  NeededSize, NeededSizeKB: Integer;
 
 begin
   FreeAndNil(Roms);
@@ -149,55 +152,69 @@ begin
         CanClose := not CheckBoxCustomRoms.Checked;
         if not CanClose then begin
           BadFile := True;
-
+          ErrMsg := '';
           RomFile := '';
           Roms := TMemoryStream.Create;
           try
             RomsCount := ((RadioGroupSpectrumModel.ItemIndex div 2) * 3) div 2 + 1;
-            Roms.Size := RomsCount shl 14;
+            NeededSizeKB := RomsCount shl 4;
+            NeededSize := NeededSizeKB shl 10;
+            Roms.Size := NeededSize;
+            L := 0;
+            J := 0;
             for I := 0 to RomsCount - 1 do begin
-              BadFile := True;
               RomFile := FramesChooseFile[I].Path;
+              if Trim(RomFile) <> '' then begin
+                Inc(J);
 
-              if Trim(RomFile) = '' then begin
-                ErrMsg := 'Custom rom file path must not be empty.';
-              end else begin
+                Stream := nil;
                 try
                   Stream := TFileStream.Create(RomFile, fmOpenRead or fmShareDenyWrite);
-                  try
-                    if Stream.Size <> RomBankSize then begin
-                      ErrMsg := 'Bad custom rom file'
-                        + LineEnding + RomFile + LineEnding + LineEnding
-                        + 'The size of rom file must be exactly 16K';
-
-                    end else begin
-                      Stream.Position := 0;
-                      if Stream.Read((Roms.Memory + (I shl 14))^, RomBankSize) = RomBankSize then
-                        BadFile := False;
-                    end;
-                  finally
-                    Stream.Free;
-                  end;
+                  BadFile := False;
                 except
                   BadFile := True;
+                end;
+                if BadFile then begin
+                  FreeAndNil(Roms);
+                  Stream.Free;
                   ErrMsg := 'Cannot load custom rom file'
                     + LineEnding + RomFile + LineEnding + LineEnding
                     + 'Check if the file exists.';
+                  Break;
                 end;
-              end;
 
-              if BadFile then
-                Break;
+                try
+                  K := L;
+                  L := L + Stream.Size;
+                  BadFile := L > NeededSize;
+                  if not BadFile then begin
+                    Stream.Position := 0;
+                    if Stream.Read((Roms.Memory + K)^, Stream.Size) <> Stream.Size then begin
+                      FreeAndNil(Roms);
+                      BadFile := True;
+                      ErrMsg := 'Cannot load custom rom file' + LineEnding + RomFile;
+                    end;
+                  end;
+                finally
+                  Stream.Free;
+                end;
+                if BadFile then
+                  Break;
+              end;
             end;
 
-            CanClose := not BadFile;
-          finally
-            if BadFile then begin
-              FreeAndNil(Roms);
-              if ErrMsg = '' then
-                ErrMsg := 'Cannot load custom rom file'
-                  + LineEnding + RomFile;
+            if ErrMsg = '' then begin
+              if J = 0 then begin
+                ErrMsg := 'Custom rom file paths must not be empty.';
+              end else if L <> NeededSize then begin
+                ErrMsg := Format('Total size of provided files must be exactly %d KB.', [NeededSizeKB]);
+              end;
+            end;
 
+            CanClose := ErrMsg = '';
+          finally
+            if not CanClose then begin
+              FreeAndNil(Roms);
               MessageDlg(ErrMsg, mtError, [mbClose], 0);
             end;
           end;
@@ -249,11 +266,11 @@ begin
   FRomPaths := nil;
   Roms := nil;
 
-  Label2.Caption := 'Choose non-standard roms.'
-    + LineEnding + 'Each rom file must have exactly 16K';
-  Label1.Caption := ' 16K and 48 K models need one rom file.'
-    + LineEnding + ' 128K and +2 need two rom files'
-    //+ LineEnding + ' +3 and +2a need four rom files.' { #todo : enable this line when +3 is implemented }
+  Label2.Caption := 'Choose non-standard roms.';
+  Label1.Caption := ' 16K and 48K models need one 16K rom file.'
+    + LineEnding + ' 128K and +2 need one 32K or two 16K rom files'
+    { #todo : enable this line when +3 is implemented }
+    //+ LineEnding + ' +3 and +2a need up to four rom files (64K total size).'
     ;
   S := '';
   I := 0;

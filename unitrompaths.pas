@@ -158,10 +158,15 @@ begin
       Result.Add(c_rom_path_1, FRomPaths1[0]);
     end;
 
-    if (FRomPaths2[0] <> '') and (FRomPaths2[1] <> '') then begin
+    if FRomPaths2[0] <> '' then begin
       if Result = nil then
         Result := TJSONObject.Create();
       Result.Add(c_rom_path_2_1, FRomPaths2[0]);
+    end;
+
+    if FRomPaths2[1] <> '' then begin
+      if Result = nil then
+        Result := TJSONObject.Create();
       Result.Add(c_rom_path_2_2, FRomPaths2[1]);
     end;
   except
