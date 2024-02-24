@@ -100,47 +100,51 @@ var
   AW: TWordDynArray;
 
 begin
-  Label2.Caption := PCKeyText;
+  PanelViewKeys.DisableAutoSizing;
+  try
+    Label2.Caption := PCKeyText;
 
-  SpectrumKeysControl.GetKeyStates(AW);
-  N := Length(AW);
-  ControlSpectrumKeysText.Free;
-  if N = 0 then begin
-    Label3.Font.Style := Label3.Font.Style + [fsItalic];
-    ControlSpectrumKeysText := nil;
-    Label3.Caption := ' (click on Spectrum keys to map)';
-  end else begin
-    Label3.Font.Style := Label3.Font.Style - [fsItalic];
-    ControlSpectrumKeysText := TCustomControl.Create(Panel2);
-    ControlSpectrumKeysText.AutoSize := True;
-    ControlSpectrumKeysText.Anchors := [];
-    S1 := ' maps to Spectrum key';
-    if N > 1 then
-      S1 := S1 + 's';
-    Label3.Caption := S1 + ' ';
-    C := nil;
-    for I := 0 to N - 1 do begin
-      L := NewLabel;
-      if C = nil then begin
-        L.AnchorParallel(akLeft, 0, ControlSpectrumKeysText);
-      end else begin
-        L.AnchorToNeighbour(akLeft, 0, C);
-        L.Caption := ' + ';
-        C := L;
+    SpectrumKeysControl.GetKeyStates(AW);
+    N := Length(AW);
+    ControlSpectrumKeysText.Free;
+    if N = 0 then begin
+      Label3.Font.Style := Label3.Font.Style + [fsItalic];
+      ControlSpectrumKeysText := nil;
+      Label3.Caption := ' (click on Spectrum keys to map)';
+    end else begin
+      Label3.Font.Style := Label3.Font.Style - [fsItalic];
+      ControlSpectrumKeysText := TCustomControl.Create(Panel2);
+      ControlSpectrumKeysText.AutoSize := True;
+      ControlSpectrumKeysText.Anchors := [];
+      S1 := ' maps to Spectrum key';
+      if N > 1 then
+        S1 := S1 + 's';
+      Label3.Caption := S1 + ' ';
+      C := nil;
+      for I := 0 to N - 1 do begin
         L := NewLabel;
-        L.AnchorToNeighbour(akLeft, 0, C);
+        if C = nil then begin
+          L.AnchorParallel(akLeft, 0, ControlSpectrumKeysText);
+        end else begin
+          L.AnchorToNeighbour(akLeft, 0, C);
+          L.Caption := ' + ';
+          C := L;
+          L := NewLabel;
+          L.AnchorToNeighbour(akLeft, 0, C);
+        end;
+        L.Caption := DecodeSpectrumKey(AW[I]);
+        L.Font := Label2.Font;
+
+        C := L;
       end;
-      L.Caption := DecodeSpectrumKey(AW[I]);
-      L.Font := Label2.Font;
 
-      C := L;
+      ControlSpectrumKeysText.AnchorVerticalCenterTo(Panel2);
+      ControlSpectrumKeysText.Parent := Panel2;
+      ControlSpectrumKeysText.AnchorToNeighbour(akLeft, 0, Label3);
     end;
-
-    ControlSpectrumKeysText.AnchorVerticalCenterTo(Panel2);
-    ControlSpectrumKeysText.Parent := Panel2;
-    ControlSpectrumKeysText.AnchorToNeighbour(akLeft, 0, Label3);
+  finally
+    PanelViewKeys.EnableAutoSizing;
   end;
-
 end;
 
 procedure TFormSpectrumKeysDialog.OnChangeSpectrumKey(Sender: TObject);

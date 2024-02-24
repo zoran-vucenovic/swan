@@ -48,9 +48,7 @@ begin
   FSpectrumKeysControl := TSpectrumKeysControl.Create(Self, False);
   FSpectrumKeysControl.Anchors := [];
   FSpectrumKeysControl.AnchorParallel(akLeft, 0, Panel1);
-  FSpectrumKeysControl.AnchorParallel(akTop, 6, Panel1);
-  FSpectrumKeysControl.BorderSpacing.Right := 6;
-  FSpectrumKeysControl.BorderSpacing.Bottom := 6;
+  FSpectrumKeysControl.AnchorParallel(akTop, 0, Panel1);
   FSpectrumKeysControl.Parent := Panel1;
   AutoSize := True;
 end;

@@ -11,18 +11,18 @@ object FormSpectrumKeysDialog: TFormSpectrumKeysDialog
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '2.2.5.0'
+  LCLVersion = '3.1.0.0'
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
     Left = 0
     Height = 262
     Top = 0
-    Width = 479
+    Width = 472
     AutoSize = True
     BevelOuter = bvNone
     ClientHeight = 262
-    ClientWidth = 479
+    ClientWidth = 472
     TabOrder = 0
     object PanelViewKeys: TPanel
       AnchorSideLeft.Control = Panel1
@@ -38,6 +38,7 @@ object FormSpectrumKeysDialog: TFormSpectrumKeysDialog
       ClientHeight = 22
       ClientWidth = 108
       Color = clWindow
+      ParentBackground = False
       ParentColor = False
       TabOrder = 0
       object Panel2: TPanel
@@ -50,6 +51,7 @@ object FormSpectrumKeysDialog: TFormSpectrumKeysDialog
         BevelOuter = bvNone
         ClientHeight = 16
         ClientWidth = 102
+        ParentBackground = False
         TabOrder = 0
         object Label1: TLabel
           AnchorSideLeft.Control = Panel2
@@ -100,7 +102,7 @@ object FormSpectrumKeysDialog: TFormSpectrumKeysDialog
       Left = 6
       Height = 26
       Top = 230
-      Width = 467
+      Width = 460
       Align = alNone
       Anchors = [akTop, akLeft, akRight]
       OKButton.Name = 'OKButton'
@@ -122,8 +124,6 @@ object FormSpectrumKeysDialog: TFormSpectrumKeysDialog
       Height = 192
       Top = 32
       Width = 472
-      BorderSpacing.Right = 7
-      BorderSpacing.Bottom = 3
       BevelOuter = bvNone
       BorderStyle = bsSingle
       TabOrder = 2

@@ -12,7 +12,7 @@ object FormKeyboardOnScreen: TFormKeyboardOnScreen
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '2.2.5.0'
+  LCLVersion = '3.1.0.0'
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

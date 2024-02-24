@@ -26,6 +26,7 @@ type
   strict private
     class var
       ColoursArr: array of TColor;
+      CArr: array of TColor;
   strict private
     FOnChgSpectrumKey: TNotifyEvent;
     FOnChgSpectrumKeyEx: TChgSpectrumKeyEx;
@@ -34,6 +35,7 @@ type
     Keys: TSpectrumKeyButtons;
 
     procedure DoOnChgSpectrumKey(Sender: TObject);
+    procedure CreateKeyButtons3(ButtonsToggle: Boolean);
     procedure CreateKeyButtons(ButtonsToggle: Boolean);
   private
     class procedure Init(); static;
@@ -43,6 +45,9 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     constructor Create(AOwner: TComponent; ButtonsToggle: Boolean);
+
+    procedure Paint; override;
+
     procedure ReleaseShifts;
     procedure SetKeyStates(const SpectrumKeys: TWordDynArray);
     procedure GetKeyStates(out SpectrumKeys: TWordDynArray);
@@ -180,7 +185,7 @@ begin
   end;
 end;
 
-procedure TSpectrumKeysControl.CreateKeyButtons(ButtonsToggle: Boolean);
+procedure TSpectrumKeysControl.CreateKeyButtons3(ButtonsToggle: Boolean);
 var
   H0, W0, Hb, Wb: Integer;
   K, L, I, J, M, N, FS, Q: Integer;
@@ -400,9 +405,227 @@ begin
   end;
 end;
 
+procedure TSpectrumKeysControl.CreateKeyButtons(ButtonsToggle: Boolean);
+var
+  I, J, L, Fs: Integer;
+  K: Integer;
+  Q: Integer;
+  B, B1: TSpectrumKeyButtonControl;
+  PrevLa, PrevLb: TControl;
+  La, LabAbove, LabBelow, LabColour: TLabel;
+  M, N: Integer;
+  S: String;
+  KT: TKeyTexts;
+  Sz: TSize;
+  H0, W0, Hb, Wb: Integer;
+  G: TKeyGraphicShape;
+  LeadKeys: array [0..3] of TSpectrumKeyButtonControl;
+  W: Word;
+  WR: WordRec absolute W;
+
+begin
+  InitColoursArr();
+  DisableAutoSizing;
+  try
+    FS := MulDiv(GetFontData(Self.Font.Reference.Handle).Height, 10, 7);
+
+    W0 := 0;
+    Hb := 0;
+    K := 0;
+    PrevLb := nil;
+    for I := 0 to 3 do begin
+      B := nil;
+      PrevLa := nil;
+      for L := 0 to 1 do begin
+        LabAbove := nil;
+        M := 3 + L + (2 * L - 1) * I;
+        //
+        WR.Hi := M;
+        for J := 0 to 4 do begin
+          N := 4 * L + (1 - 2 * L) * J;
+          WR.Lo := N;
+
+          S := UnitKeyMaps.DecodeSpectrumKeyTexts(W, KT);
+          LabAbove := TLabel.Create(Self);
+          LabAbove.Caption := KT[2];
+          LabBelow := TLabel.Create(Self);
+          LabBelow.Caption := KT[3];
+          LabAbove.Anchors := [];
+          LabBelow.Anchors := [];
+
+          B1 := B;
+          B := TSpectrumKeyButtonControl.Create(Self);
+
+          B.Anchors := [];
+          if Assigned(B1) then
+            B.AnchorToNeighbour(akLeft, 7, B1)
+          else begin
+            B.AnchorParallel(akLeft, 7, Self);
+            LeadKeys[I] := B;
+          end;
+
+          B.AnchorToNeighbour(akTop, 1, LabAbove);
+          LabAbove.AnchorParallel(akLeft, 6, B);
+          LabBelow.AnchorParallel(akLeft, 6, B);
+          LabBelow.AnchorToNeighbour(akTop, 1, B);
+          B.KeyValue := W;
+          case W of
+            0:
+              FButtonCapsShift := B;
+            $0701:
+              FButtonSymbolShift := B;
+          otherwise
+          end;
+
+          if I = 0 then begin
+            La := B.LabSymbol;
+            B.LabSymbol := B.LabCommand;
+            B.LabCommand := La;
+
+            Q := L * 5 + J;
+            if Q <= 7 then begin
+              KT[0] := ' ';
+              G := TKeyGraphicShape.Create(B);
+              G.Flags := ($F - ((Q + 1) and 7));
+              if G.Flags and 4 = 0 then
+                G.Flags := G.Flags xor $C;
+              G.Anchors := [];
+              G.AnchorParallel(akTop, 0, La);
+              G.AnchorParallel(akRight, 0, La);
+              G.AnchorParallel(akBottom, 0, La);
+              G.Parent := La.Parent;
+            end;
+
+            LabColour := TLabel.Create(Self);
+            LabColour.Font := Self.Font;
+
+            Q := (Q + 1) mod 10;
+            if Q <= 7 then begin
+              LabColour.Caption := AnsiUpperCase(TCommonSpectrum.SpectrumColourNames[Q]);
+              LabColour.Font.Color := ColoursArr[Q];
+              if Q = 0 then begin
+                LabColour.Transparent := False;
+                LabColour.Color := ColoursArr[7];
+                LabColour.Caption := ' ' + LabColour.Caption + ' ';
+              end;
+            end else
+              LabColour.Caption := ' ';
+
+            LabColour.AnchorParallel(akLeft, 0, LabAbove);
+            LabAbove.AnchorToNeighbour(akTop, 1, LabColour);
+            LabColour.AnchorParallel(akTop, 2, Self);
+            LabColour.Parent := Self;
+          end else begin
+            if Assigned(PrevLa) then
+              LabAbove.AnchorParallel(akTop, 0, PrevLa)
+            else
+              LabAbove.AnchorToNeighbour(akTop, 2, PrevLb);
+
+            if Trim(KT[0]) = '' then begin
+              B.Lab.Alignment := TAlignment.taCenter;
+              B.Lab.Layout := TTextLayout.tlCenter;
+
+              B.Lab.AnchorParallel(akLeft, 0, B.Control0);
+              B.Lab.AnchorParallel(akRight, 0, B.Control0);
+              B.Lab.AnchorParallel(akTop, 0, B.Control0);
+              B.Lab.AnchorParallel(akBottom, 0, B.Control0);
+
+              if I = 3 then
+                if N = 0 then
+                  B.Tag := 2 * L + 13;
+            end;
+          end;
+
+          B.Lab.Font := Self.Font;
+          B.LabCommand.Font := B.Lab.Font;
+
+          B.LabSymbol.Font := B.LabCommand.Font;
+          La := B.LabSymbol;
+
+          if B = FButtonSymbolShift then // symbol shift
+            La := B.Lab;
+
+          La.Font.Color := TColor($0b0ba9);
+
+          if B.Lab.Alignment <> TAlignment.taCenter then
+            B.Lab.Font.Height := FS;
+
+          TCommonFunctionsLCL.CalculateTextSize(B.LabCommand.Font, KT[1], Sz);
+          B.LabSymbol.Caption := KT[1]; // symbol text on button
+          Wb := Sz.cx;
+          H0 := Sz.cy;
+
+          TCommonFunctionsLCL.CalculateTextSize(B.LabCommand.Font, KT[0], Sz);
+          B.LabCommand.Caption := KT[0]; // command text on button
+          if Sz.cx > Wb then
+            Wb := Sz.cx;
+          H0 := H0 + Sz.cy;
+
+          B.DisplayText := S;
+          TCommonFunctionsLCL.CalculateTextSize(B.Lab.Font, B.DisplayText, Sz);
+          Wb := Wb + Sz.cx;
+          if H0 < Sz.cy then
+            H0 := Sz.cy;
+
+          if W0 < Wb then
+            W0 := Wb;
+          if Hb < H0 then
+            Hb := H0;
+
+          LabBelow.Font := B.LabSymbol.Font;
+          LabAbove.Font := B.LabSymbol.Font;
+          if I = 0 then begin
+            LabAbove.Font.Color := clWhite;
+          end else begin
+            LabAbove.Font.Color := TColor($34b934); // green;
+          end;
+          LabBelow.Font.Color := TColor($4949FF); // red
+
+          LabAbove.Parent := Self;
+          B.Parent := Self;
+          LabBelow.Parent := Self;
+
+          Inc(K);
+          Keys[K] := B;
+          B.OnChange := @DoOnChgSpectrumKey;
+          B.SetMouseEvents(ButtonsToggle);
+
+          if (L = 0) and (J = 0) then begin
+            PrevLb := LabBelow;
+            PrevLa := LabAbove;
+          end;
+        end;
+      end;
+      B.BorderSpacing.Right := B.BorderSpacing.Left;
+    end;
+    LabBelow.BorderSpacing.Bottom := 3;
+
+    Wb := W0 * 5 div 6;
+    Hb := Hb + 1;
+
+    for I := Low(LeadKeys) to High(LeadKeys) do
+      LeadKeys[I].BorderSpacing.Left := LeadKeys[I].BorderSpacing.Left + (I mod 3) * W0 * 8 div 21;
+
+    for I := Low(Keys) to High(Keys) do begin
+      B := TSpectrumKeyButtonControl(Keys[I]);
+      if B.Tag = 0 then
+        B.Control0.Width := Wb
+      else
+        B.Control0.Width := MulDiv(W0, B.Tag, 12);
+
+      B.Control0.Height := Hb;
+      B.AutoSize := True;
+    end;
+
+  finally
+    EnableAutoSizing;
+  end;
+end;
+
 class procedure TSpectrumKeysControl.Init;
 begin
   SetLength(ColoursArr, 0);
+  SetLength(CArr, 0);
 end;
 
 class procedure TSpectrumKeysControl.InitColoursArr;
@@ -416,6 +639,12 @@ begin
     for I := Low(ColoursArr) to High(ColoursArr) do begin
       ColoursArr[I] := C.Colours[False, I];
     end;
+
+    SetLength(CArr, 4);
+    CArr[0] := $222981;
+    CArr[1] := $158baf;
+    CArr[2] := $155f28;
+    CArr[3] := $b27b02;
   end;
 end;
 
@@ -424,6 +653,7 @@ var
   F: TCustomForm;
 begin
   inherited SetParent(NewParent);
+
   F := GetParentForm(Self);
   if Assigned(F) then
     F.Color := BackgroundColour;
@@ -504,6 +734,48 @@ begin
   CreateKeyButtons(ButtonsToggle);
   SetKeyStates([]);
   AutoSize := True;
+end;
+
+procedure TSpectrumKeysControl.Paint;
+var
+  P1, P2: TPoint;
+  Pp1, Pp2: TPoint;
+  Nx, Ny: Integer;
+  I: Integer;
+
+begin
+  inherited Paint;
+
+  if Assigned(FButtonSymbolShift) then begin
+    Nx := FButtonSymbolShift.Width;
+
+    P1.X := Self.FButtonSymbolShift.BoundsRect.Right + FButtonSymbolShift.BorderSpacing.Left + 4;
+    P1.Y := Self.ClientHeight;
+
+    P2.X := Self.ClientWidth;
+    P2.Y := P1.Y * 2 div 7;
+
+    Nx := FButtonSymbolShift.Width;
+    Ny := (Self.ClientWidth - P1.X) * 5;
+    Ny := ((Self.ClientHeight - P2.Y) * Nx + Ny div 2) div Ny;
+
+    Nx := (Nx + 2) div 5;
+
+    Pp1:= P1;
+    Pp2 := P2;
+
+    Canvas.Pen.Style := psClear;
+
+    for I := 0 to 3 do begin
+      Canvas.Brush.Color := CArr[I];
+      Pp1.X := Pp1.X + Nx;
+      Pp2.Y := Pp2.Y + Ny;
+      Self.Canvas.Polygon([P1, P2, Pp2, Pp1]);
+      P1.X := Pp1.X;
+      P2.Y := Pp2.Y;
+    end;
+
+  end;
 end;
 
 procedure TSpectrumKeysControl.ReleaseShifts;
