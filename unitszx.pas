@@ -321,8 +321,8 @@ function TZxstROM.LoadFromStream(const Stream: TStream): Boolean;
 var
   Rec: TRecRom;
   DataSize: Int32;
-  UncompressedSize: Int32 absolute Rec.UncompressedSize;
   Str1, Str2: TMemoryStream;
+  UncompressedSize: Int32 absolute Rec.UncompressedSize;
 
 begin
   Result := False;
@@ -335,7 +335,7 @@ begin
       if (UncompressedSize > 0) and (UncompressedSize mod KB16 = 0) then begin
         DataSize := BlockSize - SizeOf(TRecRom);
         if Stream.Size >= Stream.Position + DataSize then begin
-          //
+          Str1 := nil;
           try
             // Free RomStream -- only to prevent memory leak if the szx contains
             // more than one ZXSTROM block. This should never happen, but it is
