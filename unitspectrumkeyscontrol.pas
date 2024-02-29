@@ -526,9 +526,7 @@ begin
   inherited Paint;
 
   if Assigned(FButtonSymbolShift) then begin
-    Nx := FButtonSymbolShift.Width;
-
-    P1.X := Self.FButtonSymbolShift.BoundsRect.Right + FButtonSymbolShift.BorderSpacing.Left + 4;
+    P1.X := FButtonSymbolShift.BoundsRect.Right + FButtonSymbolShift.BorderSpacing.Left + 4;
     P1.Y := Self.ClientHeight;
 
     P2.X := Self.ClientWidth;
