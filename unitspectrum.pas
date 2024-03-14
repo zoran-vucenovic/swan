@@ -357,11 +357,17 @@ begin
 end;
 
 procedure TSpectrum.SetPaging;
+var
+  B: Boolean;
 begin
   if FPagingEnabled then begin
     FMemory.ActiveRamPageNo := FProcessor.DataBus and %111;
     FProcessor.ContendedHighBank := FProcessor.DataBus and 1 <> 0; { #todo : different on +3! }
-    FMemory.ShadowScreenDisplay := FProcessor.DataBus and %1000 <> 0;
+    B := FMemory.ShadowScreenDisplay;
+    if B xor (FProcessor.DataBus and %1000 <> 0) then begin
+      FProcessor.OnNeedWriteScreen(FProcessor.TStatesInCurrentFrame - 3);
+      FMemory.ShadowScreenDisplay := not B;
+    end;
     FMemory.ActiveRomPageNo := (FProcessor.DataBus shr 4) and 1;
     if FProcessor.DataBus and %100000 <> 0 then
       FPagingEnabled := False;
@@ -463,8 +469,6 @@ begin
   //if FProcessor.AddressBus and $FF = $FE then begin
   if FProcessor.AddressBus and 1 = 0 then begin
     Aux := FProcessor.DataBus;
-    SetCodedBorderColour(Aux and %111);
-
     // sound... byte
     // 1 in bit 4 activates EAR, whilst 0 in bit 3 activates MIC
     // Implemented so that EAR state can be read by IN, whereas MIC not, but
@@ -473,6 +477,13 @@ begin
     FInternalEar := (Aux and %10000) shl 2;
     FMic := (not Aux) and %1000;
     FEar := FInternalEar or FEarFromTape;
+
+    Aux := Aux and 7;
+    if Aux <> FCodedBorderColour then begin
+      FProcessor.OnNeedWriteScreen(FProcessor.TStatesInCurrentFrame - 8);
+      FCodedBorderColour := Aux;
+      SpectrumColoursBGRA.BorderColour2 := SpectrumColoursBGRA.BGRAColours[False, Aux];
+    end;
   end;
 
   if FProcessor.AddressBus and $8002 = 0 then begin

@@ -482,7 +482,6 @@ end;
 
 procedure TProcessor.RequestOutput;
 begin
-  FOnNeedWriteScreen(FTStatesInCurrentFrame - 4);
   IOTimings;
   FOnOutputRequest();
 end;
