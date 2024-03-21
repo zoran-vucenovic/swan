@@ -8,7 +8,7 @@ unit UnitFileZip;
 interface
 
 uses
-  Classes, SysUtils, UnitChooseFile, Zipper;
+  Classes, SysUtils, UnitFormChooseString, Zipper;
 
 type
 
@@ -68,6 +68,13 @@ end;
 class function TFileUnzipper.GetFileFromZipStream(const AZipStream: TStream;
   const Extensions: array of String; out AStream: TStream; out
   FileNameInZip: String): Boolean;
+
+const
+  MessageText: AnsiString =
+    'The chosen zip file contains %d file entries which might be Spectrum files'
+      + '. Please choose one:'
+    ;
+
 var
   UnZ: TUnZipper;
   I, II, LE, N: Integer;
@@ -123,7 +130,9 @@ begin
               Inc(I);
             end;
 
-            if UnitChooseFile.TFormChooseFile.ShowFormChooseFile(SL, N) then begin
+            if UnitFormChooseString.TFormChooseString.ShowFormChooseFile(
+              SL, 'Choose a file', Format(MessageText, [SL.Count]), N)
+            then begin
               if N < 0 then
                 Result := True
               else begin

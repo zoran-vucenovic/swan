@@ -563,14 +563,6 @@
         <UnitName Value="UnitKeyboardOnScreen"/>
       </Unit>
       <Unit>
-        <Filename Value="unitchoosefile.pas"/>
-        <IsPartOfProject Value="True"/>
-        <ComponentName Value="FormChooseFile"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Form"/>
-        <UnitName Value="UnitChooseFile"/>
-      </Unit>
-      <Unit>
         <Filename Value="unitframekeymappings.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameKeyMappings"/>
@@ -678,6 +670,14 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="UnitFrameSoundVolume"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitformchoosestring.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormChooseString"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitFormChooseString"/>
       </Unit>
     </Units>
   </ProjectOptions>

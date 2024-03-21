@@ -1,4 +1,4 @@
-unit UnitChooseFile;
+unit UnitFormChooseString;
 // Copyright 2022-2024 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
@@ -12,7 +12,7 @@ uses
   ExtCtrls, ButtonPanel, StdCtrls, Grids;
 
 type
-  TFormChooseFile = class(TForm)
+  TFormChooseString = class(TForm)
     ButtonPanel1: TButtonPanel;
     Label1: TLabel;
     Panel1: TPanel;
@@ -26,7 +26,8 @@ type
   public
     constructor Create(TheOwner: TComponent); override;
     destructor Destroy; override;
-    class function ShowFormChooseFile(const SL: TStrings; out N: Integer): Boolean; static;
+    class function ShowFormChooseFile(const SL: TStrings; const ACaption,
+      ATitle: AnsiString; out N: Integer): Boolean; static;
   end;
 
 implementation
@@ -40,14 +41,14 @@ type
     constructor Create(AOwner: TComponent); override;
   end;
 
-{ TFormChooseFile }
+{ TFormChooseString }
 
-procedure TFormChooseFile.FormShow(Sender: TObject);
+procedure TFormChooseString.FormShow(Sender: TObject);
 begin
   AfterShow(1);
 end;
 
-procedure TFormChooseFile.GridOnDblClick(Sender: TObject);
+procedure TFormChooseString.GridOnDblClick(Sender: TObject);
 var
   P, PMouse: TPoint;
   G: TFileListGrid;
@@ -78,14 +79,14 @@ begin
 
 end;
 
-procedure TFormChooseFile.AfterShow(Data: PtrInt);
+procedure TFormChooseString.AfterShow(Data: PtrInt);
 begin
   CommonFunctionsLCL.TCommonFunctionsLCL.FormToScreenCentre(Self);
   if Data > 0 then
     Application.QueueAsyncCall(@AfterShow, Data - 1);
 end;
 
-constructor TFormChooseFile.Create(TheOwner: TComponent);
+constructor TFormChooseString.Create(TheOwner: TComponent);
 begin
   inherited Create(TheOwner);
 
@@ -102,23 +103,18 @@ begin
   AfterShow(-1);
 end;
 
-destructor TFormChooseFile.Destroy;
+destructor TFormChooseString.Destroy;
 begin
   Grid.Free;
   inherited Destroy;
 end;
 
-class function TFormChooseFile.ShowFormChooseFile(const SL: TStrings; out
-  N: Integer): Boolean;
-const
-  MessageText: AnsiString =
-    'The chosen zip file contains %d file entries which might be Spectrum files'
-      + '. Please choose one:'
-    ;
+class function TFormChooseString.ShowFormChooseFile(const SL: TStrings;
+  const ACaption, ATitle: AnsiString; out N: Integer): Boolean;
 
 var
   I: Integer;
-  F: TFormChooseFile;
+  F: TFormChooseString;
 
 begin
   Result := False;
@@ -131,9 +127,16 @@ begin
     Exit(True);
   end;
 
-  F := TFormChooseFile.Create(nil);
+  F := TFormChooseString.Create(nil);
   try
-    F.Label1.Caption := Format(MessageText, [SL.Count]);
+    F.Caption := ACaption;
+    F.Label1.Caption :=  Trim(ATitle);
+    if F.Label1.Caption = '' then begin
+      F.Panel3.Hide;
+      F.Panel2.AnchorParallel(akTop, 0, F.Panel1);
+    end else begin
+      F.Panel3.Show;
+    end;
     F.Grid.RowCount := F.Grid.FixedRows + SL.Count;
     for I := 0 to SL.Count - 1 do begin
       F.Grid.Cells[F.Grid.FixedCols, F.Grid.FixedRows + I] := SL.Strings[I];
