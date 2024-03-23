@@ -33,6 +33,7 @@ type
     function LoadBlock(const Stream: TStream): Boolean; virtual; abstract;
     function GetNextPulse(): Boolean; virtual;
     function GetStopPlaying: Boolean; virtual;
+    function ForwardOneWhenStarting: Boolean; virtual;
 
     procedure Start; virtual;
     procedure Details(out S: String); virtual;
@@ -43,8 +44,21 @@ type
   { TTapePlayer }
 
   TTapePlayer = class abstract (TSpectrum.TAbstractTapePlayer)
+  public
+  // used only in tzx block 28
+    type
+      TSelection = record
+        RelativeOffset: Int16;
+        DescriptionText: AnsiString;
+      end;
+
+      TSelections = array of TSelection;
+
+      TOnSelectBlock = function(const ASelections: TSelections): Boolean of object;
+
   strict private
     FOnChangeBlock: TProcedureOfObject;
+    FOnSelectBlock: TOnSelectBlock;
     FBlockCount: Integer;
     FFileName: String;
 
@@ -120,6 +134,7 @@ type
     function GetBlockCount: Integer;
     property FileName: String read FFileName write FFileName;
     property OnChangeBlock: TProcedureOfObject read FOnChangeBlock write SetOnChangeBlock;
+    property OnSelectBlock: TOnSelectBlock read FOnSelectBlock write FOnSelectBlock;
   end;
 
 implementation
@@ -149,6 +164,11 @@ end;
 function TTapeBlock.GetStopPlaying: Boolean;
 begin
   Result := False;
+end;
+
+function TTapeBlock.ForwardOneWhenStarting: Boolean;
+begin
+  Result := GetStopPlaying;
 end;
 
 function TTapeBlock.GetNextPulse: Boolean;
@@ -225,6 +245,7 @@ begin
   FStream := nil;
   SetLength(Blocks, 2);
   FBlockCount := 0;
+  FOnSelectBlock := nil;
   SetOnChangeBlock(nil);
   FSpectrum := nil;
 end;
@@ -371,7 +392,7 @@ begin
   ActiveBit := 0;
 
   StartBlock(FCurrentBlockNumber);
-  if Assigned(FCurrentBlock) and FCurrentBlock.GetStopPlaying then
+  if Assigned(FCurrentBlock) and FCurrentBlock.ForwardOneWhenStarting then
     StartBlock(FCurrentBlockNumber + 1);
 end;
 

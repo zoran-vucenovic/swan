@@ -8,7 +8,7 @@ unit UnitFileZip;
 interface
 
 uses
-  Classes, SysUtils, UnitFormChooseString, Zipper;
+  Classes, SysUtils, Types, UnitFormChooseString, Zipper;
 
 type
 
@@ -70,6 +70,7 @@ class function TFileUnzipper.GetFileFromZipStream(const AZipStream: TStream;
   FileNameInZip: String): Boolean;
 
 const
+  CaptionText: AnsiString = 'Choose a file';
   MessageText: AnsiString =
     'The chosen zip file contains %d file entries which might be Spectrum files'
       + '. Please choose one:'
@@ -77,13 +78,15 @@ const
 
 var
   UnZ: TUnZipper;
-  I, II, LE, N: Integer;
+  I, II, LE, N, L, LL, LLL: Integer;
   Entry: TFullZipFileEntry;
   Extension: AnsiString;
   SL: TStringList;
   FiUnz: TFileUnzipper;
   ExtFound: Boolean;
   S, S2: AnsiString;
+  SA: TStringDynArray;
+
 begin
   Result := False;
   AStream := nil;
@@ -102,42 +105,59 @@ begin
           UnZ.OnCloseInputStream := @(FiUnz.DoCloseInputStream);
           UnZ.Examine;
 
-          SL := TStringList.Create;
-          try
-            I := 0;
-            while I < UnZ.Entries.Count do begin
-              Entry := UnZ.Entries.FullEntries[I];
-              if not (Entry.IsDirectory or Entry.IsLink) then begin
-                S2 := Entry.ArchiveFileName;
-                Extension := ExtractFileExt(S2);
+          LL := UnZ.Entries.Count;
+          if LL <= 144 then
+            L := LL
+          else
+            L := 144;
+          SetLength(SA{%H-}, (L * 3) div 2);
+          L := 0;
+          I := 0;
+          while I < LL do begin
+            Entry := UnZ.Entries.FullEntries[I];
+            if not (Entry.IsDirectory or Entry.IsLink) then begin
+              S2 := Entry.ArchiveFileName;
+              Extension := ExtractFileExt(S2);
 
-                ExtFound := False;
-                II := 0;
-                while (not ExtFound) and (II < LE) do begin
-                  S := Trim(Extensions[II]);
-                  if Length(S) > 0 then begin
-                    if not S.StartsWith(ExtensionSeparator, True) then
-                      S := ExtensionSeparator + S;
-                    ExtFound := AnsiCompareText(Extension, S) = 0;
-                  end;
-                  Inc(II);
+              ExtFound := False;
+              II := 0;
+              while (not ExtFound) and (II < LE) do begin
+                S := Trim(Extensions[II]);
+                if Length(S) > 0 then begin
+                  if not S.StartsWith(ExtensionSeparator, True) then
+                    S := ExtensionSeparator + S;
+                  ExtFound := AnsiCompareText(Extension, S) = 0;
                 end;
-
-                if ExtFound then
-                  SL.Append(S2);
-
+                Inc(II);
               end;
-              Inc(I);
-            end;
 
-            if UnitFormChooseString.TFormChooseString.ShowFormChooseFile(
-              SL, 'Choose a file', Format(MessageText, [SL.Count]), N)
-            then begin
-              if N < 0 then
-                Result := True
-              else begin
-                FileNameInZip := SL.Strings[N];
-                SL.Clear;
+              if ExtFound then begin
+                if L >= Length(SA) then begin
+                  LLL := (L * 7) div 5;
+                  if LLL > LL then
+                    LLL := LL;
+                  SetLength(SA, LLL);
+                end;
+                SA[L] := S2;
+                Inc(L);
+              end;
+
+            end;
+            Inc(I);
+          end;
+          SetLength(SA, L);
+
+          if UnitFormChooseString.TFormChooseString.ShowFormChooseString(
+            SA, CaptionText, Format(MessageText, [L]), N)
+          then begin
+            if N < 0 then
+              Result := True // user cancelled
+            else begin
+              FileNameInZip := SA[N];
+              SetLength(SA, 0);
+
+              SL := TStringList.Create;
+              try
                 SL.Append(FileNameInZip);
 
                 FiUnz.OutStream := nil;
@@ -169,10 +189,10 @@ begin
                 finally
                   FiUnz.OutStream.Free;
                 end;
+              finally
+                SL.Free;
               end;
             end;
-          finally
-            SL.Free;
           end;
         finally
           UnZ.Free;

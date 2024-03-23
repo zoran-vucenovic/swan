@@ -26,7 +26,7 @@ type
   public
     constructor Create(TheOwner: TComponent); override;
     destructor Destroy; override;
-    class function ShowFormChooseFile(const SL: TStrings; const ACaption,
+    class function ShowFormChooseString(const SA: array of String; const ACaption,
       ATitle: AnsiString; out N: Integer): Boolean; static;
   end;
 
@@ -109,9 +109,9 @@ begin
   inherited Destroy;
 end;
 
-class function TFormChooseString.ShowFormChooseFile(const SL: TStrings;
-  const ACaption, ATitle: AnsiString; out N: Integer): Boolean;
-
+class function TFormChooseString.ShowFormChooseString(
+  const SA: array of String; const ACaption, ATitle: AnsiString; out N: Integer
+  ): Boolean;
 var
   I: Integer;
   F: TFormChooseString;
@@ -119,38 +119,40 @@ var
 begin
   Result := False;
   N := -1;
-  if (SL = nil) or (SL.Count <= 0) then
-    Exit;
 
-  if (SL.Count = 1) then begin
-    N := 0;
-    Exit(True);
-  end;
+  if Length(SA) > 0 then begin
+    if Length(SA) = 1 then begin
+      N := 0;
+      Exit(True);
+    end;
 
-  F := TFormChooseString.Create(nil);
-  try
-    F.Caption := ACaption;
-    F.Label1.Caption :=  Trim(ATitle);
-    if F.Label1.Caption = '' then begin
-      F.Panel3.Hide;
-      F.Panel2.AnchorParallel(akTop, 0, F.Panel1);
-    end else begin
-      F.Panel3.Show;
-    end;
-    F.Grid.RowCount := F.Grid.FixedRows + SL.Count;
-    for I := 0 to SL.Count - 1 do begin
-      F.Grid.Cells[F.Grid.FixedCols, F.Grid.FixedRows + I] := SL.Strings[I];
-    end;
-    F.Grid.Row := F.Grid.FixedRows;
+    F := TFormChooseString.Create(nil);
+    try
+      F.Caption := ACaption;
 
-    if F.ShowModal <> mrOK then
-      Result := True // User canceled
-    else begin
-      N := F.Grid.Row - F.Grid.FixedRows;
-      Result := N >= 0;
+      F.Label1.Caption :=  Trim(ATitle);
+      if F.Label1.Caption = '' then begin
+        F.Panel3.Hide;
+        F.Panel2.AnchorParallel(akTop, 0, F.Panel1);
+      end else begin
+        F.Panel3.Show;
+      end;
+      F.Grid.RowCount := F.Grid.FixedRows + Length(SA);
+      for I := Low(SA) to High(SA) do begin
+        F.Grid.Cells[F.Grid.FixedCols, F.Grid.FixedRows + I] := SA[I];
+      end;
+      F.Grid.Row := F.Grid.FixedRows;
+
+      if F.ShowModal <> mrOK then
+        Result := True // user cancelled
+      else begin
+        N := F.Grid.Row - F.Grid.FixedRows;
+        Result := N >= 0;
+      end;
+    finally
+      F.Free;
     end;
-  finally
-    F.Free;
+
   end;
 end;
 

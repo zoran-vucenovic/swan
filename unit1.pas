@@ -18,7 +18,7 @@ uses
   UnitSoundPlayer, UnitOptions, UnitFrameSpectrumModel,
   UnitFrameSound, UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions,
   UnitRecentFiles, UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA,
-  UnitFileZip, UnitRomPaths, UnitSwanToolbar;
+  UnitFileZip, UnitRomPaths, UnitSwanToolbar, UnitFormChooseString;
 
 // On Linux, bgra drawing directly to PaintBox in its OnPaint event seems to be
 // extremly slow. However, we get better time when we have an auxiliary bitmap
@@ -288,6 +288,7 @@ type
     PrevPCTicks: Int64;
     PrevTimeStop: Integer;
     DropFiles: TDropFiles;
+    FSelections: TTapePlayer.TSelections;
 
     EventsQueueCount: Integer;
     EventsQueue: Array of TNotifyEvent;
@@ -339,6 +340,8 @@ type
     procedure EventTapeBrowserGoToBlock(Sender: TObject);
     procedure TapeBrowserGoToBlock();
     procedure TapeBrowserAttachTape;
+    procedure EventTapePlayerSelectBlock(Sender: TObject);
+    function TapePlayerOnSelectBlock(const ASelections: TTapePlayer.TSelections): Boolean;
     procedure GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape; const IncludeZip: Boolean; out Extensions: TStringDynArray);
     procedure LoadAsk(const SnapshotOrTape: TSnapshotOrTape);
     procedure DoLoad(const SnapshotOrTape: TSnapshotOrTape; ASourceFile: String);
@@ -441,6 +444,7 @@ begin
   {$endif}
 
   DropFiles := nil;
+  SetLength(FSelections, 0);
   DestroySpectrum;
   Spectrum := TSpectrum.Create;
   ScreenSizeFactor := 1;
@@ -2199,6 +2203,58 @@ begin
 
 end;
 
+procedure TForm1.EventTapePlayerSelectBlock(Sender: TObject);
+const
+  DlgCaption: AnsiString = 'Select block found';
+  DlgMsg: AnsiString = 'Please select the block to jump to:';
+  ItemText: AnsiString = 'block %d: %s';
+var
+  I, N: Integer;
+  WasPaused: Boolean;
+  SA: TStringDynArray;
+begin
+  if Assigned(TapePlayer) and (Length(FSelections) > 0) then begin
+    WasPaused := Spectrum.Paused;
+    try
+      Spectrum.Paused := True;
+
+      UpdateWriteScreen;
+      if Assigned(FTapeBrowser) then
+        FTapeBrowser.Invalidate;
+
+      SetLength(SA{%H-}, Length(FSelections));
+      for I := Low(FSelections) to High(FSelections) do begin
+        N := TapePlayer.GetCurrentBlockNumber + FSelections[I].RelativeOffset + 1;
+        SA[I] := Format(ItemText, [N, FSelections[I].DescriptionText]);
+      end;
+      if TFormChooseString.ShowFormChooseString(SA, DlgCaption, DlgMsg, N) then begin
+        if N >= 0 then begin
+          N := FSelections[N].RelativeOffset;
+          if N <> 0 then begin
+            TapePlayer.GoToBlock(TapePlayer.GetCurrentBlockNumber + N);
+            TapePlayer.Continue;
+          end;
+        end;
+      end;
+    finally
+      Spectrum.Paused := WasPaused;
+    end;
+  end;
+  SetLength(FSelections, 0);
+end;
+
+function TForm1.TapePlayerOnSelectBlock(const ASelections: TTapePlayer.TSelections
+  ): Boolean;
+begin
+  Result := Assigned(TapePlayer) and (Length(ASelections) > 0);
+  if Result then begin
+    FSelections := ASelections;
+    Result := True;
+    AddEventToQueue(@EventTapePlayerSelectBlock);
+  end else
+    SetLength(FSelections, 0);
+end;
+
 procedure TForm1.GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape;
   const IncludeZip: Boolean; out Extensions: TStringDynArray);
 const
@@ -2446,6 +2502,7 @@ begin
             ShowTapeBrowser()
           else
             TapeBrowserAttachTape;
+          TapePlayer.OnSelectBlock := @TapePlayerOnSelectBlock;
           Result := True;
         end;
 
@@ -2864,6 +2921,7 @@ end;
 
 procedure TForm1.FreeTapePlayer;
 begin
+  SetLength(FSelections, 0);
   if Assigned(FTapeBrowser) then
     FTapeBrowser.SetTapePlayer(nil);
 

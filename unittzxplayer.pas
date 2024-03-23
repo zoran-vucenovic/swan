@@ -306,9 +306,37 @@ var
   end;
 
   procedure LoopCheck;
+
+    function CheckEmptyLoop(APosition: Integer): Integer;
+    var
+      B: TTzxBlock;
+      N: Integer;
+    begin
+      N := FCurrentBlockNumber + APosition + 1;
+      if N >= GetBlockCount then
+        Exit(N);
+
+      B := TTzxBlock(Blocks[N]);
+      if B.GetNumberOfRepetitions > 0 then begin
+        N := CheckEmptyLoop(APosition + 1);
+        if N = 0 then
+          Exit(0);
+
+        Inc(N);
+        if N >= GetBlockCount then
+          Exit(N);
+        B := TTzxBlock(Blocks[N]);
+      end;
+      if B.CheckLoopEnd then
+        Exit(N);
+
+      Result := 0;
+    end;
+
   var
     LoopRec: ^TLoopRec;
     N: Integer;
+    EL: Integer;
   begin 
     if BL.CheckLoopEnd then begin
       // Loop end
@@ -324,13 +352,20 @@ var
       // Loop start
       N := BL.GetNumberOfRepetitions;
       if N > 0 then begin
-        if Length(FLoopArray) <= FLoopArrayCount then
-          SetLength(FLoopArray, (FLoopArrayCount * 7) div 5 + 2);
+        EL := CheckEmptyLoop(0);
+        if EL > 0 then begin
+          if EL > GetBlockCount then
+            EL := GetBlockCount;
+          FCurrentBlockNumber := EL;
+        end else begin
+          if Length(FLoopArray) <= FLoopArrayCount then
+            SetLength(FLoopArray, (FLoopArrayCount * 7) div 5 + 2);
 
-        LoopRec := @(FLoopArray[FLoopArrayCount]);
-        LoopRec^.StartBlockNumber := FCurrentBlockNumber;
-        LoopRec^.LoopCount := N;
-        Inc(FLoopArrayCount);
+          LoopRec := @(FLoopArray[FLoopArrayCount]);
+          LoopRec^.StartBlockNumber := FCurrentBlockNumber;
+          LoopRec^.LoopCount := N;
+          Inc(FLoopArrayCount);
+        end;
       end;
     end;
   end;
@@ -421,7 +456,7 @@ begin
 end;
 
 constructor TTzxPlayer.Create;
-begin                    
+begin
   inherited Create;
 
   SetLength(FCallSeq, 5);

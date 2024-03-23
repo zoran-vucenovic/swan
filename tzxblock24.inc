@@ -28,17 +28,17 @@ begin
   NumberOfRepetitions := 0;
 end;
 
-class function {TTzxPlayer.}TTzxBlock24.GetBlockId: DWord;
+class function TTzxBlock24.GetBlockId: DWord;
 begin
   Result := $24;
 end;
 
-function {TTzxPlayer.}TTzxBlock24.GetBlockLength: Integer;
+function TTzxBlock24.GetBlockLength: Integer;
 begin
   Result := 2;
 end;
 
-function {TTzxPlayer.}TTzxBlock24.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock24.LoadBlock(const Stream: TStream): Boolean;
 var
   W: Word;
 begin
@@ -52,19 +52,24 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock24.GetBlockDescription: String;
+class function TTzxBlock24.GetBlockDescription: String;
 begin
   Result := 'Loop start';
 end;
 
-function {TTzxPlayer.}TTzxBlock24.GetNumberOfRepetitions: Integer;
+function TTzxBlock24.GetNumberOfRepetitions: Integer;
 begin
   Result := NumberOfRepetitions;
+  if Result = 0 then // if loop count is zero, run through code once, as if it were 1
+    Result := 1;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock24.Details(out S: String);
+procedure TTzxBlock24.Details(out S: String);
 begin
   S := NumberOfRepetitions.ToString + ' repetitions';
+  if NumberOfRepetitions = 0 then begin
+    S := S + ' (passes once, as if it were 1)';
+  end;
 end;
 
 {$endif}

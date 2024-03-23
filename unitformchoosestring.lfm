@@ -27,10 +27,16 @@ object FormChooseString: TFormChooseString
     ClientWidth = 350
     TabOrder = 0
     object ButtonPanel1: TButtonPanel
-      Left = 6
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = Panel1
+      AnchorSideBottom.Side = asrBottom
+      Left = 181
       Height = 26
       Top = 280
-      Width = 338
+      Width = 163
+      Align = alNone
+      Anchors = [akRight, akBottom]
       OKButton.Name = 'OKButton'
       OKButton.DefaultCaption = True
       HelpButton.Name = 'HelpButton'
