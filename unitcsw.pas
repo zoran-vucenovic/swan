@@ -13,8 +13,7 @@ unit UnitCSW;
 interface
 
 uses
-  Classes, SysUtils, UnitTapePlayer, UnitSpectrum, UnitCommon,
-  UnitStreamCompression;
+  Classes, SysUtils, UnitTapePlayer, UnitSpectrum, UnitStreamCompression;
 
 type
 
@@ -29,8 +28,6 @@ type
     P: PByte;
     PEnd: PByte;
 
-    FInitialPolarity: Byte; // 0 or 64
-
     FSampleRate: Integer;
     FHalfSampleRate: Integer;
     FTotalNumOfPulses: Integer;
@@ -43,7 +40,6 @@ type
     TicksNeeded: Int64;
     FProcTicksPerSec: Int64;
 
-    procedure SetInitialPolarity(AValue: Byte);
     procedure SetSampleRate(AValue: Integer);
 
     function LoadCswData(const Stream: TStream; const L: Integer): Boolean;
@@ -51,7 +47,6 @@ type
     constructor Create(ATapePlayer: TTapePlayer); override;
     destructor Destroy; override;
 
-    function CountNumberOfPulses(): Integer;
     function GetBlockLength: Integer; override;
     class function GetBlockDescription: String; override;
     function LoadBlock(const Stream: TStream): Boolean; override;
@@ -64,7 +59,6 @@ type
     property State: TCswPlayState read FState;
     property SampleRate: Integer read FSampleRate write SetSampleRate;
     property TotalNumOfPulses: Integer read FTotalNumOfPulses write FTotalNumOfPulses;
-    property InitialPolarity: Byte read FInitialPolarity write SetInitialPolarity;
     property CompressionType: TCswCompressionType read FCompressionType write FCompressionType;
     property CswDataLength: Integer read FCswDataLength write FCswDataLength;
     property CswMajorRevisionNumber: Byte read FCswMajorRevisionNumber write FCswMajorRevisionNumber;
@@ -72,21 +66,11 @@ type
 
   end;
 
-  TCswPlayer = class(TTapePlayer)
-  protected
-    procedure CheckNextBlock(); override;
-    class function CheckHeader(const Stream: TStream): Boolean; override;
-    class function GetNextBlockClass(const {%H-}Stream: TStream): TTapeBlockClass;
-      override;
-    class function GetTapeType: TTapeType; override;
-    class function CheckIsMyClass(const Stream: TStream): Boolean; override;
-  private
-    class procedure Init;
-  end;
 
 implementation
 
 type
+
   TCswBlockHeader1 = packed record
     SampleRate: Word;
     CompressionType: Byte; // 1: RLE
@@ -111,6 +95,18 @@ type
     function LoadBlock(const Stream: TStream): Boolean; override;
     function GetBlockLength: Integer; override;
     procedure Details(out S: String); override;
+  end;
+
+  TCswPlayer = class(TTapePlayer)
+  protected
+    procedure CheckNextBlock(); override;
+    class function CheckHeader(const Stream: TStream): Boolean; override;
+    class function GetNextBlockClass(const {%H-}Stream: TStream): TTapeBlockClass;
+      override;
+    class function GetTapeType: TTapeType; override;
+    class function CheckIsMyClass(const Stream: TStream): Boolean; override;
+  private
+    class procedure Init;
   end;
 
 { TCswBlock1 }
@@ -141,7 +137,6 @@ begin
               and (Stream.Read(Header1{%H-}, SizeOf(Header1)) = SizeOf(Header1));
             if Okay then begin
               Header1.SampleRate := LEtoN(Header1.SampleRate);
-              InitialPolarity := Header1.Flags;
               SampleRate := Header1.SampleRate;
               TotalNumOfPulses := 0;
               CompressionType := cctRle;
@@ -154,7 +149,6 @@ begin
           Header2.SampleRate := LEtoN(Header2.SampleRate);
           Header2.TotalNumOfPulses := LEtoN(Header2.TotalNumOfPulses);
 
-          InitialPolarity := Header2.Flags;
           SampleRate := Header2.SampleRate;
           TotalNumOfPulses := Header2.TotalNumOfPulses;
           if Header2.CompressionType = 2 then
@@ -193,15 +187,11 @@ end;
 procedure TCswBlock1.Details(out S: String);
 begin
   inherited Details(S);
-  S := S + #13 + 'initial polarity: ' + InitialPolarity.ToString;
+  S := Format('csw ver. %d.%d', [CswMajorRevisionNumber, CswMinorRevisionNumber])
+    + #13 + S;
 end;
 
 { TCswBlock }
-
-procedure TCswBlock.SetInitialPolarity(AValue: Byte);
-begin
-  FInitialPolarity := AValue and 1;
-end;
 
 constructor TCswBlock.Create(ATapePlayer: TTapePlayer);
 begin
@@ -212,7 +202,6 @@ begin
   P := nil;
   PEnd := nil;
   FState := cpsFinished;
-  FInitialPolarity := 0;
   SampleRate := 0;
   FTotalNumOfPulses := 0;
   FCompressionType := cctRle;
@@ -223,41 +212,6 @@ begin
   MS.Free;
 
   inherited Destroy;
-end;
-
-function TCswBlock.CountNumberOfPulses(): Integer;
-var
-  N: Integer;
-  P0: PByte;
-  Pdw0: PDWord absolute P0;
-begin
-  if FCountedNumOfPulses = -2 then begin
-    Result := -1;
-    if Assigned(MS) and (MS.Size > 0) then begin
-      N := 0;
-      P0 := PByte(MS.Memory);
-      repeat
-        if P0 > PEnd then begin
-          if PEnd + 1 = P0 then begin
-            Result := N;
-          end;
-          Break;
-        end;
-
-        Inc(N);
-        if P0^ > 0 then begin
-          Inc(P0);
-        end else begin
-          Inc(P0);
-          Pdw0^ := LEtoN(Pdw0^);
-          Inc(P0, 4);
-        end;
-      until False;
-    end;
-
-    FCountedNumOfPulses := Result;
-  end else
-    Result := FCountedNumOfPulses;
 end;
 
 function TCswBlock.LoadCswData(const Stream: TStream; const L: Integer
@@ -323,24 +277,51 @@ begin
 end;
 
 function TCswBlock.LoadBlock(const Stream: TStream): Boolean;
-var
-  N: Integer;
-begin
-  FCountedNumOfPulses := -2;
-  Result := LoadCswData(Stream, FCswDataLength);
 
-  if Result then begin
-    PEnd := PByte(MS.Memory) + (MS.Size - 1);
-    N := CountNumberOfPulses;
-    case FCswMajorRevisionNumber of
-      1:
-        TotalNumOfPulses := N;
+  function CountPulses(): Boolean;
+  var
+    N: Integer;
+    P0: PByte;
+    P1: PByte;
+    Pdw0: PDWord absolute P0;
+  begin
+    Result := False;
+    FCountedNumOfPulses := -1;
+    if Assigned(MS) and (MS.Size > 0) then begin
+      PEnd := PByte(MS.Memory) + MS.Size;
+      N := 0;
+      P0 := PByte(MS.Memory);
+      repeat
+        if P0 >= PEnd then begin
+          if P0 = PEnd then begin
+            FCountedNumOfPulses := N;
+            Result := True;
+          end;
+          Break;
+        end;
 
-    otherwise
-      if TotalNumOfPulses <> N then
-        Result := False;
+        if P0^ > 0 then begin
+          Inc(N);
+          Inc(P0);
+        end else begin
+          Inc(P0);
+          P1 := P0 + 4;
+          if P1 <= PEnd then begin
+            Inc(N);
+            Pdw0^ := LEtoN(Pdw0^);
+            P0 := P1;
+          end else
+            PEnd := P0;
+        end;
+      until False;
     end;
   end;
+
+begin
+  Result := LoadCswData(Stream, FCswDataLength) and CountPulses();
+
+  if Result and (FCswMajorRevisionNumber = 1) then
+    TotalNumOfPulses := FCountedNumOfPulses;
 end;
 
 class function TCswBlock.GetBlockId: DWord;
@@ -412,8 +393,7 @@ begin
   if UpCase(S[1]) = 'Z' then
     Insert('-', S, 2);
 
-  S := Format('csw ver. %d.%d', [FCswMajorRevisionNumber, FCswMinorRevisionNumber])
-    + #13 + 'sample rate: ' + SampleRate.ToString
+  S := 'sample rate: ' + SampleRate.ToString
     + #13 + 'total number of pulses: ' + TotalNumOfPulses.ToString
     + #13 + 'compression type: ' + S
   ;

@@ -14,6 +14,7 @@
 {$i tzxblock13.inc} // Pulse sequence
 {$i tzxblock14.inc} // Pure Data Block
 {$i tzxblock15.inc} // Direct Recording
+{$i tzxblock18.inc} // CSW Recording
 {$i tzxblock19.inc} // Generalized Data Block
 {$i tzxblock20.inc} // Pause (silence) or 'Stop the Tape' command
 {$i tzxblock21.inc} // Group start
@@ -39,5 +40,4 @@
 
 {$i tzxblock16.inc} // C64 ROM Type Data Block
 {$i tzxblock17.inc} // C64 Turbo Tape Data Block
-{$i tzxblock18.inc} // CSW Recording
 

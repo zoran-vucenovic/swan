@@ -11,7 +11,8 @@ unit UnitTzxPlayer;
 interface
 
 uses
-  Classes, SysUtils, UnitSpectrum, UnitSnapshotFiles, UnitCommon, UnitTapePlayer;
+  Classes, SysUtils, UnitSpectrum, UnitSnapshotFiles, UnitCommon,
+  UnitTapePlayer, UnitCSW;
 
 implementation
 
