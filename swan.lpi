@@ -679,6 +679,11 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="UnitFormChooseString"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitcsw.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitCSW"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

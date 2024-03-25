@@ -11,7 +11,7 @@ uses
   Classes, SysUtils, fgl, UnitSpectrum, UnitCommon;
 
 type
-  TTapeType = (ttTap, ttTzx, ttPzx);
+  TTapeType = (ttTap, ttTzx, ttPzx, ttCsw);
 
   TTapePlayer = class;
   TTapePlayerClass = class of TTapePlayer;

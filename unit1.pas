@@ -2259,7 +2259,7 @@ procedure TForm1.GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape;
   const IncludeZip: Boolean; out Extensions: TStringDynArray);
 const
   SnapshotExtensions: array[0..2] of String = ('szx', 'z80', 'sna');
-  TapeExtensions: array[0..2] of String = ('tap', 'tzx', 'pzx');
+  TapeExtensions: array[0..3] of String = ('tap', 'tzx', 'pzx', 'csw');
 var
   I, L: Integer;
 begin
