@@ -23,7 +23,7 @@
 {$i tzxblock25.inc} // Loop end
 {$i tzxblock26.inc} // Call sequence
 {$i tzxblock27.inc} // Return from sequence
-{$i tzxblock28.inc} // Select block -- not implemented, cannot find any tzx file with block 28?!
+{$i tzxblock28.inc} // Select block
 {$i tzxblock2A.inc} // Stop the tape if in 48K mode
 {$i tzxblock2B.inc} // Set signal level
 {$i tzxblock30.inc} // Text description
