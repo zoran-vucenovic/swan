@@ -22,27 +22,27 @@ type
     type
       TCswCompressionType = (cctRle, cctZRle);
       TCswPlayState = (cpsStart, cpsPlaying, cpsFinished);
+
   strict private
     FState: TCswPlayState;
     MS: TMemoryStream;
     P: PByte;
     PEnd: PByte;
 
-    FSampleRate: Integer;
-    FHalfSampleRate: Integer;
+    FSampleRate: Int64;
+    FHalfSampleRate: Int64;
     FTotalNumOfPulses: Integer;
     FCountedNumOfPulses: Integer;
     FCompressionType: TCswCompressionType;
     FCswDataLength: Integer;
-    FCswMajorRevisionNumber: Byte;
-    FCswMinorRevisionNumber: Byte;
 
     TicksNeeded: Int64;
     FProcTicksPerSec: Int64;
 
-    procedure SetSampleRate(AValue: Integer);
+    procedure SetSampleRate(AValue: Int64);
 
     function LoadCswData(const Stream: TStream; const L: Integer): Boolean;
+
   public
     constructor Create(ATapePlayer: TTapePlayer); override;
     destructor Destroy; override;
@@ -57,39 +57,24 @@ type
     procedure Details(out S: String); override;
 
     property State: TCswPlayState read FState;
-    property SampleRate: Integer read FSampleRate write SetSampleRate;
+    property SampleRate: Int64 read FSampleRate write SetSampleRate;
     property TotalNumOfPulses: Integer read FTotalNumOfPulses write FTotalNumOfPulses;
     property CompressionType: TCswCompressionType read FCompressionType write FCompressionType;
     property CswDataLength: Integer read FCswDataLength write FCswDataLength;
-    property CswMajorRevisionNumber: Byte read FCswMajorRevisionNumber write FCswMajorRevisionNumber;
-    property CswMinorRevisionNumber: Byte read FCswMinorRevisionNumber write FCswMinorRevisionNumber;
-
+    property CountedNumOfPulses: Integer read FCountedNumOfPulses;
   end;
-
 
 implementation
 
 type
 
-  TCswBlockHeader1 = packed record
-    SampleRate: Word;
-    CompressionType: Byte; // 1: RLE
-    Flags: Byte; // bit 0 -- initial polarity, 1 - high, 0 - low
-    Reserved: packed array[0..2] of Byte;
-  end;
-
-  TCswBlockHeader2 = packed record
-    SampleRate: DWord;
-    TotalNumOfPulses: DWord; // total number of pulses (after decompression)
-    CompressionType: Byte; // 1: RLE, 2: Z-RLE
-    Flags: Byte; // bit 0 -- initial polarity, 1 - high, 0 - low
-    HDR: Byte; // Header extension length in bytes - for future expansions only, must be zero in version 2
-    EncodingApplicationDescription: array [0..15] of AnsiChar;
-  end;
-
   TCswBlock1 = class(TCswBlock)
   strict private
     FLen: Integer;
+    FEncodingApplicationDescription: AnsiString;
+    FCswMajorRevisionNumber: Byte;
+    FCswMinorRevisionNumber: Byte;
+
   public
     constructor Create(ATapePlayer: TTapePlayer); override;
     function LoadBlock(const Stream: TStream): Boolean; override;
@@ -118,11 +103,29 @@ begin
 end;
 
 function TCswBlock1.LoadBlock(const Stream: TStream): Boolean;
+type
+  TCswBlockHeader1 = packed record
+    SampleRate: Word;
+    CompressionType: Byte; // 1: RLE
+    Flags: Byte; // bit 0 -- initial polarity, 1 - high, 0 - low
+    Reserved: packed array[0..2] of Byte;
+  end;
+
+  TCswBlockHeader2 = packed record
+    SampleRate: DWord;
+    TotalNumOfPulses: DWord; // total number of pulses (after decompression)
+    CompressionType: Byte; // 1: RLE, 2: Z-RLE
+    Flags: Byte; // bit 0 -- initial polarity, 1 - high, 0 - low
+    HDR: Byte; // Header extension length in bytes - for future expansions only, must be zero in version 2
+    EncodingApplicationDescription: array [0..15] of AnsiChar;
+  end;
+
 var
   Header1: TCswBlockHeader1;
   Header2: TCswBlockHeader2;
   VMajor, VMinor: Byte;
   L: Integer;
+  N: Integer;
 
   Okay: Boolean;
 begin
@@ -130,6 +133,7 @@ begin
   L := Stream.Size - Stream.Position;
   if L >= 2 then begin
     if (Stream.Read(VMajor{%H-}, 1) = 1) and (Stream.Read(VMinor{%H-}, 1) = 1) then begin
+      FEncodingApplicationDescription := '';
       case VMajor of
         1:
           begin
@@ -137,6 +141,7 @@ begin
               and (Stream.Read(Header1{%H-}, SizeOf(Header1)) = SizeOf(Header1));
             if Okay then begin
               Header1.SampleRate := LEtoN(Header1.SampleRate);
+
               SampleRate := Header1.SampleRate;
               TotalNumOfPulses := 0;
               CompressionType := cctRle;
@@ -144,8 +149,13 @@ begin
           end;
       otherwise
         Okay := (Stream.Size - Stream.Position >= SizeOf(Header2))
-              and (Stream.Read(Header2{%H-}, SizeOf(Header2)) = SizeOf(Header2));
+              and (Stream.Read(Header2{%H-}, SizeOf(Header2)) = SizeOf(Header2))
+              and ((Header2.HDR = 0) or (Stream.Size - Stream.Position >= Header2.HDR));
         if Okay then begin
+          if Header2.HDR > 0 then begin
+            Stream.Seek(Int64(Header2.HDR), TSeekOrigin.soCurrent);
+          end;
+
           Header2.SampleRate := LEtoN(Header2.SampleRate);
           Header2.TotalNumOfPulses := LEtoN(Header2.TotalNumOfPulses);
 
@@ -156,20 +166,28 @@ begin
           else
             CompressionType := cctRle;
 
-          if Header2.HDR > 0 then begin
-            Stream.Seek(Int64(Header2.HDR), TSeekOrigin.soCurrent);
+          N := 0;
+          while (N <= 15) and (Header2.EncodingApplicationDescription <> #0) do begin
+            Inc(N);
+          end;
+
+          if N > 0 then begin
+            SetLength(FEncodingApplicationDescription, N);
+            Move(Header2.EncodingApplicationDescription[0], FEncodingApplicationDescription[1], N);
+            FEncodingApplicationDescription := Trim(FEncodingApplicationDescription);
           end;
 
         end;
       end;
 
-
       if Okay then begin
-        CswMajorRevisionNumber := VMajor;
-        CswMinorRevisionNumber := VMinor;
+        FCswMajorRevisionNumber := VMajor;
+        FCswMinorRevisionNumber := VMinor;
         CswDataLength := Stream.Size - Stream.Position;
 
         if inherited LoadBlock(Stream) then begin
+          if FCswMajorRevisionNumber = 1 then
+            TotalNumOfPulses := CountedNumOfPulses;
           FLen := L;
           Result := True;
         end;
@@ -187,8 +205,10 @@ end;
 procedure TCswBlock1.Details(out S: String);
 begin
   inherited Details(S);
-  S := Format('csw ver. %d.%d', [CswMajorRevisionNumber, CswMinorRevisionNumber])
-    + #13 + S;
+
+  S := Format('csw ver. %d.%d', [FCswMajorRevisionNumber, FCswMinorRevisionNumber]);
+  if FEncodingApplicationDescription <> '' then
+    S := S + #13 + 'encoding application description: ' + FEncodingApplicationDescription;
 end;
 
 { TCswBlock }
@@ -197,7 +217,7 @@ constructor TCswBlock.Create(ATapePlayer: TTapePlayer);
 begin
   inherited Create(ATapePlayer);
 
-  FCountedNumOfPulses := -2;
+  FCountedNumOfPulses := 0;
   MS := nil;
   P := nil;
   PEnd := nil;
@@ -221,7 +241,7 @@ var
 begin
   FreeAndNil(MS);
 
-  if (L > 0) and (Stream.Size - Stream.Position >= L) then begin
+  if (FSampleRate > 0) and (L > 0) and (Stream.Size - Stream.Position >= L) then begin
     S2 := TMemoryStream.Create;
     try
       S2.Size := L;
@@ -260,7 +280,7 @@ begin
   end;
 end;
 
-procedure TCswBlock.SetSampleRate(AValue: Integer);
+procedure TCswBlock.SetSampleRate(AValue: Int64);
 begin
   FSampleRate := AValue;
   FHalfSampleRate := AValue div 2;
@@ -286,16 +306,17 @@ function TCswBlock.LoadBlock(const Stream: TStream): Boolean;
     Pdw0: PDWord absolute P0;
   begin
     Result := False;
-    FCountedNumOfPulses := -1;
+    FCountedNumOfPulses := 0;
     if Assigned(MS) and (MS.Size > 0) then begin
-      PEnd := PByte(MS.Memory) + MS.Size;
-      N := 0;
       P0 := PByte(MS.Memory);
+      PEnd := P0 + MS.Size;
+
+      N := 0;
       repeat
         if P0 >= PEnd then begin
           if P0 = PEnd then begin
             FCountedNumOfPulses := N;
-            Result := True;
+            Result := N > 0;
           end;
           Break;
         end;
@@ -318,10 +339,8 @@ function TCswBlock.LoadBlock(const Stream: TStream): Boolean;
   end;
 
 begin
-  Result := LoadCswData(Stream, FCswDataLength) and CountPulses();
-
-  if Result and (FCswMajorRevisionNumber = 1) then
-    TotalNumOfPulses := FCountedNumOfPulses;
+  Result := LoadCswData(Stream, FCswDataLength)
+    and CountPulses();
 end;
 
 class function TCswBlock.GetBlockId: DWord;
@@ -338,7 +357,7 @@ procedure TCswBlock.Start;
 begin
   inherited Start;
 
-  if Assigned(MS) then begin
+  if Assigned(MS) and (FSampleRate > 0) then begin
     if FTapePlayer.GetSpectrum.Is128KModel then
       FProcTicksPerSec := 3546900
     else
@@ -388,10 +407,12 @@ procedure TCswBlock.Details(out S: String);
 begin
   inherited Details(S);
 
-  WriteStr(S, CompressionType);
-  Delete(S, 1, 3);
-  if UpCase(S[1]) = 'Z' then
-    Insert('-', S, 2);
+  case CompressionType of
+    TCswCompressionType.cctRle:
+      S := 'RLE'
+  otherwise
+    S := 'Z-RLE';
+  end;
 
   S := 'sample rate: ' + SampleRate.ToString
     + #13 + 'total number of pulses: ' + TotalNumOfPulses.ToString
@@ -444,7 +465,6 @@ class function TCswPlayer.CheckIsMyClass(const Stream: TStream): Boolean;
 var
   P: Int64;
 begin
-  Result := False;
   P := Stream.Position;
   Result := CheckHeader(Stream);
   Result := (Stream.Seek(P - Stream.Position, TSeekOrigin.soCurrent) = P) and Result;

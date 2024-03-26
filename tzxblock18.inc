@@ -100,7 +100,7 @@ begin
     if Stream.Read(W{%H-}, 2) = 2 then begin
       W := LEtoN(W);
       FPauseAfterBlock := W;
-      if ReadThreeBytes(Stream, N) and (Stream.Read(B{%H-}, 1) = 1) then begin
+      if ReadThreeBytes(Stream, N) and (N > 0) and (Stream.Read(B{%H-}, 1) = 1) then begin
         Csw.SampleRate := N;
         if B = 2 then
           Csw.CompressionType := TCswBlock.TCswCompressionType.cctZRle
@@ -111,8 +111,6 @@ begin
           Dw := LEtoN(Dw);
           Csw.TotalNumOfPulses := Dw;
           Csw.CswDataLength := L - 10;
-          Csw.CswMajorRevisionNumber := 2;
-          Csw.CswMinorRevisionNumber := 0;
           Result := Csw.LoadBlock(Stream);
         end;
       end;
