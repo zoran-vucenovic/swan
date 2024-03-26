@@ -96,6 +96,7 @@ var
   B: Byte;
   Dw: DWord;
 begin
+  Result := False;
   if L >= 10 then begin
     if Stream.Read(W{%H-}, 2) = 2 then begin
       W := LEtoN(W);
