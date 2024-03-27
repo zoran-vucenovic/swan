@@ -206,7 +206,8 @@ procedure TCswBlock1.Details(out S: String);
 begin
   inherited Details(S);
 
-  S := Format('csw ver. %d.%d', [FCswMajorRevisionNumber, FCswMinorRevisionNumber]);
+  S := Format('csw ver. %d.%d', [FCswMajorRevisionNumber, FCswMinorRevisionNumber])
+    + #13 + S;
   if FEncodingApplicationDescription <> '' then
     S := S + #13 + 'encoding application description: ' + FEncodingApplicationDescription;
 end;
