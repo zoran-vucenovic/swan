@@ -110,7 +110,7 @@ begin
             L := LL
           else
             L := 144;
-          SetLength(SA{%H-}, (L * 3) div 2);
+          SetLength(SA{%H-}, L);
           L := 0;
           I := 0;
           while I < LL do begin
