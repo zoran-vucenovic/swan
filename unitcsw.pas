@@ -406,11 +406,11 @@ end;
 
 procedure TCswBlock.Details(out S: String);
 begin
-  inherited Details(S);
+  //inherited Details(S);
 
   case CompressionType of
     TCswCompressionType.cctRle:
-      S := 'RLE'
+      S := 'RLE';
   otherwise
     S := 'Z-RLE';
   end;
