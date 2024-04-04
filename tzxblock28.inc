@@ -92,9 +92,12 @@ var
   B: Byte;
   N: Integer;
   I: Integer;
+  J: Integer;
+  K: Integer;
   L: Integer;
   M: Integer;
   Okay: Boolean;
+  S, S1: AnsiString;
 
 begin
   Result := False;
@@ -127,15 +130,31 @@ begin
                 if L >= M then begin
                   W := LEtoN(W);
                   FSelections[I].RelativeOffset := Int16(W);
-                  SetLength(FSelections[I].DescriptionText, M);
+                  SetLength(S, M);
                   Okay := M = 0;
                   if not Okay then begin
-                    if Stream.Read(FSelections[I].DescriptionText[1], M) = M then begin
+                    SetLength(S1, M);
+                    if Stream.Read(S1[1], M) = M then begin
                       L := L - M;
-                      TCommonFunctions.ConvertCodePageFromCp1252ToUtf8(FSelections[I].DescriptionText);
+                      J := 0;
+                      K := 0;
+                      while J < M do begin
+                        Inc(J);
+                        Inc(K);
+                        if S1[J] <= #32 then begin
+                          S[K] := #32;
+                          if (S1[J] = #13) and (J < M) and (S1[J + 1] = #10) then
+                            Inc(J);
+                        end else begin
+                          S[K] := S1[J];
+                        end;
+                      end;
+                      SetLength(S, K);
+                      TCommonFunctions.ConvertCodePageFromCp1252ToUtf8(S);
                       Okay := True;
                     end;
                   end;
+                  FSelections[I].DescriptionText := Trim(S);
                 end;
               end;
             end;
