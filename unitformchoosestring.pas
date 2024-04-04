@@ -36,7 +36,9 @@ implementation
 
 type
 
-  TFileListGrid = class(TCustomStringGrid)
+  TGridChooseString = class(TCustomStringGrid)
+  protected
+    function MouseButtonAllowed(Button: TMouseButton): boolean; override;
   public
     constructor Create(AOwner: TComponent); override;
   end;
@@ -50,27 +52,9 @@ end;
 
 procedure TFormChooseString.GridOnDblClick(Sender: TObject);
 var
-  P, PMouse: TPoint;
-  G: TFileListGrid;
-  Rest: Integer;
+  P: TPoint;
 begin
-  PMouse := Grid.ScreenToClient(Mouse.CursorPos);
-  G := Grid as TFileListGrid;
-  if G.OffsetToColRow(
-      False, // IsCol
-      True,  // Physical, means take scroll offset into consideration.
-      PMouse.Y,
-      P.Y,
-      Rest
-    )
-    and G.OffsetToColRow(
-      True, // IsCol
-      True, // Physical
-      PMouse.X,
-      P.X,
-      Rest
-    )
-  then begin
+  if TCommonFunctionsLCL.GridMouseToCellRegular(Grid, Grid.ScreenToClient(Mouse.CursorPos), P) then begin
     if P.Y >= Grid.FixedRows then begin
       Grid.Row := P.Y;
       ModalResult := mrOK;
@@ -91,7 +75,7 @@ begin
   inherited Create(TheOwner);
 
   Label1.Caption := ' ';
-  Grid := TFileListGrid.Create(nil);
+  Grid := TGridChooseString.Create(nil);
   Grid.Anchors := [];
   Grid.AnchorParallel(akLeft, 0, Panel2);
   Grid.AnchorParallel(akTop, 0, Panel2);
@@ -158,7 +142,12 @@ end;
 
 { TFileListGrid }
 
-constructor TFileListGrid.Create(AOwner: TComponent);
+function TGridChooseString.MouseButtonAllowed(Button: TMouseButton): boolean;
+begin
+  Result := TCommonFunctionsLCL.GridMouseButtonAllowed(Self, Button);
+end;
+
+constructor TGridChooseString.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 

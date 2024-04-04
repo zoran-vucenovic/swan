@@ -43,8 +43,6 @@ type
         function MouseButtonAllowed({%H-}Button: TMouseButton): Boolean; override;
       public
         constructor Create(AOwner: TComponent); override;
-        function MouseToCellRegular(const MousePos: TPoint; out GridCoordinates: TPoint
-          ): Boolean;
       end;
 
       TCellContent = class(TObject)
@@ -106,45 +104,13 @@ begin
     + [goColSizing]
     - [goRangeSelect]
     ;
-end;
-
-function TFormBrowseTape.TTapeGrid.MouseToCellRegular(const MousePos: TPoint;
-      out GridCoordinates: TPoint): Boolean;
-var
-  Rest: Integer;
-begin
-  Result :=
-    OffsetToColRow(
-      False, // IsCol
-      True,  // Physical, means take scroll offset into consideration.
-      MousePos.Y,
-      GridCoordinates.Y,
-      Rest
-    )
-    and OffsetToColRow(
-      True, // IsCol
-      True, // Physical
-      MousePos.X,
-      GridCoordinates.X,
-      Rest
-    );
-
-  if not Result then
-    GridCoordinates := Point(-1, -1);
+  AllowOutboundEvents := False;
 end;
 
 function TFormBrowseTape.TTapeGrid.MouseButtonAllowed(Button: TMouseButton
   ): Boolean;
-var
-  P, GC: TPoint;
 begin
-  Result := Button = TMouseButton.mbLeft;
-  if not Result then begin
-    if Button in [TMouseButton.mbRight, TMouseButton.mbMiddle] then begin
-      P := ScreenToClient(Mouse.CursorPos);
-      Result := MouseToCellRegular(P, GC);
-    end;
-  end;
+  Result := TCommonFunctionsLCL.GridMouseButtonAllowed(Self, Button);
 end;
 
 { TFormBrowseTape }
@@ -278,7 +244,7 @@ procedure TFormBrowseTape.GridOnContextPopup(Sender: TObject; MousePos: TPoint;
 var
   P: TPoint;
 begin
-  Handled := not (Grid.MouseToCellRegular(MousePos, P) and (P.Y >= Grid.FixedRows));
+  Handled := not (TCommonFunctionsLCL.GridMouseToCellRegular(Grid, MousePos, P) and (P.Y >= Grid.FixedRows));
   if not Handled then begin
     P.Y := P.Y - Grid.FixedRows;
     FBlockToGoTo := P.Y;

@@ -41,7 +41,10 @@ type
     class procedure AdjustFormPos(Form: TCustomForm; Horizontal: Boolean = False); static;
     class procedure CalculateTextSize(const F: TFont;
         const S: String; out ATextSize: TSize); static;
+    class function GridMouseToCellRegular(AGrid: TCustomGrid; const MousePos: TPoint;
+        out GridCoordinates: TPoint): Boolean; static;
     class procedure RowInView(AGrid: TCustomGrid; ARow: Integer); static;
+    class function GridMouseButtonAllowed(AGrid: TCustomGrid; Button: TMouseButton): Boolean;
     class function GetBestContrastColorForFont(R, G, B: Integer): TColor;
     class function MakeExtensionsFilter(const ArSt: Array of String): String;
   end;
@@ -108,6 +111,33 @@ end;
 type
   TGridAccessProtected = class(TCustomGrid);
 
+class function TCommonFunctionsLCL.GridMouseToCellRegular(AGrid: TCustomGrid;
+  const MousePos: TPoint; out GridCoordinates: TPoint): Boolean;
+var
+  G: TGridAccessProtected;
+  Rest: Integer;
+begin
+  G := TGridAccessProtected(AGrid);
+  Result :=
+    G.OffsetToColRow(
+      False, // IsCol
+      True,  // Physical, means take scroll offset into consideration.
+      MousePos.Y,
+      GridCoordinates.Y,
+      Rest
+    )
+    and G.OffsetToColRow(
+      True, // IsCol
+      True, // Physical
+      MousePos.X,
+      GridCoordinates.X,
+      Rest
+    );
+
+  if not Result then
+    GridCoordinates := Point(-1, -1);
+end;
+
 class procedure TCommonFunctionsLCL.RowInView(AGrid: TCustomGrid; ARow: Integer
   );
 var
@@ -129,6 +159,15 @@ begin
   finally
     G.EndUpdate;
   end;
+end;
+
+class function TCommonFunctionsLCL.GridMouseButtonAllowed(AGrid: TCustomGrid;
+  Button: TMouseButton): Boolean;
+var
+  GC: TPoint;
+begin
+  Result := (Button in [TMouseButton.mbLeft, TMouseButton.mbRight, TMouseButton.mbMiddle])
+    and GridMouseToCellRegular(AGrid, AGrid.ScreenToClient(Mouse.CursorPos), GC);
 end;
 
 class function TCommonFunctionsLCL.GetBestContrastColorForFont(R, G, B: Integer
