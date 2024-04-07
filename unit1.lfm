@@ -468,11 +468,11 @@ object Form1: TForm1
       ImageIndex = 34
       OnExecute = ActionLateTimingsExecute
     end
-    object ActionHideToolbar: TAction
+    object ActionShowHideToolbar: TAction
       Category = 'Options'
-      Caption = 'Hide toolbar'
+      Caption = 'Show toolbar'
       Hint = 'Show/Hide toolbar'
-      OnExecute = ActionHideToolbarExecute
+      OnExecute = ActionShowHideToolbarExecute
     end
   end
   object MainMenu1: TMainMenu
@@ -604,7 +604,7 @@ object Form1: TForm1
         Action = ActionEnableHistory
       end
       object MenuItem55: TMenuItem
-        Action = ActionHideToolbar
+        Action = ActionShowHideToolbar
       end
       object Separator2: TMenuItem
         Caption = '-'

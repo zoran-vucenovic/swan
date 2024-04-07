@@ -36,7 +36,7 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
-    ActionHideToolbar: TAction;
+    ActionShowHideToolbar: TAction;
     ActionLateTimings: TAction;
     ActionModelMoreOptions: TAction;
     ActionModelPlus2: TAction;
@@ -198,7 +198,7 @@ type
     procedure ActionShowDebuggerExecute(Sender: TObject);
     procedure ActionShowKeyboardOnScreenExecute(Sender: TObject);
     procedure ActionShowTapePlayerExecute(Sender: TObject);
-    procedure ActionHideToolbarExecute(Sender: TObject);
+    procedure ActionShowHideToolbarExecute(Sender: TObject);
     procedure ActionSizeDecreaseExecute(Sender: TObject);
     procedure ActionSizeIncreaseExecute(Sender: TObject);
     procedure ActionSpeedDecreaseExecute(Sender: TObject);
@@ -951,10 +951,10 @@ begin
     ShowTapeBrowser();
 end;
 
-procedure TForm1.ActionHideToolbarExecute(Sender: TObject);
+procedure TForm1.ActionShowHideToolbarExecute(Sender: TObject);
 begin
   if Sender <> Spectrum then
-    AddEventToQueue(@ActionHideToolbarExecute)
+    AddEventToQueue(@ActionShowHideToolbarExecute)
   else
     ShowOrHideToolbar(FToolBar = nil);
 end;
@@ -1927,7 +1927,7 @@ end;
 
 procedure TForm1.UpdateCheckHideToolbar;
 begin
-  ActionHideToolbar.Checked := FToolBar = nil;
+  ActionShowHideToolbar.Checked := FToolBar <> nil;
 end;
 
 procedure TForm1.ShowOrHideToolbar(AShow: Boolean);
