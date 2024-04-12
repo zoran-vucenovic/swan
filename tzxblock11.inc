@@ -5,15 +5,26 @@
 {$ifdef tzx_header_section}
 
 TTzxBlock11 = class (TTzxBlock11abstract)
+strict protected
+  function Details2: String; override;
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: DWord; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
   class function GetBlockDescription: String; override;
-  procedure Details(out S: String); override;
 end;
 
 {$else}
+
+function TTzxBlock11.Details2: String;
+begin
+  Result := inherited Details2
+    + #13 + 'Pilot pulse t-states: ' + IntToStr(PilotTicksNeeded)
+    + #13 + Format('Sync pulses t-states: (%d, %d)', [Sync1TicksNeeded, Sync2TicksNeeded])
+    + #13 + Format('T-states in zero/one bit pulses: (%d, %d)', [Bit0TicksNeeded, Bit1TicksNeeded])
+    + #13 + 'Pilot tone pulses: ' + IntToStr(PilotPulsesNeeded)
+    ;
+end;
 
 constructor TTzxBlock11.Create(ATapePlayer: TTapePlayer);
 begin
@@ -22,12 +33,12 @@ begin
   PilotTicksNeeded := 0;
 end;
 
-class function {TTzxPlayer.}TTzxBlock11.GetBlockId: DWord;
+class function TTzxBlock11.GetBlockId: DWord;
 begin
   Result := $11;
 end;
 
-function {TTzxPlayer.}TTzxBlock11.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock11.LoadBlock(const Stream: TStream): Boolean;
 var
   W: Word;
   B: Byte;
@@ -101,20 +112,9 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock11.GetBlockDescription: String;
+class function TTzxBlock11.GetBlockDescription: String;
 begin
   Result := 'Turbo Speed Data Block';
-end;
-
-procedure {TTzxPlayer.}TTzxBlock11.Details(out S: String);
-begin
-  inherited Details(S);
-  S := S
-    + #13 + 'Pilot pulse t-states: ' + IntToStr(PilotTicksNeeded)
-    + #13 + Format('Sync pulses t-states: (%d, %d)', [Sync1TicksNeeded, Sync2TicksNeeded])
-    + #13 + Format('T-states in zero/one bit pulses: (%d, %d)', [Bit0TicksNeeded, Bit1TicksNeeded])
-    + #13 + 'Pilot tone pulses: ' + IntToStr(PilotPulsesNeeded)
-    ;
 end;
 
 {$endif}

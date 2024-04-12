@@ -9,7 +9,7 @@ strict private
   FHeaderDetails: String;
 
 strict protected
-  function AddUsedBitsDetails: String; override;
+  function Details2: String; override;
 
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
@@ -32,7 +32,7 @@ begin
   Result := $10;
 end;
 
-function {TTzxPlayer.}TTzxBlock10.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock10.LoadBlock(const Stream: TStream): Boolean;
 var
   W: Word;
 begin
@@ -48,7 +48,7 @@ begin
 
 end;
 
-function {TTzxPlayer.}TTzxTapBlock.AddUsedBitsDetails: String;
+function TTzxTapBlock.Details2: String;
 begin
   Result := '';
 end;
@@ -65,7 +65,7 @@ begin
   Result := 0;
 end;
 
-function {TTzxPlayer.}TTzxTapBlock.LoadBlock(const Stream: TStream): Boolean;
+function TTzxTapBlock.LoadBlock(const Stream: TStream): Boolean;
 
 type
   THeader = packed record
@@ -164,12 +164,12 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxTapBlock.GetBlockDescription: String;
+class function TTzxTapBlock.GetBlockDescription: String;
 begin
   Result := 'Standard Speed Data Block';
 end;
 
-procedure {TTzxPlayer.}TTzxTapBlock.Details(out S: String);
+procedure TTzxTapBlock.Details(out S: String);
 begin
   inherited Details(S);
   S := FHeaderDetails + S;

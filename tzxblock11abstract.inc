@@ -23,7 +23,7 @@ strict protected
   Sync2TicksNeeded: Integer;
   BitPulsesNeeded: Integer;
   Bit0TicksNeeded: Integer;
-  Bit1TicksNeeded: Integer;       
+  Bit1TicksNeeded: Integer;
   UsedBitsInLastByte: Integer;
   PauseAfterBlock: Integer;
   FLen: Integer;
@@ -34,14 +34,14 @@ strict protected
 
 strict private
   UnusedBitsInLastByte: Integer;
-  P: PByte;            
+  P: PByte;
   BitPosition: Integer;
   TicksNeeded0: Int64;
   PulsesNeeded: Integer;
   TicksNeeded: Int64;
 
 strict protected
-  function AddUsedBitsDetails: String; virtual;
+  function Details2: String; virtual;
 
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
@@ -55,9 +55,9 @@ end;
 
 {$else}
 
-function {TTzxPlayer.}TTzxBlock11abstract.AddUsedBitsDetails: String;
+function TTzxBlock11abstract.Details2: String;
 begin
-  Result := #13 + 'Used bits in last byte: ' + IntToStr(UsedBitsInLastByte)
+  Result := #13 + 'Used bits in last byte: ' + IntToStr(UsedBitsInLastByte);
 end;
 
 constructor TTzxBlock11abstract.Create(ATapePlayer: TTapePlayer);
@@ -84,19 +84,19 @@ begin
   BitPosition := 0;
 end;
 
-destructor {TTzxPlayer.}TTzxBlock11abstract.Destroy;
+destructor TTzxBlock11abstract.Destroy;
 begin
   if Data <> nil then
     Freemem(Data);
   inherited Destroy;
 end;
 
-function {TTzxPlayer.}TTzxBlock11abstract.GetBlockLength: Integer;
+function TTzxBlock11abstract.GetBlockLength: Integer;
 begin
   Result := FLen;
 end;
 
-function {TTzxPlayer.}TTzxBlock11abstract.GetNextPulse: Boolean;
+function TTzxBlock11abstract.GetNextPulse: Boolean;
 
   procedure ToPause;
   begin
@@ -127,7 +127,7 @@ function {TTzxPlayer.}TTzxBlock11abstract.GetNextPulse: Boolean;
       ToPause;
 
   end;
-     
+
 var
   ProcTicks: Int64;
 
@@ -183,14 +183,14 @@ begin
       end;
 
       AdjustTicksIfNeeded(TicksNeeded0);
-    end;                                 
+    end;
     TicksNeeded := ProcTicks + TicksNeeded0;
   end;
 
   Result := True;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock11abstract.Start;
+procedure TTzxBlock11abstract.Start;
 begin
   inherited Start;
   State := TPlayState.psStart;
@@ -205,10 +205,10 @@ begin
   BitPosition := 7;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock11abstract.Details(out S: String);
+procedure TTzxBlock11abstract.Details(out S: String);
 begin
   S := 'Data length: ' + IntToStr(DataLen)
-    + AddUsedBitsDetails
+    + Details2
     + #13 + 'Pause after block: ' + IntToStr(PauseAfterBlock) + ' ms'
     ;
 end;
