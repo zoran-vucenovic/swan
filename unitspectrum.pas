@@ -31,9 +31,6 @@ type
       , sm128K, smPlus2, smPlus2a, smPlus3 // one day... maybe.
     );
 
-  TSpectrumColour = Integer;
-  TSpectrumColours = array [False..True, 0..7] of TSpectrumColour;
-
   { TSpectrum }
 
   TSpectrum = class(TThread)
@@ -820,7 +817,7 @@ begin
       FAYSoundChip.OnCheckTicks := @GetTotalTicks;
     end else
       FAYSoundChip.Reset();
-  end else begin                            
+  end else begin
     FreeAndNil(FAYSoundChip);
     FSoundPlayerRatePortAudio := SoundPlayerRatePortAudio48;
     FSoundPlayerRateProcessor := SoundPlayerRateProcessor48;
@@ -1198,7 +1195,7 @@ begin
 
         Inc(CCTicks, 4);
         if CCTicks > CCTicksTo then
-          Break;  
+          Break;
         Inc(X, 8);
       end else begin
         // horizontal retrace
