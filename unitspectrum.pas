@@ -1115,7 +1115,9 @@ procedure TSpectrum.SetRemainingIntPinUp(AValue: Integer);
 begin
   if AValue > 0 then begin
     FIntPinUpCount := FProcessor.TStatesInCurrentFrame + AValue
-  end else
+  end else if FProcessor.TStatesInCurrentFrame < HoldInterruptPinTicks then
+    FIntPinUpCount := HoldInterruptPinTicks
+  else
     FIntPinUpCount := 0;
   FProcessor.IntPin := FIntPinUpCount > 0;
 end;
