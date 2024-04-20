@@ -3,6 +3,7 @@ unit UnitColourFunctions;
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
+{$i zxinc.inc}
 
 interface
 

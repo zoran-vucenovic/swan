@@ -8,6 +8,7 @@ unit UnitInit;
 }
 
 {$mode ObjFPC}{$H+}
+{$i zxinc.inc}
 
 interface
 

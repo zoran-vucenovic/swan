@@ -3,7 +3,7 @@ unit UnitVer;
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode objfpc}{$H+}
-{$J-}
+{$i zxinc.inc}
 
 interface
 

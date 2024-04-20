@@ -10,7 +10,7 @@ object FormSoundVolume: TFormSoundVolume
   OnClose = FormClose
   OnCreate = FormCreate
   OnDeactivate = FormDeactivate
-  LCLVersion = '3.0.0.2'
+  LCLVersion = '3.3.0.0'
   object Panel2: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

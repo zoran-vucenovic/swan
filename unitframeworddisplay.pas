@@ -3,6 +3,7 @@ unit UnitFrameWordDisplay;
 // SPDX-License-Identifier: Apache-2.0
 
 {$mode objfpc}{$H+}
+{$i zxinc.inc}
 
 interface
 
