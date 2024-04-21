@@ -76,6 +76,7 @@ implementation
 
 procedure TFormOptions.FormCreate(Sender: TObject);
 begin
+  CloseQueryList := nil;
   Label1.Caption := ' ';
 
   FCurrentControl := nil;
@@ -339,23 +340,24 @@ var
 begin
   Result := inherited CloseQuery;
 
-  I := 0;
-  while Result and (I < CloseQueryList.Count) do begin
-    TCloseQueryEvent(CloseQueryList[I])(Self, Result);
-    Inc(I);
+  if Assigned(CloseQueryList) then begin
+    I := 0;
+    while Result and (I < CloseQueryList.Count) do begin
+      TCloseQueryEvent(CloseQueryList[I])(Self, Result);
+      Inc(I);
+    end;
   end;
 end;
 
 procedure TFormOptions.RemoveAllHandlersOfObject(AnObject: TObject);
-var
-  I: Integer;
 begin
   inherited RemoveAllHandlersOfObject(AnObject);
 
-  for I := 0 to CloseQueryList.Count - 1 do
+  if Assigned(CloseQueryList) then begin
     CloseQueryList.RemoveAllMethodsOfObject(AnObject);
-  if CloseQueryList.Count = 0 then
-    FreeAndNil(CloseQueryList);
+    if CloseQueryList.Count = 0 then
+      FreeAndNil(CloseQueryList);
+  end;
 end;
 
 procedure TFormOptions.AddCloseQuery(C: TCloseQueryEvent);
