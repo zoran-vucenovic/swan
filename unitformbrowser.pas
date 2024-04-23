@@ -125,6 +125,7 @@ begin
   end else
     FCurrentBlockNumber := -1;
   Grid.Invalidate;
+  Grid.Update;
 end;
 
 function TFormBrowseTape.AddActionsToolBar(AToolBar: TControl): Boolean;
