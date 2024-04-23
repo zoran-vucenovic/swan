@@ -27,6 +27,7 @@ type
   private
     FOnCheckLoad: TOnCheckLoadEvent;
     FDoOnCloseOK: TProcedureOfObjectString;
+    FPathToPortaudioLib: String;
 
     procedure InitProc(var S: String);
     procedure AfterShow(Data: PtrInt);
@@ -99,53 +100,54 @@ const
       + 'Do you want to continue without sound, or keep trying to locate the library%s?'
     ;
 var
-  S, S1, S2, S3: String;
+  S1, S2, S3: String;
   F: TCustomForm;
 begin
   if Sender is TCustomForm then begin
     F := TCustomForm(Sender);
     CanClose := F.ModalResult <> mrOK;
     if not CanClose then begin
-      S := Trim(Edit1.Text);
-      Edit1.Text := S;
+      FPathToPortaudioLib := Trim(Edit1.Text);
+      Edit1.Text := FPathToPortaudioLib;
       S1 := '';
       S2 := '';
       S3 := '';
-      if S <> '' then begin
-        if not FileExists(S) then begin
-          S1 := 'File "' + S + '"' + LineEnding
+      if FPathToPortaudioLib <> '' then begin
+        if not FileExists(FPathToPortaudioLib) then begin
+          S1 := 'File "' + FPathToPortaudioLib + '"' + LineEnding
             + 'does not exist.' + LineEnding + LineEnding;
           S2 := 'loaded.';
         end else if not DoCheckLoad then begin
-          S2 := 'loaded from file "' + S + '".';
+          S2 := 'loaded from file "' + FPathToPortaudioLib + '".';
         end else
           CanClose := True;
       end else begin
-        CanClose := DoCheckLoad;
-        S2 := 'found in default locations.';
-        S3 := ' yourself';
+        if not DoCheckLoad then begin
+          S2 := 'found in default locations.';
+          S3 := ' yourself';
+        end else
+          CanClose := True;
       end;
 
-      CanClose := CanClose or
-        (QuestionDlg('PortAudio library loading failed', Format(Msg, [S1, S2, S3]), TMsgDlgType.mtConfirmation,
-           [ContinueClicked, 'Continue without sound', 'IsDefault',
-           CancelClicked, 'Keep trying', 'IsCancel'], 0)
-         = ContinueClicked);
+      if not CanClose then begin
+        FPathToPortaudioLib := '';
+        CanClose :=
+          QuestionDlg('PortAudio library loading failed', Format(Msg, [S1, S2, S3]), TMsgDlgType.mtConfirmation,
+             [ContinueClicked, 'Continue without sound', 'IsDefault',
+             CancelClicked, 'Keep trying', 'IsCancel'], 0)
+          = ContinueClicked;
+      end;
     end;
   end;
 end;
 
 procedure TFrameInputLibraryPath.FormOnClose(Sender: TObject;
   var CloseAction: TCloseAction);
-var
-  S: String;
 begin
   if Sender is TCustomForm then
     if TCustomForm(Sender).ModalResult = mrOK then
-      if Assigned(FDoOnCloseOK) then begin
-        S := Trim(Edit1.Text);
-        FDoOnCloseOK(S);
-      end;
+      if Assigned(FDoOnCloseOK) then
+        FDoOnCloseOK(FPathToPortaudioLib);
 
 end;
 
@@ -153,6 +155,7 @@ constructor TFrameInputLibraryPath.Create(TheOwner: TComponent);
 begin
   inherited Create(TheOwner);
 
+  FPathToPortaudioLib := '';
   FOnCheckLoad := nil;
   FDoOnCloseOK := nil;
   Edit1.Clear;
