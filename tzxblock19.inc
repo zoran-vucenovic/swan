@@ -45,12 +45,10 @@ strict private
   SymDef: TSymdef;
   SymPos: Integer;
   SymLen: Integer;
-  //CurrentSym: Integer;
   NB: Integer;
   CurrentPrle: Integer;
   Mask: Integer;
   UnusedBitsInLastByte: Integer;
-  //PausePass: Integer;
   TicksNeeded0: Int64;
   Start1: Boolean;
   FDetails: RawByteString;
@@ -73,7 +71,7 @@ end;
 
 {$else}
 
-procedure {TTzxPlayer.}TTzxBlock19.FillDetails;
+procedure TTzxBlock19.FillDetails;
 begin
   FDetails :=
     'TOTP: ' + IntToStr(Totp) + #13
@@ -87,8 +85,52 @@ begin
 
 end;
 
-function {TTzxPlayer.}TTzxBlock19.Load2(const Stream: TStream; L: Integer
+function TTzxBlock19.Load2(const Stream: TStream; L: Integer
   ): Boolean;
+
+  // The length of SymDefsData is Asd. All values in data stream must point to
+  // a valid symdef in SymDefsData array (all values must be smaller than Asd).
+  // CheckData function checks that.
+  function CheckData(): Boolean;
+  var
+    N, M, K: Integer;
+    T: Integer;
+  begin
+    Result := False;
+
+    P := Data;
+    BitPosition := 7;
+    T := 0;
+
+    repeat
+      N := BitPosition + 1 - NB;
+      if (P >= PEnd) and ((P > PEnd) or (N < UnusedBitsInLastByte)) then
+        Break;
+
+      Inc(T);
+      K := P^;
+      if N = 0 then begin
+        M := K and Mask;
+        Inc(P);
+        BitPosition := 7;
+      end else if N > 0 then begin
+        M := (K shr N) and Mask;
+        BitPosition := BitPosition - NB;
+      end else begin
+        M := K shl (-N);
+        Inc(P);
+        K := P^;
+        M := (M or (K shr (N + 8))) and Mask;
+        BitPosition := 7 + N;
+      end;
+
+      if M >= Asd then
+        Exit; // the value points to outside of SymDefs array!
+
+    until False;
+
+    Result := ((N + NB) mod 8 = UnusedBitsInLastByte) and (T = Totd);
+  end;
 
   function LoadSymDefs(var SymDefs: TSymDefs; Asx, Npx: Integer): Boolean;
   var
@@ -199,6 +241,10 @@ begin
           for I := 0 to Totp - 1 do begin
             if Stream.Read(Prles[I], 3) <> 3 then
               Exit;
+            // The length of SymDefsPilot is Asp. Each prle in Prles array must
+            // point to allocated symbol (SymbolToBeRepresented must be less than Asp).
+            if Prles[I].SymbolToBeRepresented >= Asp then
+              Exit;
             Prles[I].NumberOfRepetitions := LEtoN(Prles[I].NumberOfRepetitions);
           end;
         end;
@@ -207,20 +253,23 @@ begin
         NB := 0;
         if Totd > 0 then begin
           if LoadSymDefs(SymDefsData, Asd, Npd) and (L > 0) then begin
-            L2 := Asd;
-            while L2 <> 0 do begin
-              Inc(NB);
-              L2 := L2 shr 1;
+            if Asd = 1 then
+              NB := 1
+            else begin
+              L2 := Asd - 1;
+              while L2 > 0 do begin
+                Inc(NB);
+                L2 := L2 shr 1;
+              end;
             end;
-            if (1 shl (NB - 1)) = Asd then
-              Dec(NB);
 
             if (NB * Totd + 7) div 8 = L then begin
               Getmem(Data, L);
               PEnd := Data + (L - 1);
               Mask := (1 shl NB) - 1;
               UnusedBitsInLastByte := L * 8 - NB * Totd;
-              Result := Stream.Read(Data^, L) = L;
+              Result := (Stream.Read(Data^, L) = L)
+                and CheckData(); // check that every value in data stream points to an allocated symbol!
             end;
 
           end;
@@ -254,7 +303,7 @@ begin
   P := nil;
 end;
 
-destructor {TTzxPlayer.}TTzxBlock19.Destroy;
+destructor TTzxBlock19.Destroy;
 begin
   if Data <> nil then
     Freemem(Data);
@@ -262,17 +311,17 @@ begin
   inherited Destroy;
 end;
 
-class function {TTzxPlayer.}TTzxBlock19.GetBlockId: DWord;
+class function TTzxBlock19.GetBlockId: DWord;
 begin
   Result := $19;
 end;
 
-class function {TTzxPlayer.}TTzxBlock19.GetBlockDescription: String;
+class function TTzxBlock19.GetBlockDescription: String;
 begin
   Result := 'Generalized Data Block';
 end;
 
-function {TTzxPlayer.}TTzxBlock19.GetNextPulse: Boolean;
+function TTzxBlock19.GetNextPulse: Boolean;
 
   procedure ToPause;
   begin
@@ -364,9 +413,12 @@ begin
                 SymPos := 0;
                 Inc(CurrentPrle);
                 if CurrentPrle >= Totp then begin
-                  SymLen := -1;
-                  State := TPlayState.psData;
-                  GetNextDataPulse;
+                  if Totd > 0 then begin
+                    SymLen := -1;
+                    State := TPlayState.psData;
+                    GetNextDataPulse;
+                  end else
+                    ToPause;
                   Break;
                 end;
 
@@ -394,13 +446,12 @@ begin
     TicksNeeded := ProcTicks + TicksNeeded0;
   end;
 
-  Result := True; // state <> psFinished;
+  Result := True;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock19.Start;
+procedure TTzxBlock19.Start;
 begin
   inherited Start;
-  State := TPlayState.psStart;
 
   Start1 := True;
   TicksNeeded0 := 0;
@@ -412,8 +463,6 @@ begin
 
   CurrentPrle := -1;
 
-  //PausePass := 0;
-  //CurrentSym := -1;
   SymPos := 0;
   SymLen := -1;
 
@@ -423,13 +472,13 @@ begin
     State := TPlayState.psData
   else
     State := TPlayState.psFinished;
+
 end;
 
-procedure {TTzxPlayer.}TTzxBlock19.Details(out S: String);
+procedure TTzxBlock19.Details(out S: String);
 begin
   S := FDetails;
 end;
-
 
 {$endif}
 
