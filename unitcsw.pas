@@ -167,7 +167,7 @@ begin
             CompressionType := cctRle;
 
           N := 0;
-          while (N <= 15) and (Header2.EncodingApplicationDescription <> #0) do begin
+          while (N <= 15) and (Header2.EncodingApplicationDescription[N] <> #0) do begin
             Inc(N);
           end;
 
