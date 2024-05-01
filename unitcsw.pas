@@ -8,7 +8,7 @@ unit UnitCSW;
 // CSW (compressed square wave) format
 // The CSW specification:
 //   [archived on 2022-02-20, as the original link is not available now (2024-03-24)]
-// http://web.archive.org/web/20220220082010/http://ramsoft.bbk.org.omegahg.com/csw.html
+// https://web.archive.org/web/20220220082010/http://ramsoft.bbk.org.omegahg.com/csw.html
 
 interface
 
@@ -206,10 +206,10 @@ procedure TCswBlock1.Details(out S: String);
 begin
   inherited Details(S);
 
-  S := Format('csw ver. %d.%d', [FCswMajorRevisionNumber, FCswMinorRevisionNumber])
+  S := Format('CSW ver. %d.%d', [FCswMajorRevisionNumber, FCswMinorRevisionNumber])
     + #13 + S;
   if FEncodingApplicationDescription <> '' then
-    S := S + #13 + 'encoding application description: ' + FEncodingApplicationDescription;
+    S := S + #13 + 'Encoding application description: ' + FEncodingApplicationDescription;
 end;
 
 { TCswBlock }
@@ -294,7 +294,7 @@ end;
 
 class function TCswBlock.GetBlockDescription: String;
 begin
-  Result := 'csw';
+  Result := 'CSW';
 end;
 
 function TCswBlock.LoadBlock(const Stream: TStream): Boolean;
@@ -415,9 +415,9 @@ begin
     S := 'Z-RLE';
   end;
 
-  S := 'sample rate: ' + SampleRate.ToString
-    + #13 + 'total number of pulses: ' + TotalNumOfPulses.ToString
-    + #13 + 'compression type: ' + S
+  S := 'Sample rate: ' + SampleRate.ToString
+    + #13 + 'Total number of pulses: ' + TotalNumOfPulses.ToString
+    + #13 + 'Compression type: ' + S
   ;
 end;
 
