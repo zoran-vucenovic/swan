@@ -15,11 +15,11 @@ object FrameOtherOptions: TFrameOtherOptions
     Left = 0
     Height = 141
     Top = 0
-    Width = 324
+    Width = 350
     AutoSize = True
     BevelOuter = bvNone
     ClientHeight = 141
-    ClientWidth = 324
+    ClientWidth = 350
     TabOrder = 0
     object Panel2: TPanel
       AnchorSideLeft.Control = Panel1
@@ -27,12 +27,12 @@ object FrameOtherOptions: TFrameOtherOptions
       Left = 10
       Height = 121
       Top = 10
-      Width = 304
+      Width = 330
       AutoSize = True
       BorderSpacing.Around = 10
       BevelOuter = bvNone
       ClientHeight = 121
-      ClientWidth = 304
+      ClientWidth = 330
       TabOrder = 0
       object CheckBoxSkipJoystickInfoSzxLoad: TCheckBox
         AnchorSideLeft.Control = Panel2
@@ -52,8 +52,8 @@ object FrameOtherOptions: TFrameOtherOptions
         Left = 0
         Height = 19
         Top = 0
-        Width = 304
-        Caption = 'on insert tape file (tzx, pzx, tap), auto show tape player'
+        Width = 330
+        Caption = 'on insert tape file (tzx, pzx, tap, csw), auto show tape player'
         TabOrder = 0
       end
       object CheckBoxSkipTapeInfoSzxLoad: TCheckBox
