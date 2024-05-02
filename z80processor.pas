@@ -745,7 +745,7 @@ var
 begin
   FlagC := RegA shr 7;
   RegA := Byte(RegA shl 1) or (RegF and 1);
-  
+
   RegF := FlagC // C
     or (RegF and %11000100) // S, Z, PV not affected
     or (RegA and %00101000); // 5, 3
@@ -987,7 +987,7 @@ end;
 
 procedure TProcessor.OUTnA;
 
-begin                                               
+begin
   TRec16(FAddressBus).UByteLo := ReadNextByte;
   TRec16(FAddressBus).UByteHi := RegA;
   FDataBus := RegA;
@@ -1190,7 +1190,7 @@ begin
 end;
 
 procedure TProcessor.Bli(const A, B: Byte);
- 
+
   { decrease PC if (already decreased) BC is not zero -- the same instruction
     will be executed again, until BC becomes zero. }
   procedure DecreasePC();
@@ -1234,7 +1234,7 @@ begin
           FlagsToSet := FlagsToSet or (TRec16(FRegPC).UByteHi and %00101000) or %100;
         end else begin
           By := By + RegA; // (transferred byte + A) -- affects F3 and F5
-          FlagsToSet := FlagsToSet                                    
+          FlagsToSet := FlagsToSet
             or Byte((By and %10) shl 4) //F5 is bit 1 of (transferred byte + A)
             or (By and %1000) //F3 is bit 3 of (transferred byte + A)
             ;
@@ -1289,7 +1289,7 @@ begin
     ContentionAndIncTStates;
     if B = 2 then begin
      // INI, IND, INIR, INDR
-      
+
       FAddressBus := RegBC;
       RequestInput;
 
@@ -1357,7 +1357,7 @@ begin
         FlagsToSet := FlagsToSet xor %100;
     end;
 
-  end;                    
+  end;
 
   RegF := FlagsToSet;
 
@@ -1728,7 +1728,7 @@ var
                 RegWZ := RegBC + 1;
               end;
             2: // LD (DE), A
-              begin                 
+              begin
                 WriteMem(RegDE, RegA);
                 RegWZ := RegDE + 1;
                 TRec16(FRegWZ).UByteHi := RegA;
@@ -1942,7 +1942,7 @@ var
           3: // IN A, (n)
             InAn;
           4: // EX (SP), HL
-            begin                                 
+            begin
               PW := ResolveHL;
               TRec16(W).UByteLo := ReadMem(FRegSP);
               Inc(FRegSP);
@@ -2097,7 +2097,7 @@ var
             begin
               InC0;
               if y <> 6 then
-                ResolveTableR(y)^ := FDataBus;
+                ResolveRegSimple(y)^ := FDataBus;
               FFlagsModified := True;
             end;
           1:
@@ -2105,7 +2105,7 @@ var
               if y = 6 then // OUT (C), 0
                 FDataBus := 0
               else // OUT (C), r[y]
-                FDataBus := ResolveTableR(y)^;
+                FDataBus := ResolveRegSimple(y)^;
 
               FAddressBus := RegBC;
               FRegWZ := FAddressBus + 1;
@@ -2269,7 +2269,7 @@ begin
       end;
     end;
   end;
-                           
+
   if FHalt then begin
     FAddressBus := FRegPC + 1;
     Contention;
@@ -2305,17 +2305,17 @@ begin
         else // simple case, no memory access, directly manipulating registers:
           case x of
             0: // rot[y] r[z]
-              Rot(y, ResolveTableR(z)^);
+              Rot(y, ResolveRegSimple(z)^);
             1: // BIT y, r[z]
               begin
-                x := ResolveTableR(z)^;
+                x := ResolveRegSimple(z)^;
                 TestBit(y, x);
                 RegF := RegF or (x and %00101000);
               end;
             2: // RES y, r[z]
-              ResetBit(y, ResolveTableR(z)^);
+              ResetBit(y, ResolveRegSimple(z)^);
             3: // SET y, r[z]
-              SetBit(y, ResolveTableR(z)^);
+              SetBit(y, ResolveRegSimple(z)^);
           otherwise
           end;
 
