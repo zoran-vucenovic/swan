@@ -513,6 +513,9 @@ begin
               Result := Stream.Read(Str1.Memory^, DataSize) = DataSize;
             end;
 
+            if Assigned(Str1) then
+              Str1.Position := 0;
+
             SetLength(FileExtension{%H-}, Length(RecTape.FileExtension));
             Move(RecTape.FileExtension[0], FileExtension[1], Length(RecTape.FileExtension));
             FileExtension := Trim(FileExtension);
@@ -580,9 +583,9 @@ begin
 
     FileName := FTapePlayer.FileName;
 
-    FileExt := Trim(ExtractFileExt(FileName));
+    FileExt := FTapePlayer.GetDefaultExtension();
     if FileExt = '' then
-      FileExt := FTapePlayer.GetDefaultExtension();
+      FileExt := Trim(ExtractFileExt(FileName));
 
     I := Length(ExtensionSeparator);
     if AnsiCompareText(Copy(FileExt, 1, I), ExtensionSeparator) = 0 then
