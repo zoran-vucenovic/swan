@@ -685,6 +685,14 @@
         <UnitName Value="UnitCSW"/>
       </Unit>
       <Unit>
+        <Filename Value="unitdlgstartadress.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormDlgStartAddress"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitDlgStartAdress"/>
+      </Unit>
+      <Unit>
         <Filename Value="unitdisassembler.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitDisassembler"/>
