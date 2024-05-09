@@ -46,6 +46,8 @@ type
     function LoadFromStream(const BankNum: Byte; IsRom: Boolean; const AStream: TStream): Boolean;
     function SaveToStream(const BankNum: Byte; IsRom: Boolean; const AStream: TStream): Boolean;
 
+    function LoadFromStream(const AStream: TStream; const AddrFrom: Word): Boolean;
+
     // Ram to one stream - pages 5, 2, 0, 1, 3, 4, 6, 7 respectively:
     function LoadRamFromStream(const AStream: TStream): Boolean;
     function SaveRamToStream(const AStream: TStream): Boolean;
@@ -174,6 +176,54 @@ begin
     except
       Result := False;
     end;
+end;
+
+function TMemory.LoadFromStream(const AStream: TStream; const AddrFrom: Word
+  ): Boolean;
+var
+  L, N: Integer;
+  P: PByte;
+  Address: Word;
+begin
+  Result := False;
+
+  L := AStream.Size - AStream.Position;
+
+  if L + AddrFrom > FRamSize then
+    Exit;
+
+  P := nil;
+  case AddrFrom shr 14 of
+    0:
+      begin
+        P := ActiveRomBank;
+        N := ActiveRomPageNo;
+      end;
+    1:
+      N := 5;
+    2:
+      N := 2;
+  otherwise
+    N := ActiveRamPageNo;
+  end;
+
+  if P = nil then
+    P := FRamBanks[N];
+
+  if Assigned(P) then begin
+    Address := AddrFrom and $3FFF;
+    N := BankSize - Integer(Address);
+    if N > L then
+      N := L;
+    if AStream.Read((P + Address)^, N) = N then begin
+      if L = N then
+        Result := True
+      else if L > N then begin
+        Address := AddrFrom + N;
+        Result := LoadFromStream(AStream, Address);
+      end;
+    end;
+  end;
 end;
 
 function TMemory.LoadRamFromStream(const AStream: TStream): Boolean;

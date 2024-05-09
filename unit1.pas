@@ -15,10 +15,10 @@ uses
   UnitFrameJoystickSetup, UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
-  UnitSoundPlayer, UnitOptions, UnitFrameSpectrumModel,
-  UnitFrameSound, UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions,
-  UnitRecentFiles, UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA,
-  UnitFileZip, UnitRomPaths, UnitSwanToolbar, UnitFormChooseString;
+  UnitSoundPlayer, UnitOptions, UnitFrameSpectrumModel, UnitFrameSound,
+  UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions, UnitRecentFiles,
+  UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA, UnitFileZip,
+  UnitRomPaths, UnitSwanToolbar, UnitFormChooseString, UnitDlgStartAdress;
 
 // On Linux, bgra drawing directly to PaintBox in its OnPaint event seems to be
 // extremly slow. However, we get better time when we have an auxiliary bitmap
@@ -36,6 +36,7 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionLoadBinaryFile: TAction;
     ActionShowHideToolbar: TAction;
     ActionLateTimings: TAction;
     ActionModelMoreOptions: TAction;
@@ -139,6 +140,7 @@ type
     MenuItem53: TMenuItem;
     MenuItem54: TMenuItem;
     MenuItem55: TMenuItem;
+    MenuItem56: TMenuItem;
     MenuItemRecentFiles: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
@@ -155,6 +157,8 @@ type
     Separator1: TMenuItem;
     Separator2: TMenuItem;
     Separator3: TMenuItem;
+    Separator4: TMenuItem;
+    Separator5: TMenuItem;
     ToolBar1: TToolBar;
     ToolButton1: TToolButton;
     procedure ActionAboutExecute(Sender: TObject);
@@ -174,6 +178,7 @@ type
     procedure ActionJoystickExecute(Sender: TObject);
     procedure ActionKeyMappingsExecute(Sender: TObject);
     procedure ActionLateTimingsExecute(Sender: TObject);
+    procedure ActionLoadBinaryFileExecute(Sender: TObject);
     procedure ActionModel128KExecute(Sender: TObject);
     procedure ActionModel16KIssue2Execute(Sender: TObject);
     procedure ActionModel16KIssue3Execute(Sender: TObject);
@@ -266,7 +271,8 @@ type
     type
       TScreenSizeFactor = 1..4;
 
-      TSnapshotOrTape = (stSnapshot, stTape, stBoth);
+      TSpectrumFileKind = (sfkSnapshot, sfkTape, sfkBinary);
+      TSpectrumFileKinds = set of TSpectrumFileKind;
 
       TKeyEventRec = record
         KeyIndex: Integer;
@@ -274,12 +280,21 @@ type
       end;
 
       TDropFiles = class(TObject)
-        SnapshotOrTape: TSnapshotOrTape;
+        SpectrumFileKinds: TSpectrumFileKinds;
         Filename: String;
       end;
 
       TSzxSaveTapeOptions = (sstoSkip, sstoEmbeddedCompressed,
         sstoEmbeddedUncompressed, sstoFilePathOnly);
+
+    const
+      SnapshotExtensions: array [0..2] of String = ('szx', 'z80', 'sna');
+      TapeExtensions: array [0..3] of String = ('tap', 'tzx', 'pzx', 'csw');
+      BinaryExtensions: array [0..1] of String = ('bin', 'ram');
+
+      AllSpectrumFileKinds = [sfkSnapshot, sfkTape, sfkBinary];
+      SnapshotOrTapeFileKinds = [sfkSnapshot, sfkTape];
+      BinFileKindOnly = [sfkBinary];
 
   strict private
     FTapeBrowser: TFormBrowseTape;
@@ -316,7 +331,7 @@ type
     procedure GetSzxSaveOptionsFromSzx(out SzxSaveTapeOptions: TSzxSaveTapeOptions);
     procedure SoundLibraryOnSave(var LibPath: String);
     function SoundLibraryDialogCheckLoad(const APath: String): Boolean;
-    procedure TryLoadFromFiles(const SnapshotOrTape: TSnapshotOrTape; const AFileNames: Array of String);
+    procedure TryLoadFromFiles(const SpectrumFileKinds: TSpectrumFileKinds; const AFileNames: Array of String);
     procedure DropFilesLoad(Sender: TObject);
     procedure UpdateActiveSnapshotHistory;
     procedure UpdateTextTapeRunning;
@@ -342,11 +357,11 @@ type
     procedure TapeBrowserAttachTape;
     procedure EventTapePlayerSelectBlock(Sender: TObject);
     function TapePlayerOnSelectBlock(const ASelections: TTapePlayer.TSelections): Boolean;
-    procedure GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape; const IncludeZip: Boolean; out Extensions: TStringDynArray);
-    procedure LoadAsk(const SnapshotOrTape: TSnapshotOrTape);
-    procedure DoLoad(const SnapshotOrTape: TSnapshotOrTape; ASourceFile: String);
-    function LoadTape(const Stream: TStream; const FileName: String;
-      Extension: String): Boolean;
+    procedure GetAcceptableExtensions(const SpectrumFileKinds: TSpectrumFileKinds; const IncludeZip: Boolean; out Extensions: TStringDynArray);
+    procedure LoadAsk(const SpectrumFileKinds: TSpectrumFileKinds);
+    procedure DoLoad(const SpectrumFileKinds: TSpectrumFileKinds; ASourceFile: String);
+    function LoadTape(const AStream: TStream; const FileName: String;
+      Extension: String; FallbackToTap: Boolean): Boolean;
     procedure SzxOnLoadTape(AStream: TStream; const AFileName: String;
         const AExtension: String; ACurrentBlock: Integer);
     procedure SzxOnSaveTape(out ATapePlayer: TTapePlayer);
@@ -585,7 +600,7 @@ begin
     AddEventToQueue(@ActionAttachTapExecute);
   end else begin
 
-    LoadAsk(TSnapshotOrTape.stTape);
+    LoadAsk([TSpectrumFileKind.sfkTape]);
   end;
 
 end;
@@ -735,6 +750,15 @@ begin
   end;
 end;
 
+procedure TForm1.ActionLoadBinaryFileExecute(Sender: TObject);
+begin
+  if Sender <> Spectrum then begin
+    AddEventToQueue(@ActionLoadBinaryFileExecute);
+  end else begin
+    LoadAsk(BinFileKindOnly);
+  end;
+end;
+
 procedure TForm1.ActionModel128KExecute(Sender: TObject);
 begin
   FNewModel := TSpectrumModel.sm128K;
@@ -824,7 +848,7 @@ begin
   if Sender <> Spectrum then begin
     AddEventToQueue(@ActionOpenExecute);
   end else begin
-    LoadAsk(TSnapshotOrTape.stBoth);
+    LoadAsk(SnapshotOrTapeFileKinds);
   end;
 end;
 
@@ -1054,20 +1078,20 @@ end;
 procedure TForm1.FormDropFiles(Sender: TObject; const FileNames: array of string
   );
 var
-  Sot: TSnapshotOrTape;
+  Sfk: TSpectrumFileKinds;
 
 begin
   if Length(FileNames) > 0 then begin
     if Sender = FTapeBrowser then
-      Sot := TSnapshotOrTape.stTape
+      Sfk := [TSpectrumFileKind.sfkTape]
     else
-      Sot := TSnapshotOrTape.stBoth;
+      Sfk := AllSpectrumFileKinds;
 
     if DropFiles = nil then begin
       DropFiles := TDropFiles.Create;
       DropFiles.Filename := '';
     end;
-    TryLoadFromFiles(Sot, FileNames);
+    TryLoadFromFiles(Sfk, FileNames);
   end;
 end;
 
@@ -1118,7 +1142,7 @@ begin
   end;
 end;
 
-procedure TForm1.TryLoadFromFiles(const SnapshotOrTape: TSnapshotOrTape;
+procedure TForm1.TryLoadFromFiles(const SpectrumFileKinds: TSpectrumFileKinds;
   const AFileNames: array of String);
 var
   I, J: Integer;
@@ -1126,7 +1150,7 @@ var
   S, FN, EFN: AnsiString;
 begin
   if Length(AFileNames) > 0 then begin
-    GetAcceptableExtensions(SnapshotOrTape, True, Extensions);
+    GetAcceptableExtensions(SpectrumFileKinds, True, Extensions);
     for I := Low(AFileNames) to High(AFileNames) do begin
       FN := AFileNames[I];
       EFN := ExtractFileExt(FN);
@@ -1138,13 +1162,13 @@ begin
               S := ExtensionSeparator + S;
             if AnsiCompareText(S, EFN) = 0 then begin
               if Assigned(DropFiles) then begin
-                DropFiles.SnapshotOrTape := SnapshotOrTape;
+                DropFiles.SpectrumFileKinds := SpectrumFileKinds;
                 if DropFiles.Filename = '' then begin
                   AddEventToQueue(@DropFilesLoad);
                 end;
                 DropFiles.Filename := FN;
               end else
-                DoLoad(SnapshotOrTape, FN);
+                DoLoad(SpectrumFileKinds, FN);
 
               Exit;
             end;
@@ -1162,7 +1186,7 @@ procedure TForm1.DropFilesLoad(Sender: TObject);
 begin
   if Assigned(DropFiles) then begin
     if (DropFiles.Filename <> '') then
-      DoLoad(DropFiles.SnapshotOrTape, DropFiles.Filename);
+      DoLoad(DropFiles.SpectrumFileKinds, DropFiles.Filename);
 
     FreeAndNil(DropFiles);
   end;
@@ -1746,7 +1770,7 @@ end;
 procedure TForm1.RecentFilesOnClick(Sender: TObject);
 begin
   if Sender = Spectrum then begin
-    DoLoad(TSnapshotOrTape.stBoth, FFileToOpen);
+    DoLoad(AllSpectrumFileKinds, FFileToOpen);
   end else if Sender is TMenuItem then begin
     FFileToOpen := TMenuItem(Sender).Caption;
     AddEventToQueue(@RecentFilesOnClick);
@@ -2255,42 +2279,54 @@ begin
     SetLength(FSelections, 0);
 end;
 
-procedure TForm1.GetAcceptableExtensions(const SnapshotOrTape: TSnapshotOrTape;
-  const IncludeZip: Boolean; out Extensions: TStringDynArray);
-const
-  SnapshotExtensions: array[0..2] of String = ('szx', 'z80', 'sna');
-  TapeExtensions: array[0..3] of String = ('tap', 'tzx', 'pzx', 'csw');
+procedure TForm1.GetAcceptableExtensions(
+  const SpectrumFileKinds: TSpectrumFileKinds; const IncludeZip: Boolean; out
+  Extensions: TStringDynArray);
 var
   I, L: Integer;
 begin
-  case SnapshotOrTape of
-    stSnapshot:
-      L := Length(SnapshotExtensions);
-    stTape:
-      L := Length(TapeExtensions);
-  otherwise
-    L := Length(SnapshotExtensions) + Length(TapeExtensions);
-  end;
-  if IncludeZip then
+  L := 0;
+  if sfkSnapshot in SpectrumFileKinds then
+    L := L + Length(SnapshotExtensions);
+
+  if sfkTape in SpectrumFileKinds then
+    L := L + Length(TapeExtensions);
+
+  if sfkBinary in SpectrumFileKinds then
+    L := L + Length(BinaryExtensions);
+
+  if (L > 0) and IncludeZip then
     Inc(L);
+
   SetLength(Extensions{%H-}, L);
 
+  if L = 0 then
+    Exit;
+
   L := 0;
-  if SnapshotOrTape in [stSnapshot, stBoth] then
+  if sfkSnapshot in SpectrumFileKinds then
     for I := Low(SnapshotExtensions) to High(SnapshotExtensions) do begin
       Extensions[L] := SnapshotExtensions[I];
       Inc(L);
     end;
-  if SnapshotOrTape in [stTape, stBoth] then
+
+  if sfkTape in SpectrumFileKinds then
     for I := Low(TapeExtensions) to High(TapeExtensions) do begin
       Extensions[L] := TapeExtensions[I];
       Inc(L);
     end;
+
+  if sfkBinary in SpectrumFileKinds then
+    for I := Low(BinaryExtensions) to High(BinaryExtensions) do begin
+      Extensions[L] := BinaryExtensions[I];
+      Inc(L);
+    end;
+
   if IncludeZip then
     Extensions[L] := 'zip';
 end;
 
-procedure TForm1.LoadAsk(const SnapshotOrTape: TSnapshotOrTape);
+procedure TForm1.LoadAsk(const SpectrumFileKinds: TSpectrumFileKinds);
 var
   WasPaused: Boolean;
   L: Boolean;
@@ -2304,7 +2340,7 @@ begin
     try
       Spectrum.Paused := True;
 
-      GetAcceptableExtensions(SnapshotOrTape, True, Extensions);
+      GetAcceptableExtensions(SpectrumFileKinds, SpectrumFileKinds <> BinFileKindOnly, Extensions);
       OpenDialog1.FilterIndex := 1;
       OpenDialog1.Filter := TCommonFunctionsLCL.MakeExtensionsFilter(Extensions);
 
@@ -2334,7 +2370,7 @@ begin
         OpenDialog1.FileName := '';
 
       if OpenDialog1.Execute then
-        DoLoad(SnapshotOrTape, OpenDialog1.FileName);
+        DoLoad(SpectrumFileKinds, OpenDialog1.FileName);
 
     finally
       Spectrum.Paused := WasPaused;
@@ -2343,30 +2379,124 @@ begin
   end;
 end;
 
-procedure TForm1.DoLoad(const SnapshotOrTape: TSnapshotOrTape;
+procedure TForm1.DoLoad(const SpectrumFileKinds: TSpectrumFileKinds;
   ASourceFile: String);
 
 var
   ErrorShown: Boolean;
+  Stream: TStream;
+  SnapshotFile: TSnapshotFile;
+  FileName: String;
 
   procedure LoadingFailed(AMsg: String = '');
   begin
     if ErrorShown then
       Exit;
+    FreeAndNil(SnapshotFile);
+    FreeAndNil(Stream);
     if AMsg = '' then
       AMsg := 'Loading failed.' + LineEnding + 'Bad file?';
-    MessageDlg(AMsg, mtError, [mbClose], 0);
     ErrorShown := True;
+    MessageDlg(AMsg, mtError, [mbClose], 0);
+  end;
+
+  function LoadBinary(): Boolean;
+  var
+    WAdr: Word;
+    M: TModalResult;
+    Limit: Integer;
+    APos: Integer;
+
+  begin
+    Result := False;
+
+    Limit := Spectrum.Memory.RamSizeKB * TCommonSpectrum.KiloByte + TCommonSpectrum.KB16;
+    if Limit > TCommonSpectrum.KB64 then
+      Limit := TCommonSpectrum.KB64;
+    APos := Limit div 2;
+
+    WAdr := APos;
+    M := TFormDlgStartAddress.ShowDlgStartAddress(WAdr, KB16, Limit - 1, FileName);
+    case M of
+      mrCancel:
+        FreeAndNil(Stream);
+      mrOK:
+        begin
+          APos := WAdr;
+          if Stream.Size + APos > Limit then begin
+            FreeAndNil(Stream);
+            LoadingFailed('The file is larger than available paged memory.');
+          end;
+        end;
+
+    otherwise
+    end;
+
+    if Assigned(Stream) then begin
+      Stream.Position := 0;
+      Result := Spectrum.Memory.LoadFromStream(Stream, APos);
+    end;
+  end;
+
+  procedure NoSpectrumFileInZip;
+  var
+    S: String;
+    I: Integer;
+    Sfk, Sfk0: TSpectrumFileKind;
+  begin
+    if SpectrumFileKinds = SnapshotOrTapeFileKinds then
+      S := 'snapshot or tape'
+    else begin
+      S := '';
+
+      I := 0;
+      for Sfk0 := Low(TSpectrumFileKind) to High(TSpectrumFileKind) do
+        if Sfk0 in SpectrumFileKinds then begin
+          Inc(I);
+          if I <> 1 then begin
+            Break;
+          end;
+          Sfk := Sfk0;
+        end;
+
+      if I = 1 then begin
+        WriteStr(S, Sfk);
+        for I := 1 to Length(S) do begin
+          if LowerCase(S[I]) <> S[I] then begin
+            S := LowerCase(Copy(S, I));
+            Break;
+          end;
+        end;
+      end else
+        S := 'Spectrum';
+    end;
+
+    LoadingFailed(Format('No %s file found in zip.', [S]));
+  end;
+
+  function StrInArr(S: String; Arr: Array of String): Boolean;
+  var
+    I: Integer;
+  begin
+    if Length(Arr) > 0 then begin
+      if Copy(S, 1, Length(ExtensionSeparator)) = ExtensionSeparator then begin
+        Delete(S, 1, Length(ExtensionSeparator));
+      end;
+      if S <> '' then begin
+        for I := Low(Arr) to High(Arr) do
+          if AnsiCompareText(S, Arr[I]) = 0 then
+            Exit(True);
+      end;
+    end;
+    Result := False;
   end;
 
 var
   WasPaused: Boolean;
-  Extension: String;
-  FileName: String;
-  Stream: TStream;
-  SnapshotFile: TSnapshotFile;
   L: Boolean;
+  Extension: String;
   AcceptedExtensions: TStringDynArray;
+  LoadAsBinary: Boolean;
 
 begin
   FFileToOpen := '';
@@ -2379,13 +2509,17 @@ begin
 
       Stream := nil;
       Extension := ExtractFileExt(ASourceFile);
+      LoadAsBinary := SpectrumFileKinds = BinFileKindOnly;
+      SnapshotFile := nil;
 
       L := False;
-      if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
-        GetAcceptableExtensions(SnapshotOrTape, True, AcceptedExtensions);
+      if (not LoadAsBinary)
+         and (AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0)
+      then begin
+        GetAcceptableExtensions(SpectrumFileKinds, True, AcceptedExtensions);
         if not TFileUnzipper.GetFileFromZipFile(ASourceFile, AcceptedExtensions, Stream, FileName) then begin
           Stream := nil;
-          LoadingFailed('No Spectrum file found in zip.');
+          NoSpectrumFileInZip;
         end else begin
           if Stream = nil then begin
             // Canceled by user (a dialog was offered to the user, to choose
@@ -2414,8 +2548,7 @@ begin
 
         end else begin
           try
-            SnapshotFile := nil;
-            if SnapshotOrTape in [stSnapshot, stBoth] then begin
+            if sfkSnapshot in SpectrumFileKinds then begin
               if (AnsiCompareText(Extension, ExtensionSeparator + 'szx') = 0)
                 //or (AnsiCompareText(Extension, ExtensionSeparator + 'zx-state') = 0)
               then
@@ -2451,10 +2584,25 @@ begin
               finally
                 SnapshotFile.Free;
               end;
-            end else if SnapshotOrTape in [stTape, stBoth] then begin
-              L := LoadTape(Stream, FileName, Extension);
-              if not L then
-                LoadingFailed;
+
+            end else begin
+
+              LoadAsBinary := LoadAsBinary
+                or (
+                  (sfkBinary in SpectrumFileKinds)
+                   and StrInArr(Extension, BinaryExtensions)
+                  );
+
+              if sfkTape in SpectrumFileKinds then
+                L := LoadTape(Stream, FileName, Extension, not LoadAsBinary);
+
+              if not L then begin
+                if sfkBinary in SpectrumFileKinds then
+                  L := LoadBinary();
+
+                if (not L) and Assigned(Stream) then
+                  LoadingFailed;
+              end;
             end;
 
             if L then begin
@@ -2474,20 +2622,21 @@ begin
   end;
 end;
 
-function TForm1.LoadTape(const Stream: TStream; const FileName: String; Extension: String): Boolean;
+function TForm1.LoadTape(const AStream: TStream; const FileName: String;
+  Extension: String; FallbackToTap: Boolean): Boolean;
 var
   TapePlayerClass: TTapePlayerClass;
 
 begin
   Result := False;
 
-  if Assigned(Stream) then begin
+  if Assigned(AStream) then begin
     FreeTapePlayer;
 
-    TapePlayerClass := TTapePlayer.CheckRealTapePlayerClass(Stream);
+    TapePlayerClass := TTapePlayer.CheckRealTapePlayerClass(AStream);
     if TapePlayerClass = nil then begin
       TapePlayerClass := TapePlayerClass.GetTapePlayerClassFromExtension(Extension);
-      if TapePlayerClass = nil then
+      if (TapePlayerClass = nil) and FallbackToTap then
         TapePlayerClass := TTapePlayer.GetTapePlayerClassFromType(TTapeType.ttTap);
     end;
 
@@ -2496,7 +2645,7 @@ begin
       TapePlayer.SetSpectrum(Spectrum);
       TapePlayer.FileName := FileName;
       try
-        if TapePlayer.LoadFromStream(Stream) then begin
+        if TapePlayer.LoadFromStream(AStream) then begin
           TapePlayer.Rewind;
           if FAutoShowTapePlayerWhenTapeLoaded then
             ShowTapeBrowser()
@@ -2555,7 +2704,7 @@ begin
     end;
 
     if not BadFilePath then begin
-      if LoadTape(AStream, AFileName, AExtension) then begin
+      if LoadTape(AStream, AFileName, AExtension, True) then begin
         if ACurrentBlock > 0 then
           TapePlayer.GoToBlock(ACurrentBlock);
       end else begin
@@ -2746,7 +2895,7 @@ begin
   for I := 1 to ParamCount do
     Arr[I - 1] := ParamStr(I);
   FreeAndNil(DropFiles);
-  TryLoadFromFiles(TSnapshotOrTape.stBoth, Arr);
+  TryLoadFromFiles(AllSpectrumFileKinds, Arr);
 
   if not (FDontAskPortAudioPath or TSoundPlayer.IsLibLoaded) then
     AddEventToQueue(@ShowMessageSoundLibNotLoaded);

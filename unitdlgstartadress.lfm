@@ -1,0 +1,127 @@
+object FormDlgStartAddress: TFormDlgStartAddress
+  Left = 249
+  Height = 153
+  Top = 111
+  Width = 296
+  AutoSize = True
+  Caption = 'Load binary file to RAM'
+  ClientHeight = 153
+  ClientWidth = 296
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  Position = poMainFormCenter
+  LCLVersion = '3.3.0.0'
+  object Panel2: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    Left = 0
+    Height = 152
+    Top = 0
+    Width = 294
+    AutoSize = True
+    BevelOuter = bvNone
+    ClientHeight = 152
+    ClientWidth = 294
+    TabOrder = 0
+    object Panel1: TPanel
+      AnchorSideLeft.Control = Panel2
+      AnchorSideTop.Control = Panel2
+      Left = 8
+      Height = 136
+      Top = 8
+      Width = 278
+      BorderSpacing.Around = 8
+      BevelOuter = bvNone
+      ClientHeight = 136
+      ClientWidth = 278
+      TabOrder = 0
+      object ButtonPanel1: TButtonPanel
+        AnchorSideTop.Control = SpinEdit1
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel1
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Side = asrBottom
+        Left = 115
+        Height = 26
+        Top = 106
+        Width = 163
+        Align = alNone
+        Anchors = [akTop, akRight]
+        BorderSpacing.Top = 30
+        BorderSpacing.Around = 0
+        OKButton.Name = 'OKButton'
+        OKButton.DefaultCaption = True
+        HelpButton.Name = 'HelpButton'
+        HelpButton.DefaultCaption = True
+        CloseButton.Name = 'CloseButton'
+        CloseButton.DefaultCaption = True
+        CancelButton.Name = 'CancelButton'
+        CancelButton.DefaultCaption = True
+        TabOrder = 0
+        ShowButtons = [pbOK, pbCancel]
+        ShowBevel = False
+      end
+      object Label1: TLabel
+        AnchorSideLeft.Control = Panel1
+        AnchorSideTop.Control = SpinEdit1
+        AnchorSideTop.Side = asrCenter
+        Left = 0
+        Height = 15
+        Top = 57
+        Width = 171
+        Caption = 'Start address (123456 — 789012):'
+      end
+      object SpinEdit1: TSpinEdit
+        AnchorSideLeft.Control = Label1
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Panel3
+        AnchorSideTop.Side = asrBottom
+        Left = 175
+        Height = 23
+        Top = 53
+        Width = 95
+        BorderSpacing.Left = 4
+        BorderSpacing.Top = 12
+        TabOrder = 1
+      end
+      object Label2: TLabel
+        AnchorSideLeft.Control = Panel1
+        AnchorSideTop.Control = Panel1
+        Left = 0
+        Height = 15
+        Top = 0
+        Width = 124
+        Caption = 'Load binary file to RAM'
+      end
+      object Panel3: TPanel
+        AnchorSideLeft.Control = Panel1
+        AnchorSideTop.Control = Label2
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = Panel1
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 17
+        Top = 24
+        Width = 278
+        Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
+        BorderSpacing.Top = 9
+        BevelOuter = bvNone
+        ClientHeight = 17
+        ClientWidth = 278
+        TabOrder = 2
+        object Label3: TLabel
+          AnchorSideLeft.Control = Panel3
+          AnchorSideTop.Control = Panel3
+          Left = 0
+          Height = 15
+          Top = 1
+          Width = 34
+          BorderSpacing.Top = 1
+          BorderSpacing.Bottom = 1
+          Caption = 'Label3'
+        end
+      end
+    end
+  end
+end

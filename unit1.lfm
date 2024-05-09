@@ -474,6 +474,11 @@ object Form1: TForm1
       Hint = 'Show/Hide toolbar'
       OnExecute = ActionShowHideToolbarExecute
     end
+    object ActionLoadBinaryFile: TAction
+      Category = 'File'
+      Caption = 'Load binary file...'
+      OnExecute = ActionLoadBinaryFileExecute
+    end
   end
   object MainMenu1: TMainMenu
     Images = DataModuleImages.ImageList1
@@ -492,6 +497,15 @@ object Form1: TForm1
       end
       object MenuItem18: TMenuItem
         Action = ActionSaveSna
+      end
+      object Separator4: TMenuItem
+        Caption = '-'
+      end
+      object MenuItem56: TMenuItem
+        Action = ActionLoadBinaryFile
+      end
+      object Separator5: TMenuItem
+        Caption = '-'
       end
       object MenuItemRecentFiles: TMenuItem
         Caption = 'Recent files'
