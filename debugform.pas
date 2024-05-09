@@ -10,7 +10,8 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
   Buttons, Grids, ActnList, UnitFrameWordDisplay, UnitSpectrum, Z80Processor,
-  UnitMemory, FastIntegers, CommonFunctionsLCL, UnitCommonSpectrum, Types, fgl;
+  UnitMemory, FastIntegers, CommonFunctionsLCL, UnitCommonSpectrum,
+  UnitDisassembler, Types, fgl;
 
 type
   { #todo : update to 128k (memory pages, port 0x7ffd) }
@@ -209,6 +210,7 @@ type
     //property RegI: Byte read GetRegI write SetRegI;
     //
 
+    Disassembler: TDisassembler;
     FAddressBreakPoints: TAddressBreakPoints;
 
     ShapeArray: array [0..7] of TShape;
@@ -218,6 +220,7 @@ type
     procedure UpdateValues;
     procedure FocusAddressInGrid(const Address: Word);
     procedure GotoPC;
+    procedure AfterShow(Data: PtrInt);
 
   public
     procedure SetSpectrum(Spectrum: TSpectrum);
@@ -378,6 +381,13 @@ begin
 
   FAddressBreakPoints := TAddressBreakPoints.Create;
 
+  Disassembler := nil;
+
+  StringGrid1.RowHeights[0] := StringGrid1.RowHeights[0] * 2;
+  StringGrid1.Columns[0].Title.Caption := StringReplace(StringGrid1.Columns[0].Title.Caption, ' - ', LineEnding, []);
+  StringGrid1.Columns[1].Title.Caption := StringReplace(StringGrid1.Columns[1].Title.Caption, ' - ', LineEnding, []);
+  TCommonFunctionsLCL.GrowFormHeight(Self);
+  Self.Constraints.MinHeight := Self.Height;
 end;
 
 procedure TFormDebug.FormClose(Sender: TObject; var CloseAction: TCloseAction);
@@ -421,6 +431,7 @@ begin
   //FAddressBreakPoints.Clear;
 
   FAddressBreakPoints.Free;
+  Disassembler.Free;
 
   FrWZ.Free;
 
@@ -443,7 +454,7 @@ end;
 
 procedure TFormDebug.FormShow(Sender: TObject);
 begin
-  TCommonFunctionsLCL.AdjustFormPos(Self);
+  AfterShow(2);
 end;
 
 procedure TFormDebug.StringGrid1DrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -603,7 +614,7 @@ end;
 
 procedure TFormDebug.UpdateValues;
 var
-  I, N: Integer;
+  I, N, L: Integer;
   Mem: TMemory;
   Proc: TProcessor;
   B: Byte;
@@ -625,8 +636,11 @@ begin
             B := Mem.ReadByte(N);
             StringGrid1.Cells[2, I] := IntToHex(B, 2) + ' (' + B.ToString.PadLeft(3, '0') + ')';
 
+            StringGrid1.Cells[3, I] := Disassembler.Dissasemble(N, L);
+            StringGrid1.Cells[4, I] := L.ToString;
             Inc(N);
           end;
+
         finally
           StringGrid1.EndUpdate;
         end;
@@ -646,13 +660,33 @@ begin
   FocusAddressInGrid(ProgrCounter);
 end;
 
+procedure TFormDebug.AfterShow(Data: PtrInt);
+begin
+  TCommonFunctionsLCL.AdjustFormPos(Self);
+  AutoSize := False;
+  if Data > 0 then begin
+    AutoSize := True;
+    Application.QueueAsyncCall(@AfterShow, Data - 1);
+  end else
+    Constraints.MinHeight := 0;
+end;
+
 procedure TFormDebug.SetSpectrum(Spectrum: TSpectrum);
 begin
-  FSpectrum := Spectrum;
+  if Spectrum <> FSpectrum then begin
+    FreeAndNil(Disassembler);
+    FSpectrum := Spectrum;
+  end;
+
+  if Assigned(FSpectrum) and Assigned(FSpectrum.Memory) then begin
+    if Disassembler = nil then
+      Disassembler := TDisassembler.Create(FSpectrum.Memory);
+
+  end;
 
   StringGrid1.RowCount := StringGrid1.FixedRows;
   //FOneStep := True;
-  StringGrid1.AutoAdjustColumns;
+  //StringGrid1.AutoAdjustColumns;
   AfterStep;
 end;
 

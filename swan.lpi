@@ -684,6 +684,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitCSW"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitdisassembler.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitDisassembler"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
