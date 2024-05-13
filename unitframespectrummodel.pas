@@ -105,10 +105,6 @@ end;
 
 procedure TFrameSpectrumModel.FormOnCloseQuery(Sender: TObject;
   var CanClose: Boolean);
-
-const
-  RomBankSize = 1024 * 16;
-
 var
   F: TCustomForm;
   I, J: Integer;
