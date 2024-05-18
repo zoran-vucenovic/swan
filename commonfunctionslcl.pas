@@ -19,6 +19,7 @@ type
   strict private
     class var
       Canv: TCanvas;
+      MonoFont: TFont;
   private
     class procedure Init; static;
     class procedure Final; static;
@@ -48,6 +49,7 @@ type
     class function GridMouseButtonAllowed(AGrid: TCustomGrid; Button: TMouseButton): Boolean;
     class function GetBestContrastColorForFont(R, G, B: Integer): TColor;
     class function MakeExtensionsFilter(const ArSt: Array of String): String;
+    class function GetMonoFont(): TFont;
   end;
 
   IFormAddCloseQuery = interface
@@ -240,9 +242,34 @@ begin
 
 end;
 
+class function TCommonFunctionsLCL.GetMonoFont(): TFont;
+const
+  FontsToTry: array of String = (
+    'Monospace',
+    'Consolas', 'Liberation Mono', 'Lucida Console', 'Courier New',
+    'DejaVu Sans Mono', 'FreeMono', 'Courier',
+    'Mono'
+  );
+
+var
+  I: Integer;
+begin
+  if MonoFont = nil then begin
+    MonoFont := TFont.Create;
+    for I := Low(FontsToTry) to High(FontsToTry) do begin
+      if Screen.Fonts.IndexOf(FontsToTry[I]) >= 0 then begin
+        MonoFont.Name := FontsToTry[I];
+        Break;
+      end;
+    end;
+  end;
+  Result := MonoFont;
+end;
+
 class procedure TCommonFunctionsLCL.Init;
 begin
   Canv := nil;
+  MonoFont := nil;
 end;
 
 class procedure TCommonFunctionsLCL.Final;
@@ -253,6 +280,7 @@ begin
 
     Canv.Free;
   end;
+  MonoFont.Free;
 end;
 
 class function TCommonFunctionsLCL.CreateLinkLabel(AOwner: TComponent;

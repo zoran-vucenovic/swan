@@ -104,6 +104,7 @@ begin
     + [goColSizing]
     - [goRangeSelect]
     ;
+  FocusRectVisible := False;
   AllowOutboundEvents := False;
 end;
 

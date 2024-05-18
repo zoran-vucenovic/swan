@@ -9,8 +9,8 @@ interface
 
 uses
   Classes, SysUtils, Types, UnitSpectrumColourMap, CommonFunctionsLCL,
-  UnitCommonSpectrum, UnitFormForOptionsBasic, UnitOptions, Forms, Controls,
-  ExtCtrls, Graphics, StdCtrls, Dialogs, Buttons, LCLType, LCLIntf,
+  UnitCommonSpectrum, UnitFormForOptionsBasic, UnitOptions, UnitCommon, Forms,
+  Controls, ExtCtrls, Graphics, StdCtrls, Dialogs, Buttons, LCLType, LCLIntf,
   LazUTF8;
 
 type
@@ -96,9 +96,6 @@ implementation
 { TFrameColourPalette.TColourArea }
 
 procedure TFrameColourPalette.TColourArea.SetColor(Value: TColor);
-const
-  NonBreakSpace: RawByteString = #$c2 + #$a0;
-  NarrowNonBreakSpace: RawByteString = #$e2 + #$80 + #$af;
 var
   R, G, B: Integer;
 begin
@@ -114,7 +111,8 @@ begin
   G := Green(Value);
   B := Blue(Value);
   DisplayText := Format('RGB:%3:s%0:s%4:s%1:s%4:s%2:s',
-    [IntToHex(R, 2), IntToHex(G, 2), IntToHex(B, 2), NonBreakSpace, NarrowNonBreakSpace]);
+    [IntToHex(R, 2), IntToHex(G, 2), IntToHex(B, 2), TCommonFunctions.NonBreakSpace,
+        TCommonFunctions.NarrowNonBreakSpace]);
 
   Font.Color := TCommonFunctionsLCL.GetBestContrastColorForFont(R, G, B);
 

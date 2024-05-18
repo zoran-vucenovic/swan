@@ -35,6 +35,10 @@ type
 
   TCommonFunctions = class sealed (TObject)
   public
+    const
+      NonBreakSpace: RawByteString = #$c2 + #$a0;
+      NarrowNonBreakSpace: RawByteString = #$e2 + #$80 + #$af;
+  public
     class function GlobalClassNameGenerator(C: TClass): String; static;
     class function GlobalObjectNameGenerator(Obj: TObject): String; static;
     class function SpectrumCharToUtf8(const Is128K: Boolean; S: RawByteString): RawByteString; static;

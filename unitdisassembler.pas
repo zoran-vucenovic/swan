@@ -14,33 +14,40 @@ type
   TDisassembler = class(TObject)
   public
     type
-      TNumDisplay = (ndDecimal, ndHex, ndBin);
+      TNumDisplay = (ndHex, ndDec, ndBin);
+  public
+    const
+      AllowedHexPrefixes: array of RawByteString = ('$', '0x', '#', '&');
+      AllowedHexSuffixes: array of RawByteString = ('h');
   strict private
     const
       Nop: RawByteString = 'NOP';
       Alu: array of RawByteString = ('ADD A,', 'ADC A,', 'SUB', 'SBC A,', 'AND', 'XOR', 'OR', 'CP');
 
-
   strict private
+    FDisplayRelativeJumpOffsetAsAbsolute: Boolean;
     FHexfix: RawByteString;
+    FHexFormatIndex: Integer;
     FMemory: TMemory;
     FNumDisplay: TNumDisplay;
     FHexPrefix: Boolean;
 
     function ApplyHexfix(const S: RawByteString): RawByteString; inline;
     function ConvByteToString(B: Byte): RawByteString;
-    //function ConvInt8ToString(N: Int8): RawByteString;
     function ConvWordToString(W: Word): RawByteString;
-    procedure SetHexfix(const AValue: RawByteString);
-    //function ConvIntToString(N: Integer): RawByteString;
+    procedure SetHexFormatIndex(AValue: Integer);
   public
     constructor Create();
     constructor Create(AMemory: TMemory);
-    function Dissasemble(Pc: Word; out OpcodeLen: Integer): RawByteString;
+    function Dissasemble(aPc: Word; out aOpcodeLen: Integer): RawByteString;
+    class function DecodeHexFormatIndex(AValue: RawByteString): Integer;
 
     property NumDisplay: TNumDisplay read FNumDisplay write FNumDisplay;
-    property Hexfix: RawByteString read FHexfix write SetHexfix;
+    property Hexfix: RawByteString read FHexfix;
+    property HexFormatIndex: Integer read FHexFormatIndex write SetHexFormatIndex;
+    property HexIsPrefix: Boolean read FHexPrefix;
     property Memory: TMemory read FMemory write FMemory;
+    property DisplayRelativeJumpOffsetAsAbsolute: Boolean read FDisplayRelativeJumpOffsetAsAbsolute write FDisplayRelativeJumpOffsetAsAbsolute;
   end;
 
 implementation
@@ -50,9 +57,9 @@ implementation
 function TDisassembler.ApplyHexfix(const S: RawByteString): RawByteString;
 begin
   if FHexPrefix then
-    Result := Hexfix + S
+    Result := FHexfix + S
   else
-    Result := S + Hexfix;
+    Result := S + FHexfix;
 end;
 
 function TDisassembler.ConvByteToString(B: Byte): RawByteString;
@@ -60,7 +67,7 @@ begin
   case FNumDisplay of
     ndHex:
       Result := ApplyHexfix(IntToHex(B));
-    ndDecimal:
+    ndDec:
       Result := IntToStr(B);
   otherwise
     Result := '%' + B.ToBinString;
@@ -72,18 +79,25 @@ begin
   case FNumDisplay of
     ndHex:
       Result := ApplyHexfix(IntToHex(W));
-    ndDecimal:
+    ndDec:
       Result := IntToStr(W);
   otherwise
     Result := '%' + W.ToBinString;
   end;
 end;
 
-procedure TDisassembler.SetHexfix(const AValue: RawByteString);
+procedure TDisassembler.SetHexFormatIndex(AValue: Integer);
 begin
-  if FHexfix <> AValue then begin
-    FHexfix := AnsiLowerCase(AValue);
-    FHexPrefix := FHexfix <> 'h';
+  if (AValue >= 0) and (FHexFormatIndex <> AValue) then begin
+    if AValue < Length(AllowedHexSuffixes) + Length(AllowedHexPrefixes) then begin
+      FHexFormatIndex := AValue;
+      FHexPrefix := AValue < Length(AllowedHexPrefixes);
+      if FHexPrefix then begin
+        FHexfix := AllowedHexPrefixes[AValue];
+      end else begin
+        FHexfix := AllowedHexSuffixes[AValue - Length(AllowedHexPrefixes)];
+      end;
+    end;
   end;
 end;
 
@@ -97,10 +111,11 @@ begin
   inherited Create;
   FMemory := AMemory;
   FNumDisplay := ndHex;
-  SetHexfix('$');
+  FHexFormatIndex := -1;
+  SetHexFormatIndex(0);
 end;
 
-function TDisassembler.Dissasemble(Pc: Word; out OpcodeLen: Integer
+function TDisassembler.Dissasemble(aPc: Word; out aOpcodeLen: Integer
   ): RawByteString;
 const
   Cond: array [0..7] of RawByteString = ('NZ', 'Z', 'NC', 'C', 'PO', 'PE', 'P', 'M');
@@ -110,15 +125,13 @@ var
   x, y, z: Byte;
   Pref: Byte;
 
-  //OpcodeLen: Integer;
-
   {$push}
   {$Q-}{$R-}
   function ReadNextByte(): Byte;
   begin
-    Inc(Pc);
-    Result := FMemory.ReadByte(Pc);
-    Inc(OpcodeLen);
+    Inc(aPc);
+    Result := FMemory.ReadByte(aPc);
+    Inc(aOpcodeLen);
   end;
 
   function ResolveMemHL(): RawByteString;
@@ -128,15 +141,14 @@ var
   begin
     case Pref of
       $DD:
-        Result := 'Ix';
+        Result := 'IX';
       $FD:
-        Result := 'Iy';
+        Result := 'IY';
     otherwise
       Exit('(HL)');
     end;
 
     Bd := ReadNextByte();
-    Inc(OpcodeLen);
     if D < 0 then begin
       Result := Result + ' - ';
       D := -D;
@@ -151,9 +163,9 @@ var
   begin
     case Pref of
       $DD:
-        Result := 'Ix';
+        Result := 'IX';
       $FD:
-        Result := 'Iy';
+        Result := 'IY';
     otherwise
       Result := 'HL';
     end;
@@ -163,9 +175,9 @@ var
   begin
     case Pref of
       $DD:
-        Result := 'IxH';
+        Result := 'IXH';
       $FD:
-        Result := 'IyH';
+        Result := 'IYH';
     otherwise
       Result := 'H';
     end;
@@ -175,9 +187,9 @@ var
   begin
     case Pref of
       $DD:
-        Result := 'IxL';
+        Result := 'IXL';
       $FD:
-        Result := 'IyL';
+        Result := 'IYL';
     otherwise
       Result := 'L';
     end;
@@ -192,8 +204,7 @@ var
         Result := 'DE';
       2:
         Result := ResolveHL();
-    otherwise
-    //  3:
+    otherwise //  3:
       if x <> 3 then
         Result := 'SP'
       else
@@ -251,14 +262,22 @@ var
     WordRec(Result).Hi := ReadNextByte();
   end;
 
-  function GetRelativeJumpOffset(): Integer;
+  function GetRelativeJumpOffset(): RawByteString;
   var
+    N: Int32;
     D: Int8;
     B: Byte absolute D;
   begin
     B := ReadNextByte();
-    Result := D;
-    Result := Result + 2;
+    N := D;
+    if not FDisplayRelativeJumpOffsetAsAbsolute then begin
+      Result := (N + 2).ToString;
+      if Result[1] <> '-' then
+        Result := '+' + Result;
+    end else begin
+      N := N + aPc + 1;
+      Result := ConvWordToString(LongRec(N).Lo);
+    end;
   end;
 
   function Bli(const A, B: Byte): RawByteString;
@@ -290,28 +309,6 @@ var
     end;
   end;
 
-  //function Alu(const I: Integer): RawByteString;
-  //begin
-  //  case I of
-  //    0:
-  //      Result := 'ADD A,';
-  //    1:
-  //      Result := 'ADC A,';
-  //    2:
-  //      Result := 'SUB';
-  //    3:
-  //      Result := 'SBC A,';
-  //    4:
-  //      Result := 'AND';
-  //    5:
-  //      Result := 'XOR';
-  //    6:
-  //      Result := 'OR';
-  //  otherwise // 7:
-  //      Result := 'CP';
-  //  end;
-  //end;
-
   function ProcessCB(): RawByteString;
   const
     Rot: array [0..7] of RawByteString = ('RLC', 'RRC', 'RL', 'RR', 'SLA', 'SRA', 'SLL', 'SRL');
@@ -319,7 +316,6 @@ var
     if Pref <> $CB then begin
       Result := ResolveMemHL();
       Opcode := ReadNextByte();
-      Inc(OpcodeLen);
       x := Opcode shr 6;
       y := (Opcode shr 3) and %111;
       z := Opcode and %111;
@@ -331,13 +327,13 @@ var
         Result := Rot[y] + ' ' + Result;
       1:
         begin
-          Result := 'BIT ' + ConvByteToString(y) + ', ' + Result;
+          Result := 'BIT ' + y.ToString + ', ' + Result;
           Exit;
         end;
       2:
-        Result := 'RES ' + ConvByteToString(y) + ', ' + Result;
+        Result := 'RES ' + y.ToString + ', ' + Result;
     otherwise // 3
-      Result := 'SET ' + ConvByteToString(y) + ', ' + Result;
+      Result := 'SET ' + y.ToString + ', ' + Result;
     end;
 
     if Pref <> $CB then
@@ -398,7 +394,7 @@ var
                   Result := 'RETI';
               end;
             6:
-              Result := 'IM ' + ConvByteToString(((y and 3) shl 1) div 3);
+              Result := 'IM ' + (((y and 3) shl 1) div 3).ToString;
 
           otherwise // 7
             case y of
@@ -430,8 +426,6 @@ var
   end;
 
   function ProcessX0(): RawByteString;
-  var
-    N: Integer;
   begin
     case z of
       0:
@@ -442,7 +436,6 @@ var
             1:
               Result := 'EX AF, AF''';
           otherwise
-            N := GetRelativeJumpOffset();
             if y = 2 then
               Result := 'DJNZ'
             else begin
@@ -453,7 +446,7 @@ var
               end;
             end;
 
-            Result := Result + ' ' + N.ToString;
+            Result := Result + ' ' + GetRelativeJumpOffset();
           end;
         end;
       1:
@@ -635,18 +628,17 @@ var
   end;
 
 begin
-  Opcode := FMemory.ReadByte(Pc);
+  Opcode := FMemory.ReadByte(aPc);
 
+  aOpcodeLen := 1;
   case Opcode of
     $CB, $ED, $DD, $FD:
       begin
         Pref := Opcode;
         Opcode := ReadNextByte();
-        OpcodeLen := 2;
       end;
   otherwise
     Pref := 0;
-    OpcodeLen := 1;
   end;
 
   x := Opcode shr 6;
@@ -674,8 +666,7 @@ begin
           end;
         $CB:
           begin
-            //Inc(OpcodeLen);
-            ProcessCB;
+            Result := ProcessCB;
             Exit;
           end;
       otherwise
@@ -696,5 +687,24 @@ begin
   end;
 end;
 
-end.
+class function TDisassembler.DecodeHexFormatIndex(AValue: RawByteString
+  ): Integer;
+var
+  I: Integer;
+begin
+  for I := Low(AllowedHexPrefixes) to High(AllowedHexPrefixes) do begin
+    if CompareText(AllowedHexPrefixes[I], AValue) = 0 then begin
+      Exit(I);
+    end;
+  end;
 
+  for I := Low(AllowedHexSuffixes) to High(AllowedHexSuffixes) do begin
+    if CompareText(AllowedHexSuffixes[I], AValue) = 0 then begin
+      Exit(Length(AllowedHexPrefixes) + I);
+    end;
+  end;
+
+  Result := -1;
+end;
+
+end.

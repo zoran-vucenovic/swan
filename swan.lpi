@@ -182,14 +182,6 @@
         <UnitName Value="UnitSpectrum"/>
       </Unit>
       <Unit>
-        <Filename Value="debugform.pas"/>
-        <IsPartOfProject Value="True"/>
-        <ComponentName Value="FormDebug"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Form"/>
-        <UnitName Value="DebugForm"/>
-      </Unit>
-      <Unit>
         <Filename Value="unitframeworddisplay.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameWordDisplay"/>
@@ -696,6 +688,32 @@
         <Filename Value="unitdisassembler.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitDisassembler"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitgridspectrummemory.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitGridSpectrumMemory"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitformdebug.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormDebug"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitFormDebug"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitframegridmemory.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameGridMemory"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitFrameGridMemory"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitdebugcpustate.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitDebugCpuState"/>
       </Unit>
     </Units>
   </ProjectOptions>

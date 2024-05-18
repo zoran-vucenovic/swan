@@ -10,7 +10,7 @@ interface
 uses
   Classes, SysUtils, Types, Forms, Controls, Graphics, Dialogs, ActnList, Menus,
   ComCtrls, LCLType, Buttons, StdCtrls, ExtCtrls, fpjson, UnitSpectrum,
-  UnitSnapshotFiles, AboutBox, DebugForm, UnitFormBrowser, UnitColourPalette,
+  UnitSnapshotFiles, AboutBox, UnitFormDebug, UnitFormBrowser, UnitColourPalette,
   UnitSpectrumColourMap, CommonFunctionsLCL, UnitFrameKeyMappings, UnitJoystick,
   UnitFrameJoystickSetup, UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,

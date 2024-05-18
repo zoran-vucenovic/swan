@@ -12,7 +12,7 @@ uses
   Interfaces, // this includes the LCL widgetset
   Forms,
   UnitInit, // keep this at the top (above other our units; rtl, fcl and lcl units can be above, of course)
-  DebugForm, UnitFrameWordDisplay, UnitSnapshotFiles, UnitSpectrumKeyboard,
+  UnitFrameWordDisplay, UnitSnapshotFiles, UnitSpectrumKeyboard,
   unit1, UnitSpectrum, UnitVer, UnitConfigs, UnitTzxPlayer, UnitFormBrowser,
   UnitColourPalette, UnitSpectrumColourMap, UnitKeyMaps,
   UnitSpectrumColoursBGRA, UnitKeyMapRecords, UnitFrameOneKeyMap,
@@ -27,7 +27,8 @@ uses
   UnitFrameHistorySnapshotOptions, UnitRecentFiles, UnitMemory, SnapshotZ80,
   SnapshotSNA, SoundChipAY_3_8912, UnitFrameChooseFile, UnitFileZip,
   UnitRomPaths, UnitSwanToolbar, UnitFrameSoundVolume, UnitFormChooseString,
-  UnitCSW, UnitDisassembler, UnitDlgStartAdress;
+  UnitCSW, UnitDisassembler, UnitDlgStartAdress, UnitGridSpectrumMemory,
+  UnitFormDebug, UnitFrameGridMemory, UnitDebugCpuState;
 
 {$R *.res}
 
