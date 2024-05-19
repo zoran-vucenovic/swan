@@ -15,12 +15,16 @@ uses
 type
   TFormDebug = class (TForm, TSpectrum.IDebugger)
     Label1: TLabel;
+    Label2: TLabel;
+    LabelTicksInCurrentFrame: TLabel;
     LabelFramesPassed: TLabel;
     Panel1: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
     Panel4: TPanel;
     Panel5: TPanel;
+    Panel6: TPanel;
+    Panel7: TPanel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
 
@@ -75,6 +79,13 @@ begin
   Panel4.BorderStyle := bsSingle;
   Panel4.AutoSize := True;
 
+  Panel6.Caption := '';
+  Panel6.BevelOuter := bvNone;
+  Panel7.Caption := '';
+  Panel7.BevelOuter := bvNone;
+  Panel7.BorderStyle := bsSingle;
+  Panel7.AutoSize := True;
+
   Panel2.Anchors := [];
   Panel3.Anchors := [];
 
@@ -101,6 +112,9 @@ begin
   Panel4.Anchors := [];
   Panel4.AnchorParallel(akLeft, 3, Panel3);
   Panel4.AnchorToNeighbour(akTop, 3, FDebugCPUState);
+  Panel7.Anchors := [];
+  Panel7.AnchorToNeighbour(akLeft, 3, Panel4);
+  Panel7.AnchorToNeighbour(akTop, 3, FDebugCPUState);
 
   FDebugCPUState.Parent := Panel3;
   FrameGridMemory.Parent := Panel2;
@@ -111,10 +125,16 @@ begin
   Self.Constraints.MinHeight := Self.Height;
 
   LabelFramesPassed.Caption := ' ';
+  LabelTicksInCurrentFrame.Caption := ' ';
 
   Panel4.Hint := 'Frames passed since Spectrum was switched on'
     + LineEnding + '(application start or last hard reset)';
   Panel4.ShowHint := True;
+
+  Panel7.Hint := 'Clock ticks passed since last interrupt';
+  Panel7.ShowHint := True;
+
+
 
   AfterShow(-1);
   AddHandlerFirstShow(@FormFirstShow);
@@ -229,6 +249,7 @@ begin
       FrameGridMemory.Pc := FSpectrum.GetProcessor.RegPC;
       FDebugCPUState.SetAll(FSpectrum.GetProcessor);
       LabelFramesPassed.Caption := FSpectrum.GetFrameCount.ToString;
+      LabelTicksInCurrentFrame.Caption := FSpectrum.GetProcessor.TStatesInCurrentFrame.ToString;
       FrameGridMemory.AfterStep;
     end;
 end;
