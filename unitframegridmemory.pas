@@ -54,14 +54,15 @@ type
         ;
       cPanelNumBaseHint: RawByteString =
         'Numeric base in assembly instructions — hex, dec or bin.'
-        + LineEnding + 'Note: unless "show relative jumps as absolute" is chosen,'
-        + LineEnding + 'this setting does not affect relative offset numbers,'
-        + LineEnding + 'such as (IX+d) or JR d, which are still displayed as signed decimal.'
+        + LineEnding + 'Note:'
+        + LineEnding + '  This setting does not affect relative offset (signed 8-bit) numbers, such as d in ...(IX+d),'
+        + LineEnding + '  as well as in JR d (the later unless "show relative jumps as absolute" option is chosen).'
+        + LineEnding + '  These are always displayed as signed decimal.'
         ;
       cPanelHexFormatHint: RawByteString =
         'Hex number format in assembly instructions:'
         + LineEnding + 'You can choose among prefix%s or suffix%s.'
-        + LineEnding + 'This is insignificant unless hex num. format is chosen.'
+        + LineEnding + 'This makes difference only when hex num. format is chosen.'
         ;
       cCheckBoxDisplayRelativeJumpOffsetAsAbsoluteHint: RawByteString =
         'Relative offsets in JR in DJNZ instructions are displayed'
