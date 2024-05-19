@@ -28,17 +28,15 @@ type
     function TextForCell(aCol, aRow: Integer): RawByteString;
 
   protected
+    procedure DoCopyToClipboard; override;
     procedure DrawColumnText(aCol, aRow: Integer; aRect: TRect;
       aState: TGridDrawState); override;
     procedure DrawCell(aCol, aRow: Integer; aRect: TRect; aState: TGridDrawState
       ); override;
-    procedure PrepareCanvas(aCol, aRow: Integer; aState: TGridDrawState);
-      override;
   public
     constructor Create(AOwner: TComponent); override;
 
     procedure JumpTo(Addr: Word);
-    procedure DoCopyToClipboard; override;
 
     property Pc: Word read FPc write SetPc;
     property Sp: Word read FSp write SetSp;
@@ -91,7 +89,6 @@ end;
 procedure TSpectrumMemoryGrid.DrawCell(aCol, aRow: Integer; aRect: TRect;
   aState: TGridDrawState);
 var
-  C: Integer;
   S: RawByteString;
   TS: TTextStyle;
   Re: TRect;
@@ -102,20 +99,20 @@ begin
   if aRow < FixedRows then
     Exit;
 
-  if aState * [gdSelected, gdFocused] <> [] then begin
-    Re := Rect(aRect.Left + 1, aRect.Top + 1, aRect.Right - 2, aRect.Bottom - 2);
-    Canvas.Pen.Color := GridLineColor;
-    Canvas.Pen.Width := 2;
-    Canvas.Polyline([Re.TopLeft, Point(Re.Right, Re.Top), Re.BottomRight, Point(Re.Left, Re.Bottom), Re.TopLeft]);
-  end;
-
   TS := Canvas.TextStyle;
-  S := TextForCell(aCol, aRow);
-  if S = '' then
-    Exit;
 
-  C := aCol - FixedCols;
-  if C < 0 then begin
+  if aCol < FixedCols then begin
+    aRow := aRow - FixedRows;
+    if aRow = FPc then begin
+      if aRow <> FSp then
+        S := 'PC'
+      else
+        S := 'PC,SP';
+    end else if aRow = FSp then begin
+      S := 'SP';
+    end else
+      Exit;
+
     TS.Alignment := TAlignment.taRightJustify;
     Canvas.Font.Style := Canvas.Font.Style + [fsBold];
 
@@ -125,7 +122,18 @@ begin
 
     aRect.Right := aRect.Right - 6;
   end else begin
-    if C <> 4 then
+    S := TextForCell(aCol, aRow);
+    if S = '' then
+      Exit;
+
+    if aState * [gdSelected, gdFocused] <> [] then begin
+      Re := Rect(aRect.Left + 1, aRect.Top + 1, aRect.Right - 2, aRect.Bottom - 2);
+      Canvas.Pen.Color := GridLineColor;
+      Canvas.Pen.Width := 2;
+      Canvas.Polyline([Re.TopLeft, Point(Re.Right, Re.Top), Re.BottomRight, Point(Re.Left, Re.Bottom), Re.TopLeft]);
+    end;
+
+    if ColumnFromGridColumn(aCol).Tag <> 4 then
       TS.Alignment := TAlignment.taLeftJustify
     else begin
       TS.Alignment := TAlignment.taRightJustify;
@@ -138,30 +146,6 @@ begin
   Canvas.TextRect(ARect, aRect.Left, aRect.Top, S, TS);
 end;
 
-procedure TSpectrumMemoryGrid.PrepareCanvas(aCol, aRow: Integer;
-  aState: TGridDrawState);
-const
-  RomColour = TColor($f9f9f9);
-  ScreenColour = TColor($cdeac0);
-  ScreenAttrColour = TColor($d7ead7);
-
-begin
-  inherited PrepareCanvas(aCol, aRow, aState);
-
-  if aCol >= FixedCols then begin
-    aRow := aRow - FixedRows;
-    if aRow >= 0 then begin
-      if aRow < TCommonSpectrum.KB16 then begin
-        Canvas.Brush.Color := RomColour;
-      end else if aRow < TCommonSpectrum.KB16 + 32 * 192 then begin
-        Canvas.Brush.Color := ScreenColour;
-      end else if aRow < TCommonSpectrum.KB16 + 32 * (192 + 24) then begin
-        Canvas.Brush.Color := ScreenAttrColour;
-      end;
-    end;
-  end;
-end;
-
 constructor TSpectrumMemoryGrid.Create(AOwner: TComponent);
 var
   C: TGridColumn;
@@ -169,13 +153,13 @@ var
 begin
   inherited Create(AOwner);
 
+  Color := TColor($f9f9f9);
+
   FocusRectVisible := False;
   Font := TCommonFunctionsLCL.GetMonoFont();
 
   BorderStyle := bsNone;
   TitleFont.Name := 'default';
-  Color := clWhite;
-  AlternateColor := Color;
   FFollowPc := True;
   FDisassembler := nil;
   RowCount := FixedRows;
@@ -193,6 +177,7 @@ begin
     C := Columns.Add;
     C.ReadOnly := True;
     C.Title.MultiLine := I <> 3;
+    C.Tag := I;
     case I of
       0:
         begin
@@ -233,10 +218,13 @@ begin
 end;
 
 procedure TSpectrumMemoryGrid.DoCopyToClipboard;
+var
+  S: RawByteString;
 begin
   //inherited DoCopyToClipboard;
-  if (Row >= FixedRows) and (Col >= FixedCols) then
-    Clipboard.AsText := TextForCell(Col, Row);
+  S := TextForCell(Col, Row);
+  if S <> '' then
+    Clipboard.AsText := S;
 end;
 
 function TSpectrumMemoryGrid.TextForCell(aCol, aRow: Integer): RawByteString;
@@ -249,55 +237,48 @@ var
 
 begin
   Result := '';
-  R := aRow - FixedRows;
-  C := aCol - FixedCols;
-  if C < 0 then begin
-    if R = FPc then begin
-      if R <> FSp then
-        Result := 'PC'
-      else
-        Result := 'PC,SP';
-    end else if R = FSp then begin
-      Result := 'SP';
-    end;
 
-  end else begin
-    case C of
-      0:
-        Result := R.ToHexString(4) + ' (' + R.ToString + ')';
-      1:
-        begin
-          W := R;
-          B := FDisassembler.Memory.ReadByte(W);
-          Result := B.ToHexString(2) + ' (' + B.ToString + ')';
-        end;
-      2:
-        begin
-          W := R;
-          FDisassembler.Dissasemble(W, C);
-          for I := 1 to C do begin
-            if I > 1 then
-              Result := Result + TCommonFunctions.NonBreakSpace;
-            Result := Result + FDisassembler.Memory.ReadByte(W).ToHexString(2);
-            {$push}{$Q-}{$R-}
-            Inc(W);
-            {$pop}
+  if aCol >= FixedCols then begin
+    R := aRow - FixedRows;
+    if R >= 0 then begin
+      C := ColumnFromGridColumn(aCol).Tag;
+      case C of
+        0:
+          Result := R.ToHexString(4) + ' (' + R.ToString + ')';
+        1:
+          begin
+            W := R;
+            B := FDisassembler.Memory.ReadByte(W);
+            Result := B.ToHexString(2) + ' (' + B.ToString + ')';
           end;
-        end;
-      3:
-        begin
-          W := R;
-          Result := FDisassembler.Dissasemble(W, C);
-        end;
-      4:
-        begin
-          W := R;
-          FDisassembler.Dissasemble(W, C);
-          if C > 0 then begin
-            Result := C.ToString;
+        2:
+          begin
+            W := R;
+            FDisassembler.Dissasemble(W, C);
+            for I := 1 to C do begin
+              if I > 1 then
+                Result := Result + TCommonFunctions.NonBreakSpace;
+              Result := Result + FDisassembler.Memory.ReadByte(W).ToHexString(2);
+              {$push}{$Q-}{$R-}
+              Inc(W);
+              {$pop}
+            end;
           end;
-        end;
-    otherwise
+        3:
+          begin
+            W := R;
+            Result := FDisassembler.Dissasemble(W, C);
+          end;
+        4:
+          begin
+            W := R;
+            FDisassembler.Dissasemble(W, C);
+            if C > 0 then begin
+              Result := C.ToString;
+            end;
+          end;
+      otherwise
+      end;
     end;
   end;
 end;
