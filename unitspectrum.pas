@@ -1065,6 +1065,7 @@ begin
         Synchronize(@CheckDebuggerStep);
         if StepInDebugger then begin
           DoStep;
+          StepToInstructionEndIfNeeded;
           Synchronize(@AfterDebuggerStep);
         end;
       end;
