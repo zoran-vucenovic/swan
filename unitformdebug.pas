@@ -20,6 +20,7 @@ type
     Panel2: TPanel;
     Panel3: TPanel;
     Panel4: TPanel;
+    Panel5: TPanel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
 
@@ -67,6 +68,8 @@ begin
   Panel2.Caption := '';
   Panel3.Caption := '';
   Panel3.BevelOuter := bvNone;
+  Panel5.Caption := '';
+  Panel5.BevelOuter := bvNone;
   Panel4.Caption := '';
   Panel4.BevelOuter := bvNone;
   Panel4.BorderStyle := bsSingle;

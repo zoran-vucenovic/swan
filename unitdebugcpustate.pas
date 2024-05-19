@@ -9,7 +9,7 @@ interface
 
 uses
   Classes, SysUtils, BGRABitmap, BGRABitmapTypes, BGRAPolygon,
-  Z80Processor, UnitFrameWordDisplay, Controls, Graphics,
+  Z80Processor, UnitFrameWordDisplay, CommonFunctionsLCL, Controls, Graphics,
   StdCtrls;
 
 type
@@ -36,6 +36,9 @@ type
     FlCtrlsInterruptPin: TCustomControl;
     FlCtrlsHalt: TCustomControl;
 
+    InterruptModeCtrl: TCustomControl;
+    LabInterruptMode: TLabel;
+    LabInterruptModeValue: TLabel;
     RegistersContainer: TCustomControl;
     FlagsContainer: TCustomControl;
   public
@@ -297,41 +300,42 @@ begin
 
   RegistersContainer := TCustomControl.Create(nil);
 
-  FrPC.AnchorParallel(akLeft, 0, RegistersContainer);
-  FrPC.AnchorParallel(akTop, 0, RegistersContainer);
-  FrSP.AnchorToNeighbour(akLeft, SpcRegs, FrPC);
-  FrSP.AnchorParallel(akTop, 0, RegistersContainer);
-
   FrAF.AnchorParallel(akLeft, 0, RegistersContainer);
+  FrAF.AnchorParallel(akTop, 0, RegistersContainer);
+
   FrBC.AnchorParallel(akLeft, 0, FrAF);
   FrDE.AnchorParallel(akLeft, 0, FrAF);
   FrHL.AnchorParallel(akLeft, 0, FrAF);
   FrIx.AnchorParallel(akLeft, 0, FrAF);
+  FrPC.AnchorParallel(akLeft, 0, FrAF);
 
-  FrAF.AnchorToNeighbour(akTop, SpcRegs + 2, FrPC);
   FrBC.AnchorToNeighbour(akTop, SpcRegs, FrAF);
   FrDE.AnchorToNeighbour(akTop, SpcRegs, FrBC);
   FrHL.AnchorToNeighbour(akTop, SpcRegs, FrDE);
   FrIx.AnchorToNeighbour(akTop, SpcRegs + 2, FrHL);
+  FrPC.AnchorToNeighbour(akTop, SpcRegs + 2, FrIx);
 
   FrAF1.AnchorToNeighbour(akLeft, SpcRegs, FrAF);
   FrBC1.AnchorParallel(akLeft, 0, FrAF1);
   FrDE1.AnchorParallel(akLeft, 0, FrAF1);
   FrHL1.AnchorParallel(akLeft, 0, FrAF1);
   FrIy.AnchorParallel(akLeft, 0, FrAF1);
-  FrWZ.AnchorParallel(akLeft, 0, FrAF);
+  FrSP.AnchorParallel(akLeft, 0, FrAF1);
 
   FrAF1.AnchorParallel(akTop, 0, FrAF);
   FrBC1.AnchorToNeighbour(akTop, SpcRegs, FrAF1);
   FrDE1.AnchorToNeighbour(akTop, SpcRegs, FrBC1);
   FrHL1.AnchorToNeighbour(akTop, SpcRegs, FrDE1);
   FrIy.AnchorToNeighbour(akTop, SpcRegs + 2, FrHL1);
+  FrSP.AnchorToNeighbour(akTop, SpcRegs + 2, FrIy);
 
-  FrI.AnchorHorizontalCenterTo(FrIx);
-  FrI.AnchorToNeighbour(akTop, SpcRegs + 2, FrIx);
+  FrI.AnchorParallel(akLeft, 0, FrAF);
+  FrI.AnchorToNeighbour(akTop, SpcRegs + 2, FrPC);
 
   FrR.AnchorParallel(akLeft, 0, FrI);
   FrR.AnchorToNeighbour(akTop, SpcRegs, FrI);
+
+  FrWZ.AnchorParallel(akLeft, 0, FrAF);
   FrWZ.AnchorToNeighbour(akTop, SpcRegs + 2, FrR);
 
   FrAF.Parent := RegistersContainer;
@@ -353,7 +357,7 @@ begin
   FlagsContainer := TCustomControl.Create(nil);
   FlCtrlsFlags := TFlagsCtrl.Create(nil, ['S', 'Z', '5', 'H', '3', 'PV', 'N', 'C'], False, False);
 
-  FlCtrlsIff := TFlagsCtrl.Create(nil, ['Iff1:', 'Iff2:'], True, False);
+  FlCtrlsIff := TFlagsCtrl.Create(nil, ['Iff1', 'Iff2'], True, False);
 
   FlCtrlsInterruptPin := TFlagsCtrl.Create(nil, ['interrupt pin'], True, False);
   FlCtrlsHalt := TFlagsCtrl.Create(nil, ['halt'], True, False);
@@ -380,17 +384,48 @@ begin
   FlCtrlsInterruptPin.Parent := FlagsContainer;
   FlCtrlsHalt.Parent := FlagsContainer;
 
+  InterruptModeCtrl := TCustomControl.Create(nil);
+  LabInterruptMode := TLabel.Create(nil);
+  LabInterruptModeValue := TLabel.Create(nil);
+
+  InterruptModeCtrl.BorderStyle := bsSingle;
+  InterruptModeCtrl.AnchorParallel(akLeft, 0, FrAF1);
+  InterruptModeCtrl.AnchorParallel(akTop, 0, FrI);
+
+  InterruptModeCtrl.Hint := 'Interrupt mode (0, 1 or 2)';
+  InterruptModeCtrl.ShowHint := True;
+  LabInterruptMode.Caption := 'IM:';
+  LabInterruptModeValue.Font := TCommonFunctionsLCL.GetMonoFont();
+  LabInterruptModeValue.Font.Style := LabInterruptModeValue.Font.Style + [fsBold];
+
+  LabInterruptModeValue.Caption := ' ';
+  LabInterruptMode.AnchorParallel(akLeft, 0, InterruptModeCtrl);
+  LabInterruptMode.AnchorParallel(akBottom, 0, InterruptModeCtrl);
+  LabInterruptMode.Layout := TTextLayout.tlBottom;
+  LabInterruptModeValue.Layout := TTextLayout.tlBottom;
+  LabInterruptModeValue.AnchorToNeighbour(akLeft, 2, LabInterruptMode);
+  LabInterruptModeValue.AnchorParallel(akBottom, 0, InterruptModeCtrl);
+
+  LabInterruptMode.BorderSpacing.Around := 1;
+  LabInterruptModeValue.BorderSpacing.Around := 1;
+
+  LabInterruptMode.Parent := InterruptModeCtrl;
+  LabInterruptModeValue.Parent := InterruptModeCtrl;
+  InterruptModeCtrl.Parent := RegistersContainer;
+  InterruptModeCtrl.AutoSize := True;
+  InterruptModeCtrl.Color := FlCtrlsHalt.Color;
+
+  FlagsContainer.AnchorToNeighbour(akLeft, SpcRegs, InterruptModeCtrl);
+  FlagsContainer.AnchorParallel(akTop, 0, InterruptModeCtrl);
+
+  FlagsContainer.AutoSize := True;
+
   RegistersContainer.AnchorParallel(akTop, SpcRegs, Self);
   RegistersContainer.AnchorParallel(akLeft, SpcRegs, Self);
   RegistersContainer.AutoSize := True;
-  RegistersContainer.Parent := Self;
-
-  FlagsContainer.AnchorParallel(akLeft, 10, FrAF1);
-  FlagsContainer.AnchorParallel(akTop, SpcRegs, FrI);
-
-  FlagsContainer.AutoSize := True;    ;
 
   FlagsContainer.Parent := RegistersContainer;
+  RegistersContainer.Parent := Self;
 
   AutoSize := True;
 end;
@@ -414,6 +449,10 @@ begin
   FrWZ.Free;
 
   RegistersContainer.Free;
+
+  InterruptModeCtrl.Free;
+  LabInterruptMode.Free;
+  LabInterruptModeValue.Free;
 
   FlCtrlsHalt.Free;
   FlCtrlsInterruptPin.Free;
@@ -467,6 +506,7 @@ begin
       B := 0;
     TFlagsCtrl(FlCtrlsInterruptPin).SetValues(B);
 
+    LabInterruptModeValue.Caption := AProc.InterruptMode.ToString;
   end;
 end;
 
