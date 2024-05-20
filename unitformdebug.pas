@@ -134,8 +134,6 @@ begin
   Panel7.Hint := 'Clock ticks passed since last interrupt';
   Panel7.ShowHint := True;
 
-
-
   AfterShow(-1);
   AddHandlerFirstShow(@FormFirstShow);
 end;
@@ -145,10 +143,6 @@ begin
   RemoveAllHandlersOfObject(Self);
   Application.RemoveAsyncCalls(Self);
 
-  SaveToJson();
-
-  if Assigned(FSpectrum) then
-    FSpectrum.DettachDebugger;
   SetSpectrum(nil);
   if Assigned(FrameGridMemory) then begin
     FrameGridMemory.SetDisasembler(nil);
@@ -216,10 +210,17 @@ end;
 procedure TFormDebug.SetSpectrum(ASpectrum: TSpectrum);
 begin
   if ASpectrum <> FSpectrum then begin
+    if Assigned(FSpectrum) then
+      FSpectrum.DettachDebugger;
+
+    if ASpectrum = nil then
+      SaveToJson();
+
+    FreeAndNil(FDisassembler);
     if Assigned(ASpectrum) and Assigned(ASpectrum.Memory) then begin
-      FDisassembler := TDisassembler.Create(ASpectrum.Memory);
-    end else
-      FreeAndNil(FDisassembler);
+      FDisassembler := TDisassembler.Create();
+      FDisassembler.Memory := ASpectrum.Memory;
+    end;
 
     FSpectrum := ASpectrum;
 
@@ -229,7 +230,6 @@ begin
       LoadFromJson();
 
     AfterStep;
-
   end;
 end;
 

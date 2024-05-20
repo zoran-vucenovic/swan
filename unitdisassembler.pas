@@ -613,7 +613,7 @@ var
         if y and 1 = 0 then begin
           Result := 'PUSH ' + ResolveTableRP();
         end else if y shr 1 = 0 then begin
-          Result := 'CALL ' + ConvWordToString(ReadNextWord())
+          Result := 'CALL ' + ConvWordToString(ReadNextWord());
         end else
           Result := Nop; // prefix EE, EE or FD
 

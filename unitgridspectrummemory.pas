@@ -301,26 +301,20 @@ var
   MemSize: Integer;
 
 begin
-  BeginUpdate;
-  try
-    if Assigned(FDisassembler) then
-      Mem := FDisassembler.Memory
-    else
-      Mem := nil;
+  if Assigned(FDisassembler) then
+    Mem := FDisassembler.Memory
+  else
+    Mem := nil;
 
-    if Mem <> nil then begin
-      MemSize := Mem.RamSizeKB * TCommonSpectrum.KiloByte;
-      if MemSize >= TCommonSpectrum.KB48 then
-        MemSize := TCommonSpectrum.KB48;
-      MemSize := TCommonSpectrum.KB16 + MemSize;
-    end else
-      MemSize := 0;
+  if Mem <> nil then begin
+    MemSize := Mem.RamSizeKB * TCommonSpectrum.KiloByte;
+    if MemSize >= TCommonSpectrum.KB48 then
+      MemSize := TCommonSpectrum.KB48;
+    MemSize := TCommonSpectrum.KB16 + MemSize;
+  end else
+    MemSize := 0;
 
-    RowCount := FixedRows + MemSize;
-
-  finally
-    EndUpdate();
-  end;
+  RowCount := FixedRows + MemSize;
 end;
 
 end.
