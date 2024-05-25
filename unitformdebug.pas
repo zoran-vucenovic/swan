@@ -10,10 +10,10 @@ interface
 uses
   Classes, SysUtils, UnitSpectrum, UnitDisassembler, Z80Processor,
   UnitFrameGridMemory, CommonFunctionsLCL, UnitDebugCpuState, UnitConfigs,
-  Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls, fpjson;
+  UnitDebugger, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls, fpjson;
 
 type
-  TFormDebug = class (TForm, TSpectrum.IDebugger)
+  TFormDebug = class (TForm, TSpectrum.IFormDebug)
     Label1: TLabel;
     Label2: TLabel;
     LabelTicksInCurrentFrame: TLabel;
@@ -37,6 +37,7 @@ type
     FrameGridMemory: TFrameGridMemory;
     FDisassembler: TDisassembler;
     FDebugCPUState: TDebugCpuState;
+    FDebugger: TDebugger;
 
     procedure FormFirstShow(Sender: TObject);
 
@@ -50,8 +51,6 @@ type
     procedure AfterStep;
     procedure LoadFromJson();
     procedure SaveToJson();
-    function CheckBreakPoints: Boolean;
-
   end;
 
 var
@@ -202,29 +201,36 @@ procedure TFormDebug.DoClose(var CloseAction: TCloseAction);
 begin
   Application.RemoveAllHandlersOfObject(Self);
   Application.RemoveAsyncCalls(Self);
-  FSpectrum.DettachDebugger;
+  FSpectrum.DettachFormDebug;
+  FDebugger.BreakpointsListening := FDebugger.Breakpoints.Count > 0;
   CloseAction := caFree;
+
   inherited DoClose(CloseAction);
 end;
 
 procedure TFormDebug.SetSpectrum(ASpectrum: TSpectrum);
 begin
   if ASpectrum <> FSpectrum then begin
+    FDebugger := nil;
     if Assigned(FSpectrum) then
-      FSpectrum.DettachDebugger;
+      FSpectrum.DettachFormDebug;
 
     if ASpectrum = nil then
       SaveToJson();
 
-    FreeAndNil(FDisassembler);
+    FDisassembler := nil;
     if Assigned(ASpectrum) and Assigned(ASpectrum.Memory) then begin
-      FDisassembler := TDisassembler.Create();
-      FDisassembler.Memory := ASpectrum.Memory;
+      if ASpectrum.GetDebugger is TDebugger then begin
+        FDebugger := TDebugger(ASpectrum.GetDebugger);
+        FDebugger.BreakpointsListening := False;
+        FDisassembler := FDebugger.Disassembler;
+      end;
     end;
 
     FSpectrum := ASpectrum;
 
     FrameGridMemory.SetDisasembler(FDisassembler);
+    FrameGridMemory.Debugger := FDebugger;
 
     if Assigned(FDisassembler) then
       LoadFromJson();
@@ -252,11 +258,6 @@ begin
       LabelTicksInCurrentFrame.Caption := FSpectrum.GetProcessor.TStatesInCurrentFrame.ToString;
       FrameGridMemory.AfterStep;
     end;
-end;
-
-function TFormDebug.CheckBreakPoints: Boolean;
-begin
-  Result := False;
 end;
 
 end.

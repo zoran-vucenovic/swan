@@ -10,15 +10,17 @@ interface
 uses
   Classes, SysUtils, Types, Forms, Controls, Graphics, Dialogs, ActnList, Menus,
   ComCtrls, LCLType, Buttons, StdCtrls, ExtCtrls, fpjson, UnitSpectrum,
-  UnitSnapshotFiles, AboutBox, UnitFormDebug, UnitFormBrowser, UnitColourPalette,
-  UnitSpectrumColourMap, CommonFunctionsLCL, UnitFrameKeyMappings, UnitJoystick,
-  UnitFrameJoystickSetup, UnitDataModuleImages, unitSoundVolume, UnitConfigs,
+  UnitSnapshotFiles, AboutBox, UnitFormDebug, UnitFormBrowser,
+  UnitColourPalette, UnitSpectrumColourMap, CommonFunctionsLCL,
+  UnitFrameKeyMappings, UnitJoystick, UnitFrameJoystickSetup,
+  UnitDataModuleImages, unitSoundVolume, UnitConfigs,
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
   UnitSoundPlayer, UnitOptions, UnitFrameSpectrumModel, UnitFrameSound,
   UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions, UnitRecentFiles,
   UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA, UnitFileZip,
-  UnitRomPaths, UnitSwanToolbar, UnitFormChooseString, UnitDlgStartAdress;
+  UnitRomPaths, UnitSwanToolbar, UnitFormChooseString, UnitDlgStartAdress,
+  UnitDebugger;
 
 // On Linux, bgra drawing directly to PaintBox in its OnPaint event seems to be
 // extremly slow. However, we get better time when we have an auxiliary bitmap
@@ -248,6 +250,9 @@ type
     FDontAskPortAudioPath: Boolean;
 
     procedure SpectrumOnChangeModel();
+    class function SpectrumOnGetDebuggerClass(): TSpectrum.TAbstractDebuggerClass; static;
+    procedure DoShowDebuggerForm; inline;
+    procedure SpectrumOnBreakpoint;
     procedure DoChangeModel(Sender: TObject);
     procedure AfterShow(Data: PtrInt);
     procedure UpdateActionsModel();
@@ -445,6 +450,8 @@ begin
   SetLength(KeyEventQueue, 0);
 
   Caption := ApplicationName;
+
+  TSpectrum.OnGetDebuggerClass := @SpectrumOnGetDebuggerClass;
   Spectrum := nil;
 
   FSkipWriteScreen := True;
@@ -464,6 +471,7 @@ begin
   Spectrum := TSpectrum.Create;
   ScreenSizeFactor := 1;
   Spectrum.OnChangeModel := @SpectrumOnChangeModel;
+  Spectrum.OnBreakpoint := @SpectrumOnBreakpoint;
   TSnapshotSZX.OnSzxLoadTape := @SzxOnLoadTape;
   TSnapshotSZX.OnSzxSaveTape := @SzxOnSaveTape;
 
@@ -949,13 +957,7 @@ begin
   if Sender <> Spectrum then
     AddEventToQueue(@ActionShowDebuggerExecute)
   else begin
-    if FormDebug = nil then begin
-      FormDebug := TFormDebug.Create(nil);
-      FormDebug.AddHandlerOnBeforeDestruction(@DoDetachDebugger);
-    end;
-
-    Spectrum.AttachDebugger(FormDebug);
-    FormDebug.Show;
+    DoShowDebuggerForm;
   end;
 end;
 
@@ -1130,6 +1132,27 @@ begin
   WriteStr(S, Spectrum.SpectrumModel);
   S := StringReplace(Copy(S, 3), '_', ' ', [rfReplaceAll]);
   LabelModel.Caption := 'Spectrum ' + StringReplace(S, 'plus', '+', [rfIgnoreCase]) + ' ';
+end;
+
+class function TForm1.SpectrumOnGetDebuggerClass(): TSpectrum.TAbstractDebuggerClass;
+begin
+  Result := UnitDebugger.TDebugger;
+end;
+
+procedure TForm1.DoShowDebuggerForm;
+begin
+  if FormDebug = nil then begin
+    FormDebug := TFormDebug.Create(nil);
+    FormDebug.AddHandlerOnBeforeDestruction(@DoDetachDebugger);
+  end;
+
+  Spectrum.AttachFormDebug(FormDebug);
+  FormDebug.Show;
+end;
+
+procedure TForm1.SpectrumOnBreakpoint;
+begin
+  DoShowDebuggerForm;
 end;
 
 procedure TForm1.DoChangeModel(Sender: TObject);
@@ -2785,7 +2808,7 @@ begin
   if Spectrum <> nil then begin
     Spectrum.OnSync := nil;
     FreeTapePlayer;
-    Spectrum.DettachDebugger;
+    Spectrum.DettachFormDebug;
     FreeAndNil(FormDebug);
 
     Spectrum.GetSpectrumColours(Colours);

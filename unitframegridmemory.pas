@@ -8,8 +8,8 @@ unit UnitFrameGridMemory;
 interface
 
 uses
-  Classes, SysUtils, UnitGridSpectrumMemory, UnitDisassembler, Forms, Controls,
-  ExtCtrls, StdCtrls, Spin, Buttons, fpjson;
+  Classes, SysUtils, UnitGridSpectrumMemory, UnitDisassembler, UnitDebugger,
+  Forms, Controls, ExtCtrls, StdCtrls, Spin, Buttons, fpjson;
 
 type
   TFrameGridMemory = class(TFrame)
@@ -72,13 +72,16 @@ type
     FGrid: TSpectrumMemoryGrid;
     FOneStep: Boolean;
 
+    function GetDebugger: TDebugger;
     function GetPc: Word;
     function GetSp: Word;
+    procedure SetDebugger(const AValue: TDebugger);
     procedure SetPc(const AValue: Word);
     procedure SetSp(const AValue: Word);
     procedure CheckBoxFollowPcOnChange(Sender: TObject);
     procedure DisassemblerDisplayChange(Sender: TObject);
     procedure UpdateValuesFromDisassembler;
+
   public
     constructor Create(TheOwner: TComponent); override;
     destructor Destroy; override;
@@ -91,6 +94,7 @@ type
 
     property Pc: Word read GetPc write SetPc;
     property Sp: Word read GetSp write SetSp;
+    property Debugger: TDebugger read GetDebugger write SetDebugger;
   end;
 
 implementation
@@ -128,6 +132,11 @@ begin
   FOneStep := True;
 end;
 
+function TFrameGridMemory.GetDebugger: TDebugger;
+begin
+  Result := FGrid.Debugger;
+end;
+
 function TFrameGridMemory.GetPc: Word;
 begin
   Result := FGrid.Pc;
@@ -136,6 +145,11 @@ end;
 function TFrameGridMemory.GetSp: Word;
 begin
   Result := FGrid.Sp;
+end;
+
+procedure TFrameGridMemory.SetDebugger(const AValue: TDebugger);
+begin
+  FGrid.Debugger := AValue;
 end;
 
 procedure TFrameGridMemory.SetPc(const AValue: Word);

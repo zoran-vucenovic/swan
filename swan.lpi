@@ -715,6 +715,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitDebugCpuState"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitdebugger.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitDebugger"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

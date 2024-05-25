@@ -8,12 +8,14 @@ unit UnitGridSpectrumMemory;
 interface
 
 uses
-  Classes, SysUtils, UnitMemory, UnitDisassembler, UnitCommonSpectrum,
-  CommonFunctionsLCL, UnitCommon, Grids, Graphics, Forms, Controls, Clipbrd;
+  Classes, SysUtils, Types, UnitMemory, UnitDisassembler, UnitCommonSpectrum,
+  CommonFunctionsLCL, UnitCommon, UnitDebugger, Grids, Graphics, Forms,
+  Controls, Clipbrd;
 
 type
   TSpectrumMemoryGrid = class(TDrawGrid)
   strict private
+    FDebugger: TDebugger;
     FDisassembler: TDisassembler;
     FFollowPc: Boolean;
     FPc: Word;
@@ -27,12 +29,23 @@ type
     procedure FillGrid();
     function TextForCell(aCol, aRow: Integer): RawByteString;
 
+  strict private
+    class var
+      BmpPC, BmpSP, BmpPcSmall, BmpSPSmall, BmpBk: TBitmap;
+
+  private
+    class procedure Init; static;
+    class procedure Final; static;
+    class procedure CreateBmps(const AFont: TFont);
   protected
     procedure DoCopyToClipboard; override;
     procedure DrawColumnText(aCol, aRow: Integer; aRect: TRect;
       aState: TGridDrawState); override;
     procedure DrawCell(aCol, aRow: Integer; aRect: TRect; aState: TGridDrawState
       ); override;
+    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+      override;
+
   public
     constructor Create(AOwner: TComponent); override;
 
@@ -42,6 +55,7 @@ type
     property Sp: Word read FSp write SetSp;
     property FollowPc: Boolean read FFollowPc write SetFollowPc;
     property Disassembler: TDisassembler read FDisassembler write SetDisassembler;
+    property Debugger: TDebugger read FDebugger write FDebugger;
   end;
 
 implementation
@@ -88,10 +102,18 @@ end;
 
 procedure TSpectrumMemoryGrid.DrawCell(aCol, aRow: Integer; aRect: TRect;
   aState: TGridDrawState);
+
 var
   S: RawByteString;
   TS: TTextStyle;
   Re: TRect;
+  Addr: Word;
+  W: Word;
+
+  procedure DrawBmp(ABmp: TBitmap; R: TRect);
+  begin
+    Canvas.Draw(R.Right - ABmp.Width - 2, R.Top + (R.Height - ABmp.Height) div 2, ABmp);
+  end;
 
 begin
   inherited DrawCell(aCol, aRow, aRect, aState);
@@ -99,32 +121,34 @@ begin
   if aRow < FixedRows then
     Exit;
 
-  TS := Canvas.TextStyle;
-
   if aCol < FixedCols then begin
     aRow := aRow - FixedRows;
+
+    if BmpPC = nil then
+      CreateBmps(TitleFont);
     if aRow = FPc then begin
-      if aRow <> FSp then
-        S := 'PC'
-      else
-        S := 'PC,SP';
+      if aRow <> FSp then begin
+        DrawBmp(BmpPC, aRect);
+      end else begin 
+        DrawBmp(BmpSPSmall, aRect);
+        Re := aRect;
+        Re.Offset(-BmpSPSmall.Width, 0);
+        DrawBmp(BmpPcSmall, Re);
+      end;
     end else if aRow = FSp then begin
-      S := 'SP';
-    end else
-      Exit;
+      DrawBmp(BmpSP, aRect);
+    end;
 
-    TS.Alignment := TAlignment.taRightJustify;
-    Canvas.Font.Style := Canvas.Font.Style + [fsBold];
-
-    Canvas.Brush.Color := clYellow;
-    TS.Layout := tlCenter;
-    TS.Opaque := True;
-
-    aRect.Right := aRect.Right - 6;
+    Addr := aRow;
+    if FDebugger.Breakpoints.TryGetData(Addr, W) and (W = 0) then begin
+      Canvas.Draw(aRect.Left + 4, aRect.Top + (aRect.Height - BmpBk.Height) div 2, BmpBk);
+    end;
   end else begin
     S := TextForCell(aCol, aRow);
     if S = '' then
       Exit;
+
+    TS := Canvas.TextStyle;
 
     if aState * [gdSelected, gdFocused] <> [] then begin
       Re := Rect(aRect.Left + 1, aRect.Top + 1, aRect.Right - 2, aRect.Bottom - 2);
@@ -140,10 +164,37 @@ begin
       aRect.Right := aRect.Right - ColWidths[aCol] div 3;
     end;
 
+    aRect.Left := aRect.Left + 6;
+    Canvas.TextRect(ARect, aRect.Left, aRect.Top, S, TS);
   end;
 
-  aRect.Left := aRect.Left + 6;
-  Canvas.TextRect(ARect, aRect.Left, aRect.Top, S, TS);
+end;
+
+procedure TSpectrumMemoryGrid.MouseUp(Button: TMouseButton; Shift: TShiftState;
+  X, Y: Integer);
+var
+  P: TPoint;
+  W: Word;
+begin
+  inherited MouseUp(Button, Shift, X, Y);
+
+  if Button = TMouseButton.mbLeft then begin
+    if TCommonFunctionsLCL.GridMouseToCellRegular(Self, Point(X, Y), P) then begin
+      if (P.X >= 0) and (P.Y >= 0) then begin
+        if P.X < FixedCols then begin
+          if P.Y >= FixedRows then begin
+            W := P.Y - FixedRows;
+            if FDebugger.IsBreakPoint(W) then
+              FDebugger.RemoveBreakpoint(W)
+            else
+              FDebugger.AddBreakpoint(W);
+
+            Invalidate;
+          end;
+        end;
+      end;
+    end;
+  end;
 end;
 
 constructor TSpectrumMemoryGrid.Create(AOwner: TComponent);
@@ -283,6 +334,87 @@ begin
   end;
 end;
 
+class procedure TSpectrumMemoryGrid.Init;
+begin
+  BmpBk := nil;
+  BmpSP := nil;
+  BmpPC := nil;
+  BmpPcSmall := nil;
+  BmpSPSmall := nil;
+end;
+
+class procedure TSpectrumMemoryGrid.Final;
+begin
+  BmpBk.Free;
+  BmpSP.Free;
+  BmpPcSmall.Free;
+  BmpSPSmall.Free;
+  BmpPC.Free;
+end;
+
+class procedure TSpectrumMemoryGrid.CreateBmps(const AFont: TFont);
+var
+  F: TFont;
+  BackgroundColour: TColor;
+  TS: TTextStyle;
+
+  function CreateBmp(const S: RawByteString; Small: Boolean = False): TBitmap;
+  var
+    Sz: TSize;
+  begin
+    Result := TBitmap.Create;
+    Result.Canvas.Font := F;
+
+    if Small then
+      Result.Canvas.Font.Size := 6;
+
+    TCommonFunctionsLCL.CalculateTextSize(F, S, Sz);
+    if not Small then
+      Sz.cx := Sz.cx + 1;
+    Result.SetSize(Sz.cx + 1, Sz.cy + 1);
+
+    Result.Canvas.Brush.Style := bsSolid;
+    Result.Canvas.Brush.Color := clFuchsia;
+    Result.Canvas.FillRect(Rect(0, 0, Result.Width, Result.Height));
+
+    Result.Canvas.Brush.Color := BackgroundColour;
+    Result.TransparentColor := clFuchsia;
+    Result.TransparentMode := tmFixed;
+    Result.Masked := True;
+
+    Result.Canvas.Pen.Color := Result.Canvas.Brush.Color;
+    Result.Canvas.RoundRect(0, 0, Result.Width, Result.Height, 7, 5);
+
+    TS := Result.Canvas.TextStyle;
+    TS.Alignment := TAlignment.taCenter;
+    TS.Layout := TTextLayout.tlCenter;
+    TS.Opaque := False;
+
+    Result.Canvas.TextRect(Rect(0, 0, Result.Width, Result.Height), 0, 0, S, TS);
+  end;
+
+begin
+  F := TFont.Create;
+  try
+    F.Assign(AFont);
+    F.Style := F.Style + [fsBold];
+
+    F.Color := clNavy;
+    BackgroundColour := clYellow;
+    BmpPC := CreateBmp('PC');
+    BmpSP := CreateBmp('SP');
+    BmpPcSmall := CreateBmp('PC', True);
+    BmpSPSmall := CreateBmp('SP', True);
+
+    F.Color := clYellow;
+    BackgroundColour := clRed;
+    BmpBk := CreateBmp('B');
+
+  finally
+    F.Free;
+  end;
+end;
+
 procedure TSpectrumMemoryGrid.SetDisassembler(ADisasembler: TDisassembler);
 var
   Mem: TMemory;
@@ -316,5 +448,11 @@ begin
 
   RowCount := FixedRows + MemSize;
 end;
+
+initialization
+  TSpectrumMemoryGrid.Init;
+
+finalization
+  TSpectrumMemoryGrid.Final;
 
 end.
