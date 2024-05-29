@@ -8,30 +8,44 @@ unit UnitDebugger;
 interface
 
 uses
-  Classes, SysUtils, fgl, UnitSpectrum, UnitDisassembler;
+  Classes, SysUtils, fgl, LazMethodList, UnitSpectrum, UnitDisassembler;
 
 type
+
+  TBreakpoints = class(specialize TFPGMap<Word, RawByteString>)
+  public
+    constructor Create;
+  end;
 
   TDebugger = class(TSpectrum.TAbstractDebugger)
   strict private
     type
-      TBreakpoints = class(specialize TFPGMap<Word, Word>)
+      TBreakpointsW = class(specialize TFPGMap<Word, Word>)
       public
         constructor Create;
       end;
 
   strict private
+    FBreakpointsWide: TBreakpointsW;
     FBreakpoints: TBreakpoints;
     FDisassembler: TDisassembler;
+    FOnBreakpointChangeList: TMethodList;
+
+    procedure DoOnBreakpointChange;
   public
     constructor CreateDebugger; override;
     destructor Destroy; override;
 
+    function BreakpointsEmpty: Boolean;
     procedure SetSpectrum(ASpectrum: TSpectrum); override;
     function IsOnBreakpoint: Boolean; override;
     function IsBreakpoint(Addr: Word): Boolean;
     procedure AddBreakpoint(Addr: Word);
     procedure RemoveBreakpoint(Addr: Word);
+    procedure RemoveAllBreakpoints();
+    procedure AddOnBreakpointChange(ANotifyEvent: TNotifyEvent);
+    procedure RemoveOnBreakPointChangeHandlerOfObject(AObject: TObject);
+
     property Breakpoints: TBreakpoints read FBreakpoints write FBreakpoints;
     property Disassembler: TDisassembler read FDisassembler;
   end;
@@ -39,9 +53,19 @@ type
 
 implementation
 
+{ TDebugger.TBreakpointsW }
+
+constructor TDebugger.TBreakpointsW.Create;
+begin
+  inherited Create;
+
+  Duplicates := TDuplicates.dupIgnore;
+  Sorted := True;
+end;
+
 { TBreakpoints }
 
-constructor TDebugger.TBreakpoints.Create;
+constructor TBreakpoints.Create;
 begin
   inherited Create;
 
@@ -51,21 +75,41 @@ end;
 
 { TDebugger }
 
+procedure TDebugger.DoOnBreakpointChange;
+var
+  I: Integer;
+begin
+  if Assigned(FOnBreakpointChangeList) then begin
+    for I := 0 to FOnBreakpointChangeList.Count - 1 do begin
+      TNotifyEvent(FOnBreakpointChangeList[I])(Self);
+    end;
+  end;
+end;
+
 constructor TDebugger.CreateDebugger;
 begin
   inherited Create;
 
+  FOnBreakpointChangeList := nil;
   FDisassembler := nil;
   FSpectrum := nil;
+  FBreakpointsWide := TBreakpointsW.Create;
   FBreakpoints := TBreakpoints.Create;
 end;
 
 destructor TDebugger.Destroy;
 begin
+  FOnBreakpointChangeList.Free;
+  FBreakpointsWide.Free;
   FBreakpoints.Free;
   FDisassembler.Free;
 
   inherited Destroy;
+end;
+
+function TDebugger.BreakpointsEmpty: Boolean;
+begin
+  Result := FBreakpoints.Count = 0;
 end;
 
 procedure TDebugger.SetSpectrum(ASpectrum: TSpectrum);
@@ -86,10 +130,10 @@ var
   I: Word;
 begin
   W := FSpectrum.GetProcessor.RegPC;
-  Result := FBreakpoints.Find(W, N);
+  Result := FBreakpointsWide.Find(W, N);
 
   if Result then begin
-    I := FBreakpoints.Data[N];
+    I := FBreakpointsWide.Data[N];
     if I > 0 then begin
       FDisassembler.Dissasemble(W, N);
       if N <= I then
@@ -101,38 +145,31 @@ end;
 function TDebugger.IsBreakpoint(Addr: Word): Boolean;
 var
   N: Integer;
-  J: Word;
 begin
-  if FBreakpoints.Find(Addr, N) then begin
-    J := FBreakpoints.Data[N];
-    if J = 0 then
-      Exit(True);
-  end;
-  Result := False;
+  Result := FBreakpoints.Find(Addr, N);
 end;
 
 procedure TDebugger.AddBreakpoint(Addr: Word);
 var
-  N: Integer;
-  I, J: Word;
+  I: Word;
   W: Word;
 begin
+  FBreakpoints.AddOrSetData(Addr, '');
+
   W := Addr;
 
   I := 0;
   while True do begin
-    FBreakpoints.AddOrSetData(W, I);
+    FBreakpointsWide.AddOrSetData(W, I);
     if I = 3 then
       Break;
     Dec(W);
-    if FBreakpoints.Find(W, N) then begin
-      J := FBreakpoints.Data[N];
-      if J = 0 then
-        Break;
-
-    end;
+    if IsBreakpoint(W) then
+      Break;
     Inc(I);
   end;
+
+  DoOnBreakpointChange;
 end;
 
 procedure TDebugger.RemoveBreakpoint(Addr: Word);
@@ -141,11 +178,13 @@ var
   N, L: Integer;
   W: Word;
 begin
+  FBreakpoints.Remove(Addr);
+
   W := Addr;
   Inc(W);
   I := I.MaxValue;
-  if FBreakpoints.Find(W, L) then begin
-    J := FBreakpoints.Data[L];
+  if FBreakpointsWide.Find(W, L) then begin
+    J := FBreakpointsWide.Data[L];
     if (J < 3) then begin
       I := J;
     end;
@@ -155,22 +194,53 @@ begin
   W := Addr;
   while N <= 3 do begin
     if (N > 0) then begin
-      if FBreakpoints.Find(W, L) then begin
-        J := FBreakpoints.Data[L];
+      if FBreakpointsWide.Find(W, L) then begin
+        J := FBreakpointsWide.Data[L];
         if (J = 0) then
           Break;
       end;
     end;
     if I < 3 then begin
       Inc(I);
-      FBreakpoints.AddOrSetData(W, I);
+      FBreakpointsWide.AddOrSetData(W, I);
     end else
-      FBreakpoints.Remove(W);
+      FBreakpointsWide.Remove(W);
 
     Inc(N);
     Dec(W);
   end;
+
+  DoOnBreakpointChange;
 end;
+
+procedure TDebugger.RemoveAllBreakpoints();
+begin
+  FBreakpoints.Clear;
+  FBreakpointsWide.Clear;
+  DoOnBreakpointChange;
+end;
+
+procedure TDebugger.AddOnBreakpointChange(ANotifyEvent: TNotifyEvent);
+begin
+  if Assigned(ANotifyEvent) then begin
+    if FOnBreakpointChangeList = nil then begin
+      FOnBreakpointChangeList := TMethodList.Create;
+    end;
+
+    FOnBreakpointChangeList.Add(TMethod(ANotifyEvent));
+  end;
+end;
+
+procedure TDebugger.RemoveOnBreakPointChangeHandlerOfObject(AObject: TObject);
+begin
+  if Assigned(FOnBreakpointChangeList) then begin
+    FOnBreakpointChangeList.RemoveAllMethodsOfObject(AObject);
+    if FOnBreakpointChangeList.Count = 0 then
+      FreeAndNil(FOnBreakpointChangeList);
+  end;
+
+end;
+
 {$pop}
 
 end.

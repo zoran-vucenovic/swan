@@ -13,7 +13,7 @@ uses
   Controls, Clipbrd;
 
 type
-  TSpectrumMemoryGrid = class(TDrawGrid)
+  TSpectrumMemoryGrid = class(TCustomDrawGrid)
   strict private
     FDebugger: TDebugger;
     FDisassembler: TDisassembler;
@@ -103,17 +103,16 @@ end;
 procedure TSpectrumMemoryGrid.DrawCell(aCol, aRow: Integer; aRect: TRect;
   aState: TGridDrawState);
 
+  procedure DrawBmp(ABmp: TBitmap; R: TRect);
+  begin
+    Canvas.Draw(R.Right - ABmp.Width - 2, R.Top + (R.Height - ABmp.Height) div 2, ABmp);
+  end;
+
 var
   S: RawByteString;
   TS: TTextStyle;
   Re: TRect;
   Addr: Word;
-  W: Word;
-
-  procedure DrawBmp(ABmp: TBitmap; R: TRect);
-  begin
-    Canvas.Draw(R.Right - ABmp.Width - 2, R.Top + (R.Height - ABmp.Height) div 2, ABmp);
-  end;
 
 begin
   inherited DrawCell(aCol, aRow, aRect, aState);
@@ -140,16 +139,11 @@ begin
     end;
 
     Addr := aRow;
-    if FDebugger.Breakpoints.TryGetData(Addr, W) and (W = 0) then begin
+
+    if FDebugger.IsBreakpoint(Addr) then begin
       Canvas.Draw(aRect.Left + 4, aRect.Top + (aRect.Height - BmpBk.Height) div 2, BmpBk);
     end;
   end else begin
-    S := TextForCell(aCol, aRow);
-    if S = '' then
-      Exit;
-
-    TS := Canvas.TextStyle;
-
     if aState * [gdSelected, gdFocused] <> [] then begin
       Re := Rect(aRect.Left + 1, aRect.Top + 1, aRect.Right - 2, aRect.Bottom - 2);
       Canvas.Pen.Color := GridLineColor;
@@ -157,12 +151,12 @@ begin
       Canvas.Polyline([Re.TopLeft, Point(Re.Right, Re.Top), Re.BottomRight, Point(Re.Left, Re.Bottom), Re.TopLeft]);
     end;
 
-    if ColumnFromGridColumn(aCol).Tag <> 4 then
-      TS.Alignment := TAlignment.taLeftJustify
-    else begin
-      TS.Alignment := TAlignment.taRightJustify;
-      aRect.Right := aRect.Right - ColWidths[aCol] div 3;
-    end;
+    S := TextForCell(aCol, aRow);
+    if S = '' then
+      Exit;
+
+    TS := Canvas.TextStyle;
+    TS.Alignment := TAlignment.taLeftJustify;
 
     aRect.Left := aRect.Left + 6;
     Canvas.TextRect(ARect, aRect.Left, aRect.Top, S, TS);
@@ -201,6 +195,7 @@ constructor TSpectrumMemoryGrid.Create(AOwner: TComponent);
 var
   C: TGridColumn;
   I: Integer;
+  Sz: TSize;
 begin
   inherited Create(AOwner);
 
@@ -214,7 +209,8 @@ begin
   FFollowPc := True;
   FDisassembler := nil;
   RowCount := FixedRows;
-  RowHeights[0] := RowHeights[0] * 2;
+  TCommonFunctionsLCL.CalculateTextSize(TitleFont, 'Ag(', Sz);
+  RowHeights[0] := RowHeights[0] + Sz.cy;
   ExtendedSelect := False;
 
   ColWidths[0] := 46;
@@ -224,10 +220,11 @@ begin
     - [goEditing, goHorzLine, goRangeSelect, goVertLine, goDrawFocusSelected,
        goFixedVertLine, goFixedHorzLine];
 
-  for I := 0 to 4 do begin
+  for I := 0 to 3 do begin
     C := Columns.Add;
     C.ReadOnly := True;
-    C.Title.MultiLine := I <> 3;
+    C.Title.MultiLine := True;
+    C.Title.Layout := tlCenter;
     C.Tag := I;
     case I of
       0:
@@ -249,11 +246,6 @@ begin
         begin
           C.Width := 140;
           C.Title.Caption := 'instruction';
-        end;
-      4:
-        begin
-          C.Width := 78;
-          C.Title.Caption := 'opcode len.' + LineEnding + 'in bytes';
         end;
     end;
   end;
@@ -320,14 +312,7 @@ begin
             W := R;
             Result := FDisassembler.Dissasemble(W, C);
           end;
-        4:
-          begin
-            W := R;
-            FDisassembler.Dissasemble(W, C);
-            if C > 0 then begin
-              Result := C.ToString;
-            end;
-          end;
+
       otherwise
       end;
     end;
@@ -439,10 +424,7 @@ begin
     Mem := nil;
 
   if Mem <> nil then begin
-    MemSize := Mem.RamSizeKB * TCommonSpectrum.KiloByte;
-    if MemSize >= TCommonSpectrum.KB48 then
-      MemSize := TCommonSpectrum.KB48;
-    MemSize := TCommonSpectrum.KB16 + MemSize;
+    MemSize := Mem.CurrentlyMappedMemSizeKB * TCommonSpectrum.KiloByte;
   end else
     MemSize := 0;
 

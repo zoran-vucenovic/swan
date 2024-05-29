@@ -21,7 +21,6 @@ type
     Panel1: TCustomControl;
     FFixConstraints: Boolean;
 
-    function GetFramesArrCount: Integer;
     procedure AfterShow(Data: PtrInt);
 
   protected
@@ -39,8 +38,6 @@ type
     procedure RemoveAllHandlersOfObject(AnObject: TObject); override;
 
     procedure AddCloseQuery(C: TCloseQueryEvent);
-
-    property FramesArrCount: Integer read GetFramesArrCount;
   end;
 
 implementation
@@ -71,13 +68,6 @@ begin
     if CloseQueryList.Count = 0 then
       FreeAndNil(CloseQueryList);
   end;
-end;
-
-function TFormForOptionsBasic.GetFramesArrCount: Integer;
-begin
-  if Assigned(CloseQueryList) then
-    Exit(CloseQueryList.Count);
-  Result := 0;
 end;
 
 procedure TFormForOptionsBasic.AfterShow(Data: PtrInt);

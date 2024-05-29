@@ -1,0 +1,51 @@
+object FrameBreakpoints: TFrameBreakpoints
+  Left = 0
+  Height = 285
+  Top = 0
+  Width = 367
+  ClientHeight = 285
+  ClientWidth = 367
+  TabOrder = 0
+  DesignLeft = 247
+  DesignTop = 167
+  object Panel1: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 0
+    Height = 285
+    Top = 0
+    Width = 367
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BevelOuter = bvNone
+    Caption = 'Panel1'
+    TabOrder = 0
+  end
+  object ActionListEditBreakpoints: TActionList
+    Left = 240
+    Top = 80
+    object ActionAdd: TAction
+      Caption = 'Add'
+      Hint = 'Add new breakpoint'
+      OnExecute = ActionAddExecute
+    end
+    object ActionRemove: TAction
+      Caption = 'Remove'
+      Hint = 'Remove selected breakpoint'
+      OnExecute = ActionRemoveExecute
+    end
+    object ActionRemoveAll: TAction
+      Caption = 'Remove all'
+      Hint = 'Remove all breakpoints'
+      OnExecute = ActionRemoveAllExecute
+    end
+    object ActionEdit: TAction
+      Caption = 'Edit'
+      Hint = 'Edit selected breakpoint'
+      OnExecute = ActionEditExecute
+    end
+  end
+end

@@ -3,13 +3,14 @@ object FormInputPokes: TFormInputPokes
   Height = 560
   Top = 119
   Width = 430
+  BorderIcons = [biSystemMenu]
   Caption = 'Input pokes'
   ClientHeight = 560
   ClientWidth = 430
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnShow = FormShow
-  LCLVersion = '2.2.5.0'
+  LCLVersion = '3.3.0.0'
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

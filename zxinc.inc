@@ -19,6 +19,7 @@
   {$inline on}
   {$Optimization LEVEL3}
   {$Q-}{$R-}
+
+  // remove this when conditional breakpoints are implemented
+  {$define ConditionalBreakpointsNotYetImplemented}
 {$endif}
-
-

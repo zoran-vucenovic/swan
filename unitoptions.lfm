@@ -3,13 +3,14 @@ object FormOptions: TFormOptions
   Height = 680
   Top = 111
   Width = 541
+  BorderIcons = [biSystemMenu]
   Caption = 'Options'
   ClientHeight = 680
   ClientWidth = 541
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '2.2.7.0'
+  LCLVersion = '3.3.0.0'
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

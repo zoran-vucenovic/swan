@@ -10,7 +10,8 @@ interface
 uses
   Classes, SysUtils, UnitSpectrum, UnitDisassembler, Z80Processor,
   UnitFrameGridMemory, CommonFunctionsLCL, UnitDebugCpuState, UnitConfigs,
-  UnitDebugger, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls, fpjson;
+  UnitDebugger, UnitFrameBreakpoints, Forms, Controls, Graphics, Dialogs,
+  ExtCtrls, StdCtrls, fpjson;
 
 type
   TFormDebug = class (TForm, TSpectrum.IFormDebug)
@@ -38,10 +39,14 @@ type
     FDisassembler: TDisassembler;
     FDebugCPUState: TDebugCpuState;
     FDebugger: TDebugger;
+    FormBreakpoints: TCustomForm;
 
     procedure FormFirstShow(Sender: TObject);
 
     procedure AfterShow(Data: PtrInt);
+    procedure LabelBreakpointsOnClick(Sender: TObject);
+    procedure FBreakpointsOnChange(Sender: TObject);
+    procedure FormBreakpointsBeforeDestruction(Sender: TObject);
   protected
     procedure DoClose(var CloseAction: TCloseAction); override;
 
@@ -63,9 +68,12 @@ implementation
 { TFormDebug }
 
 procedure TFormDebug.FormCreate(Sender: TObject);
+var
+  Lab: TCustomLabel;
 begin
   FSpectrum := nil;
   FDisassembler := nil;
+  FormBreakpoints := nil;
 
   Panel1.Caption := '';
   Panel2.Caption := '';
@@ -119,6 +127,13 @@ begin
   FrameGridMemory.Parent := Panel2;
 
   Panel3.AutoSize := True;
+
+  Lab := TCommonFunctionsLCL.CreateLinkLabel(Panel3, 'Edit breakpoints');
+  Lab.OnClick := @LabelBreakpointsOnClick;
+  Lab.Anchors := [];
+  Lab.AnchorParallel(akLeft, 0, Panel4);
+  Lab.AnchorToNeighbour(akTop, 3, Panel4);
+  Lab.Parent := Panel3;
 
   TCommonFunctionsLCL.GrowFormHeight(Self);
   Self.Constraints.MinHeight := Self.Height;
@@ -197,12 +212,38 @@ begin
   end;
 end;
 
+procedure TFormDebug.LabelBreakpointsOnClick(Sender: TObject);
+begin
+  if FormBreakpoints = nil then begin
+    FormBreakpoints := TFrameBreakpoints.ShowFormBreakpoints(Self, FDebugger, True);
+    FDebugger.AddOnBreakpointChange(@FBreakpointsOnChange);
+    FormBreakpoints.AddHandlerOnBeforeDestruction(@FormBreakpointsBeforeDestruction);
+  end else
+    FormBreakpoints.BringToFront;
+end;
+
+procedure TFormDebug.FBreakpointsOnChange(Sender: TObject);
+begin
+  FrameGridMemory.Invalidate;
+end;
+
+procedure TFormDebug.FormBreakpointsBeforeDestruction(Sender: TObject);
+begin
+  if Assigned(FDebugger) then
+    FDebugger.RemoveOnBreakPointChangeHandlerOfObject(Self);
+  if Assigned(FormBreakpoints) then begin
+    FormBreakpoints.RemoveAllHandlersOfObject(Self);
+    FormBreakpoints := nil;
+  end;
+end;
+
 procedure TFormDebug.DoClose(var CloseAction: TCloseAction);
 begin
   Application.RemoveAllHandlersOfObject(Self);
   Application.RemoveAsyncCalls(Self);
+  FDebugger.RemoveOnBreakPointChangeHandlerOfObject(Self);
   FSpectrum.DettachFormDebug;
-  FDebugger.BreakpointsListening := FDebugger.Breakpoints.Count > 0;
+  FDebugger.BreakpointsListening := not FDebugger.BreakpointsEmpty;
   CloseAction := caFree;
 
   inherited DoClose(CloseAction);

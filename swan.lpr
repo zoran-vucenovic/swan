@@ -28,7 +28,8 @@ uses
   SnapshotSNA, SoundChipAY_3_8912, UnitFrameChooseFile, UnitFileZip,
   UnitRomPaths, UnitSwanToolbar, UnitFrameSoundVolume, UnitFormChooseString,
   UnitCSW, UnitDisassembler, UnitDlgStartAdress, UnitGridSpectrumMemory,
-  UnitFormDebug, UnitFrameGridMemory, UnitDebugCpuState, UnitDebugger;
+  UnitFormDebug, UnitFrameGridMemory, UnitDebugCpuState, UnitDebugger,
+  UnitDebugBreakpointsGrid, UnitFrameBreakpoints;
 
 {$R *.res}
 

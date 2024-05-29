@@ -720,6 +720,19 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitDebugger"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitdebugbreakpointsgrid.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitDebugBreakpointsGrid"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitframebreakpoints.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameBreakpoints"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitFrameBreakpoints"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

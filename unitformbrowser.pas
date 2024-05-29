@@ -38,7 +38,7 @@ type
       cFollow = 'follow_block';
   private
     type
-      TTapeGrid = class(TDrawGrid)
+      TTapeGrid = class(TCustomDrawGrid)
       protected
         function MouseButtonAllowed({%H-}Button: TMouseButton): Boolean; override;
       public

@@ -3,6 +3,7 @@ object FormDebug: TFormDebug
   Height = 240
   Top = 145
   Width = 659
+  BorderIcons = [biSystemMenu]
   Caption = 'Debugger'
   ClientHeight = 240
   ClientWidth = 659

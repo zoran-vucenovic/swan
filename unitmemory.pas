@@ -33,6 +33,7 @@ type
     Bank5: PByte;
     Bank2: PByte;
 
+    function GetCurrentlyMappedMemSizeKB: Word;
     procedure SetActiveRamPageNo(B: Byte);
     procedure SetActiveRomPageNo(B: Byte);
     procedure SetShadowScreenDisplay(B: Boolean);
@@ -69,6 +70,7 @@ type
     property ActiveRamPageNo: Byte read FActiveRamPageNo write SetActiveRamPageNo;
     property ActiveRomPageNo: Byte read FActiveRomPageNo write SetActiveRomPageNo;
     property RamSizeKB: Word read GetRamSizeKB;
+    property CurrentlyMappedMemSizeKB: Word read GetCurrentlyMappedMemSizeKB;
     property ShadowScreenDisplay: Boolean read GetShadowScreenDisplay write SetShadowScreenDisplay;
   end;
 
@@ -364,6 +366,14 @@ procedure TMemory.SetActiveRamPageNo(B: Byte);
 begin
   FActiveRamPageNo := B;
   ActiveRamBank := FRamBanks[B];
+end;
+
+function TMemory.GetCurrentlyMappedMemSizeKB: Word;
+begin
+  Result := GetRamSizeKB;
+  if Result > 48 then
+    Result := 48;
+  Result := Result + 16;
 end;
 
 procedure TMemory.InitBanks(const ARamSizeKB: Word; ARomBanksCount: Integer);
