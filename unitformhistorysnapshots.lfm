@@ -9,7 +9,7 @@ object FormHistorySnapshots: TFormHistorySnapshots
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '3.0.0.2'
+  LCLVersion = '3.3.0.0'
   object Panel15: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

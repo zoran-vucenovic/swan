@@ -156,6 +156,7 @@ end;
 
 procedure TFormHistorySnapshots.FormCreate(Sender: TObject);
 begin
+  BorderIcons := BorderIcons - [TBorderIcon.biMaximize, TBorderIcon.biMinimize];
   PrevCtrl := nil;
   ScrollBox := nil;
   HistorySnapshots := nil;
