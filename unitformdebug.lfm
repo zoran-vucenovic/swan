@@ -1,12 +1,12 @@
 object FormDebug: TFormDebug
-  Left = 229
-  Height = 240
-  Top = 145
-  Width = 659
+  Left = 304
+  Height = 456
+  Top = 169
+  Width = 359
   BorderIcons = [biSystemMenu]
   Caption = 'Debugger'
-  ClientHeight = 240
-  ClientWidth = 659
+  ClientHeight = 456
+  ClientWidth = 359
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   LCLVersion = '3.3.0.0'
@@ -18,19 +18,19 @@ object FormDebug: TFormDebug
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 0
-    Height = 240
+    Height = 456
     Top = 0
-    Width = 659
+    Width = 359
     Anchors = [akTop, akLeft, akRight, akBottom]
     BevelOuter = bvNone
     Caption = 'Panel1'
-    ClientHeight = 240
-    ClientWidth = 659
+    ClientHeight = 456
+    ClientWidth = 359
     TabOrder = 0
     object Panel2: TPanel
-      Left = 320
+      Left = 48
       Height = 50
-      Top = 40
+      Top = 208
       Width = 170
       BevelOuter = bvNone
       BorderStyle = bsSingle

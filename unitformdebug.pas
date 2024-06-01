@@ -99,10 +99,15 @@ begin
   Panel3.AnchorParallel(akLeft, 0, Panel1);
   Panel3.AnchorParallel(akTop, 0, Panel1);
 
-  Panel2.AnchorParallel(akRight, 0, Panel1);
-  Panel2.AnchorParallel(akTop, 0, Panel1);
+  //Panel2.AnchorParallel(akRight, 0, Panel1);
+  //Panel2.AnchorParallel(akTop, 0, Panel1);
+  //Panel2.AnchorParallel(akBottom, 0, Panel1);
+  //Panel2.AnchorToNeighbour(akLeft, 0, Panel3);
+
+  Panel2.AnchorParallel(akLeft, 0, Panel1);
+  Panel2.AnchorToNeighbour(akTop, 0, Panel3);
   Panel2.AnchorParallel(akBottom, 0, Panel1);
-  Panel2.AnchorToNeighbour(akLeft, 0, Panel3);
+  Panel2.AnchorParallel(akRight, 0, Panel1);
 
   FrameGridMemory := TFrameGridMemory.Create(Self);
 
@@ -131,8 +136,9 @@ begin
   Lab := TCommonFunctionsLCL.CreateLinkLabel(Panel3, 'Edit breakpoints');
   Lab.OnClick := @LabelBreakpointsOnClick;
   Lab.Anchors := [];
-  Lab.AnchorParallel(akLeft, 0, Panel4);
-  Lab.AnchorToNeighbour(akTop, 3, Panel4);
+
+  Lab.AnchorParallel(akRight, 9, Panel3);
+  Lab.AnchorParallel(akTop, 0, Panel7);
   Lab.Parent := Panel3;
 
   TCommonFunctionsLCL.GrowFormHeight(Self);
