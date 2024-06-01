@@ -31,12 +31,12 @@ type
 
   strict private
     class var
-      BmpPC, BmpSP, BmpPcSmall, BmpSPSmall, BmpBk: TBitmap;
+      BmpPC, BmpSP, BmpBk: TBitmap;
 
   private
     class procedure Init; static;
     class procedure Final; static;
-    class procedure CreateBmps(const AFont: TFont);
+    class procedure CreateBmps();
   protected
     procedure DoCopyToClipboard; override;
     procedure DrawColumnText(aCol, aRow: Integer; aRect: TRect;
@@ -123,16 +123,14 @@ begin
   if aCol < FixedCols then begin
     aRow := aRow - FixedRows;
 
-    if BmpPC = nil then
-      CreateBmps(TitleFont);
     if aRow = FPc then begin
       if aRow <> FSp then begin
         DrawBmp(BmpPC, aRect);
       end else begin 
-        DrawBmp(BmpSPSmall, aRect);
         Re := aRect;
-        Re.Offset(-BmpSPSmall.Width, 0);
-        DrawBmp(BmpPcSmall, Re);
+        DrawBmp(BmpSP, Re);
+        Re.Offset(-BmpSP.Width, 0);
+        DrawBmp(BmpPc, Re);
       end;
     end else if aRow = FSp then begin
       DrawBmp(BmpSP, aRect);
@@ -141,7 +139,7 @@ begin
     Addr := aRow;
 
     if FDebugger.IsBreakpoint(Addr) then begin
-      Canvas.Draw(aRect.Left + 4, aRect.Top + (aRect.Height - BmpBk.Height) div 2, BmpBk);
+      Canvas.Draw(aRect.Left + 3, aRect.Top + (aRect.Height - BmpBk.Height) div 2, BmpBk);
     end;
   end else begin
     if aState * [gdSelected, gdFocused] <> [] then begin
@@ -213,8 +211,6 @@ begin
   RowHeights[0] := RowHeights[0] + Sz.cy;
   ExtendedSelect := False;
 
-  ColWidths[0] := 46;
-
   Options := Options
     + [goColSizing, goColMoving]
     - [goEditing, goHorzLine, goRangeSelect, goVertLine, goDrawFocusSelected,
@@ -249,6 +245,9 @@ begin
         end;
     end;
   end;
+
+  CreateBmps();
+  ColWidths[0] := BmpSP.Width + BmpPC.Width + BmpBk.Width + 6;
 end;
 
 procedure TSpectrumMemoryGrid.JumpTo(Addr: Word);
@@ -321,42 +320,33 @@ end;
 
 class procedure TSpectrumMemoryGrid.Init;
 begin
+  BmpPC := nil;
   BmpBk := nil;
   BmpSP := nil;
-  BmpPC := nil;
-  BmpPcSmall := nil;
-  BmpSPSmall := nil;
 end;
 
 class procedure TSpectrumMemoryGrid.Final;
 begin
   BmpBk.Free;
   BmpSP.Free;
-  BmpPcSmall.Free;
-  BmpSPSmall.Free;
   BmpPC.Free;
 end;
 
-class procedure TSpectrumMemoryGrid.CreateBmps(const AFont: TFont);
+class procedure TSpectrumMemoryGrid.CreateBmps;
 var
   F: TFont;
   BackgroundColour: TColor;
   TS: TTextStyle;
 
-  function CreateBmp(const S: RawByteString; Small: Boolean = False): TBitmap;
+  function CreateBmp(const S: RawByteString): TBitmap;
   var
     Sz: TSize;
   begin
     Result := TBitmap.Create;
     Result.Canvas.Font := F;
 
-    if Small then
-      Result.Canvas.Font.Size := 6;
-
-    TCommonFunctionsLCL.CalculateTextSize(F, S, Sz);
-    if not Small then
-      Sz.cx := Sz.cx + 1;
-    Result.SetSize(Sz.cx + 1, Sz.cy + 1);
+    TCommonFunctionsLCL.CalculateTextSize(Result.Canvas.Font, S, Sz);
+    Result.SetSize(Sz.cx + 2, Sz.cy + 1);
 
     Result.Canvas.Brush.Style := bsSolid;
     Result.Canvas.Brush.Color := clFuchsia;
@@ -379,24 +369,24 @@ var
   end;
 
 begin
-  F := TFont.Create;
-  try
-    F.Assign(AFont);
-    F.Style := F.Style + [fsBold];
+  if BmpPC = nil then begin
+    F := TFont.Create;
+    try
+      F.Style := F.Style + [fsBold];
 
-    F.Color := clNavy;
-    BackgroundColour := clYellow;
-    BmpPC := CreateBmp('PC');
-    BmpSP := CreateBmp('SP');
-    BmpPcSmall := CreateBmp('PC', True);
-    BmpSPSmall := CreateBmp('SP', True);
+      F.Size := 8;
+      F.Color := clYellow;
+      BackgroundColour := clRed;
+      BmpBk := CreateBmp('b');
 
-    F.Color := clYellow;
-    BackgroundColour := clRed;
-    BmpBk := CreateBmp('B');
+      F.Color := clNavy;
+      BackgroundColour := clYellow;
+      BmpPC := CreateBmp('PC');
+      BmpSP := CreateBmp('SP');
 
-  finally
-    F.Free;
+    finally
+      F.Free;
+    end;
   end;
 end;
 
