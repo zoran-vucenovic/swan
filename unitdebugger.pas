@@ -36,10 +36,10 @@ type
     constructor CreateDebugger; override;
     destructor Destroy; override;
 
-    function BreakpointsEmpty: Boolean;
     procedure SetSpectrum(ASpectrum: TSpectrum); override;
+    function IsBreakpoint(Addr: Word): Boolean; inline;
     function IsOnBreakpoint: Boolean; override;
-    function IsBreakpoint(Addr: Word): Boolean;
+    function BreakpointsEmpty: Boolean; override;
     procedure AddBreakpoint(Addr: Word);
     procedure RemoveBreakpoint(Addr: Word);
     procedure RemoveAllBreakpoints();
@@ -49,7 +49,6 @@ type
     property Breakpoints: TBreakpoints read FBreakpoints write FBreakpoints;
     property Disassembler: TDisassembler read FDisassembler;
   end;
-
 
 implementation
 
@@ -121,6 +120,13 @@ begin
     FDisassembler.Memory := FSpectrum.Memory;
 end;
 
+function TDebugger.IsBreakpoint(Addr: Word): Boolean;
+var
+  N: Integer;
+begin
+  Result := FBreakpoints.Find(Addr, N);
+end;
+
 {$push}
 {$Q-}{$R-}
 function TDebugger.IsOnBreakpoint: Boolean;
@@ -140,13 +146,6 @@ begin
         Result := False;
     end;
   end;
-end;
-
-function TDebugger.IsBreakpoint(Addr: Word): Boolean;
-var
-  N: Integer;
-begin
-  Result := FBreakpoints.Find(Addr, N);
 end;
 
 procedure TDebugger.AddBreakpoint(Addr: Word);
@@ -213,6 +212,8 @@ begin
   DoOnBreakpointChange;
 end;
 
+{$pop}
+
 procedure TDebugger.RemoveAllBreakpoints();
 begin
   FBreakpoints.Clear;
@@ -240,8 +241,6 @@ begin
   end;
 
 end;
-
-{$pop}
 
 end.
 

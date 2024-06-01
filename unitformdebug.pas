@@ -249,7 +249,6 @@ begin
   Application.RemoveAsyncCalls(Self);
   FDebugger.RemoveOnBreakPointChangeHandlerOfObject(Self);
   FSpectrum.DettachFormDebug;
-  FDebugger.BreakpointsListening := not FDebugger.BreakpointsEmpty;
   CloseAction := caFree;
 
   inherited DoClose(CloseAction);
@@ -269,7 +268,6 @@ begin
     if Assigned(ASpectrum) and Assigned(ASpectrum.Memory) then begin
       if ASpectrum.GetDebugger is TDebugger then begin
         FDebugger := TDebugger(ASpectrum.GetDebugger);
-        FDebugger.BreakpointsListening := False;
         FDisassembler := FDebugger.Disassembler;
       end;
     end;

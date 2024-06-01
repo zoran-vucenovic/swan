@@ -45,14 +45,13 @@ type
     TAbstractDebugger = class abstract (TObject)
     strict private
       FBreakpointsListening: Boolean;
-      procedure SetBreakpointsListening(const AValue: Boolean);
     strict protected
       FSpectrum: TSpectrum;
     public
       constructor CreateDebugger; virtual; abstract;
       procedure SetSpectrum(ASpectrum: TSpectrum); virtual; abstract;
       function IsOnBreakpoint: Boolean; virtual; abstract;
-      property BreakpointsListening: Boolean read FBreakpointsListening write SetBreakpointsListening;
+      function BreakpointsEmpty: Boolean; virtual; abstract;
     end;
 
     TAbstractDebuggerClass = class of TAbstractDebugger;
@@ -117,6 +116,7 @@ type
     AskForSpeedCorrection: Boolean;
     FRunning: Boolean;
     FKeepRunning: Boolean;
+    FBreakpointsListening: Boolean;
 
     FEar: Byte;
     FInternalEar: Byte;
@@ -554,8 +554,8 @@ end;
 
 procedure TSpectrum.CheckStartSoundPlayer;
 begin
-  if (not FSoundMuted) and AskForSpeedCorrection and FRunning and (FSpeed = NormalSpeed)
-      and TSoundPlayer.IsLibLoaded and (not TSoundPlayer.Playing)
+  if (not FSoundMuted) and AskForSpeedCorrection and FRunning and (FKeepRunning or FBreakpointsListening)
+      and (FSpeed = NormalSpeed) and TSoundPlayer.IsLibLoaded and (not TSoundPlayer.Playing)
   then begin
     FLatestTickUpdatedSoundBuffer := (FSumTicks + FProcessor.TStatesInCurrentFrame) * FSoundPlayerRatePortAudio;
     TSoundPlayer.Start;
@@ -593,7 +593,7 @@ end;
 procedure TSpectrum.UpdateAskForSpeedCorrection;
 begin
   if AskForSpeedCorrection xor (
-     (FKeepRunning or FDebugger.BreakpointsListening) and (SpeedCorrection <> 0)
+     (FKeepRunning or FBreakpointsListening) and (SpeedCorrection <> 0)
              and (FProcessor.OnNeedWriteScreen = @WriteToScreen)
      )
   then begin
@@ -651,7 +651,7 @@ begin
   FOnChangeModel := nil;
   FRestoringSpectrumModel := False;
 
-  FRunning := False;
+  StopRunning;
 
   SpectrumColoursBGRA.Bmp.SetSize(WholeScreenWidth, WholeScreenHeight);
 
@@ -673,9 +673,7 @@ begin
   FSumTicks := 0;
   ResetSpectrum;
 
-  FKeepRunning := True;
-  FPaused := True;
-  SetPaused(False);
+  FPaused := False;
 end;
 
 destructor TSpectrum.Destroy;
@@ -879,15 +877,26 @@ begin
 end;
 
 procedure TSpectrum.UpdateDebuggedOrPaused;
+var
+  BL, Kr: Boolean;
 begin
-  if (FPaused or Assigned(FFormDebug) or FDebugger.BreakpointsListening) = FKeepRunning then begin
-    StopSoundPlayer;
+  if FRunning then begin
+    Kr := not (FPaused or Assigned(FFormDebug));
+    BL := Kr and (not FDebugger.BreakpointsEmpty);
 
-    FKeepRunning := FRunning and not FKeepRunning;
+    Kr := Kr and (not BL);
 
-    UpdateAskForSpeedCorrection;
-    CheckStartSoundPlayer;
-  end;
+    if (Kr xor FKeepRunning) or (FBreakpointsListening xor BL) then begin
+      StopSoundPlayer;
+
+      FKeepRunning := Kr;
+      FBreakpointsListening := BL;
+
+      UpdateAskForSpeedCorrection;
+      CheckStartSoundPlayer;
+    end;
+  end else
+    StopRunning;
 end;
 
 procedure TSpectrum.AttachFormDebug(AFormDebug: IFormDebug);
@@ -940,6 +949,7 @@ procedure TSpectrum.StopRunning;
 begin
   FRunning := False;
   FKeepRunning := False;
+  FBreakpointsListening := False;
 end;
 
 procedure TSpectrum.ResetSpectrum;
@@ -1083,18 +1093,19 @@ begin
 
   ResetSpectrum;
   FRunning := True;
-  FKeepRunning := True;
+  FKeepRunning := False;
+  FBreakpointsListening := False;
 
   if Assigned(FOnStartRun) then
     Synchronize(FOnStartRun);
 
-  CheckStartSoundPlayer;
+  UpdateDebuggedOrPaused;
 
   while FRunning do begin
     while FKeepRunning do
       DoStep;
 
-    while FRunning and FDebugger.BreakpointsListening do begin
+    while FBreakpointsListening do begin
       if not FDebugger.IsOnBreakpoint then begin
         DoStep;
       end else begin
@@ -1105,7 +1116,7 @@ begin
       end;
     end;
 
-    while FRunning and not (FKeepRunning or FDebugger.BreakpointsListening) do begin
+    while FRunning and not (FKeepRunning or FBreakpointsListening) do begin
       if Assigned(FFormDebug) then begin
         Synchronize(@CheckFormDebugStep);
         if StepInFormDebug then begin
@@ -1311,18 +1322,6 @@ begin
   if AValue <> FEarFromTape then begin
     FEarFromTape := AValue;
     FEar := FInternalEar or AValue;
-  end;
-end;
-
-{ TSpectrum.TAbstractDebugger }
-
-procedure TSpectrum.TAbstractDebugger.SetBreakpointsListening(
-  const AValue: Boolean);
-begin
-  if FBreakpointsListening xor AValue then begin
-    FBreakpointsListening := AValue;
-    if Assigned(FSpectrum) then
-      FSpectrum.UpdateDebuggedOrPaused;
   end;
 end;
 
