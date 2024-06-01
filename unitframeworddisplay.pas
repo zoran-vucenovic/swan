@@ -8,7 +8,8 @@ unit UnitFrameWordDisplay;
 interface
 
 uses
-  Classes, SysUtils, Forms, Controls, ExtCtrls, StdCtrls;
+  Classes, SysUtils, Types, CommonFunctionsLCL, Forms, Controls, ExtCtrls,
+  StdCtrls, Graphics;
 
 type
   TFrameWordDisplay = class(TFrame)
@@ -29,7 +30,7 @@ type
 
     procedure SetByteMode(AValue: Boolean);
     procedure SetValue(AValue: Word);
-  public                                                  
+  public
     constructor Create(TheOwner: TComponent); override;
     class function MakeNew(const Title: String): TFrameWordDisplay;
 
@@ -67,16 +68,26 @@ end;
 
 procedure TFrameWordDisplay.SetByteMode(AValue: Boolean);
 begin
-  if FByteMode <> AValue then begin
+  if FByteMode xor AValue then begin
     FByteMode := AValue;
 
+    Label1.Visible := not AValue;
+    Label3.Visible := not AValue;
     SetValue(FValue);
   end;
 end;
 
 constructor TFrameWordDisplay.Create(TheOwner: TComponent);
+var
+  Sz: TSize;
 begin
   inherited Create(TheOwner);
+
+  Panel1.Font := TCommonFunctionsLCL.GetMonoFont;
+  Panel1.Font.Size := 8;
+  TCommonFunctionsLCL.CalculateTextSize(Panel1.Font, '65535', Sz);
+  Label5.Constraints.MinWidth := Sz.cx + 8;
+  Label5.AutoSize := True;
 
   FByteMode := False;
   Label6.Constraints.MinWidth := Label6.Width;

@@ -341,6 +341,7 @@ var
   function CreateBmp(const S: RawByteString): TBitmap;
   var
     Sz: TSize;
+    R: Integer;
   begin
     Result := TBitmap.Create;
     Result.Canvas.Font := F;
@@ -358,7 +359,13 @@ var
     Result.Masked := True;
 
     Result.Canvas.Pen.Color := Result.Canvas.Brush.Color;
-    Result.Canvas.RoundRect(0, 0, Result.Width, Result.Height, 7, 5);
+
+    R := Result.Height;
+    if Result.Width < R then
+      R := Result.Width;
+
+    R := R * 2 div 5;
+    Result.Canvas.RoundRect(0, 0, Result.Width, Result.Height, R, R);
 
     TS := Result.Canvas.TextStyle;
     TS.Alignment := TAlignment.taCenter;
@@ -375,8 +382,8 @@ begin
       F.Style := F.Style + [fsBold];
 
       F.Size := 8;
-      F.Color := clYellow;
-      BackgroundColour := clRed;
+      F.Color := TColor($e2ffff);
+      BackgroundColour := TColor($2534da);
       BmpBk := CreateBmp('b');
 
       F.Color := clNavy;

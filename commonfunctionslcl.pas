@@ -245,22 +245,39 @@ end;
 class function TCommonFunctionsLCL.GetMonoFont(): TFont;
 const
   FontsToTry: array of String = (
-    'Monospace',
-    'Consolas', 'Liberation Mono', 'Lucida Console', 'Courier New',
-    'DejaVu Sans Mono', 'FreeMono', 'Courier',
-    'Mono'
+    'Noto Mono', 'Liberation Mono', 'Lucida Console', 'Courier New',
+    'DejaVu Sans Mono', 'Ubuntu Mono', 'Ubuntu Sans Mono', 'Consolas',
+    'Noto Sans Mono', 'FreeMono', 'Monospace', 'Courier', 'Mono'
   );
 
 var
-  I: Integer;
+  I, N: Integer;
+  SL, SL2: TStringList;
 begin
   if MonoFont = nil then begin
     MonoFont := TFont.Create;
-    for I := Low(FontsToTry) to High(FontsToTry) do begin
-      if Screen.Fonts.IndexOf(FontsToTry[I]) >= 0 then begin
-        MonoFont.Name := FontsToTry[I];
-        Break;
+    SL := nil;
+    try
+      if (Screen.Fonts is TStringList) and (not TStringList(Screen.Fonts).CaseSensitive) then begin
+        SL2 := TStringList(Screen.Fonts);
+      end else begin
+        SL := TStringList.Create;
+        SL2 := SL;
+        SL.CaseSensitive := False;
+        SL.Sorted := True;
+        SL.Duplicates := TDuplicates.dupIgnore;
+        SL.AddStrings(Screen.Fonts, True);
       end;
+
+      for I := Low(FontsToTry) to High(FontsToTry) do begin
+        N := SL2.IndexOf(FontsToTry[I]);
+        if N >= 0 then begin
+          MonoFont.Name := SL2.Strings[N];
+          Break;
+        end;
+      end;
+    finally
+      SL.Free;
     end;
   end;
   Result := MonoFont;

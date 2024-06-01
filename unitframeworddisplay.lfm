@@ -16,12 +16,12 @@ object FrameWordDisplay: TFrameWordDisplay
     Left = 36
     Height = 24
     Top = 0
-    Width = 250
+    Width = 254
     AutoSize = True
     BorderSpacing.Left = 6
     BevelOuter = bvNone
     ClientHeight = 24
-    ClientWidth = 250
+    ClientWidth = 254
     Font.Color = 5833989
     Font.Height = -13
     Font.Name = 'Courier New'
@@ -31,6 +31,7 @@ object FrameWordDisplay: TFrameWordDisplay
     object PanelBin: TPanel
       AnchorSideLeft.Control = Panel1
       AnchorSideTop.Control = Panel1
+      AnchorSideTop.Side = asrCenter
       Left = 0
       Height = 24
       Top = 0
@@ -41,29 +42,34 @@ object FrameWordDisplay: TFrameWordDisplay
       ClientHeight = 20
       ClientWidth = 134
       Color = clCream
+      ParentBackground = False
       ParentColor = False
       TabOrder = 0
       object Label1: TLabel
         AnchorSideLeft.Control = PanelBin
         AnchorSideTop.Control = PanelBin
+        AnchorSideTop.Side = asrCenter
         Left = 2
         Height = 16
         Top = 2
         Width = 64
         BorderSpacing.Around = 2
         Caption = '00000000'
+        Layout = tlCenter
         ParentColor = False
       end
       object Label2: TLabel
         AnchorSideLeft.Control = Label1
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = PanelBin
+        AnchorSideTop.Side = asrCenter
         Left = 68
         Height = 16
         Top = 2
         Width = 64
         BorderSpacing.Around = 2
         Caption = '00000000'
+        Layout = tlCenter
         ParentColor = False
       end
     end
@@ -71,6 +77,7 @@ object FrameWordDisplay: TFrameWordDisplay
       AnchorSideLeft.Control = PanelBin
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Panel1
+      AnchorSideTop.Side = asrCenter
       Left = 144
       Height = 24
       Top = 0
@@ -82,29 +89,34 @@ object FrameWordDisplay: TFrameWordDisplay
       ClientHeight = 20
       ClientWidth = 38
       Color = clCream
+      ParentBackground = False
       ParentColor = False
       TabOrder = 1
       object Label3: TLabel
         AnchorSideLeft.Control = PanelHex
         AnchorSideTop.Control = PanelHex
+        AnchorSideTop.Side = asrCenter
         Left = 2
         Height = 16
         Top = 2
         Width = 16
         BorderSpacing.Around = 2
         Caption = '00'
+        Layout = tlCenter
         ParentColor = False
       end
       object Label4: TLabel
         AnchorSideLeft.Control = Label3
         AnchorSideLeft.Side = asrBottom
         AnchorSideTop.Control = PanelHex
+        AnchorSideTop.Side = asrCenter
         Left = 20
         Height = 16
         Top = 2
         Width = 16
         BorderSpacing.Around = 2
         Caption = '00'
+        Layout = tlCenter
         ParentColor = False
       end
     end
@@ -114,35 +126,29 @@ object FrameWordDisplay: TFrameWordDisplay
       AnchorSideTop.Control = Panel1
       AnchorSideTop.Side = asrCenter
       AnchorSideBottom.Side = asrBottom
-      Left = 186
+      Left = 190
       Height = 17
       Top = 4
       Width = 64
       AutoSize = True
+      BorderSpacing.Left = 4
       BevelOuter = bvNone
       ClientHeight = 17
       ClientWidth = 64
-      Font.Color = 5833989
-      Font.Height = -13
-      Font.Style = [fsBold]
-      ParentFont = False
       TabOrder = 2
       object Label5: TLabel
         AnchorSideLeft.Control = Panel2
         AnchorSideTop.Control = Panel2
+        AnchorSideTop.Side = asrCenter
         AnchorSideBottom.Side = asrBottom
         Left = 0
         Height = 17
         Top = 0
         Width = 64
-        Alignment = taCenter
         AutoSize = False
         Caption = '65890'
-        Font.Color = 5833989
-        Font.Height = -13
-        Font.Name = 'Monospace'
+        Layout = tlCenter
         ParentColor = False
-        ParentFont = False
       end
     end
   end
@@ -157,8 +163,7 @@ object FrameWordDisplay: TFrameWordDisplay
     Alignment = taRightJustify
     AutoSize = False
     Caption = 'Label6'
-    Font.Height = -13
+    Layout = tlCenter
     ParentColor = False
-    ParentFont = False
   end
 end

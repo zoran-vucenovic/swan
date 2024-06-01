@@ -54,7 +54,7 @@ type
   TFlagCtrl = class(TCustomControl)
   strict private
     type
-      TPaintCtrl = class(TCustomControl)
+      TPaintCtrl = class(TGraphicControl)
       private
         class var
           BmpFalse: TBGRABitmap;
@@ -231,6 +231,8 @@ begin
 
   Constraints.MinWidth := 26;
   AutoSize := True;
+
+  TabStop := False;
 end;
 
 procedure TFlagCtrl.SetValue(const AValue: Boolean);
