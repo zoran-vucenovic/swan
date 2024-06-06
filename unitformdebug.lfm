@@ -9,7 +9,7 @@ object FormDebug: TFormDebug
   ClientWidth = 359
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  LCLVersion = '3.3.0.0'
+  LCLVersion = '3.5.0.0'
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

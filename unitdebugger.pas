@@ -11,8 +11,20 @@ uses
   Classes, SysUtils, fgl, LazMethodList, UnitSpectrum, UnitDisassembler;
 
 type
+  TBreakpointCondition = class(TObject)
+  private
+    FCondExprRpn: RawByteString;
+    FConditionExpr: RawByteString;
+    procedure SetConditionExpr(AValue: RawByteString);
+  public
+    constructor Create;
 
-  TBreakpoints = class(specialize TFPGMap<Word, RawByteString>)
+    procedure Clear;
+    property ConditionExpr: RawByteString read FConditionExpr write SetConditionExpr;
+    property CondExprRpn: RawByteString read FCondExprRpn write FCondExprRpn;
+  end;
+
+  TBreakpoints = class(specialize TFPGMapObject<Word, TBreakpointCondition>)
   public
     constructor Create;
   end;
@@ -62,11 +74,32 @@ begin
   Sorted := True;
 end;
 
+{ TBreakpointCondition }
+
+procedure TBreakpointCondition.SetConditionExpr(AValue: RawByteString);
+begin
+  if FConditionExpr <> AValue then begin
+    FCondExprRpn := '';
+    FConditionExpr := AValue;
+  end;
+end;
+
+constructor TBreakpointCondition.Create;
+begin
+  Clear;
+end;
+
+procedure TBreakpointCondition.Clear;
+begin
+  FConditionExpr := '';
+  FCondExprRpn := '';
+end;
+
 { TBreakpoints }
 
 constructor TBreakpoints.Create;
 begin
-  inherited Create;
+  inherited Create(True);
 
   Duplicates := TDuplicates.dupIgnore;
   Sorted := True;
@@ -152,8 +185,10 @@ procedure TDebugger.AddBreakpoint(Addr: Word);
 var
   I: Word;
   W: Word;
+  B: TBreakpointCondition;
 begin
-  FBreakpoints.AddOrSetData(Addr, '');
+  B := TBreakpointCondition.Create;
+  FBreakpoints.AddOrSetData(Addr, B);
 
   W := Addr;
 

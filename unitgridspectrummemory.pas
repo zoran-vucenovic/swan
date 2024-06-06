@@ -28,6 +28,9 @@ type
     procedure FocusAddressInGrid(Addr: Word);
     procedure FillGrid();
     function TextForCell(aCol, aRow: Integer): RawByteString;
+    procedure SetDebugger(AValue: TDebugger);
+    procedure FBreakpointsOnChange(Sender: TObject);
+    class procedure CreateBmps();
 
   strict private
     class var
@@ -36,7 +39,6 @@ type
   private
     class procedure Init; static;
     class procedure Final; static;
-    class procedure CreateBmps();
   protected
     procedure DoCopyToClipboard; override;
     procedure DrawColumnText(aCol, aRow: Integer; aRect: TRect;
@@ -45,7 +47,7 @@ type
       ); override;
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
       override;
-
+    function MouseButtonAllowed(Button: TMouseButton): boolean; override;
   public
     constructor Create(AOwner: TComponent); override;
 
@@ -55,7 +57,7 @@ type
     property Sp: Word read FSp write SetSp;
     property FollowPc: Boolean read FFollowPc write SetFollowPc;
     property Disassembler: TDisassembler read FDisassembler write SetDisassembler;
-    property Debugger: TDebugger read FDebugger write FDebugger;
+    property Debugger: TDebugger read FDebugger write SetDebugger;
   end;
 
 implementation
@@ -181,12 +183,17 @@ begin
             else
               FDebugger.AddBreakpoint(W);
 
-            Invalidate;
+            //Invalidate;
           end;
         end;
       end;
     end;
   end;
+end;
+
+function TSpectrumMemoryGrid.MouseButtonAllowed(Button: TMouseButton): boolean;
+begin
+  Result := Button in [mbLeft, mbRight, mbMiddle];
 end;
 
 constructor TSpectrumMemoryGrid.Create(AOwner: TComponent);
@@ -395,6 +402,22 @@ begin
       F.Free;
     end;
   end;
+end;
+
+procedure TSpectrumMemoryGrid.SetDebugger(AValue: TDebugger);
+begin
+  if FDebugger = AValue then Exit;
+  if Assigned(FDebugger) then
+    FDebugger.RemoveOnBreakPointChangeHandlerOfObject(Self);
+  FDebugger := AValue;
+
+  if Assigned(FDebugger) then
+    FDebugger.AddOnBreakpointChange(@FBreakpointsOnChange);
+end;
+
+procedure TSpectrumMemoryGrid.FBreakpointsOnChange(Sender: TObject);
+begin
+  Invalidate;
 end;
 
 procedure TSpectrumMemoryGrid.SetDisassembler(ADisasembler: TDisassembler);

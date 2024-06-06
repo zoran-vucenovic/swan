@@ -30,7 +30,6 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
-    procedure ClearGrid;
     procedure FillGrid;
     property Debugger: TDebugger read FDebugger write SetDebugger;
   end;
@@ -67,7 +66,7 @@ end;
 
 function TGridBreakpoints.MouseButtonAllowed(Button: TMouseButton): boolean;
 begin
-  Result := True;
+  Result := TCommonFunctionsLCL.GridMouseButtonAllowed(Self, Button);
 end;
 
 procedure TGridBreakpoints.DrawCell(aCol, aRow: Integer; aRect: TRect;
@@ -106,7 +105,7 @@ begin
         end;
       1:
         begin
-          S := FDebugger.Breakpoints.Data[I];
+          S := FDebugger.Breakpoints.Data[I].ConditionExpr;
           if S = '' then begin
             S := ' <none>';
             Canvas.Font.Color := clMaroon;
@@ -181,7 +180,7 @@ begin
   end;
 
   Self.AutoFillColumns := True;
-  ClearGrid;
+  RowCount := FixedRows;
 end;
 
 destructor TGridBreakpoints.Destroy;
@@ -189,11 +188,6 @@ begin
   SetDebugger(nil);
 
   inherited Destroy;
-end;
-
-procedure TGridBreakpoints.ClearGrid;
-begin
-  RowCount := FixedRows;
 end;
 
 procedure TGridBreakpoints.FillGrid;
@@ -205,9 +199,11 @@ begin
     end else begin
       RowCount := FixedRows + FDebugger.Breakpoints.Count;
     end;
+
   finally
     EndUpdate();
   end;
+  AfterMoveSelection(-2, -2);
 end;
 
 end.

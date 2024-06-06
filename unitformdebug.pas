@@ -45,7 +45,6 @@ type
 
     procedure AfterShow(Data: PtrInt);
     procedure LabelBreakpointsOnClick(Sender: TObject);
-    procedure FBreakpointsOnChange(Sender: TObject);
     procedure FormBreakpointsBeforeDestruction(Sender: TObject);
   protected
     procedure DoClose(var CloseAction: TCloseAction); override;
@@ -222,21 +221,13 @@ procedure TFormDebug.LabelBreakpointsOnClick(Sender: TObject);
 begin
   if FormBreakpoints = nil then begin
     FormBreakpoints := TFrameBreakpoints.ShowFormBreakpoints(Self, FDebugger, True);
-    FDebugger.AddOnBreakpointChange(@FBreakpointsOnChange);
     FormBreakpoints.AddHandlerOnBeforeDestruction(@FormBreakpointsBeforeDestruction);
   end else
     FormBreakpoints.BringToFront;
 end;
 
-procedure TFormDebug.FBreakpointsOnChange(Sender: TObject);
-begin
-  FrameGridMemory.Invalidate;
-end;
-
 procedure TFormDebug.FormBreakpointsBeforeDestruction(Sender: TObject);
 begin
-  if Assigned(FDebugger) then
-    FDebugger.RemoveOnBreakPointChangeHandlerOfObject(Self);
   if Assigned(FormBreakpoints) then begin
     FormBreakpoints.RemoveAllHandlersOfObject(Self);
     FormBreakpoints := nil;

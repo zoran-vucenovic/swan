@@ -35,13 +35,15 @@ type
     function GetHasPanelWithActionButtons: Boolean;
     procedure SetHasPanelWithActionButtons(AValue: Boolean);
     procedure GridOnContextPopup(Sender: TObject; MousePos: TPoint; var Handled: Boolean);
+    procedure GridOnAfterSelection(Sender: TObject; aCol, aRow: Integer);
+    procedure UpdateActionsEnabled;
   public
     constructor Create(TheOwner: TComponent); override;
     destructor Destroy; override;
 
+    procedure SetDebugger(ADebugger: TDebugger);
     property HasPanelWithActionButtons: Boolean
        read GetHasPanelWithActionButtons write SetHasPanelWithActionButtons;
-    property GridBreakpoints: TGridBreakpoints read FGridBreakpoints;
 
     class function ShowFormBreakpoints(AOwner: TComponent; ADebugger: TDebugger;
       AHasPanelWithActionButtons: Boolean): TCustomForm; static;
@@ -139,15 +141,32 @@ end;
 procedure TFrameBreakpoints.GridOnContextPopup(Sender: TObject; MousePos: TPoint;
   var Handled: Boolean);
 var
+  I: Integer;
+  B: Boolean;
   P: TPoint;
-
 begin
-  ActionRemove.Enabled := TCommonFunctionsLCL.GridMouseToCellRegular(FGridBreakpoints, MousePos, P);
-  Handled := P.Y < FGridBreakpoints.FixedRows;
-  if not Handled then begin
-    ActionRemoveAll.Enabled := FGridBreakpoints.RowCount > FGridBreakpoints.FixedRows;
-    ActionEdit.Enabled := ActionRemove.Enabled;
+  if ActionEdit.Enabled then begin
+    B := TCommonFunctionsLCL.GridMouseToCellRegular(FGridBreakpoints, MousePos, P);
+    for I := 0 to FPopupMenu.Items.Count - 1 do begin
+      if FPopupMenu.Items[I].Tag = 1 then
+        FPopupMenu.Items[I].Enabled := B;
+    end;
   end;
+end;
+
+procedure TFrameBreakpoints.GridOnAfterSelection(Sender: TObject; aCol,
+  aRow: Integer);
+begin
+  if FGridBreakpoints.Row <> aRow then
+    UpdateActionsEnabled;
+end;
+
+procedure TFrameBreakpoints.UpdateActionsEnabled;
+begin
+  ActionAdd.Enabled := True;
+  ActionRemoveAll.Enabled := FGridBreakpoints.RowCount > FGridBreakpoints.FixedRows;
+  ActionRemove.Enabled := FGridBreakpoints.Row >= FGridBreakpoints.FixedRows;
+  ActionEdit.Enabled := ActionRemove.Enabled;
 end;
 
 constructor TFrameBreakpoints.Create(TheOwner: TComponent);
@@ -181,20 +200,29 @@ begin
   for I := 0 to ActionListEditBreakpoints.ActionCount - 1 do begin
     Mi := TMenuItem.Create(FPopupMenu);
     Mi.Action := ActionListEditBreakpoints.Actions[I];
+    if (Mi.Action = ActionRemove) or (Mi.Action = ActionEdit) then
+      Mi.Tag := 1;
     FPopupMenu.Items.Add(Mi);
   end;
 
   FGridBreakpoints.PopupMenu := FPopupMenu;
   FGridBreakpoints.OnContextPopup := @GridOnContextPopup;
+  FGridBreakpoints.OnAfterSelection := @GridOnAfterSelection;
 end;
 
 destructor TFrameBreakpoints.Destroy;
 begin
   FPopupMenu.Free;
   FPanelWithActionButtons.Free;
+  SetDebugger(nil);
   FGridBreakpoints.Free;
 
   inherited Destroy;
+end;
+
+procedure TFrameBreakpoints.SetDebugger(ADebugger: TDebugger);
+begin
+  FGridBreakpoints.Debugger := ADebugger;
 end;
 
 type
@@ -216,17 +244,27 @@ class function TFrameBreakpoints.ShowFormBreakpoints(AOwner: TComponent;
 var
   F: TBreakpointsForm;
   Fm: TFrameBreakpoints;
+  OwnerForm: TCustomForm;
+
 begin
   F := TBreakpointsForm.CreateNew(AOwner, 0);
   F.Name := TCommonFunctions.GlobalObjectNameGenerator(F);
   F.Caption := 'Breakpoints';
 
   F.BorderIcons := F.BorderIcons - [TBorderIcon.biMaximize, TBorderIcon.biMinimize];
-  F.Position := TPosition.poDesigned;
   Fm := TFrameBreakpoints.Create(F);
+  Fm.SetDebugger(ADebugger);
   Fm.HasPanelWithActionButtons := AHasPanelWithActionButtons;
-  Fm.GridBreakpoints.Debugger := ADebugger;
-  F.SetBounds((Screen.Width - Fm.Width) div 2, (Screen.Height - Fm.Height) div 2, Fm.Width, Fm.Height);
+
+  F.Width := Fm.Width;
+  F.Height := Fm.Height;
+
+  if AOwner is TCustomForm then begin
+    F.Position := TPosition.poDesigned;
+    TCommonFunctionsLCL.AdjustFormPos(F, False, TCustomForm(AOwner));
+  end else
+    F.Position := TPosition.poMainFormCenter;
+
   F.Constraints.MinHeight := (F.Height * 3) div 5;
   F.Constraints.MinWidth := (F.Width * 5) div 9;
   Fm.Anchors := [];
