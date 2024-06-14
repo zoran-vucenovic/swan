@@ -33,16 +33,14 @@ type
     const
       cSectionDebugger: RawByteString = 'debugger';
 
-  private
+  strict private
     FSpectrum: TSpectrum;
     FrameGridMemory: TFrameGridMemory;
-    FDisassembler: TDisassembler;
     FDebugCPUState: TDebugCpuState;
-    FDebugger: TDebugger;
     FormBreakpoints: TCustomForm;
 
     procedure FormFirstShow(Sender: TObject);
-
+    function GetDebugger: TDebugger;
     procedure AfterShow(Data: PtrInt);
     procedure LabelBreakpointsOnClick(Sender: TObject);
     procedure FormBreakpointsBeforeDestruction(Sender: TObject);
@@ -71,7 +69,6 @@ var
   Lab: TCustomLabel;
 begin
   FSpectrum := nil;
-  FDisassembler := nil;
   FormBreakpoints := nil;
 
   Panel1.Caption := '';
@@ -97,11 +94,6 @@ begin
 
   Panel3.AnchorParallel(akLeft, 0, Panel1);
   Panel3.AnchorParallel(akTop, 0, Panel1);
-
-  //Panel2.AnchorParallel(akRight, 0, Panel1);
-  //Panel2.AnchorParallel(akTop, 0, Panel1);
-  //Panel2.AnchorParallel(akBottom, 0, Panel1);
-  //Panel2.AnchorToNeighbour(akLeft, 0, Panel3);
 
   Panel2.AnchorParallel(akLeft, 0, Panel1);
   Panel2.AnchorToNeighbour(akTop, 0, Panel3);
@@ -164,7 +156,6 @@ begin
 
   SetSpectrum(nil);
   if Assigned(FrameGridMemory) then begin
-    FrameGridMemory.SetDisasembler(nil);
     FreeAndNil(FrameGridMemory);
   end;
 
@@ -204,6 +195,11 @@ begin
   AfterShow(2);
 end;
 
+function TFormDebug.GetDebugger: TDebugger;
+begin
+  Result := FrameGridMemory.Debugger;
+end;
+
 procedure TFormDebug.AfterShow(Data: PtrInt);
 begin
   TCommonFunctionsLCL.AdjustFormPos(Self);
@@ -220,7 +216,7 @@ end;
 procedure TFormDebug.LabelBreakpointsOnClick(Sender: TObject);
 begin
   if FormBreakpoints = nil then begin
-    FormBreakpoints := TFrameBreakpoints.ShowFormBreakpoints(Self, FDebugger, True);
+    FormBreakpoints := TFrameBreakpoints.ShowFormBreakpoints(Self, GetDebugger, True);
     FormBreakpoints.AddHandlerOnBeforeDestruction(@FormBreakpointsBeforeDestruction);
   end else
     FormBreakpoints.BringToFront;
@@ -235,10 +231,14 @@ begin
 end;
 
 procedure TFormDebug.DoClose(var CloseAction: TCloseAction);
+var
+  D: TDebugger;
 begin
   Application.RemoveAllHandlersOfObject(Self);
   Application.RemoveAsyncCalls(Self);
-  FDebugger.RemoveOnBreakPointChangeHandlerOfObject(Self);
+  D := GetDebugger;
+  if Assigned(D) then
+    D.RemoveOnBreakPointChangeHandlerOfObject(Self);
   FSpectrum.DettachFormDebug;
   CloseAction := caFree;
 
@@ -246,29 +246,27 @@ begin
 end;
 
 procedure TFormDebug.SetSpectrum(ASpectrum: TSpectrum);
+var
+  D: TDebugger;
 begin
   if ASpectrum <> FSpectrum then begin
-    FDebugger := nil;
+    D := nil;
     if Assigned(FSpectrum) then
       FSpectrum.DettachFormDebug;
 
-    if ASpectrum = nil then
+    if ASpectrum = nil then begin
       SaveToJson();
-
-    FDisassembler := nil;
-    if Assigned(ASpectrum) and Assigned(ASpectrum.Memory) then begin
+    end else if Assigned(ASpectrum.Memory) then begin
       if ASpectrum.GetDebugger is TDebugger then begin
-        FDebugger := TDebugger(ASpectrum.GetDebugger);
-        FDisassembler := FDebugger.Disassembler;
+        D := TDebugger(ASpectrum.GetDebugger);
       end;
     end;
 
     FSpectrum := ASpectrum;
 
-    FrameGridMemory.SetDisasembler(FDisassembler);
-    FrameGridMemory.Debugger := FDebugger;
+    FrameGridMemory.Debugger := D;
 
-    if Assigned(FDisassembler) then
+    if Assigned(D) then
       LoadFromJson();
 
     AfterStep;

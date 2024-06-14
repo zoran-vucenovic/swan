@@ -10,18 +10,19 @@ interface
 uses
   Classes, SysUtils, Types, UnitMemory, UnitDisassembler, UnitCommonSpectrum,
   CommonFunctionsLCL, UnitCommon, UnitDebugger, Grids, Graphics, Forms,
-  Controls, Clipbrd;
+  Controls, Clipbrd, Menus;
 
 type
   TSpectrumMemoryGrid = class(TCustomDrawGrid)
   strict private
     FDebugger: TDebugger;
-    FDisassembler: TDisassembler;
     FFollowPc: Boolean;
     FPc: Word;
     FSp: Word;
+    FPopupMenu1: TPopupMenu;
+    PopupItemAddBreakpoint: TMenuItem;
+    PopupItemRemoveBreakpoint: TMenuItem;
 
-    procedure SetDisassembler(ADisasembler: TDisassembler);
     procedure SetFollowPc(const AValue: Boolean);
     procedure SetPc(const AValue: Word);
     procedure SetSp(const AValue: Word);
@@ -29,7 +30,9 @@ type
     procedure FillGrid();
     function TextForCell(aCol, aRow: Integer): RawByteString;
     procedure SetDebugger(AValue: TDebugger);
+    function GetDisassembler: TDisassembler;
     procedure FBreakpointsOnChange(Sender: TObject);
+    procedure AddOrRemoveBreakpointExec(Sender: TObject);
     class procedure CreateBmps();
 
   strict private
@@ -48,6 +51,9 @@ type
     procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
       override;
     function MouseButtonAllowed(Button: TMouseButton): boolean; override;
+    function GetCells(ACol, ARow: Integer): string; override;
+    function GetCellHintText(ACol, ARow: Integer): string; override;
+    procedure DoContextPopup(MousePos: TPoint; var Handled: Boolean); override;
   public
     constructor Create(AOwner: TComponent); override;
 
@@ -56,7 +62,6 @@ type
     property Pc: Word read FPc write SetPc;
     property Sp: Word read FSp write SetSp;
     property FollowPc: Boolean read FFollowPc write SetFollowPc;
-    property Disassembler: TDisassembler read FDisassembler write SetDisassembler;
     property Debugger: TDebugger read FDebugger write SetDebugger;
   end;
 
@@ -183,7 +188,7 @@ begin
             else
               FDebugger.AddBreakpoint(W);
 
-            //Invalidate;
+            Hint := GetCellHintText(P.X, P.Y);
           end;
         end;
       end;
@@ -196,11 +201,55 @@ begin
   Result := Button in [mbLeft, mbRight, mbMiddle];
 end;
 
+function TSpectrumMemoryGrid.GetCells(ACol, ARow: Integer): string;
+begin
+  Result := TextForCell(aCol, aRow);
+end;
+
+function TSpectrumMemoryGrid.GetCellHintText(ACol, ARow: Integer): string;
+var
+  W: Word;
+begin
+  Result := '';
+
+  if (ACol < FixedCols) and (ARow >= FixedRows) then begin
+    W := ARow - FixedRows;
+
+    if not FDebugger.IsBreakpoint(W) then begin
+      Result := 'add breakpoint to';
+    end else begin
+      Result := 'remove breakpoint from';
+    end;
+    Result := Format('Click to %s address $%s', [Result, W.ToHexString]);
+  end;
+end;
+
+procedure TSpectrumMemoryGrid.DoContextPopup(MousePos: TPoint;
+  var Handled: Boolean);
+var
+  P: TPoint;
+  W: Word;
+  IsBreakpoint: Boolean;
+begin
+  Handled := not (TCommonFunctionsLCL.GridMouseToCellRegular(Self, MousePos, P)
+      and (P.Y >= FixedRows)
+      );
+  if not Handled then begin
+    W := P.Y - FixedRows;
+
+    FPopupMenu1.Tag := W;
+    IsBreakpoint := FDebugger.IsBreakpoint(W);
+    PopupItemAddBreakpoint.Enabled := not IsBreakpoint;
+    PopupItemRemoveBreakpoint.Enabled := IsBreakpoint;
+  end;
+end;
+
 constructor TSpectrumMemoryGrid.Create(AOwner: TComponent);
 var
   C: TGridColumn;
   I: Integer;
   Sz: TSize;
+
 begin
   inherited Create(AOwner);
 
@@ -212,14 +261,14 @@ begin
   BorderStyle := bsNone;
   TitleFont.Name := 'default';
   FFollowPc := True;
-  FDisassembler := nil;
+  FDebugger := nil;
   RowCount := FixedRows;
   TCommonFunctionsLCL.CalculateTextSize(TitleFont, 'Ag(', Sz);
   RowHeights[0] := RowHeights[0] + Sz.cy;
   ExtendedSelect := False;
 
   Options := Options
-    + [goColSizing, goColMoving]
+    + [goColSizing, goColMoving, goCellHints, goTruncCellHints]
     - [goEditing, goHorzLine, goRangeSelect, goVertLine, goDrawFocusSelected,
        goFixedVertLine, goFixedHorzLine];
 
@@ -255,13 +304,28 @@ begin
 
   CreateBmps();
   ColWidths[0] := BmpSP.Width + BmpPC.Width + BmpBk.Width + 6;
+  ShowHint := True;
+
+  FPopupMenu1 := TPopupMenu.Create(Self);
+
+  PopupItemAddBreakpoint := TMenuItem.Create(FPopupMenu1);
+  PopupItemAddBreakpoint.Caption := 'Add breakpoint';
+  PopupItemAddBreakpoint.OnClick := @AddOrRemoveBreakpointExec;
+
+  PopupItemRemoveBreakpoint := TMenuItem.Create(Self);
+  PopupItemRemoveBreakpoint.Caption := 'Remove breakpoint';
+  PopupItemRemoveBreakpoint.OnClick := @AddOrRemoveBreakpointExec;
+
+  FPopupMenu1.Items.Add([PopupItemAddBreakpoint, PopupItemRemoveBreakpoint]);
 end;
 
 procedure TSpectrumMemoryGrid.JumpTo(Addr: Word);
+var
+  R: Integer;
 begin
-  if Addr < FixedRows + RowCount then begin
-    Row := FixedRows + Addr;
-    CommonFunctionsLCL.TCommonFunctionsLCL.RowInView(Self, Row);
+  R := FixedRows + Addr;
+  if R < RowCount then begin
+    CommonFunctionsLCL.TCommonFunctionsLCL.RowInView(Self, R);
     Invalidate;
   end;
 end;
@@ -297,17 +361,17 @@ begin
         1:
           begin
             W := R;
-            B := FDisassembler.Memory.ReadByte(W);
+            B := GetDisassembler.Memory.ReadByte(W);
             Result := B.ToHexString(2) + ' (' + B.ToString + ')';
           end;
         2:
           begin
             W := R;
-            FDisassembler.Dissasemble(W, C);
+            GetDisassembler.Dissasemble(W, C);
             for I := 1 to C do begin
               if I > 1 then
                 Result := Result + TCommonFunctions.NonBreakSpace;
-              Result := Result + FDisassembler.Memory.ReadByte(W).ToHexString(2);
+              Result := Result + GetDisassembler.Memory.ReadByte(W).ToHexString(2);
               {$push}{$Q-}{$R-}
               Inc(W);
               {$pop}
@@ -316,7 +380,7 @@ begin
         3:
           begin
             W := R;
-            Result := FDisassembler.Dissasemble(W, C);
+            Result := GetDisassembler.Dissasemble(W, C);
           end;
 
       otherwise
@@ -405,50 +469,82 @@ begin
 end;
 
 procedure TSpectrumMemoryGrid.SetDebugger(AValue: TDebugger);
+var
+  Mem: TMemory;
+  D: TDisassembler;
+
 begin
   if FDebugger = AValue then Exit;
   if Assigned(FDebugger) then
     FDebugger.RemoveOnBreakPointChangeHandlerOfObject(Self);
   FDebugger := AValue;
 
+  Mem := nil;
+
   if Assigned(FDebugger) then
     FDebugger.AddOnBreakpointChange(@FBreakpointsOnChange);
+
+  D := GetDisassembler;
+  if Assigned(D) then
+    Mem := D.Memory;
+
+  FillGrid;
+end;
+
+function TSpectrumMemoryGrid.GetDisassembler: TDisassembler;
+begin
+  Result := nil;
+  if Assigned(FDebugger) then
+    Result := FDebugger.Disassembler;
 end;
 
 procedure TSpectrumMemoryGrid.FBreakpointsOnChange(Sender: TObject);
 begin
   Invalidate;
+  AfterMoveSelection(-2, -2);
 end;
 
-procedure TSpectrumMemoryGrid.SetDisassembler(ADisasembler: TDisassembler);
+procedure TSpectrumMemoryGrid.AddOrRemoveBreakpointExec(Sender: TObject);
 var
-  Mem: TMemory;
+  W: Word;
+  Mp: TPoint;
+
 begin
-  Mem := nil;
-  if Assigned(FDisassembler) then
-    Mem := FDisassembler.Memory;
-  FDisassembler := ADisasembler;
-  if (FDisassembler = nil) or (Mem <> FDisassembler.Memory) then
-    FillGrid;
+  if Sender is TMenuItem then begin
+    if FPopupMenu1.Tag >= 0 then begin
+      W := FPopupMenu1.Tag;
+      if Sender = PopupItemAddBreakpoint then begin
+        if not FDebugger.IsBreakpoint(W) then
+          FDebugger.AddBreakpoint(W);
+      end else if FDebugger.IsBreakpoint(W) then
+        FDebugger.RemoveBreakpoint(W);
+    end;
+  end;
 end;
 
 procedure TSpectrumMemoryGrid.FillGrid();
 var
   Mem: TMemory;
   MemSize: Integer;
+  D: TDisassembler;
 
 begin
-  if Assigned(FDisassembler) then
-    Mem := FDisassembler.Memory
+  PopupMenu := nil;
+
+  D := GetDisassembler;
+  if Assigned(D) then
+    Mem := D.Memory
   else
     Mem := nil;
 
-  if Mem <> nil then begin
-    MemSize := Mem.CurrentlyMappedMemSizeKB * TCommonSpectrum.KiloByte;
-  end else
+  if Mem <> nil then
+    MemSize := Mem.CurrentlyMappedMemSizeKB * TCommonSpectrum.KiloByte
+  else
     MemSize := 0;
 
   RowCount := FixedRows + MemSize;
+  if MemSize > 0 then
+    PopupMenu := FPopupMenu1;
 end;
 
 initialization

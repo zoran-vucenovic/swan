@@ -27,11 +27,12 @@ type
     procedure ActionEditExecute(Sender: TObject);
     procedure ActionRemoveAllExecute(Sender: TObject);
     procedure ActionRemoveExecute(Sender: TObject);
-  private
+  strict private
     FPanelWithActionButtons: TCustomControl;
     FGridBreakpoints: TGridBreakpoints;
     FPopupMenu: TPopupMenu;
 
+    procedure SetDebugger(ADebugger: TDebugger);
     function GetHasPanelWithActionButtons: Boolean;
     procedure SetHasPanelWithActionButtons(AValue: Boolean);
     procedure GridOnContextPopup(Sender: TObject; MousePos: TPoint; var Handled: Boolean);
@@ -41,7 +42,6 @@ type
     constructor Create(TheOwner: TComponent); override;
     destructor Destroy; override;
 
-    procedure SetDebugger(ADebugger: TDebugger);
     property HasPanelWithActionButtons: Boolean
        read GetHasPanelWithActionButtons write SetHasPanelWithActionButtons;
 
@@ -244,40 +244,48 @@ class function TFrameBreakpoints.ShowFormBreakpoints(AOwner: TComponent;
 var
   F: TBreakpointsForm;
   Fm: TFrameBreakpoints;
-  OwnerForm: TCustomForm;
 
 begin
-  F := TBreakpointsForm.CreateNew(AOwner, 0);
-  F.Name := TCommonFunctions.GlobalObjectNameGenerator(F);
-  F.Caption := 'Breakpoints';
+  Result := nil;
+  if Assigned(ADebugger) then begin
+    F := TBreakpointsForm.CreateNew(AOwner, 0);
+    try
+      F.Name := TCommonFunctions.GlobalObjectNameGenerator(F);
+      F.Caption := 'Breakpoints';
 
-  F.BorderIcons := F.BorderIcons - [TBorderIcon.biMaximize, TBorderIcon.biMinimize];
-  Fm := TFrameBreakpoints.Create(F);
-  Fm.SetDebugger(ADebugger);
-  Fm.HasPanelWithActionButtons := AHasPanelWithActionButtons;
+      F.BorderIcons := F.BorderIcons - [TBorderIcon.biMaximize, TBorderIcon.biMinimize];
+      Fm := TFrameBreakpoints.Create(F);
+      Fm.Name := TCommonFunctions.GlobalObjectNameGenerator(Fm);
+      Fm.SetDebugger(ADebugger);
+      Fm.HasPanelWithActionButtons := AHasPanelWithActionButtons;
 
-  F.Width := Fm.Width;
-  F.Height := Fm.Height;
+      F.Width := Fm.Width;
+      F.Height := Fm.Height;
 
-  if AOwner is TCustomForm then begin
-    F.Position := TPosition.poDesigned;
-    TCommonFunctionsLCL.AdjustFormPos(F, False, TCustomForm(AOwner));
-  end else
-    F.Position := TPosition.poMainFormCenter;
+      if AOwner is TCustomForm then begin
+        F.Position := TPosition.poDesigned;
+        TCommonFunctionsLCL.AdjustFormPos(F, False, TCustomForm(AOwner));
+      end else
+        F.Position := TPosition.poMainFormCenter;
 
-  F.Constraints.MinHeight := (F.Height * 3) div 5;
-  F.Constraints.MinWidth := (F.Width * 5) div 9;
-  Fm.Anchors := [];
-  Fm.AnchorParallel(akLeft, 0, F);
-  Fm.AnchorParallel(akTop, 0, F);
-  Fm.AnchorParallel(akRight, 0, F);
-  Fm.AnchorParallel(akBottom, 0, F);
-  //
-  Fm.Parent := F;
+      F.Constraints.MinHeight := (F.Height * 3) div 5;
+      F.Constraints.MinWidth := (F.Width * 5) div 9;
+      Fm.Anchors := [];
+      Fm.AnchorParallel(akLeft, 0, F);
+      Fm.AnchorParallel(akTop, 0, F);
+      Fm.AnchorParallel(akRight, 0, F);
+      Fm.AnchorParallel(akBottom, 0, F);
+      //
+      Fm.Parent := F;
 
-  F.PopupMode := TPopupMode.pmAuto;
-  F.Show;
-  Result := F;
+      F.PopupMode := TPopupMode.pmAuto;
+      F.Show;
+      Result := F;
+      F := nil;
+    finally
+      F.Free;
+    end;
+  end;
 end;
 
 end.

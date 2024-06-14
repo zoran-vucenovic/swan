@@ -72,6 +72,7 @@ type
     FGrid: TSpectrumMemoryGrid;
     FOneStep: Boolean;
 
+    function GetDisassembler: TDisassembler;
     function GetDebugger: TDebugger;
     function GetPc: Word;
     function GetSp: Word;
@@ -86,11 +87,10 @@ type
     constructor Create(TheOwner: TComponent); override;
     destructor Destroy; override;
 
-    procedure SetDisasembler(ADisasembler: TDisassembler);
     procedure OnStep(out DoContinue: Boolean);
     procedure AfterStep;
     function SaveToJSON(out JSONObj: TJSONObject): Boolean;
-    function LoadFromJSON(const JSONObj: TJSONObject): Boolean;
+    procedure LoadFromJSON(const JSONObj: TJSONObject);
 
     property Pc: Word read GetPc write SetPc;
     property Sp: Word read GetSp write SetSp;
@@ -132,9 +132,23 @@ begin
   FOneStep := True;
 end;
 
+function TFrameGridMemory.GetDisassembler: TDisassembler;
+var
+  D: TDebugger;
+begin
+  D := GetDebugger;
+  if Assigned(D) then
+    Result := D.Disassembler
+  else
+    Result := nil;
+end;
+
 function TFrameGridMemory.GetDebugger: TDebugger;
 begin
-  Result := FGrid.Debugger;
+  if Assigned(FGrid) then
+    Result := FGrid.Debugger
+  else
+    Result := nil;
 end;
 
 function TFrameGridMemory.GetPc: Word;
@@ -149,7 +163,10 @@ end;
 
 procedure TFrameGridMemory.SetDebugger(const AValue: TDebugger);
 begin
-  FGrid.Debugger := AValue;
+  if Assigned(FGrid) then begin
+    FGrid.Debugger := AValue;
+    UpdateValuesFromDisassembler;
+  end;
 end;
 
 procedure TFrameGridMemory.SetPc(const AValue: Word);
@@ -168,25 +185,32 @@ begin
 end;
 
 procedure TFrameGridMemory.DisassemblerDisplayChange(Sender: TObject);
+var
+  D: TDisassembler;
 begin
-  if Assigned(FGrid) and Assigned(FGrid.Disassembler) then begin
-    FGrid.Disassembler.NumDisplay := TDisassembler.TNumDisplay(ComboBoxNumBase.ItemIndex);
-    FGrid.Disassembler.HexFormatIndex := ComboBoxHexFormat.ItemIndex;
-    FGrid.Disassembler.DisplayRelativeJumpOffsetAsAbsolute :=
+  D := GetDisassembler;
+  if Assigned(D) then begin
+    D.NumDisplay := TDisassembler.TNumDisplay(ComboBoxNumBase.ItemIndex);
+    D.HexFormatIndex := ComboBoxHexFormat.ItemIndex;
+    D.DisplayRelativeJumpOffsetAsAbsolute :=
       CheckBoxDisplayRelativeJumpOffsetAsAbsolute.Checked;
     FGrid.Invalidate;
   end;
+
 end;
 
 procedure TFrameGridMemory.UpdateValuesFromDisassembler;
+var
+  D: TDisassembler;
 begin
-  if Assigned(FGrid.Disassembler) then begin
+  D := GetDisassembler;
+  if Assigned(D) then begin
     SpinEdit1.MaxValue := FGrid.RowCount - FGrid.FixedRows - 1;
-    ComboBoxNumBase.ItemIndex := Ord(FGrid.Disassembler.NumDisplay);
-    ComboBoxHexFormat.ItemIndex := FGrid.Disassembler.HexFormatIndex;
+    ComboBoxNumBase.ItemIndex := Ord(D.NumDisplay);
+    ComboBoxHexFormat.ItemIndex := D.HexFormatIndex;
     CheckBoxDisplayRelativeJumpOffsetAsAbsolute.OnChange := nil;
     CheckBoxFollowPC.OnChange := nil;
-    CheckBoxDisplayRelativeJumpOffsetAsAbsolute.Checked := FGrid.Disassembler.DisplayRelativeJumpOffsetAsAbsolute;
+    CheckBoxDisplayRelativeJumpOffsetAsAbsolute.Checked := D.DisplayRelativeJumpOffsetAsAbsolute;
     CheckBoxFollowPC.Checked := FGrid.FollowPc;
     CheckBoxDisplayRelativeJumpOffsetAsAbsolute.OnChange := @DisassemblerDisplayChange;
     CheckBoxFollowPC.OnChange := @CheckBoxFollowPcOnChange;
@@ -196,7 +220,7 @@ end;
 constructor TFrameGridMemory.Create(TheOwner: TComponent);
 var
   Nd: TDisassembler.TNumDisplay;
-  I, J: Integer;
+  I: Integer;
   S, S1, S2: RawByteString;
 begin
   inherited Create(TheOwner);
@@ -280,14 +304,6 @@ begin
   inherited Destroy;
 end;
 
-procedure TFrameGridMemory.SetDisasembler(ADisasembler: TDisassembler);
-begin
-  if Assigned(FGrid) then begin
-    FGrid.Disassembler := ADisasembler;
-    UpdateValuesFromDisassembler;
-  end;
-end;
-
 procedure TFrameGridMemory.OnStep(out DoContinue: Boolean);
 begin
   DoContinue := FOneStep;
@@ -305,61 +321,71 @@ function TFrameGridMemory.SaveToJSON(out JSONObj: TJSONObject): Boolean;
 var
   N: Integer;
   S: RawByteString;
+  D: TDisassembler;
+  JObj: TJSONObject;
+
 begin
   Result := False;
+  JSONObj := nil;
 
-  JSONObj := TJSONObject.Create;
+  JObj := TJSONObject.Create;
   try
     if FGrid.FollowPc then
       N := 1
     else
       N := 0;
 
-    JSONObj.Add(cSectionFollowPC, N);
-    if Assigned(FGrid.Disassembler) then begin
-      WriteStr(S, FGrid.Disassembler.NumDisplay);
+    JObj.Add(cSectionFollowPC, N);
+
+    D := GetDisassembler;
+    if Assigned(D) then begin
+      WriteStr(S, D.NumDisplay);
       S := LowerCase(Copy(S, 3));
-      JSONObj.Add(cSectionNumBase, S);
-      JSONObj.Add(cSectionHexFormat, FGrid.Disassembler.Hexfix);
-      if FGrid.Disassembler.DisplayRelativeJumpOffsetAsAbsolute then
+      JObj.Add(cSectionNumBase, S);
+      JObj.Add(cSectionHexFormat, D.Hexfix);
+      if D.DisplayRelativeJumpOffsetAsAbsolute then
         N := 1
       else
         N := 0;
-      JSONObj.Add(cSectionDisplayRelativeJumpOffsetAsAbsolute, N);
+      JObj.Add(cSectionDisplayRelativeJumpOffsetAsAbsolute, N);
     end;
 
-    Result := JSONObj.Count > 0;
+    if JObj.Count > 0 then begin
+      JSONObj := JObj;
+      JObj := nil;
+      Result := True;
+    end;
 
   finally
-    if not Result then
-      FreeAndNil(JSONObj);
+    JObj.Free;
   end;
 end;
 
-function TFrameGridMemory.LoadFromJSON(const JSONObj: TJSONObject): Boolean;
+procedure TFrameGridMemory.LoadFromJSON(const JSONObj: TJSONObject);
 var
-  N: Integer;
   S, S1: RawByteString;
   Nd: TDisassembler.TNumDisplay;
+  D: TDisassembler;
+
 begin
-  Result := False;
   if Assigned(JSONObj) then begin
     FGrid.FollowPc := JSONObj.Get(cSectionFollowPC, Integer(1)) <> 0;
-    if Assigned(FGrid.Disassembler) then begin
+    D := GetDisassembler;
+    if Assigned(D) then begin
       S := '';
       S := JSONObj.Get(cSectionNumBase, S);
       for Nd := Low(TDisassembler.TNumDisplay) to High(TDisassembler.TNumDisplay) do begin
         WriteStr(S1, Nd);
         if CompareText(Copy(S1, 3), S) = 0 then begin
-          FGrid.Disassembler.NumDisplay := Nd;
+          D.NumDisplay := Nd;
           Break;
         end;
       end;
 
       S := '';
       S := JSONObj.Get(cSectionHexFormat, S);
-      FGrid.Disassembler.HexFormatIndex := TDisassembler.DecodeHexFormatIndex(S);
-      FGrid.Disassembler.DisplayRelativeJumpOffsetAsAbsolute := JSONObj.Get(cSectionDisplayRelativeJumpOffsetAsAbsolute, Integer(0)) <> 0;
+      D.HexFormatIndex := TDisassembler.DecodeHexFormatIndex(S);
+      D.DisplayRelativeJumpOffsetAsAbsolute := JSONObj.Get(cSectionDisplayRelativeJumpOffsetAsAbsolute, Integer(0)) <> 0;
       UpdateValuesFromDisassembler;
     end;
   end;

@@ -130,10 +130,10 @@ begin
                 if L >= M then begin
                   W := LEtoN(W);
                   FSelections[I].RelativeOffset := Int16(W);
-                  SetLength(S, M);
+                  SetLength(S{%H-}, M);
                   Okay := M = 0;
                   if not Okay then begin
-                    SetLength(S1, M);
+                    SetLength(S1{%H-}, M);
                     if Stream.Read(S1[1], M) = M then begin
                       L := L - M;
                       J := 0;
