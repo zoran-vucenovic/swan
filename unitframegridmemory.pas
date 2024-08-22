@@ -65,7 +65,7 @@ type
         + LineEnding + 'This makes difference only when hex num. format is chosen.'
         ;
       cCheckBoxDisplayRelativeJumpOffsetAsAbsoluteHint: RawByteString =
-        'Relative offsets in JR in DJNZ instructions are displayed'
+        'Relative offsets in JR and DJNZ instructions are displayed'
         + LineEnding + 'as absolute addresses of the destination.'
         ;
   private
