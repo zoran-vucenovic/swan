@@ -44,6 +44,8 @@ type
     procedure AfterShow(Data: PtrInt);
     procedure LabelBreakpointsOnClick(Sender: TObject);
     procedure FormBreakpointsBeforeDestruction(Sender: TObject);
+    procedure LoadFromJson();
+    procedure SaveToJson();
   protected
     procedure DoClose(var CloseAction: TCloseAction); override;
 
@@ -51,12 +53,7 @@ type
     procedure SetSpectrum(ASpectrum: TSpectrum);
     procedure OnStep(out DoContinue: Boolean);
     procedure AfterStep;
-    procedure LoadFromJson();
-    procedure SaveToJson();
   end;
-
-var
-  FormDebug: TFormDebug;
 
 implementation
 
@@ -145,6 +142,7 @@ begin
   Panel7.Hint := 'Clock ticks passed since last interrupt';
   Panel7.ShowHint := True;
 
+  FrameGridMemory.Grid.OnEditBreakPoints := @LabelBreakpointsOnClick;
   AfterShow(-1);
   AddHandlerFirstShow(@FormFirstShow);
 end;
@@ -156,9 +154,9 @@ begin
 
   SetSpectrum(nil);
   if Assigned(FrameGridMemory) then begin
+    FrameGridMemory.Grid.OnEditBreakPoints := nil;
     FreeAndNil(FrameGridMemory);
   end;
-
 end;
 
 procedure TFormDebug.LoadFromJson;
@@ -216,7 +214,7 @@ end;
 procedure TFormDebug.LabelBreakpointsOnClick(Sender: TObject);
 begin
   if FormBreakpoints = nil then begin
-    FormBreakpoints := TFrameBreakpoints.ShowFormBreakpoints(Self, GetDebugger, True);
+    FormBreakpoints := TFrameBreakpoints.ShowFormBreakpoints(Self, GetDebugger, True, FrameGridMemory.Grid.Row - FrameGridMemory.Grid.FixedRows);
     FormBreakpoints.AddHandlerOnBeforeDestruction(@FormBreakpointsBeforeDestruction);
   end else
     FormBreakpoints.BringToFront;

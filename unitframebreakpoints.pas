@@ -9,7 +9,8 @@ interface
 
 uses
   Classes, SysUtils, CommonFunctionsLCL, UnitDebugBreakpointsGrid, UnitDebugger,
-  UnitCommon, Forms, Controls, ExtCtrls, StdCtrls, ActnList, Menus;
+  UnitCommon, Forms, Controls, ExtCtrls, StdCtrls,
+  ActnList, Menus;
 
 type
   TFrameBreakpoints = class(TFrame)
@@ -46,7 +47,7 @@ type
        read GetHasPanelWithActionButtons write SetHasPanelWithActionButtons;
 
     class function ShowFormBreakpoints(AOwner: TComponent; ADebugger: TDebugger;
-      AHasPanelWithActionButtons: Boolean): TCustomForm; static;
+      AHasPanelWithActionButtons: Boolean; AAddr: Integer): TCustomForm; static;
   end;
 
 implementation
@@ -240,10 +241,13 @@ begin
 end;
 
 class function TFrameBreakpoints.ShowFormBreakpoints(AOwner: TComponent;
-  ADebugger: TDebugger; AHasPanelWithActionButtons: Boolean): TCustomForm;
+  ADebugger: TDebugger; AHasPanelWithActionButtons: Boolean; AAddr: Integer
+  ): TCustomForm;
 var
   F: TBreakpointsForm;
   Fm: TFrameBreakpoints;
+  W: Word;
+  N: Integer;
 
 begin
   Result := nil;
@@ -265,6 +269,8 @@ begin
       if AOwner is TCustomForm then begin
         F.Position := TPosition.poDesigned;
         TCommonFunctionsLCL.AdjustFormPos(F, False, TCustomForm(AOwner));
+        F.PopupParent := TCustomForm(AOwner);
+        F.PopupMode := TPopupMode.pmExplicit;
       end else
         F.Position := TPosition.poMainFormCenter;
 
@@ -278,7 +284,14 @@ begin
       //
       Fm.Parent := F;
 
-      F.PopupMode := TPopupMode.pmAuto;
+      if (AAddr > 0) and (AAddr < Word.MaxValue) then begin
+        W := AAddr;
+        N := Fm.FGridBreakpoints.FixedRows + ADebugger.Breakpoints.IndexOf(W);
+
+        if (N >= 0) and (N < Fm.FGridBreakpoints.RowCount) then
+          Fm.FGridBreakpoints.Row := N;
+      end;
+
       F.Show;
       Result := F;
       F := nil;

@@ -45,6 +45,8 @@ type
         const S: String; out ATextSize: TSize); static;
     class function GridMouseToCellRegular(AGrid: TCustomGrid; const MousePos: TPoint;
         out GridCoordinates: TPoint): Boolean; static;
+    class function GridCellToMouseRegular(AGrid: TCustomGrid; const GridCoordinates: TPoint;
+        out MousePos: TPoint): Boolean; static;
     class procedure RowInView(AGrid: TCustomGrid; ARow: Integer); static;
     class function GridMouseButtonAllowed(AGrid: TCustomGrid; Button: TMouseButton): Boolean;
     class function GetBestContrastColorForFont(R, G, B: Integer): TColor;
@@ -139,6 +141,33 @@ begin
 
   if not Result then
     GridCoordinates := Point(-1, -1);
+end;
+
+class function TCommonFunctionsLCL.GridCellToMouseRegular(AGrid: TCustomGrid;
+  const GridCoordinates: TPoint; out MousePos: TPoint): Boolean;
+var
+  G: TGridAccessProtected;
+  Rest: Integer;
+begin
+  G := TGridAccessProtected(AGrid);
+  Result :=
+    G.ColRowToOffset(
+      False,
+      True,
+      GridCoordinates.Y,
+      Rest,
+      MousePos.Y
+      )
+    and G.ColRowToOffset(
+      True,
+      True,
+      GridCoordinates.X,
+      Rest,
+      MousePos.X
+      );
+
+  if not Result then
+    MousePos := Point(-1, -1);
 end;
 
 class procedure TCommonFunctionsLCL.RowInView(AGrid: TCustomGrid; ARow: Integer

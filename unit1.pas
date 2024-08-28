@@ -1066,15 +1066,16 @@ begin
   FreeAndNil(FToolBar);
   DestroySoundVolumeForm();
   FreeAndNil(HistoryQueue);
-
-  DestroySpectrum;
+  FreeAndNil(FormDebug);
 
   MenuItemRecentFiles.Clear;
   TSnapshotSZX.OnSzxLoadTape := nil;
-  FreeAndNil(FormDebug);
+
   FreeTapePlayer;
   Bmp.Free;
   FRecentFiles.Free;
+
+  DestroySpectrum;
 end;
 
 procedure TForm1.FormDropFiles(Sender: TObject; const FileNames: array of string

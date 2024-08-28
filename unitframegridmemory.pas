@@ -95,6 +95,7 @@ type
     property Pc: Word read GetPc write SetPc;
     property Sp: Word read GetSp write SetSp;
     property Debugger: TDebugger read GetDebugger write SetDebugger;
+    property Grid: TSpectrumMemoryGrid read FGrid;
   end;
 
 implementation

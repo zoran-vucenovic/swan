@@ -52,13 +52,13 @@ type
     function IsBreakpoint(Addr: Word): Boolean; inline;
     function IsOnBreakpoint: Boolean; override;
     function BreakpointsEmpty: Boolean; override;
-    procedure AddBreakpoint(Addr: Word);
+    procedure AddBreakpoint(Addr: Word; ABkpointCond: TBreakpointCondition);
     procedure RemoveBreakpoint(Addr: Word);
     procedure RemoveAllBreakpoints();
     procedure AddOnBreakpointChange(ANotifyEvent: TNotifyEvent);
     procedure RemoveOnBreakPointChangeHandlerOfObject(AObject: TObject);
 
-    property Breakpoints: TBreakpoints read FBreakpoints write FBreakpoints;
+    property Breakpoints: TBreakpoints read FBreakpoints;
     property Disassembler: TDisassembler read FDisassembler;
   end;
 
@@ -181,14 +181,16 @@ begin
   end;
 end;
 
-procedure TDebugger.AddBreakpoint(Addr: Word);
+procedure TDebugger.AddBreakpoint(Addr: Word; ABkpointCond: TBreakpointCondition
+  );
 var
   I: Word;
   W: Word;
-  B: TBreakpointCondition;
+
 begin
-  B := TBreakpointCondition.Create;
-  FBreakpoints.AddOrSetData(Addr, B);
+  if ABkpointCond = nil then
+    ABkpointCond := TBreakpointCondition.Create;
+  FBreakpoints.AddOrSetData(Addr, ABkpointCond);
 
   W := Addr;
 

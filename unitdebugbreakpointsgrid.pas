@@ -16,6 +16,7 @@ type
   TGridBreakpoints = class(TDrawGrid)
   private
     FDebugger: TDebugger;
+
     procedure SetDebugger(AValue: TDebugger);
     procedure FBreakpointsOnChange(Sender: TObject);
   protected
@@ -135,7 +136,7 @@ var
   Sz: TSize;
 begin
   inherited Create(AOwner);
-  
+
   FDebugger := nil;
   BorderStyle := bsNone;
 
