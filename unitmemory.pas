@@ -191,7 +191,7 @@ begin
 
   L := AStream.Size - AStream.Position;
 
-  if L + AddrFrom > FRamSize then
+  if L + AddrFrom > Integer(GetCurrentlyMappedMemSizeKB) * KiloByte then
     Exit;
 
   P := nil;

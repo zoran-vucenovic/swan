@@ -595,7 +595,7 @@ begin
     Mem := nil;
 
   if Mem <> nil then
-    MemSize := Mem.CurrentlyMappedMemSizeKB * TCommonSpectrum.KiloByte
+    MemSize := Integer(Mem.CurrentlyMappedMemSizeKB) * TCommonSpectrum.KiloByte
   else
     MemSize := 0;
 

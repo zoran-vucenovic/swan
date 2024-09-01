@@ -676,7 +676,7 @@ begin
       Spectrum.Paused := True;
       if TFormInputPokes.ShowInputPokesDialog(
         TCommonSpectrum.KB16,
-        TCommonSpectrum.KB64 - 1,
+        Integer(Spectrum.Memory.CurrentlyMappedMemSizeKB) * TCommonSpectrum.KiloByte - 1,
         Pokes
         )
       then begin
@@ -2434,16 +2434,13 @@ var
   begin
     Result := False;
 
-    Limit := Spectrum.Memory.RamSizeKB * TCommonSpectrum.KiloByte + TCommonSpectrum.KB16;
-    if Limit > TCommonSpectrum.KB64 then
-      Limit := TCommonSpectrum.KB64;
+    Limit := Spectrum.Memory.CurrentlyMappedMemSizeKB;
+    Limit := Limit * TCommonSpectrum.KiloByte;
     APos := Limit div 2;
 
     WAdr := APos;
     M := TFormDlgStartAddress.ShowDlgStartAddress(WAdr, KB16, Limit - 1, FileName);
     case M of
-      mrCancel:
-        FreeAndNil(Stream);
       mrOK:
         begin
           APos := WAdr;
@@ -2454,6 +2451,7 @@ var
         end;
 
     otherwise
+      FreeAndNil(Stream);
     end;
 
     if Assigned(Stream) then begin
