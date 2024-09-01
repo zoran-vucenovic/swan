@@ -1116,7 +1116,14 @@ begin
       end;
     end;
 
-    while FRunning and not (FKeepRunning or FBreakpointsListening) do begin
+    while FRunning do begin
+      if FKeepRunning or FBreakpointsListening then begin
+        if FBreakpointsListening then begin
+          DoStep;
+          StepToInstructionEndIfNeeded;
+        end;
+        Break;
+      end;
       if Assigned(FFormDebug) then begin
         Synchronize(@CheckFormDebugStep);
         if StepInFormDebug then begin
