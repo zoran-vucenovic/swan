@@ -31,14 +31,6 @@ type
 
   TDebugger = class(TSpectrum.TAbstractDebugger)
   strict private
-    type
-      TBreakpointsW = class(specialize TFPGMap<Word, Word>)
-      public
-        constructor Create;
-      end;
-
-  strict private
-    FBreakpointsWide: TBreakpointsW;
     FBreakpoints: TBreakpoints;
     FDisassembler: TDisassembler;
     FOnBreakpointChangeList: TMethodList;
@@ -63,16 +55,6 @@ type
   end;
 
 implementation
-
-{ TDebugger.TBreakpointsW }
-
-constructor TDebugger.TBreakpointsW.Create;
-begin
-  inherited Create;
-
-  Duplicates := TDuplicates.dupIgnore;
-  Sorted := True;
-end;
 
 { TBreakpointCondition }
 
@@ -125,14 +107,12 @@ begin
   FOnBreakpointChangeList := nil;
   FDisassembler := nil;
   FSpectrum := nil;
-  FBreakpointsWide := TBreakpointsW.Create;
   FBreakpoints := TBreakpoints.Create;
 end;
 
 destructor TDebugger.Destroy;
 begin
   FOnBreakpointChangeList.Free;
-  FBreakpointsWide.Free;
   FBreakpoints.Free;
   FDisassembler.Free;
 
@@ -160,101 +140,31 @@ begin
   Result := FBreakpoints.Find(Addr, N);
 end;
 
-{$push}
-{$Q-}{$R-}
 function TDebugger.IsOnBreakpoint: Boolean;
 var
   N: Integer;
-  W: Word;
-  I: Word;
 begin
-  W := FSpectrum.GetProcessor.RegPC;
-  Result := FBreakpointsWide.Find(W, N);
-
-  if Result then begin
-    I := FBreakpointsWide.Data[N];
-    if I > 0 then begin
-      FDisassembler.Dissasemble(W, N);
-      if N <= I then
-        Result := False;
-    end;
-  end;
+  Result := FBreakpoints.Find(FSpectrum.GetProcessor.RegPC, N);
 end;
-
 procedure TDebugger.AddBreakpoint(Addr: Word; ABkpointCond: TBreakpointCondition
   );
-var
-  I: Word;
-  W: Word;
-
 begin
   if ABkpointCond = nil then
     ABkpointCond := TBreakpointCondition.Create;
+
   FBreakpoints.AddOrSetData(Addr, ABkpointCond);
-
-  W := Addr;
-
-  I := 0;
-  while True do begin
-    FBreakpointsWide.AddOrSetData(W, I);
-    if I = 3 then
-      Break;
-    Dec(W);
-    if IsBreakpoint(W) then
-      Break;
-    Inc(I);
-  end;
-
   DoOnBreakpointChange;
 end;
 
 procedure TDebugger.RemoveBreakpoint(Addr: Word);
-var
-  J, I: Word;
-  N, L: Integer;
-  W: Word;
 begin
   FBreakpoints.Remove(Addr);
-
-  W := Addr;
-  Inc(W);
-  I := I.MaxValue;
-  if FBreakpointsWide.Find(W, L) then begin
-    J := FBreakpointsWide.Data[L];
-    if (J < 3) then begin
-      I := J;
-    end;
-  end;
-
-  N := 0;
-  W := Addr;
-  while N <= 3 do begin
-    if (N > 0) then begin
-      if FBreakpointsWide.Find(W, L) then begin
-        J := FBreakpointsWide.Data[L];
-        if (J = 0) then
-          Break;
-      end;
-    end;
-    if I < 3 then begin
-      Inc(I);
-      FBreakpointsWide.AddOrSetData(W, I);
-    end else
-      FBreakpointsWide.Remove(W);
-
-    Inc(N);
-    Dec(W);
-  end;
-
   DoOnBreakpointChange;
 end;
-
-{$pop}
 
 procedure TDebugger.RemoveAllBreakpoints();
 begin
   FBreakpoints.Clear;
-  FBreakpointsWide.Clear;
   DoOnBreakpointChange;
 end;
 

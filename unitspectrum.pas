@@ -1109,9 +1109,13 @@ begin
       if not FDebugger.IsOnBreakpoint then begin
         DoStep;
       end else begin
-        //StepToInstructionEndIfNeeded;
-        if Assigned(FOnBreakpoint) then begin
-          Synchronize(FOnBreakpoint);
+        StepToInstructionEndIfNeeded;
+        if not FDebugger.IsOnBreakpoint then begin
+          DoStep;
+        end else begin
+          if Assigned(FOnBreakpoint) then begin
+            Synchronize(FOnBreakpoint);
+          end;
         end;
       end;
     end;
