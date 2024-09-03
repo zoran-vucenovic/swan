@@ -53,6 +53,9 @@ type
     procedure SetSpectrum(ASpectrum: TSpectrum);
     procedure OnStep(out DoContinue: Boolean);
     procedure AfterStep;
+    procedure SetActive(const AActive: Boolean);
+    function GetActive(): Boolean;
+    procedure SetOnToggleActiveRequest(const AValue: TNotifyEvent);
   end;
 
 implementation
@@ -67,6 +70,7 @@ var
 begin
   FSpectrum := nil;
   FormBreakpoints := nil;
+  Panel3.Enabled := True;
 
   Panel1.Caption := '';
   Panel2.Caption := '';
@@ -237,7 +241,8 @@ begin
   D := GetDebugger;
   if Assigned(D) then
     D.RemoveOnBreakPointChangeHandlerOfObject(Self);
-  FSpectrum.DettachFormDebug;
+  if Assigned(FSpectrum) then
+    FSpectrum.DettachFormDebug;
   CloseAction := caFree;
 
   inherited DoClose(CloseAction);
@@ -290,6 +295,25 @@ begin
       LabelTicksInCurrentFrame.Caption := FSpectrum.GetProcessor.TStatesInCurrentFrame.ToString;
       FrameGridMemory.AfterStep;
     end;
+end;
+
+procedure TFormDebug.SetActive(const AActive: Boolean);
+begin
+  if Panel3.Enabled xor AActive then begin
+    Panel3.Enabled := AActive;
+    FrameGridMemory.IsActive := AActive;
+    AfterStep;
+  end;
+end;
+
+function TFormDebug.GetActive(): Boolean;
+begin
+  Result := Panel3.Enabled;
+end;
+
+procedure TFormDebug.SetOnToggleActiveRequest(const AValue: TNotifyEvent);
+begin
+  FrameGridMemory.OnToggleActiveRequest := AValue;
 end;
 
 end.

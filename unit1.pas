@@ -252,6 +252,7 @@ type
     procedure SpectrumOnChangeModel();
     class function SpectrumOnGetDebuggerClass(): TSpectrum.TAbstractDebuggerClass; static;
     procedure DoShowDebuggerForm; inline;
+    procedure DebuggerRunStop(Sender: TObject);
     procedure SpectrumOnBreakpoint;
     procedure DoChangeModel(Sender: TObject);
     procedure AfterShow(Data: PtrInt);
@@ -1148,7 +1149,25 @@ begin
   end;
 
   Spectrum.AttachFormDebug(FormDebug);
+  FormDebug.SetActive(True);
+  FormDebug.SetOnToggleActiveRequest(@DebuggerRunStop);
   FormDebug.Show;
+end;
+
+procedure TForm1.DebuggerRunStop(Sender: TObject);
+begin
+  if Assigned(FormDebug) then begin
+    if Sender <> Spectrum then begin
+      AddEventToQueue(@DebuggerRunStop);
+    end else begin
+      if FormDebug.GetActive() then begin
+        FormDebug.SetActive(False);
+        Spectrum.DettachFormDebug;
+      end else begin
+        DoShowDebuggerForm;
+      end;
+    end;
+  end;
 end;
 
 procedure TForm1.SpectrumOnBreakpoint;

@@ -14,6 +14,7 @@ uses
 type
   TFrameGridMemory = class(TFrame)
     BitBtn1: TBitBtn;
+    ButtonRunStop: TButton;
     ButtonJumpToPC: TButton;
     ButtonJumpToSP: TButton;
     ButtonJumpGo: TButton;
@@ -32,11 +33,14 @@ type
     Panel3: TPanel;
     Panel4: TPanel;
     Panel5: TPanel;
+    Panel6: TPanel;
+    Panel7: TPanel;
     PanelOptions: TPanel;
     PanelNumBase: TPanel;
     PanelHexFormat: TPanel;
     SpinEdit1: TSpinEdit;
     procedure BitBtn1Click(Sender: TObject);
+    procedure ButtonRunStopClick(Sender: TObject);
     procedure ButtonJumpGoClick(Sender: TObject);
     procedure ButtonJumpToPCClick(Sender: TObject);
     procedure ButtonJumpToSPClick(Sender: TObject);
@@ -71,11 +75,14 @@ type
   private
     FGrid: TSpectrumMemoryGrid;
     FOneStep: Boolean;
+    FOnToggleActiveRequest: TNotifyEvent;
 
+    function GetActive: Boolean;
     function GetDisassembler: TDisassembler;
     function GetDebugger: TDebugger;
     function GetPc: Word;
     function GetSp: Word;
+    procedure SetActive(AValue: Boolean);
     procedure SetDebugger(const AValue: TDebugger);
     procedure SetPc(const AValue: Word);
     procedure SetSp(const AValue: Word);
@@ -96,6 +103,8 @@ type
     property Sp: Word read GetSp write SetSp;
     property Debugger: TDebugger read GetDebugger write SetDebugger;
     property Grid: TSpectrumMemoryGrid read FGrid;
+    property IsActive: Boolean read GetActive write SetActive;
+    property OnToggleActiveRequest: TNotifyEvent read FOnToggleActiveRequest write FOnToggleActiveRequest;
   end;
 
 implementation
@@ -123,6 +132,12 @@ begin
     BitBtn1.ImageIndex := 0;
 end;
 
+procedure TFrameGridMemory.ButtonRunStopClick(Sender: TObject);
+begin
+  if Assigned(FOnToggleActiveRequest) then
+    FOnToggleActiveRequest(Sender);
+end;
+
 procedure TFrameGridMemory.ButtonJumpToSPClick(Sender: TObject);
 begin
   FGrid.JumpTo(FGrid.Sp);
@@ -144,6 +159,11 @@ begin
     Result := nil;
 end;
 
+function TFrameGridMemory.GetActive: Boolean;
+begin
+  Result := FGrid.Enabled;
+end;
+
 function TFrameGridMemory.GetDebugger: TDebugger;
 begin
   if Assigned(FGrid) then
@@ -160,6 +180,19 @@ end;
 function TFrameGridMemory.GetSp: Word;
 begin
   Result := FGrid.Sp;
+end;
+
+procedure TFrameGridMemory.SetActive(AValue: Boolean);
+begin
+  if AValue xor GetActive then begin
+    PanelOptions.Enabled := AValue;
+    Panel1.Enabled := AValue;
+    if AValue then
+      ButtonRunStop.Caption := 'Run'
+    else
+      ButtonRunStop.Caption := 'Stop';
+    FGrid.Enabled := AValue;
+  end;
 end;
 
 procedure TFrameGridMemory.SetDebugger(const AValue: TDebugger);
@@ -226,8 +259,13 @@ var
 begin
   inherited Create(TheOwner);
 
+  FOnToggleActiveRequest := nil;
   FOneStep := False;
   SpinEdit1.Value := 0;
+
+  Panel7.BevelOuter := bvNone;
+  Panel6.BevelOuter := bvNone;
+
   Panel1.Caption := '';
   Panel1.BevelOuter := bvNone;
 
@@ -295,7 +333,10 @@ begin
   ComboBoxHexFormat.OnChange := @DisassemblerDisplayChange;
 
   BorderStyle := bsNone;
+  FGrid.Enabled := False;
+  SetActive(True);
   FGrid.Parent := Panel2;
+  ButtonRunStop.Constraints.MinWidth := ButtonRunStop.Width;
 end;
 
 destructor TFrameGridMemory.Destroy;
