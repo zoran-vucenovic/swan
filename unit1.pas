@@ -2768,7 +2768,7 @@ begin
   Spectrum.OnStartRun := @SpectrumStartRun;
 
   Spectrum.OnSync := @SyncSpectrum;
-  SetSpectrumSpeed(512);
+  SetSpectrumSpeed(TSpectrum.NormalSpeed);
 
   PrevTimeStop := 0;
   PrevTicks := 0;

@@ -1106,16 +1106,12 @@ begin
       DoStep;
 
     while FBreakpointsListening do begin
+      StepToInstructionEndIfNeeded;
       if not FDebugger.IsOnBreakpoint then begin
         DoStep;
       end else begin
-        StepToInstructionEndIfNeeded;
-        if not FDebugger.IsOnBreakpoint then begin
-          DoStep;
-        end else begin
-          if Assigned(FOnBreakpoint) then begin
-            Synchronize(FOnBreakpoint);
-          end;
+        if Assigned(FOnBreakpoint) then begin
+          Synchronize(FOnBreakpoint);
         end;
       end;
     end;
@@ -1128,6 +1124,7 @@ begin
         end;
         Break;
       end;
+
       if Assigned(FFormDebug) then begin
         Synchronize(@CheckFormDebugStep);
         if StepInFormDebug then begin
