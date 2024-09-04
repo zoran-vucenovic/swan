@@ -1163,6 +1163,7 @@ begin
       if FormDebug.GetActive() then begin
         FormDebug.SetActive(False);
         Spectrum.DettachFormDebug;
+        Self.SetFocus;
       end else begin
         DoShowDebuggerForm;
       end;
