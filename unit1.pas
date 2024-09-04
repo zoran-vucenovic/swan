@@ -1150,7 +1150,7 @@ begin
 
   Spectrum.AttachFormDebug(FormDebug);
   FormDebug.SetActive(True);
-  FormDebug.SetOnToggleActiveRequest(@DebuggerRunStop);
+  FormDebug.OnDebuggerRunStop := @DebuggerRunStop;
   FormDebug.Show;
 end;
 

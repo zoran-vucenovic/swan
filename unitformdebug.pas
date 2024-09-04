@@ -46,6 +46,7 @@ type
     procedure FormBreakpointsBeforeDestruction(Sender: TObject);
     procedure LoadFromJson();
     procedure SaveToJson();
+    procedure SetOnDebuggerRunStop(AValue: TNotifyEvent);
   protected
     procedure DoClose(var CloseAction: TCloseAction); override;
 
@@ -55,7 +56,7 @@ type
     procedure AfterStep;
     procedure SetActive(const AActive: Boolean);
     function GetActive(): Boolean;
-    procedure SetOnToggleActiveRequest(const AValue: TNotifyEvent);
+    property OnDebuggerRunStop: TNotifyEvent write SetOnDebuggerRunStop;
   end;
 
 implementation
@@ -158,6 +159,7 @@ begin
 
   SetSpectrum(nil);
   if Assigned(FrameGridMemory) then begin
+    FrameGridMemory.OnRunStop := nil;
     FrameGridMemory.Grid.OnEditBreakPoints := nil;
     FreeAndNil(FrameGridMemory);
   end;
@@ -189,6 +191,11 @@ begin
           JObj.Free;
         end;
 
+end;
+
+procedure TFormDebug.SetOnDebuggerRunStop(AValue: TNotifyEvent);
+begin
+  FrameGridMemory.OnRunStop := AValue;
 end;
 
 procedure TFormDebug.FormFirstShow(Sender: TObject);
@@ -309,11 +316,6 @@ end;
 function TFormDebug.GetActive(): Boolean;
 begin
   Result := Panel3.Enabled;
-end;
-
-procedure TFormDebug.SetOnToggleActiveRequest(const AValue: TNotifyEvent);
-begin
-  FrameGridMemory.OnToggleActiveRequest := AValue;
 end;
 
 end.

@@ -373,7 +373,6 @@ object FrameGridMemory: TFrameGridMemory
           BorderSpacing.Left = 5
           Caption = 'Stop'
           TabOrder = 0
-          OnClick = ButtonRunStopClick
         end
       end
     end
