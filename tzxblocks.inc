@@ -18,7 +18,7 @@
 {$i tzxblock19.inc} // Generalized Data Block
 {$i tzxblock20.inc} // Pause (silence) or 'Stop the Tape' command
 {$i tzxblock21.inc} // Group start
-{$i tzxblock22.inc} // Grop end
+{$i tzxblock22.inc} // Group end
 {$i tzxblock23.inc} // Jump to block
 {$i tzxblock24.inc} // Loop start
 {$i tzxblock25.inc} // Loop end
