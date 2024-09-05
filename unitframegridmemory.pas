@@ -46,7 +46,6 @@ type
     procedure ButtonStepClick(Sender: TObject);
   private
     const
-      cSectionFollowPC: RawByteString = 'follow_pc';
       cSectionHexFormat: RawByteString = 'hex_format';
       cSectionNumBase: RawByteString = 'num_base';
       cSectionDisplayRelativeJumpOffsetAsAbsolute: RawByteString =
@@ -370,13 +369,6 @@ begin
 
   JObj := TJSONObject.Create;
   try
-    if FGrid.FollowPc then
-      N := 1
-    else
-      N := 0;
-
-    JObj.Add(cSectionFollowPC, N);
-
     D := GetDisassembler;
     if Assigned(D) then begin
       WriteStr(S, D.NumDisplay);
@@ -409,7 +401,6 @@ var
 
 begin
   if Assigned(JSONObj) then begin
-    FGrid.FollowPc := JSONObj.Get(cSectionFollowPC, Integer(1)) <> 0;
     D := GetDisassembler;
     if Assigned(D) then begin
       S := '';
