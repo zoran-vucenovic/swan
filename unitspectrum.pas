@@ -125,6 +125,7 @@ type
     FOnEndRun: TThreadMethod;
     StepInFormDebug: Boolean;
     FFrameCount: Int64;
+    FSumFrameCount: Int64;
     FIntPinUpCount: Int16Fast;
     FLatestTickUpdatedSoundBuffer: Int64;
     FRestoringSpectrumModel: Boolean;
@@ -202,6 +203,7 @@ type
     function IsRunning: Boolean;
     function GetProcessor: TProcessor;
     function GetFrameCount: Int64;
+    function GetTotalFrameCount: Int64;
     procedure DrawToCanvas(const ACanvas: TCanvas; const R: TRect); inline;
     function GetBgraColours: TBGRAColours;
     function IsIssue2: Boolean;
@@ -671,6 +673,8 @@ begin
   FOnResetSpectrum := nil;
 
   FSumTicks := 0;
+  FFrameCount := 0;
+  FSumFrameCount := 0;
   ResetSpectrum;
 
   FPaused := False;
@@ -990,6 +994,7 @@ begin
   FPagingEnabled := FIs128KModel;
   FProcessor.ContendedHighBank := False;
 
+  FSumFrameCount := GetTotalFrameCount;
   FFrameCount := 0;
   InitTimes;
   KeyBoard.ClearKeyboard;
@@ -1016,6 +1021,11 @@ end;
 function TSpectrum.GetFrameCount: Int64;
 begin
   Result := FFrameCount;
+end;
+
+function TSpectrum.GetTotalFrameCount: Int64;
+begin
+  Result := FSumFrameCount + FFrameCount;
 end;
 
 procedure TSpectrum.DrawToCanvas(const ACanvas: TCanvas; const R: TRect);

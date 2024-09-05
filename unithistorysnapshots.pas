@@ -48,10 +48,10 @@ type
     property KeyGoBack: Word read FKeyGoBack write FKeyGoBack;
   end;
 
-  TSnapshotHistoryQueue = class
+  TSnapshotHistoryQueue = class(TObject)
   strict private
     type
-      TSnapshotsHistoryElement = class
+      TSnapshotsHistoryElement = class(TObject)
       private
       public
         Stream: TStream;
@@ -67,12 +67,15 @@ type
     Last: TSnapshotsHistoryElement;
     FSavePeriod: Integer;
     FSpectrum: TSpectrum;
-    FramesPassed: Integer; // frames since last save
+
+    FramesToSaveSnap: Int64;
+    FramesLastSavedSnap: Int64;
     FramesDelay: Integer; // when going back, skip the last, go to previous snapshot
     FMaxNumberOfSnapshotsInMemory: Integer;
     FSnap: TSnapshotInternalSwan;
     FCount: Integer;
 
+    procedure ResetFramesPassed(); inline;
     function GetSnap(): TSnapshotInternalSwan;
     procedure SetSavePeriod(AValue: Integer);
     procedure SetMaxNumberOfSnapshotsInMemory(const AValue: Integer);
@@ -81,7 +84,6 @@ type
     function GetElement(NegativeOffset: Integer): TSnapshotsHistoryElement;
 
   public
-
     constructor Create;
     destructor Destroy; override;
 
@@ -100,6 +102,8 @@ implementation
 
 constructor TSnapshotHistoryQueue.TSnapshotsHistoryElement.Create;
 begin
+  inherited Create;
+
   Stream := TMemoryStream.Create;
   Next := nil;
   Prev := nil;
@@ -190,6 +194,12 @@ end;
 
 { TSnapshotHistoryQueue }
 
+procedure TSnapshotHistoryQueue.ResetFramesPassed();
+begin
+  FramesLastSavedSnap := FSpectrum.GetTotalFrameCount;
+  FramesToSaveSnap := FramesLastSavedSnap + FSavePeriod;
+end;
+
 function TSnapshotHistoryQueue.GetSnap: TSnapshotInternalSwan;
 begin
   if FSnap = nil then begin
@@ -239,15 +249,17 @@ var
   Element: TSnapshotsHistoryElement;
 
 begin
-  if (NegativeOffset = 0) and (FramesPassed < FramesDelay) and CheckDelay then begin
-    if LoadSnapshot(-1, False) then
-      Exit(True);
+  if (NegativeOffset = 0) and CheckDelay then begin
+    if FSpectrum.GetTotalFrameCount() < (FramesLastSavedSnap + FramesDelay) then
+      if LoadSnapshot(-1, False) then
+        Exit(True);
   end;
 
   Element := GetElement(NegativeOffset);
   if Assigned(Element) and Assigned(Element.Stream) then begin
     if GetSnap.LoadFromStream(Element.Stream) then begin
-      FramesPassed := 0;
+      ResetFramesPassed();
+
       Last := Element;
       FCount := FCount + NegativeOffset;
       Exit(True);
@@ -305,20 +317,21 @@ end;
 
 procedure TSnapshotHistoryQueue.CheckSaveHistorySnapshot;
 begin
-  Inc(FramesPassed);
-  if FramesPassed >= FSavePeriod then begin
-    FramesPassed := 0;
+  if FSpectrum.GetTotalFrameCount() >= FramesToSaveSnap then begin
+    ResetFramesPassed();
     SaveSnapshot;
   end;
 end;
 
 constructor TSnapshotHistoryQueue.Create;
 begin
+  inherited Create;
+
   FSnap := nil;
   First := nil;
   Last := nil;
   FSpectrum := nil;
-  FramesPassed := 0;
+
   FCount := 0;
   FMaxNumberOfSnapshotsInMemory := TSnapshotHistoryOptions.DefMaxNumberOfSnapshotsInMemory;
 
@@ -351,10 +364,11 @@ procedure TSnapshotHistoryQueue.SetSpectrum(const ASpectrum: TSpectrum);
 begin
   if FSpectrum <> ASpectrum then begin
     FSpectrum := ASpectrum;
-        
-    FramesPassed := 0;
-    if Assigned(ASpectrum) then
+
+    if Assigned(ASpectrum) then begin
+      ResetFramesPassed();
       SaveSnapshot();
+    end;
 
   end;
 end;

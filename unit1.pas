@@ -2911,8 +2911,7 @@ begin
   end;
 
   if Assigned(HistoryQueue) then
-    if not Spectrum.Paused then
-      HistoryQueue.CheckSaveHistorySnapshot;
+    HistoryQueue.CheckSaveHistorySnapshot;
 end;
 
 procedure TForm1.SpectrumEndRun;
