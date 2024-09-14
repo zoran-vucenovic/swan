@@ -249,6 +249,7 @@ type
     FInitiallyHideToolBar: Boolean;
     FDontAskPortAudioPath: Boolean;
 
+    procedure ClearKeyboardAndJoystickState; inline;
     procedure SpectrumOnChangeModel();
     class function SpectrumOnGetDebuggerClass(): TSpectrum.TAbstractDebuggerClass; static;
     procedure DoShowDebuggerForm; inline;
@@ -403,6 +404,13 @@ implementation
 
 { TForm1 }
 
+procedure TForm1.ClearKeyboardAndJoystickState;
+begin
+  KeyEventCount := 0;
+  Spectrum.KeyBoard.ClearKeyboard;
+  TJoystick.Joystick.ResetState;
+end;
+
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   FAutoShowTapePlayerWhenTapeLoaded := True;
@@ -497,9 +505,7 @@ end;
 
 procedure TForm1.FormDeactivate(Sender: TObject);
 begin
-  KeyEventCount := 0;
-  Spectrum.KeyBoard.ClearKeyboard;
-  TJoystick.Joystick.ResetState;
+  ClearKeyboardAndJoystickState;
 end;
 
 procedure TForm1.ActionExitExecute(Sender: TObject);
@@ -577,9 +583,7 @@ begin
   if Sender <> Spectrum then begin
     AddEventToQueue(@ActionEnableJoystickExecute);
   end else begin
-    KeyEventCount := 0;
-    Spectrum.KeyBoard.ClearKeyboard;
-    TJoystick.Joystick.ResetState;
+    ClearKeyboardAndJoystickState;
     TJoystick.Joystick.Enabled := not TJoystick.Joystick.Enabled;
     UpdateShowCurrentlyActiveJoystick;
   end;
@@ -707,9 +711,7 @@ begin
     try
       Spectrum.Paused := True;
 
-      KeyEventCount := 0;
-      Spectrum.KeyBoard.ClearKeyboard;
-      TJoystick.Joystick.ResetState;
+      ClearKeyboardAndJoystickState;
 
       TJoystick.Joystick.GetKeys(AKeys);
       JoystickType := TJoystick.Joystick.JoystickType;
@@ -740,9 +742,7 @@ begin
       if TFrameKeyMappings.ShowFormKeyMappings() then begin
         Spectrum.KeyBoard.LoadFromKeyMappings;
       end;
-      KeyEventCount := 0;
-      Spectrum.KeyBoard.ClearKeyboard;
-      TJoystick.Joystick.ResetState;
+      ClearKeyboardAndJoystickState;
     finally
       Spectrum.Paused := WasPaused;
     end;
@@ -1688,9 +1688,7 @@ begin
   try
     Spectrum.Paused := True;
 
-    KeyEventCount := 0;
-    Spectrum.KeyBoard.ClearKeyboard;
-    TJoystick.Joystick.ResetState;
+    ClearKeyboardAndJoystickState;
 
     OptionsDialog := TFormOptions.CreateOptionsDialog([]);
     if Assigned(OptionsDialog) then
@@ -3148,8 +3146,7 @@ begin
       FKeyboardOnScreen.OnKeyDown := nil;
       FKeyboardOnScreen.OnDeactivate := nil;
       FKeyboardOnScreen := nil;
-      Spectrum.KeyBoard.ClearKeyboard;
-      TJoystick.Joystick.ResetState;
+      ClearKeyboardAndJoystickState;
       UpdateCheckShowKeyboard;
     end else if AComponent = FSoundVolumeForm then begin
       FSoundVolumeForm := nil;
