@@ -176,7 +176,7 @@ begin
   Grid.ParentFont := False;
 
   Grid.Font.Style := Grid.Font.Style + [fsBold];
-  
+
   FD := GetFontData(Self.Font.Reference.Handle);
   FontHeight := MulDiv(FD.Height, 6, 5);
   if Abs(FontHeight) < 10 then

@@ -105,7 +105,7 @@ begin
 end;
 
 procedure {TTzxPlayer.}TTzxBlockPause.Start;
-begin                
+begin
   inherited Start;
   State := TPlayState.psStart;
 

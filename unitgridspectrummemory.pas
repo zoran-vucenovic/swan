@@ -138,7 +138,7 @@ begin
     if aRow = FPc then begin
       if aRow <> FSp then begin
         DrawBmp(BmpPC, aRect);
-      end else begin 
+      end else begin
         Re := aRect;
         DrawBmp(BmpSP, Re);
         Re.Offset(-BmpSP.Width, 0);

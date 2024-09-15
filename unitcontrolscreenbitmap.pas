@@ -86,7 +86,7 @@ begin
         M := (Y shl 3) or J;
         ScreenPixel := SpectrumColoursBGRA.Bmp.ScanLine[M] + N;
         By := (PScreenStart + W)^;
-                              
+
         Spx := ScreenPixel;
         LastPass := BmpFlash = nil;
         repeat

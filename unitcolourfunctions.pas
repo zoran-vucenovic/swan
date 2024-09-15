@@ -19,7 +19,7 @@ type
     class function HSLToRGB(H, S, L: Double): TColor; static;
   public
     type
-      EBadColourException = class(Exception);                
+      EBadColourException = class(Exception);
   public
     class function MakeLighterColour(C: TColor; Coef: Double): TColor; static;
   end;

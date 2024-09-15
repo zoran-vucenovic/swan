@@ -146,6 +146,7 @@ var
 begin
   Result := FBreakpoints.Find(FSpectrum.GetProcessor.RegPC, N);
 end;
+
 procedure TDebugger.AddBreakpoint(Addr: Word; ABkpointCond: TBreakpointCondition
   );
 begin

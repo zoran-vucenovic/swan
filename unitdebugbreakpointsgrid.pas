@@ -83,7 +83,7 @@ begin
   inherited DrawCell(aCol, aRow, aRect, aState);
 
   if (aRow >= FixedRows) and (aCol >= FixedCols) then begin
-    
+
     if aState * [gdSelected, gdFocused] <> [] then begin
       Re := Rect(aRect.Left + 1, aRect.Top + 1, aRect.Right - 2, aRect.Bottom - 2);
       Canvas.Pen.Color := GridLineColor;

@@ -305,7 +305,7 @@ begin
             SnapshotControl.Parent := ScrollBox;
             Application.AddOnUserInputHandler(@(SnapshotControl.UserInputEvent));
           end;
-        end;     
+        end;
         Inc(N);
       end;
     end;
@@ -366,7 +366,7 @@ begin
     if PrevCtrl is TSnapshotControl then
       TSnapshotControl(PrevCtrl).LastSelected := False;
     SC.LastSelected := True;
-    PrevCtrl := SC;            
+    PrevCtrl := SC;
     ScrollBox.ScrollInView(SC);
     ScrollBox.Invalidate;
   end;

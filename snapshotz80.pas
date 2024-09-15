@@ -496,7 +496,7 @@ var
 
 begin
   Result := False;
-  
+
   if Stream = nil then
     Exit;
   if FSpectrum = nil then

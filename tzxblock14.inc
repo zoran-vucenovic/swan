@@ -65,7 +65,7 @@ begin
                         UsedBitsInLastByte := 8;
                       end else
                         UsedBitsInLastByte := B;
-                      
+
                       if L > 0 then begin
                         PEnd := Data + (L - 1);
                         Result := True;

@@ -213,7 +213,7 @@ var
   ErrStr: String;
 
   function InError(const AErr: PortAudioHeader.TPaError): Boolean;
-  begin        
+  begin
     Err := AErr;
     if AErr >= 0 then
       Exit(False);

@@ -422,7 +422,7 @@ begin
     Bank2 := nil;
     FRamBanks[0] := nil;
   end;
-  
+
   FRamBanks[2] := Bank2;
   FRamBanks[5] := Bank5;
 

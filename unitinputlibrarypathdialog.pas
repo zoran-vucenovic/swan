@@ -86,7 +86,7 @@ procedure TFrameInputLibraryPath.BitBtn1Click(Sender: TObject);
 begin
   if OpenDialog1.Execute then begin
     Edit1.Text := OpenDialog1.FileName;
-  end;    
+  end;
   OpenDialog1.FileName := ExtractFileName(OpenDialog1.FileName);
 end;
 

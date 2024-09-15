@@ -37,7 +37,7 @@ type
     class property VersionMinor: Word read GetVersionMinor;
     class property VersionRevision: Word read GetVersionRevision;
     class property VersionBuildNumber: Word read GetVersionBuildNumber;
-    class property FullVersion: DWord read GetFullVersion;     
+    class property FullVersion: DWord read GetFullVersion;
     class property FullVersionString: String read GetFullVersionString;
 
     class property VersionString: String read GetVersionString;

@@ -173,7 +173,7 @@ begin
   end;
 end;
 
-class function TConfJSON.SaveToFile(): Boolean;   
+class function TConfJSON.SaveToFile(): Boolean;
 var
   Stream: TStream;
   Mode: Word;

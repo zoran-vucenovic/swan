@@ -156,7 +156,7 @@ begin
 
   if ProcTicks >= TicksNeeded then begin
     // set active bit here
-    case State of  
+    case State of
       TPlayState.psData:
         GetNextDataBit;
       TPlayState.psStart:

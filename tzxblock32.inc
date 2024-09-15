@@ -110,7 +110,7 @@ begin
                   L := L - B;
                 end;
               end;
-            end;    
+            end;
             Exit(True);
           end;
         end;

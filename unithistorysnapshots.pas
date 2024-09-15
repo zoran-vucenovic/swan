@@ -62,7 +62,7 @@ type
         destructor Destroy; override;
       end;
 
-  strict private             
+  strict private
     First: TSnapshotsHistoryElement;
     Last: TSnapshotsHistoryElement;
     FSavePeriod: Integer;

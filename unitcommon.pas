@@ -203,7 +203,7 @@ begin
 end;
 
 class procedure TCommonFunctions.ConvertCodePageFromCp1252ToUtf8(var S: AnsiString);
-begin                      
+begin
 // https://docs.microsoft.com/en-us/windows/win32/intl/code-page-identifiers
   SetCodePage(RawByteString(S), 1252, False); // set to cp1252
   SetCodePage(RawByteString(S), CP_UTF8, True); // convert

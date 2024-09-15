@@ -5,7 +5,7 @@
 {
   Tzx blocks specification: https://worldofspectrum.net/TZXformat.html
 }
-                               
+
 {$i tzxblockStandard.inc}
 {$i tzxblock11abstract.inc}
 {$i tzxblock10.inc} // Standard Speed Data Block

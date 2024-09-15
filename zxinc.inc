@@ -1,7 +1,7 @@
 
 // Copyright 2022-2024 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
-                               
+
 {$ModeSwitch advancedrecords}
 {$J-}
 {$interfaces corba}

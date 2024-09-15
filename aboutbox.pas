@@ -241,7 +241,7 @@ begin
     Label1.Font.Height := FontHeight;
 
     Label2.Font.SetDefault;
-    Label3.Font := Label2.Font;      
+    Label3.Font := Label2.Font;
     Label7.Font := Label2.Font;
     FontHeight := MulDiv(FD.Height, 6, 5);
     if Abs(FontHeight) < 10 then

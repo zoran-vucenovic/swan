@@ -153,7 +153,7 @@ begin
 
     BP.Parent := Panel1;
   end;
-                      
+
   C.Parent := Panel1;
   CloseQueryList := nil;
 

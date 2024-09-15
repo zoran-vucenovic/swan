@@ -46,7 +46,7 @@ const
   // So:
   TicksBeforePause = Int64(945);
 
-type                          
+type
 
   TTzxPlayer = class(TTapePlayer)
   strict private
@@ -338,7 +338,7 @@ var
     LoopRec: ^TLoopRec;
     N: Integer;
     EL: Integer;
-  begin 
+  begin
     if BL.CheckLoopEnd then begin
       // Loop end
       if FLoopArrayCount > 0 then begin

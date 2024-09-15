@@ -5,7 +5,7 @@
 {$ifdef tzx_header_section}
 
 TTzxBlock2A = class (TTzxBlockStandard)
-strict protected                                                   
+strict protected
   function Load2(const {%H-}Stream: TStream; {%H-}L: Integer): Boolean; override;
 public
   class function GetBlockId: DWord; override;

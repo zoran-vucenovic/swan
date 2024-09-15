@@ -101,7 +101,7 @@ type
       end;
   strict private
     Pulses: Array of TPulse;
-    
+
     TicksNeeded: Int64;
     CurrentPulseNumber: Integer;
     RepeatCount: Integer;
@@ -642,7 +642,7 @@ var
     end;
 
     Result := False;
-  end;                              
+  end;
 
 var
   Pulse: TPulse;
@@ -724,7 +724,7 @@ begin
       FTapePlayer.ActiveBit := 0;
       State := ppsPlaying;
     end;
-    
+
     Dec(RepeatCount);
     if RepeatCount <= 0 then begin
       repeat
@@ -733,7 +733,7 @@ begin
           State := ppsFinished;
           Break;
         end;
-        Duration := Pulses[CurrentPulseNumber].Duration; 
+        Duration := Pulses[CurrentPulseNumber].Duration;
         RepeatCount := Pulses[CurrentPulseNumber].RepeatCount;
         if Duration > 0 then begin
           AdjustTicksIfNeeded(Duration);

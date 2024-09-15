@@ -321,7 +321,7 @@ end;
 procedure InitBlackWhiteColours;
 var
   Cl: TLCLColourMap absolute FBlackWhiteSpectrumColours;
-begin                
+begin
   Cl.Name := 'Black and white';
   ConvertToBW(FDefaultLCLColoursD7.Colours, Cl.Colours);
 end;

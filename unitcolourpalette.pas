@@ -52,7 +52,7 @@ type
         procedure MouseLeave; override;
       public
         constructor Create(AOwner: TComponent); override;
-        procedure Paint; override;            
+        procedure Paint; override;
         property ParentColor default False;
         property Color nodefault;
       end;

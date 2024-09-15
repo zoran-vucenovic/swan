@@ -178,7 +178,7 @@ const
   {$else}
     {$fatal OS not supported!}
   {$endif}
-                    
+
 {$ifdef mswindows}
 var
   Ext: String;
@@ -198,7 +198,7 @@ var
 {$endif}
 
 begin
-  if LoadCount = 0 then begin   
+  if LoadCount = 0 then begin
     Result := False;
     if Trim(LibraryPath) = '' then begin
       LibHandle := SafeLoadLibrary(DefaultLibraryName);

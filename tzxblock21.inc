@@ -49,7 +49,7 @@ begin
     if Stream.Read(B{%H-}, 1) = 1 then begin
       if Stream.Size - Stream.Position >= B then begin
         Result := B = 0;
-        FLen := 1 + B;            
+        FLen := 1 + B;
         SetLength(GroupName, B);
         if not Result then begin
           if Stream.Read(GroupName[1], B) = B then begin

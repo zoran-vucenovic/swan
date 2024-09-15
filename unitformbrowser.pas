@@ -115,7 +115,7 @@ begin
 end;
 
 { TFormBrowseTape }
-  
+
 procedure TFormBrowseTape.UpdateCurrentBlockNumber(
   const UncoditionallyPositionGrid: Boolean);
 begin
@@ -190,7 +190,7 @@ begin
     end else begin
       Grid.Canvas.Brush.Color := Grid.Color;
     end;
-    
+
     Grid.Canvas.FillRect(aRect);
 
     if aState * [gdSelected, gdFocused] <> [] then begin

@@ -83,7 +83,7 @@ begin
 
         TB := TSwanToolButton.Create(Self);
         TB.Style := tbsButton;
-        TB.Action := AActions[I];    
+        TB.Action := AActions[I];
         if AActions[I].Hint = '' then
           TB.Hint := AActions[I].Caption;
 
@@ -148,11 +148,11 @@ begin
       if Assigned(A) then begin
 
         SB := TSwanSpeedButton.Create(Self);
-                                            
+
         SB.Images := FImages;
         SB.Anchors := [];
         SB.AnchorParallel(akTop, 0, Self);
-                       
+
         if PrevSB = nil then begin
           if Assigned(FImages) then begin
             J := 0;

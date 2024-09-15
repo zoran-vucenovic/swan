@@ -1003,7 +1003,7 @@ begin
 end;
 
 procedure TForm1.ActionSpeedDecreaseExecute(Sender: TObject);
-begin                        
+begin
   if Sender <> Spectrum then begin
     AddEventToQueue(@ActionSpeedDecreaseExecute);
   end else begin
@@ -2130,7 +2130,7 @@ var
 begin
   if Spectrum.IsRunning then begin
     WasPaused := Spectrum.Paused;
-    try                          
+    try
       Spectrum.Paused := True;
       Extension := SnapshotClass.GetDefaultExtension;
       if not Extension.StartsWith(ExtensionSeparator, True) then

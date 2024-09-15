@@ -397,7 +397,7 @@ begin
   Shape.Width := 1;
   Shape.Height := 1;
   Shape.Pen.Color := clSkyBlue;
-                                                     
+
   Lab := TLabel.Create(C);
   Lab.ShowAccelChar := False;
 

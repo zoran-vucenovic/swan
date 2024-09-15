@@ -249,7 +249,7 @@ begin
   SetOnChangeBlock(nil);
   FSpectrum := nil;
 end;
-  
+
 procedure TTapePlayer.StartBlock(BlockNumber: Integer);
 begin
   if (BlockNumber < 0) then
