@@ -203,7 +203,7 @@ end;
 
 function TSpectrumMemoryGrid.MouseButtonAllowed(Button: TMouseButton): boolean;
 begin
-  Result := TCommonFunctionsLCL.GridMouseButtonAllowed(Self, Button);
+  Result := Button in [mbLeft, mbRight, mbMiddle];
 end;
 
 function TSpectrumMemoryGrid.GetCells(ACol, ARow: Integer): string;
@@ -316,8 +316,6 @@ begin
         end;
     end;
   end;
-
-  AllowOutboundEvents := False;
 
   CreateBmps();
   ColWidths[0] := BmpSP.Width + BmpPC.Width + BmpBk.Width + 6;
