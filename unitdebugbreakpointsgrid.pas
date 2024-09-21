@@ -13,7 +13,7 @@ uses
 
 
 type
-  TGridBreakpoints = class(TDrawGrid)
+  TGridBreakpoints = class(TCustomDrawGrid)
   private
     FDebugger: TDebugger;
 
