@@ -12,8 +12,8 @@ uses
   Interfaces, // this includes the LCL widgetset
   Forms,
   UnitInit, // keep this at the top (above other our units; rtl, fcl and lcl units can be above, of course)
-  UnitFrameWordDisplay, UnitSnapshotFiles, UnitSpectrumKeyboard,
-  unit1, UnitSpectrum, UnitVer, UnitConfigs, UnitTzxPlayer, UnitFormBrowser,
+  UnitFrameWordDisplay, UnitSnapshotFiles, UnitSpectrumKeyboard, unit1,
+  UnitSpectrum, UnitVer, UnitConfigs, UnitTzxPlayer, UnitFormBrowser,
   UnitColourPalette, UnitSpectrumColourMap, UnitKeyMaps,
   UnitSpectrumColoursBGRA, UnitKeyMapRecords, UnitFrameOneKeyMap,
   UnitSpectrumKeysDialog, UnitFormPressAKey, UnitCommon, UnitCommonSpectrum,
@@ -29,7 +29,8 @@ uses
   UnitRomPaths, UnitSwanToolbar, UnitFrameSoundVolume, UnitFormChooseString,
   UnitCSW, UnitDisassembler, UnitDlgStartAdress, UnitGridSpectrumMemory,
   UnitFormDebug, UnitFrameGridMemory, UnitDebugCpuState, UnitDebugger,
-  UnitDebugBreakpointsGrid, UnitFrameBreakpoints;
+  UnitDebugBreakpointsGrid, UnitFrameBreakpoints, UnitFrameToolbarOptions,
+  UnitSwanTreeView;
 
 {$R *.res}
 

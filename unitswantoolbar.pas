@@ -8,7 +8,8 @@ unit UnitSwanToolbar;
 interface
 
 uses
-  Classes, SysUtils, Controls, ActnList, Buttons, ComCtrls, Graphics;
+  Classes, SysUtils, UnitCommon, Controls, ActnList, Buttons, ComCtrls,
+  Graphics, Menus;
 
 type
 
@@ -17,11 +18,18 @@ type
 
   TSwanToolBar = class(TToolBar)
   private
+    FRecentFilesMenuItem: TMenuItem;
+    FRecentFilesToolButton: TSwanToolButton;
+    FSpacers: array of TControl;
+
+    procedure RemoveAllButtons;
   protected
   public
     constructor Create(TheOwner: TComponent); override;
-    procedure AddButtonActions(AActions: Array of TCustomAction);
-    procedure Paint; override;
+    procedure AddButtons(AItems: array of TComponent);
+
+    procedure UpdateRecentFiles();
+    property RecentFilesMenuItem: TMenuItem write FRecentFilesMenuItem;
   end;
 
   TSwanSpeedButtonsBar = class(TCustomControl)
@@ -58,6 +66,9 @@ constructor TSwanToolBar.Create(TheOwner: TComponent);
 begin
   inherited Create(TheOwner);
 
+  SetLength(FSpacers, 0);
+  FRecentFilesMenuItem := nil;
+  FRecentFilesToolButton := nil;
   Align := alNone;
   Flat := True;
   ShowHint := True;
@@ -65,45 +76,152 @@ begin
   ShowCaptions := False;
 end;
 
-procedure TSwanToolBar.AddButtonActions(AActions: array of TCustomAction);
+procedure TSwanToolBar.AddButtons(AItems: array of TComponent);
 var
-  C: TControl;
-  TB: TSwanToolButton;
   I: Integer;
+  TB: TSwanToolButton;
+  C: TControl;
+  Cm: TComponent;
+  Ac: TCustomAction;
+  Mi: TMenuItem;
+  J: Integer;
+  M: TMenuItem;
+  II: Integer;
 
 begin
   DisableAlign;
   try
-    for I := Low(AActions) to High(AActions) do begin
-      if AActions[I] = nil then begin
+    RemoveAllButtons;
+    J := 0;
+    for I := Low(AItems) to High(AItems) do begin
+      Cm := AItems[I];
+      if Cm = nil then begin
         C := TCustomControl.Create(Self);
+        C.Name := TCommonFunctions.GlobalObjectNameGenerator(C);
         C.Width := Self.ButtonWidth div 4;
+        C.Height := 1;
         C.Constraints.MinWidth := C.Width;
+        C.AutoSize := False;
+        C.Parent := Self;
+
+        if Length(FSpacers) <= J then
+          SetLength(FSpacers, J * 5 div 3 + 2);
+        FSpacers[J] := C;
+        Inc(J);
+
       end else begin
+        Ac := nil;
+        Mi := nil;
+        if Cm is TCustomAction then begin
+          TB := TSwanToolButton.Create(Self);
+          TB.Name := TCommonFunctions.GlobalObjectNameGenerator(TB);
+          Ac := TCustomAction(Cm);
+        end else if Cm is TMenuItem then begin
+          TB := TSwanToolButton.Create(Self);
+          TB.Name := TCommonFunctions.GlobalObjectNameGenerator(TB);
+          Mi := TMenuItem(Cm);
+          if Mi.Action is TCustomAction then begin
+            Ac := TCustomAction(Mi.Action);
 
-        TB := TSwanToolButton.Create(Self);
-        TB.Style := tbsButton;
-        TB.Action := AActions[I];
-        if AActions[I].Hint = '' then
-          TB.Hint := AActions[I].Caption;
+          end else begin
+            TB.Style := tbsButtonDrop;
+            TB.ImageIndex := Mi.ImageIndex;
+            TB.Caption := Mi.Caption;
+            TB.Hint := Mi.Hint;
 
-        C := TB;
+            if Mi = FRecentFilesMenuItem then begin
+              FRecentFilesToolButton := TB;
+            end else begin
+
+              if Mi.Count > 0 then begin
+                TB.DropdownMenu := TPopupMenu.Create(TB);
+                TB.DropdownMenu.Name := TCommonFunctions.GlobalObjectNameGenerator(TB.DropdownMenu);
+                TB.DropdownMenu.Images := Mi.GetImageList;
+                for II := 0 to Mi.Count - 1 do begin
+                  M := TMenuItem.Create(TB.DropdownMenu);
+                  M.Name := TCommonFunctions.GlobalObjectNameGenerator(M);
+                  M.Action := Mi.Items[II].Action;
+                  TB.DropdownMenu.Items.Add(M);
+                end;
+              end;
+
+              TB.Enabled := Mi.Enabled;
+            end;
+
+          end;
+        end;
+        if Assigned(TB) then begin
+
+          if Assigned(Ac) then begin
+            TB.Style := tbsButton;
+            TB.Action := Ac;
+          end;
+
+          if TB.Hint = '' then
+            TB.Hint := TB.Caption;
+
+          TB.AutoSize := True;
+          TB.Parent := Self;
+        end;
       end;
-      C.Parent := Self;
+    end;
+    SetLength(FSpacers, J);
+    UpdateRecentFiles;
 
-      C.AutoSize := True;
+  finally
+    EnableAlign;
+  end;
+end;
+
+procedure TSwanToolBar.RemoveAllButtons;
+var
+  I: Integer;
+begin
+  DisableAlign;
+  try
+    FRecentFilesToolButton := nil;
+
+    for I := Low(FSpacers) to High(FSpacers) do
+      FSpacers[I].Free;
+    SetLength(FSpacers, 0);
+    for I := Self.ButtonCount - 1 downto 0 do begin
+      Self.Buttons[I].Free;
     end;
 
   finally
     EnableAlign;
   end;
-
 end;
 
-procedure TSwanToolBar.Paint;
+procedure TSwanToolBar.UpdateRecentFiles;
+var
+  I: Integer;
+  M: TMenuItem;
 begin
+  if Assigned(FRecentFilesToolButton) and Assigned(FRecentFilesMenuItem) then begin
+    if FRecentFilesMenuItem.Count > 0 then begin
+      if FRecentFilesToolButton.DropdownMenu = nil then begin
+        FRecentFilesToolButton.DropdownMenu := TPopupMenu.Create(FRecentFilesToolButton);
+        FRecentFilesToolButton.DropdownMenu.Name := TCommonFunctions.GlobalObjectNameGenerator(FRecentFilesToolButton.DropdownMenu);
+        FRecentFilesToolButton.DropdownMenu.Images := Self.Images;
+      end;
 
-  inherited Paint;
+      FRecentFilesToolButton.DropdownMenu.Items.Clear;
+      for I := 0 to FRecentFilesMenuItem.Count - 1 do begin
+        M := TMenuItem.Create(FRecentFilesToolButton.DropdownMenu);
+        M.Name := TCommonFunctions.GlobalObjectNameGenerator(M);
+        M.Caption := FRecentFilesMenuItem.Items[I].Caption;
+        M.ImageIndex := FRecentFilesMenuItem[I].ImageIndex;
+        M.OnClick := FRecentFilesMenuItem.Items[I].OnClick;
+        FRecentFilesToolButton.DropdownMenu.Items.Add(M);
+      end;
+    end else begin
+      FRecentFilesToolButton.DropdownMenu.Free;
+      FRecentFilesToolButton.DropdownMenu := nil;
+    end;
+
+    FRecentFilesToolButton.Enabled := FRecentFilesMenuItem.Enabled;
+  end;
 end;
 
 { TSwanSpeedButtonsBar }

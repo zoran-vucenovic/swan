@@ -1,0 +1,225 @@
+object FrameToobarOptions: TFrameToobarOptions
+  Left = 0
+  Height = 580
+  Top = 0
+  Width = 473
+  ClientHeight = 580
+  ClientWidth = 473
+  TabOrder = 0
+  DesignLeft = 295
+  DesignTop = 114
+  object Panel1: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Panel4
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 0
+    Height = 556
+    Top = 24
+    Width = 473
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BevelOuter = bvNone
+    ClientHeight = 556
+    ClientWidth = 473
+    TabOrder = 0
+    object PanelAll: TPanel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel1
+      AnchorSideRight.Control = Splitter1
+      AnchorSideBottom.Control = Panel1
+      AnchorSideBottom.Side = asrBottom
+      Left = 0
+      Height = 556
+      Top = 0
+      Width = 171
+      Anchors = [akTop, akLeft, akRight, akBottom]
+      BevelOuter = bvNone
+      TabOrder = 0
+    end
+    object PanelSelected: TPanel
+      AnchorSideLeft.Control = Panel2
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Panel1
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      AnchorSideBottom.Control = Panel1
+      AnchorSideBottom.Side = asrBottom
+      Left = 302
+      Height = 556
+      Top = 0
+      Width = 171
+      Anchors = [akTop, akLeft, akRight, akBottom]
+      BevelOuter = bvNone
+      TabOrder = 3
+    end
+    object Splitter1: TSplitter
+      AnchorSideTop.Control = Panel1
+      AnchorSideRight.Control = Panel2
+      AnchorSideBottom.Control = Panel1
+      AnchorSideBottom.Side = asrBottom
+      Left = 171
+      Height = 556
+      Top = 0
+      Width = 5
+      Align = alNone
+      Anchors = [akTop, akRight, akBottom]
+    end
+    object Panel2: TPanel
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideTop.Control = Panel1
+      AnchorSideBottom.Control = Panel1
+      AnchorSideBottom.Side = asrBottom
+      Left = 176
+      Height = 556
+      Top = 0
+      Width = 126
+      Anchors = [akTop, akBottom]
+      AutoSize = True
+      BevelOuter = bvNone
+      BorderStyle = bsSingle
+      ClientHeight = 552
+      ClientWidth = 122
+      TabOrder = 1
+      object Panel3: TPanel
+        AnchorSideLeft.Control = Panel2
+        AnchorSideTop.Control = Panel2
+        Left = 0
+        Height = 207
+        Top = 54
+        Width = 122
+        AutoSize = True
+        BorderSpacing.Top = 54
+        BevelOuter = bvNone
+        ClientHeight = 207
+        ClientWidth = 122
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 0
+        object BitBtn1: TBitBtn
+          AnchorSideLeft.Control = Panel3
+          AnchorSideTop.Control = Panel3
+          Left = 0
+          Height = 45
+          Top = 0
+          Width = 83
+          Action = ActionAdd
+          AutoSize = True
+          GlyphShowMode = gsmAlways
+          Layout = blGlyphTop
+          Images = DataModuleImages.ImageList2
+          ImageIndex = 0
+          TabOrder = 0
+        end
+        object BitBtn2: TBitBtn
+          AnchorSideLeft.Control = Panel3
+          AnchorSideTop.Control = BitBtn1
+          AnchorSideTop.Side = asrBottom
+          Left = 0
+          Height = 45
+          Top = 54
+          Width = 104
+          Action = ActionRemove
+          AutoSize = True
+          BorderSpacing.Top = 9
+          GlyphShowMode = gsmAlways
+          Layout = blGlyphTop
+          Images = DataModuleImages.ImageList2
+          ImageIndex = 1
+          TabOrder = 1
+        end
+        object BitBtn3: TBitBtn
+          AnchorSideLeft.Control = Panel3
+          AnchorSideTop.Control = BitBtn2
+          AnchorSideTop.Side = asrBottom
+          Left = 0
+          Height = 45
+          Top = 108
+          Width = 106
+          Action = ActionMoveUp
+          AutoSize = True
+          BorderSpacing.Top = 9
+          GlyphShowMode = gsmAlways
+          Layout = blGlyphTop
+          Images = DataModuleImages.ImageList2
+          ImageIndex = 2
+          TabOrder = 2
+        end
+        object BitBtn4: TBitBtn
+          AnchorSideLeft.Control = Panel3
+          AnchorSideTop.Control = BitBtn3
+          AnchorSideTop.Side = asrBottom
+          Left = 0
+          Height = 45
+          Top = 162
+          Width = 122
+          Action = ActionMoveDown
+          AutoSize = True
+          BorderSpacing.Top = 9
+          GlyphShowMode = gsmAlways
+          Layout = blGlyphTop
+          Images = DataModuleImages.ImageList2
+          ImageIndex = 3
+          TabOrder = 3
+        end
+      end
+    end
+  end
+  object Panel4: TPanel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 0
+    Height = 24
+    Top = 0
+    Width = 473
+    Anchors = [akTop, akLeft, akRight]
+    AutoSize = True
+    BevelOuter = bvNone
+    ClientHeight = 24
+    ClientWidth = 473
+    TabOrder = 1
+    object CheckBox1: TCheckBox
+      Left = 5
+      Height = 19
+      Top = 5
+      Width = 88
+      BorderSpacing.Left = 5
+      BorderSpacing.Top = 5
+      Caption = 'Show toolbar'
+      TabOrder = 0
+    end
+  end
+  object ActionList1: TActionList
+    Images = DataModuleImages.ImageList2
+    Left = 88
+    Top = 71
+    object ActionRemove: TAction
+      Caption = 'ActionRemove'
+      Hint = 'Remove the selected button from the toolbar'
+      ImageIndex = 1
+      OnExecute = ActionRemoveExecute
+    end
+    object ActionAdd: TAction
+      Caption = 'ActionAdd'
+      Hint = 'Add the selected button to the toolbar'
+      ImageIndex = 0
+      OnExecute = ActionAddExecute
+    end
+    object ActionMoveUp: TAction
+      Caption = 'ActionMoveUp'
+      Hint = 'Move the selected button'
+      ImageIndex = 2
+      OnExecute = ActionMoveUpExecute
+    end
+    object ActionMoveDown: TAction
+      Caption = 'ActionMoveDown'
+      Hint = 'Move the selected button'
+      ImageIndex = 3
+      OnExecute = ActionMoveDownExecute
+    end
+  end
+end

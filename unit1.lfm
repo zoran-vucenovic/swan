@@ -479,6 +479,11 @@ object Form1: TForm1
       Caption = 'Load binary file...'
       OnExecute = ActionLoadBinaryFileExecute
     end
+    object ActionToolbar: TAction
+      Category = 'Options'
+      Caption = 'Toolbar...'
+      OnExecute = ActionToolbarExecute
+    end
   end
   object MainMenu1: TMainMenu
     Images = DataModuleImages.ImageList1
@@ -486,22 +491,22 @@ object Form1: TForm1
     Top = 36
     object MenuItem16: TMenuItem
       Caption = '&File'
-      object MenuItem17: TMenuItem
+      object MenuItemOpen: TMenuItem
         Action = ActionOpen
       end
-      object MenuItem39: TMenuItem
+      object MenuItemSaveSzxSnapshot: TMenuItem
         Action = ActionSaveSzx
       end
-      object MenuItem13: TMenuItem
+      object MenuItemSaveZ80Snapshot: TMenuItem
         Action = ActionSaveZ80
       end
-      object MenuItem18: TMenuItem
+      object MenuItemSaveSnaSnapshot: TMenuItem
         Action = ActionSaveSna
       end
       object Separator4: TMenuItem
         Caption = '-'
       end
-      object MenuItem56: TMenuItem
+      object MenuItemLoadBinaryFile: TMenuItem
         Action = ActionLoadBinaryFile
       end
       object Separator5: TMenuItem
@@ -519,13 +524,13 @@ object Form1: TForm1
     end
     object MenuItem3: TMenuItem
       Caption = '&Emulation'
-      object MenuItem4: TMenuItem
+      object MenuItemPause: TMenuItem
         Action = ActionPause
       end
-      object MenuItem12: TMenuItem
+      object MenuItemResetSpectrum: TMenuItem
         Action = ActionReset
       end
-      object MenuItem41: TMenuItem
+      object MenuItemSignalProcessor: TMenuItem
         Caption = 'Signal processor'
         ImageIndex = 20
         object MenuItem42: TMenuItem
@@ -535,43 +540,43 @@ object Form1: TForm1
           Action = ActionResetCPU
         end
       end
-      object MenuItem5: TMenuItem
+      object MenuItemDecreaseSpeed: TMenuItem
         Action = ActionSpeedDecrease
       end
-      object MenuItem6: TMenuItem
+      object MenuItemIncreaseSpeed: TMenuItem
         Action = ActionSpeedIncrease
       end
-      object MenuItem7: TMenuItem
+      object MenuItemNormalSpeed: TMenuItem
         Action = ActionNormalSpeed
       end
-      object MenuItem8: TMenuItem
+      object MenuItemFullSpeed: TMenuItem
         Action = ActionFullSpeed
       end
     end
     object MenuItem14: TMenuItem
       Caption = '&Options'
-      object MenuItem26: TMenuItem
+      object MenuItemIncreaseSize: TMenuItem
         Action = ActionSizeIncrease
       end
-      object MenuItem27: TMenuItem
+      object MenuItemDecreaseSize: TMenuItem
         Action = ActionSizeDecrease
       end
-      object MenuItem47: TMenuItem
+      object MenuItemOnScreenKeyboard: TMenuItem
         Action = ActionShowKeyboardOnScreen
       end
-      object MenuItem10: TMenuItem
+      object MenuItemKeyMappings: TMenuItem
         Action = ActionKeyMappings
       end
-      object MenuItem15: TMenuItem
+      object MenuItemColourPalette: TMenuItem
         Action = ActionColours
       end
-      object MenuItem36: TMenuItem
+      object MenuItemMuteSound: TMenuItem
         Action = ActionMuteSound
       end
-      object MenuItem37: TMenuItem
+      object MenuItemPortaudioLibraryPath: TMenuItem
         Action = ActionPortAudioLibPath
       end
-      object MenuItem44: TMenuItem
+      object MenuItemSpectrumModel: TMenuItem
         Caption = 'Model'
         ImageIndex = 26
         object MenuItem48: TMenuItem
@@ -599,76 +604,79 @@ object Form1: TForm1
           Action = ActionModelMoreOptions
         end
       end
-      object MenuItem54: TMenuItem
+      object MenuItemLateTimings: TMenuItem
         Action = ActionLateTimings
       end
-      object MenuItem11: TMenuItem
+      object MenuItemJoystick: TMenuItem
         Action = ActionJoystick
       end
-      object MenuItem33: TMenuItem
+      object MenuItemJoystickEnabled: TMenuItem
         Action = ActionEnableJoystick
       end
-      object MenuItem35: TMenuItem
+      object MenuItemFastTapeLoading: TMenuItem
         Action = ActionFastLoading
       end
-      object MenuItem40: TMenuItem
+      object MenuItemAutosavingSnapshots: TMenuItem
         Action = ActionHistorySnapshots
       end
-      object MenuItem38: TMenuItem
+      object MenuItemAutosavingSnapshotsEnabled: TMenuItem
         Action = ActionEnableHistory
       end
-      object MenuItem55: TMenuItem
+      object MenuItemToolbar: TMenuItem
+        Action = ActionToolbar
+      end
+      object MenuItemShowToolbar: TMenuItem
         Action = ActionShowHideToolbar
       end
       object Separator2: TMenuItem
         Caption = '-'
       end
-      object MenuItem50: TMenuItem
+      object MenuItemAllOptions: TMenuItem
         Action = ActionAllOptions
       end
     end
     object MenuItem1: TMenuItem
       Caption = '&Tape'
-      object MenuItem30: TMenuItem
+      object MenuItemShowTapePlayer: TMenuItem
         Action = ActionShowTapePlayer
       end
       object Separator1: TMenuItem
         Caption = '-'
       end
-      object MenuItem2: TMenuItem
+      object MenuItemInsertTape: TMenuItem
         Action = ActionAttachTap
       end
-      object MenuItem34: TMenuItem
+      object MenuItemEjectTape: TMenuItem
         Action = ActionEjectTape
       end
-      object MenuItem25: TMenuItem
+      object MenuItemPlayTape: TMenuItem
         Action = ActionPlay
       end
-      object MenuItem29: TMenuItem
+      object MenuItemStopTape: TMenuItem
         Action = ActionStop
       end
-      object MenuItem28: TMenuItem
+      object MenuItemRewindTape: TMenuItem
         Action = ActionRewind
       end
-      object MenuItem32: TMenuItem
+      object MenuItemPreviousBlockTape: TMenuItem
         Action = ActionDecTapeBlock
       end
-      object MenuItem9: TMenuItem
+      object MenuItemNextBlockTape: TMenuItem
         Action = ActionIncTapeBlock
       end
     end
     object MenuItem21: TMenuItem
       Caption = '&Debug'
-      object MenuItem22: TMenuItem
+      object MenuItemShowDebugger: TMenuItem
         Action = ActionShowDebugger
       end
-      object MenuItem31: TMenuItem
+      object MenuItemInputPokes: TMenuItem
         Action = ActionInputPokes
       end
     end
     object MenuItem19: TMenuItem
       Caption = '&Help'
-      object MenuItem20: TMenuItem
+      object MenuItemAbout: TMenuItem
         Action = ActionAbout
       end
     end

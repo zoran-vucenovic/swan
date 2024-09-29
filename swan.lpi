@@ -733,6 +733,19 @@
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="UnitFrameBreakpoints"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitframetoolbaroptions.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameToobarOptions"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitFrameToolbarOptions"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitswantreeview.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitSwanTreeView"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

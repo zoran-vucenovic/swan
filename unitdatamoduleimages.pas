@@ -13,6 +13,7 @@ uses
 type
   TDataModuleImages = class(TDataModule)
     ImageList1: TImageList;
+    ImageList2: TImageList;
   private
   public
   end;

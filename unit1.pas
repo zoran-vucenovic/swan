@@ -20,7 +20,7 @@ uses
   UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions, UnitRecentFiles,
   UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA, UnitFileZip,
   UnitRomPaths, UnitSwanToolbar, UnitFormChooseString, UnitDlgStartAdress,
-  UnitDebugger;
+  UnitDebugger, UnitSwanTreeView, UnitFrameToolbarOptions;
 
 // On Linux, bgra drawing directly to PaintBox in its OnPaint event seems to be
 // extremly slow. However, we get better time when we have an auxiliary bitmap
@@ -38,6 +38,7 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionToolbar: TAction;
     ActionLoadBinaryFile: TAction;
     ActionShowHideToolbar: TAction;
     ActionLateTimings: TAction;
@@ -92,62 +93,63 @@ type
     LabelModel: TLabel;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
-    MenuItem10: TMenuItem;
-    MenuItem11: TMenuItem;
-    MenuItem12: TMenuItem;
-    MenuItem13: TMenuItem;
+    MenuItemToolbar: TMenuItem;
+    MenuItemKeyMappings: TMenuItem;
+    MenuItemJoystick: TMenuItem;
+    MenuItemResetSpectrum: TMenuItem;
+    MenuItemSaveZ80Snapshot: TMenuItem;
     MenuItem14: TMenuItem;
-    MenuItem15: TMenuItem;
+    MenuItemColourPalette: TMenuItem;
     MenuItem16: TMenuItem;
-    MenuItem17: TMenuItem;
-    MenuItem18: TMenuItem;
+    MenuItemOpen: TMenuItem;
+    MenuItemSaveSnaSnapshot: TMenuItem;
     MenuItem19: TMenuItem;
-    MenuItem2: TMenuItem;
-    MenuItem20: TMenuItem;
+    MenuItemInsertTape: TMenuItem;
+    MenuItemAbout: TMenuItem;
     MenuItem21: TMenuItem;
-    MenuItem22: TMenuItem;
+    MenuItemShowDebugger: TMenuItem;
     MenuItem23: TMenuItem;
     MenuItem24: TMenuItem;
-    MenuItem25: TMenuItem;
-    MenuItem26: TMenuItem;
-    MenuItem27: TMenuItem;
-    MenuItem28: TMenuItem;
-    MenuItem29: TMenuItem;
+    MenuItemPlayTape: TMenuItem;
+    MenuItemIncreaseSize: TMenuItem;
+    MenuItemDecreaseSize: TMenuItem;
+    MenuItemRewindTape: TMenuItem;
+    MenuItemStopTape: TMenuItem;
     MenuItem3: TMenuItem;
-    MenuItem30: TMenuItem;
-    MenuItem31: TMenuItem;
-    MenuItem32: TMenuItem;
-    MenuItem33: TMenuItem;
-    MenuItem34: TMenuItem;
-    MenuItem35: TMenuItem;
-    MenuItem36: TMenuItem;
-    MenuItem37: TMenuItem;
-    MenuItem38: TMenuItem;
-    MenuItem39: TMenuItem;
-    MenuItem4: TMenuItem;
-    MenuItem40: TMenuItem;
-    MenuItem41: TMenuItem;
+    MenuItemShowTapePlayer: TMenuItem;
+    MenuItemInputPokes: TMenuItem;
+    MenuItemPreviousBlockTape: TMenuItem;
+    MenuItemJoystickEnabled: TMenuItem;
+    MenuItemEjectTape: TMenuItem;
+    MenuItemFastTapeLoading: TMenuItem;
+    MenuItemMuteSound: TMenuItem;
+    MenuItemPortaudioLibraryPath: TMenuItem;
+    MenuItemAutosavingSnapshotsEnabled: TMenuItem;
+    MenuItemSaveSzxSnapshot: TMenuItem;
+    MenuItemPause: TMenuItem;
+    MenuItemAutosavingSnapshots: TMenuItem;
+    MenuItemSignalProcessor: TMenuItem;
     MenuItem42: TMenuItem;
     MenuItem43: TMenuItem;
-    MenuItem44: TMenuItem;
+    MenuItemSpectrumModel: TMenuItem;
     MenuItem45: TMenuItem;
     MenuItem46: TMenuItem;
-    MenuItem47: TMenuItem;
+    MenuItemOnScreenKeyboard: TMenuItem;
     MenuItem48: TMenuItem;
     MenuItem49: TMenuItem;
-    MenuItem5: TMenuItem;
-    MenuItem50: TMenuItem;
+    MenuItemDecreaseSpeed: TMenuItem;
+    MenuItemAllOptions: TMenuItem;
     MenuItem51: TMenuItem;
     MenuItem52: TMenuItem;
     MenuItem53: TMenuItem;
-    MenuItem54: TMenuItem;
-    MenuItem55: TMenuItem;
-    MenuItem56: TMenuItem;
+    MenuItemLateTimings: TMenuItem;
+    MenuItemShowToolbar: TMenuItem;
+    MenuItemLoadBinaryFile: TMenuItem;
     MenuItemRecentFiles: TMenuItem;
-    MenuItem6: TMenuItem;
-    MenuItem7: TMenuItem;
-    MenuItem8: TMenuItem;
-    MenuItem9: TMenuItem;
+    MenuItemIncreaseSpeed: TMenuItem;
+    MenuItemNormalSpeed: TMenuItem;
+    MenuItemFullSpeed: TMenuItem;
+    MenuItemNextBlockTape: TMenuItem;
     OpenDialog1: TOpenDialog;
     PaintBox1: TPaintBox;
     Panel1: TPanel;
@@ -211,6 +213,7 @@ type
     procedure ActionSpeedDecreaseExecute(Sender: TObject);
     procedure ActionSpeedIncreaseExecute(Sender: TObject);
     procedure ActionStopExecute(Sender: TObject);
+    procedure ActionToolbarExecute(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
@@ -249,6 +252,8 @@ type
     FInitiallyHideToolBar: Boolean;
     FDontAskPortAudioPath: Boolean;
 
+    function GetTreeWithToolbarActions: TSwanTreeView;
+    procedure FillDefaultToolbarActions(out AToolbarActions: TComponentArray);
     procedure ClearKeyboardAndJoystickState; inline;
     procedure SpectrumOnChangeModel();
     class function SpectrumOnGetDebuggerClass(): TSpectrum.TAbstractDebuggerClass; static;
@@ -304,6 +309,8 @@ type
       BinFileKindOnly = [sfkBinary];
 
   strict private
+    FTreeWithToolbarActions: TSwanTreeView;
+    FToolbarActions: TComponentArray;
     FTapeBrowser: TFormBrowseTape;
     FKeyboardOnScreen: UnitKeyboardOnScreen.TFormKeyboardOnScreen;
     PrevTicks: Int64;
@@ -385,6 +392,7 @@ type
     procedure ShowKeyboardOnScreen();
     procedure ShowSoundVolumeForm(const AToggleMute: Boolean);
     procedure ShowOrHideToolbar(AShow: Boolean);
+    procedure UpdateToolbarItems;
     procedure DestroySoundVolumeForm();
     procedure ShowMessageSoundLibNotLoaded(Sender: TObject);
     procedure FreeTapePlayer;
@@ -413,6 +421,8 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  FTreeWithToolbarActions := nil;
+  SetLength(FToolbarActions, 0);
   FAutoShowTapePlayerWhenTapeLoaded := True;
   FNewModel := TSpectrumModel.smNone;
   HistoryQueue := nil;
@@ -496,6 +506,8 @@ begin
   UpdateCheckWriteScreen;
   //
   UpdateCheckShowKeyboard;
+  if Length(FToolbarActions) = 0 then
+    FillDefaultToolbarActions(FToolbarActions);
   ShowOrHideToolbar(not FInitiallyHideToolBar);
   UpdateCheckHideToolbar;
 
@@ -1040,6 +1052,33 @@ begin
   end;
 end;
 
+procedure TForm1.ActionToolbarExecute(Sender: TObject);
+var
+  WasPaused: Boolean;
+  B: Boolean;
+
+begin
+  if Sender <> Spectrum then begin
+    AddEventToQueue(@ActionToolbarExecute);
+  end else begin
+    WasPaused := Spectrum.Paused;
+    try
+      Spectrum.Paused := True;
+
+      B := Assigned(FToolBar);
+      if TFrameToobarOptions.ShowOnForm(GetTreeWithToolbarActions, FToolbarActions, B) then begin
+        if B then
+          UpdateToolbarItems;
+
+        ShowOrHideToolbar(B);
+      end;
+    finally
+      Spectrum.Paused := WasPaused;
+    end;
+
+  end;
+end;
+
 procedure TForm1.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   if Assigned(Spectrum) then begin
@@ -1065,10 +1104,12 @@ begin
     FreeAndNil(FTapeBrowser);
   end;
   FreeAndNil(FToolBar);
+  SetLength(FToolbarActions, 0);
   DestroySoundVolumeForm();
   FreeAndNil(HistoryQueue);
   FreeAndNil(FormDebug);
 
+  FreeAndNil(FTreeWithToolbarActions);
   MenuItemRecentFiles.Clear;
   TSnapshotSZX.OnSzxLoadTape := nil;
 
@@ -1124,6 +1165,132 @@ begin
       ShowSoundVolumeForm(True);
     end;
   end;
+end;
+
+function TForm1.GetTreeWithToolbarActions: TSwanTreeView;
+
+  function AddNodes(const ARootNode: String; const Arr1: array of TComponent): TTreeNode;
+  var
+    I: Integer;
+    Cm: TComponent;
+    S: String;
+    N: Integer;
+    Nd: TTreeNode;
+
+  begin
+    Result := FTreeWithToolbarActions.Items.AddChild(nil, ARootNode);
+    FTreeWithToolbarActions.Images := MainMenu1.Images;
+
+    for I := Low(Arr1) to High(Arr1) do begin
+      Cm := Arr1[I];
+      if Cm is TMenuItem then begin
+        S := TMenuItem(Cm).Caption;
+        N := TMenuItem(Cm).ImageIndex;
+      end else if Cm is TCustomAction then begin
+        S := TCustomAction(Cm).Caption;
+        N := TCustomAction(Cm).ImageIndex;
+      end else
+        S := '';
+
+      if S <> '' then begin
+        Nd := FTreeWithToolbarActions.Items.AddChildObject(Result, S, Pointer(Cm));
+        Nd.ImageIndex := N;
+        Nd.SelectedIndex := N;
+      end;
+    end;
+  end;
+
+begin
+  if FTreeWithToolbarActions = nil then begin
+
+    FTreeWithToolbarActions := TSwanTreeView.Create(nil);
+
+    AddNodes('File', [
+      MenuItemOpen,
+      MenuItemSaveSzxSnapshot,
+      MenuItemSaveZ80Snapshot,
+      MenuItemSaveSnaSnapshot,
+      MenuItemLoadBinaryFile,
+      MenuItemRecentFiles
+    ]);
+
+    AddNodes('Emulation', [
+      MenuItemPause,
+      MenuItemResetSpectrum,
+      MenuItemSignalProcessor,
+      MenuItemDecreaseSpeed,
+      MenuItemIncreaseSpeed,
+      MenuItemNormalSpeed,
+      MenuItemFullSpeed
+    ]);
+
+    AddNodes('Options', [
+      MenuItemIncreaseSize,
+      MenuItemDecreaseSize,
+      MenuItemOnScreenKeyboard,
+      MenuItemKeyMappings,
+      MenuItemColourPalette,
+      MenuItemMuteSound,
+      MenuItemPortaudioLibraryPath,
+      MenuItemSpectrumModel,
+      MenuItemLateTimings,
+      MenuItemJoystick,
+      MenuItemJoystickEnabled,
+      MenuItemFastTapeLoading,
+      MenuItemAutosavingSnapshots,
+      MenuItemAutosavingSnapshotsEnabled,
+      //MenuItemShowToolbar,
+      MenuItemAllOptions
+    ]);
+
+    AddNodes('Tape', [
+      MenuItemShowTapePlayer,
+      MenuItemInsertTape,
+      MenuItemEjectTape,
+      MenuItemPlayTape,
+      MenuItemStopTape,
+      MenuItemRewindTape,
+      MenuItemPreviousBlockTape,
+      MenuItemNextBlockTape
+    ]);
+
+    AddNodes('Debug', [
+      MenuItemShowDebugger,
+      MenuItemInputPokes
+    ]);
+
+    AddNodes('Help', [
+      MenuItemAbout
+    ]);
+  end;
+
+  Result := FTreeWithToolbarActions;
+end;
+
+procedure TForm1.FillDefaultToolbarActions(out
+  AToolbarActions: TComponentArray);
+
+  procedure InternalFillDefaultToolbarActions(const Arr1: array of TComponent);
+  var
+    I: Integer;
+  begin
+    SetLength(AToolbarActions, Length(Arr1));
+    for I := Low(Arr1) to High(Arr1) do
+      AToolbarActions[I] := Arr1[I];
+  end;
+
+begin
+  InternalFillDefaultToolbarActions([
+    MenuItemOpen,
+    MenuItemPause,
+    MenuItemResetSpectrum,
+    MenuItemLateTimings,
+    MenuItemOnScreenKeyboard,
+    MenuItemFastTapeLoading,
+    MenuItemAutosavingSnapshots,
+    MenuItemAllOptions,
+    MenuItemAbout
+  ]);
 end;
 
 procedure TForm1.SpectrumOnChangeModel;
@@ -1807,6 +1974,9 @@ begin
     MenuItemRecentFiles.AddSeparator;
     MenuItemRecentFiles.Enabled := False;
   end;
+
+  if Assigned(FToolBar) then
+    FToolBar.UpdateRecentFiles();
 end;
 
 procedure TForm1.RecentFilesOnClick(Sender: TObject);
@@ -2013,19 +2183,10 @@ begin
         FToolBar.Wrapable := True;
         FToolBar.AutoSize := True;
 
+        UpdateToolbarItems;
+
         FToolBar.Parent := Self;
 
-        FToolBar.AddButtonActions([
-          ActionOpen,
-          ActionPause,
-          ActionReset,
-          ActionLateTimings,
-          ActionShowKeyboardOnScreen,
-          ActionFastLoading,
-          ActionHistorySnapshots,
-          ActionAllOptions,
-          ActionAbout
-        ]);
       end else begin
         PaintBox1.AnchorParallel(akTop, 0, Self);
         FreeAndNil(FToolBar);
@@ -2038,6 +2199,24 @@ begin
     end;
 
     SetNewAutoSize(nil);
+  end;
+end;
+
+procedure TForm1.UpdateToolbarItems;
+var
+  I: Integer;
+  Mi: TMenuItem;
+begin
+  if Assigned(FToolBar) then begin
+    Mi := nil;
+    for I := Low(FToolbarActions) to High(FToolbarActions) do begin
+      if FToolbarActions[I] = MenuItemRecentFiles then begin
+        Mi := MenuItemRecentFiles;
+        Break;
+      end;
+    end;
+    FToolBar.RecentFilesMenuItem := Mi;
+    FToolBar.AddButtons(FToolbarActions);
   end;
 end;
 
