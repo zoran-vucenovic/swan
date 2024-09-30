@@ -242,8 +242,9 @@ type
       cSectionBuildDate = 'build_date';
       cSectionCustomRomPaths = 'custom_rom_paths';
       cSectionLateTimings = 'late_timings';
-      cSectionHideToolBar = 'hide_toolbar';
       cSectionDontAskForPortAudioPath = 'do_not_ask_for_portaudio';
+      cSectionHideToolBar = 'hide_toolbar';
+      cSectionToolbarButtons = 'toolbar_buttons';
 
   strict private
     FNewModel: TSpectrumModel;
@@ -1552,6 +1553,7 @@ var
   SzxSaveTapeOptions: TSzxSaveTapeOptions;
 
   FullVersionFromConf: DWord;
+  Arr: TComponentArray;
 
 begin
   JObj := TConfJSON.GetJSONObject(cSection0);
@@ -1683,13 +1685,55 @@ begin
       end;
     end;
 
+    JD := JObj.Find(cSectionToolbarButtons);
+    if JD is TJSONArray then begin
+      if GetTreeWithToolbarActions.LoadComponentsFromJSonArray(TJSONArray(JD), Arr) then
+        FToolbarActions := Arr;
+    end;
+
     FInitiallyHideToolBar := JObj.Get(cSectionHideToolBar, Integer(0)) <> 0;
+
     FDontAskPortAudioPath := JObj.Get(cSectionDontAskForPortAudioPath, Integer(0)) <> 0;
   end;
   TSoundPlayer.Volume := SoundVol;
 end;
 
 procedure TForm1.SaveToConf;
+
+  function SaveToolbarButtonsToJSonArray(out JArr: TJSONArray): Boolean;
+  var
+    I: Integer;
+    S: RawByteString;
+    A: TJSONArray;
+
+  begin
+    Result := False;
+    JArr := nil;
+    if Length(FToolbarActions) > 0 then begin
+      A := TJSONArray.Create;
+      try
+        for I := Low(FToolbarActions) to High(FToolbarActions) do begin
+          S := FToolbarActions[I].Name;
+          if S <> '' then begin
+            if A.Add(S) < 0 then begin
+              FreeAndNil(A);
+              Break;
+            end;
+          end;
+        end;
+
+        if Assigned(A) then begin
+          JArr := A;
+          A := nil;
+          Result := True;
+        end;
+
+      finally
+        A.Free;
+      end;
+    end;
+  end;
+
 var
   JObj: TJSONObject;
   N: Integer;
@@ -1740,6 +1784,10 @@ begin
     else
       N := 0;
     JObj.Add(cSectionHideToolBar, N);
+
+    if SaveToolbarButtonsToJSonArray(JArr) then begin
+      JObj.Add(cSectionToolbarButtons, JArr);
+    end;
 
     if FDontAskPortAudioPath then
       N := 1
