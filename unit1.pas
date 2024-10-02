@@ -422,6 +422,7 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  TFrameToobarOptions.OnGetDefToolbarActions := @FillDefaultToolbarActions;
   FTreeWithToolbarActions := nil;
   SetLength(FToolbarActions, 0);
   FAutoShowTapePlayerWhenTapeLoaded := True;

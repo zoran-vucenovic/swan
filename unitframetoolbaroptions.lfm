@@ -47,17 +47,16 @@ object FrameToobarOptions: TFrameToobarOptions
       AnchorSideRight.Side = asrBottom
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
-      Left = 302
+      Left = 226
       Height = 556
       Top = 0
-      Width = 171
+      Width = 247
       Anchors = [akTop, akLeft, akRight, akBottom]
       BevelOuter = bvNone
       TabOrder = 3
     end
     object Splitter1: TSplitter
       AnchorSideTop.Control = Panel1
-      AnchorSideRight.Control = Panel2
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
       Left = 171
@@ -65,9 +64,10 @@ object FrameToobarOptions: TFrameToobarOptions
       Top = 0
       Width = 5
       Align = alNone
-      Anchors = [akTop, akRight, akBottom]
+      Anchors = [akTop, akBottom]
     end
     object Panel2: TPanel
+      AnchorSideLeft.Control = Splitter1
       AnchorSideLeft.Side = asrBottom
       AnchorSideTop.Control = Panel1
       AnchorSideBottom.Control = Panel1
@@ -75,26 +75,27 @@ object FrameToobarOptions: TFrameToobarOptions
       Left = 176
       Height = 556
       Top = 0
-      Width = 126
-      Anchors = [akTop, akBottom]
+      Width = 50
+      Anchors = [akTop, akLeft, akBottom]
       AutoSize = True
       BevelOuter = bvNone
-      BorderStyle = bsSingle
-      ClientHeight = 552
-      ClientWidth = 122
+      ClientHeight = 556
+      ClientWidth = 50
       TabOrder = 1
       object Panel3: TPanel
         AnchorSideLeft.Control = Panel2
         AnchorSideTop.Control = Panel2
-        Left = 0
-        Height = 207
+        Left = 3
+        Height = 186
         Top = 54
-        Width = 122
+        Width = 42
         AutoSize = True
+        BorderSpacing.Left = 3
         BorderSpacing.Top = 54
+        BorderSpacing.Right = 5
         BevelOuter = bvNone
-        ClientHeight = 207
-        ClientWidth = 122
+        ClientHeight = 186
+        ClientWidth = 42
         ParentShowHint = False
         ShowHint = True
         TabOrder = 0
@@ -102,9 +103,9 @@ object FrameToobarOptions: TFrameToobarOptions
           AnchorSideLeft.Control = Panel3
           AnchorSideTop.Control = Panel3
           Left = 0
-          Height = 45
+          Height = 30
           Top = 0
-          Width = 83
+          Width = 42
           Action = ActionAdd
           AutoSize = True
           GlyphShowMode = gsmAlways
@@ -118,9 +119,9 @@ object FrameToobarOptions: TFrameToobarOptions
           AnchorSideTop.Control = BitBtn1
           AnchorSideTop.Side = asrBottom
           Left = 0
-          Height = 45
-          Top = 54
-          Width = 104
+          Height = 30
+          Top = 39
+          Width = 42
           Action = ActionRemove
           AutoSize = True
           BorderSpacing.Top = 9
@@ -135,9 +136,9 @@ object FrameToobarOptions: TFrameToobarOptions
           AnchorSideTop.Control = BitBtn2
           AnchorSideTop.Side = asrBottom
           Left = 0
-          Height = 45
-          Top = 108
-          Width = 106
+          Height = 30
+          Top = 78
+          Width = 42
           Action = ActionMoveUp
           AutoSize = True
           BorderSpacing.Top = 9
@@ -152,9 +153,9 @@ object FrameToobarOptions: TFrameToobarOptions
           AnchorSideTop.Control = BitBtn3
           AnchorSideTop.Side = asrBottom
           Left = 0
-          Height = 45
-          Top = 162
-          Width = 122
+          Height = 30
+          Top = 117
+          Width = 42
           Action = ActionMoveDown
           AutoSize = True
           BorderSpacing.Top = 9
@@ -163,6 +164,23 @@ object FrameToobarOptions: TFrameToobarOptions
           Images = DataModuleImages.ImageList2
           ImageIndex = 3
           TabOrder = 3
+        end
+        object BitBtn5: TBitBtn
+          AnchorSideLeft.Control = Panel3
+          AnchorSideTop.Control = BitBtn4
+          AnchorSideTop.Side = asrBottom
+          Left = 0
+          Height = 30
+          Top = 156
+          Width = 42
+          Action = ActionReset
+          AutoSize = True
+          BorderSpacing.Top = 9
+          GlyphShowMode = gsmAlways
+          Layout = blGlyphTop
+          Images = DataModuleImages.ImageList2
+          ImageIndex = 4
+          TabOrder = 4
         end
       end
     end
@@ -198,28 +216,29 @@ object FrameToobarOptions: TFrameToobarOptions
     Left = 88
     Top = 71
     object ActionRemove: TAction
-      Caption = 'ActionRemove'
       Hint = 'Remove the selected button from the toolbar'
       ImageIndex = 1
       OnExecute = ActionRemoveExecute
     end
     object ActionAdd: TAction
-      Caption = 'ActionAdd'
       Hint = 'Add the selected button to the toolbar'
       ImageIndex = 0
       OnExecute = ActionAddExecute
     end
     object ActionMoveUp: TAction
-      Caption = 'ActionMoveUp'
       Hint = 'Move the selected button'
       ImageIndex = 2
       OnExecute = ActionMoveUpExecute
     end
     object ActionMoveDown: TAction
-      Caption = 'ActionMoveDown'
       Hint = 'Move the selected button'
       ImageIndex = 3
       OnExecute = ActionMoveDownExecute
+    end
+    object ActionReset: TAction
+      Hint = 'Reset to default set of buttons'
+      ImageIndex = 4
+      OnExecute = ActionResetExecute
     end
   end
 end

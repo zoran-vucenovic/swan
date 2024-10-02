@@ -15,6 +15,7 @@ uses
 type
 
   TFrameToobarOptions = class(TFrame)
+    ActionReset: TAction;
     ActionMoveDown: TAction;
     ActionMoveUp: TAction;
     ActionAdd: TAction;
@@ -24,6 +25,7 @@ type
     BitBtn2: TBitBtn;
     BitBtn3: TBitBtn;
     BitBtn4: TBitBtn;
+    BitBtn5: TBitBtn;
     CheckBox1: TCheckBox;
     Panel1: TPanel;
     Panel2: TPanel;
@@ -36,7 +38,11 @@ type
     procedure ActionMoveDownExecute(Sender: TObject);
     procedure ActionMoveUpExecute(Sender: TObject);
     procedure ActionRemoveExecute(Sender: TObject);
+    procedure ActionResetExecute(Sender: TObject);
 
+  public
+    type
+      TProcGetDefToolbarActions = procedure (out AToolbarActions: TComponentArray) of object;
   strict private
     type
       TGridOptionsList = class(TCustomDrawGrid)
@@ -57,23 +63,35 @@ type
       end;
 
   strict private
+    class var
+      FOnGetDefToolbarActions: TProcGetDefToolbarActions;
+      FDefToolbarActions: TComponentArray;
+
+  private
+    class procedure Init;
+
+  strict private
     Grid: TGridOptionsList;
     FTreeViewAll: TSwanTreeView;
     FSelectedItems: TComponentArray;
 
-    procedure ClearGrid;
     procedure ShowToolbarCannotBeEmptyMsg;
     procedure FillGrid(const SelectedItems: TComponentArray);
     procedure GridOnDrawCell(Sender: TObject; aCol, aRow: Integer; aRect: TRect;
               aState:TGridDrawState);
-    procedure FormCloseCallback(Sender: TObject; var {%H-}CloseAction: TCloseAction);
+    procedure FormCloseQuery(Sender : TObject; var CanClose: Boolean);
     procedure SetTreeAndSelectedItems(ATree: TSwanTreeView;
               const SelectedItems: TComponentArray);
+    procedure FormOnFirstShow(Sender: TObject);
+    procedure AfterShowForm(Data: PtrInt);
+
   public
     constructor Create(TheOwner: TComponent); override;
 
     class function ShowOnForm(ATree: TSwanTreeView;
       var ASelectedItems: TComponentArray; var AShowToolbar: Boolean): Boolean;
+
+    class property OnGetDefToolbarActions: TProcGetDefToolbarActions write FOnGetDefToolbarActions;
   end;
 
 implementation
@@ -172,9 +190,21 @@ begin
   Grid.RemoveNode(-1);
 end;
 
-procedure TFrameToobarOptions.ClearGrid;
+procedure TFrameToobarOptions.ActionResetExecute(Sender: TObject);
 begin
-  Grid.RowCount := Grid.FixedRows;
+  if Length(FDefToolbarActions) = 0 then begin
+    if Assigned(FOnGetDefToolbarActions) then
+      FOnGetDefToolbarActions(FDefToolbarActions);
+  end;
+
+  if Length(FDefToolbarActions) > 0 then
+    FillGrid(FDefToolbarActions);
+end;
+
+class procedure TFrameToobarOptions.Init;
+begin
+  SetLength(FDefToolbarActions, 0);
+  FOnGetDefToolbarActions := nil;
 end;
 
 procedure TFrameToobarOptions.ShowToolbarCannotBeEmptyMsg;
@@ -192,25 +222,32 @@ var
   Nd: TTreeNode;
 begin
   if Assigned(FTreeViewAll) then begin
-    Grid.BeginUpdate;
+    FTreeViewAll.BeginUpdate;
     try
-      SetLength(Grid.NodeArr, Length(SelectedItems));
-      N := 0;
-      for I := Low(SelectedItems) to High(SelectedItems) do begin
-        Nd := FTreeViewAll.Items.FindNodeWithData(SelectedItems[I]);
+      Grid.BeginUpdate;
+      try
+        FTreeViewAll.MakeAllNodesVisible;
+        SetLength(Grid.NodeArr, Length(SelectedItems));
+        N := 0;
+        for I := Low(SelectedItems) to High(SelectedItems) do begin
+          Nd := FTreeViewAll.Items.FindNodeWithData(SelectedItems[I]);
 
-        if Nd is TSwanTreeNode then begin
-          Grid.NodeArr[N] := TSwanTreeNode(Nd);
-          Nd.Visible := False;
-          Inc(N);
+          if Nd is TSwanTreeNode then begin
+            Grid.NodeArr[N] := TSwanTreeNode(Nd);
+            Nd.Visible := False;
+            Inc(N);
+          end;
         end;
+
+        SetLength(Grid.NodeArr, N);
+        Grid.NodeCount := N;
+        Grid.RowCount := Grid.FixedRows + N;
+      finally
+        Grid.EndUpdate();
       end;
 
-      SetLength(Grid.NodeArr, N);
-      Grid.NodeCount := N;
-      Grid.RowCount := Grid.FixedRows + N;
     finally
-      Grid.EndUpdate();
+      FTreeViewAll.EndUpdate;
     end;
   end;
 end;
@@ -278,15 +315,14 @@ begin
   end;
 end;
 
-procedure TFrameToobarOptions.FormCloseCallback(Sender: TObject;
-  var CloseAction: TCloseAction);
+procedure TFrameToobarOptions.FormCloseQuery(Sender: TObject;
+  var CanClose: Boolean);
 var
   F: TCustomForm;
   I: Integer;
   J: Integer;
   Obj: TObject;
 begin
-  CloseAction := TCloseAction.caFree;
   if Sender is TCustomForm then begin
     F := TCustomForm(Sender);
     if F.ModalResult = mrOK then begin
@@ -303,13 +339,10 @@ begin
         SetLength(FSelectedItems, J);
       end else begin
         ShowToolbarCannotBeEmptyMsg;
-        CloseAction := TCloseAction.caNone;
+        CanClose := False;
       end;
     end;
   end;
-
-  if CloseAction = caFree then
-    FTreeViewAll.Parent := nil;
 end;
 
 procedure TFrameToobarOptions.SetTreeAndSelectedItems(ATree: TSwanTreeView;
@@ -341,9 +374,20 @@ begin
   if H > Grid.DefaultRowHeight then
     Grid.DefaultRowHeight := H;
 
-  ATree.MakeAllNodesVisible;
   FillGrid(SelectedItems);
   Grid.OnDrawCell := @GridOnDrawCell;
+end;
+
+procedure TFrameToobarOptions.FormOnFirstShow(Sender: TObject);
+begin
+  AfterShowForm(1);
+end;
+
+procedure TFrameToobarOptions.AfterShowForm(Data: PtrInt);
+begin
+  Splitter1.Left := (Self.ClientWidth - Splitter1.Width - Panel2.Width) div 2;
+  if Data > 0 then
+    Application.QueueAsyncCall(@AfterShowForm, Data - 1);
 end;
 
 constructor TFrameToobarOptions.Create(TheOwner: TComponent);
@@ -356,13 +400,13 @@ begin
   BitBtn2.Caption := '';
   BitBtn3.Caption := '';
   BitBtn4.Caption := '';
+  BitBtn5.Caption := '';
 
   FTreeViewAll := nil;
 
   Grid := TGridOptionsList.Create(PanelSelected);
 
   Panel2.AutoSize := True;
-  Panel2.Left := (Self.ClientWidth + Splitter1.Width - Panel2.Width) div 2;
 
   Grid.Anchors := [];
   Grid.AnchorParallel(akLeft, 0, PanelSelected);
@@ -375,6 +419,8 @@ begin
   Grid.SelectedColor := $d77800;
 
   Grid.Parent := PanelSelected;
+
+  AfterShowForm(-1);
 end;
 
 class function TFrameToobarOptions.ShowOnForm(ATree: TSwanTreeView;
@@ -391,9 +437,10 @@ begin
     try
       F := TFormForOptionsBasic.CreateForControl(nil, Fm, False);
       try
-        F.AddHandlerClose(@Fm.FormCloseCallback);
+        (F as IFormAddCloseQuery).AddCloseQuery(@Fm.FormCloseQuery);
         Fm.SetTreeAndSelectedItems(ATree, ASelectedItems);
         Fm.CheckBox1.Checked := AShowToolbar;
+        F.AddHandlerFirstShow(@Fm.FormOnFirstShow);
 
         if F.ShowModal = mrOK then begin
           ASelectedItems := Fm.FSelectedItems;
@@ -529,6 +576,9 @@ begin
     end;
   end;
 end;
+
+initialization
+  TFrameToobarOptions.Init;
 
 end.
 
