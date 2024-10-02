@@ -2216,6 +2216,9 @@ begin
 end;
 
 procedure TForm1.ShowOrHideToolbar(AShow: Boolean);
+var
+  M: TPopupMenu;
+  Mi: TMenuItem;
 begin
   if AShow xor Assigned(FToolBar) then begin
     DisableAlign;
@@ -2233,6 +2236,13 @@ begin
         FToolBar.AutoSize := True;
 
         UpdateToolbarItems;
+
+        M := TPopupMenu.Create(FToolBar);
+        Mi := TMenuItem.Create(M);
+        Mi.Action := ActionToolbar;
+        Mi.Caption := 'Toolbar options...';
+        M.Items.Add(Mi);
+        FToolBar.PopupMenu := M;
 
         FToolBar.Parent := Self;
 
