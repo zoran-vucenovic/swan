@@ -252,6 +252,7 @@ type
     FAutoShowTapePlayerWhenTapeLoaded: Boolean;
     FInitiallyHideToolBar: Boolean;
     FDontAskPortAudioPath: Boolean;
+    FDummyObj: TObject;
 
     function GetTreeWithToolbarActions: TSwanTreeView;
     procedure FillDefaultToolbarActions(out AToolbarActions: TComponentArray);
@@ -422,6 +423,7 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  FDummyObj := TCommonSpectrum.DummyObj;
   TFrameToobarOptions.OnGetDefToolbarActions := @FillDefaultToolbarActions;
   FTreeWithToolbarActions := nil;
   SetLength(FToolbarActions, 0);
@@ -532,7 +534,7 @@ var
   WasPaused: Boolean;
   Colours: TLCLColourMap;
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionColoursExecute);
   end else begin
     WasPaused := Spectrum.Paused;
@@ -554,7 +556,7 @@ end;
 procedure TForm1.ActionDecTapeBlockExecute(Sender: TObject);
 begin
   if Assigned(TapePlayer) then begin
-    if Sender <> Spectrum then
+    if Sender <> FDummyObj then
       AddEventToQueue(@ActionDecTapeBlockExecute)
     else begin
       TapePlayer.IncBlock(-1);
@@ -564,7 +566,7 @@ end;
 
 procedure TForm1.ActionFastLoadingExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionFastLoadingExecute);
   end else begin
     FSkipWriteScreen := not FSkipWriteScreen;
@@ -575,7 +577,7 @@ end;
 procedure TForm1.ActionEjectTapeExecute(Sender: TObject);
 begin
   if Assigned(TapePlayer) then begin
-    if Sender <> Spectrum then begin
+    if Sender <> FDummyObj then begin
       AddEventToQueue(@ActionEjectTapeExecute)
     end else begin
       FreeTapePlayer;
@@ -585,7 +587,7 @@ end;
 
 procedure TForm1.ActionEnableHistoryExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionEnableHistoryExecute);
   end else begin
     SetSnapshotHistoryEnabled(not Assigned(HistoryQueue));
@@ -594,7 +596,7 @@ end;
 
 procedure TForm1.ActionEnableJoystickExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionEnableJoystickExecute);
   end else begin
     ClearKeyboardAndJoystickState;
@@ -605,7 +607,7 @@ end;
 
 procedure TForm1.ActionAboutExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionAboutExecute);
   end else begin
     TFormAbout.ShowAbout();
@@ -614,7 +616,7 @@ end;
 
 procedure TForm1.ActionAllOptionsExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionAllOptionsExecute);
   end else begin
     ShowAllOptionsDialog(TFrameOtherOptions);
@@ -623,7 +625,7 @@ end;
 
 procedure TForm1.ActionAttachTapExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionAttachTapExecute);
   end else begin
 
@@ -634,7 +636,7 @@ end;
 
 procedure TForm1.ActionFullSpeedExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionFullSpeedExecute);
   end else begin
     SetSpectrumSpeed(0);
@@ -646,7 +648,7 @@ var
   ActivateHistory: Boolean;
   WasPaused: Boolean;
 begin
-  if Sender <> Spectrum then
+  if Sender <> FDummyObj then
     AddEventToQueue(@ActionHistorySnapshotsExecute)
   else begin
     WasPaused := Spectrum.Paused;
@@ -672,7 +674,7 @@ end;
 procedure TForm1.ActionIncTapeBlockExecute(Sender: TObject);
 begin
   if Assigned(TapePlayer) then begin
-    if Sender <> Spectrum then
+    if Sender <> FDummyObj then
       AddEventToQueue(@ActionIncTapeBlockExecute)
     else begin
       TapePlayer.IncBlock(1);
@@ -687,7 +689,7 @@ var
   I: Integer;
   WasPaused: Boolean;
 begin
-  if Sender <> Spectrum then
+  if Sender <> FDummyObj then
     AddEventToQueue(@ActionInputPokesExecute)
   else begin
     WasPaused := Spectrum.Paused;
@@ -718,7 +720,7 @@ var
   JoystickType: TJoystick.TJoystickType;
   AKeys: TJoystick.TJoystickDirectionsKeys;
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionJoystickExecute);
   end else begin
     WasPaused := Spectrum.Paused;
@@ -746,7 +748,7 @@ procedure TForm1.ActionKeyMappingsExecute(Sender: TObject);
 var
   WasPaused: Boolean;
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionKeyMappingsExecute);
   end else begin
     WasPaused := Spectrum.Paused;
@@ -765,7 +767,7 @@ end;
 
 procedure TForm1.ActionLateTimingsExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionLateTimingsExecute);
   end else begin
     Spectrum.LateTimings := not Spectrum.LateTimings;
@@ -775,7 +777,7 @@ end;
 
 procedure TForm1.ActionLoadBinaryFileExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionLoadBinaryFileExecute);
   end else begin
     LoadAsk(BinFileKindOnly);
@@ -814,7 +816,7 @@ end;
 
 procedure TForm1.ActionModelMoreOptionsExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionModelMoreOptionsExecute);
   end else begin
     ShowAllOptionsDialog(TFrameSpectrumModel);
@@ -830,7 +832,7 @@ end;
 procedure TForm1.ActionMoveBackExecute(Sender: TObject);
 begin
   if Assigned(HistoryQueue) then begin
-    if Sender <> Spectrum then begin
+    if Sender <> FDummyObj then begin
       AddEventToQueue(@ActionMoveBackExecute);
     end else begin
       HistoryQueue.LoadSnapshot(0, True);
@@ -840,7 +842,7 @@ end;
 
 procedure TForm1.ActionMuteSoundExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionMuteSoundExecute);
   end else begin
     Spectrum.SoundMuted := not Spectrum.SoundMuted;
@@ -850,7 +852,7 @@ end;
 
 procedure TForm1.ActionNMIExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionNMIExecute);
   end else begin
     Spectrum.GetProcessor.NMI();
@@ -859,7 +861,7 @@ end;
 
 procedure TForm1.ActionNormalSpeedExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionNormalSpeedExecute);
   end else begin
     SetSpectrumSpeed(TSpectrum.NormalSpeed);
@@ -868,7 +870,7 @@ end;
 
 procedure TForm1.ActionOpenExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionOpenExecute);
   end else begin
     LoadAsk(SnapshotOrTapeFileKinds);
@@ -877,7 +879,7 @@ end;
 
 procedure TForm1.ActionPauseExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionPauseExecute);
   end else begin
     Spectrum.Paused := not Spectrum.Paused;
@@ -888,7 +890,7 @@ end;
 procedure TForm1.ActionPlayExecute(Sender: TObject);
 begin
   if Assigned(TapePlayer) then begin
-    if Sender <> Spectrum then
+    if Sender <> FDummyObj then
       AddEventToQueue(@ActionPlayExecute)
     else begin
       TapePlayer.Continue();
@@ -900,7 +902,7 @@ procedure TForm1.ActionPortAudioLibPathExecute(Sender: TObject);
 var
   WasPaused: Boolean;
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionPortAudioLibPathExecute);
   end else begin
     WasPaused := Spectrum.Paused;
@@ -916,7 +918,7 @@ end;
 
 procedure TForm1.ActionResetCPUExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionResetCPUExecute)
   end else begin
     Spectrum.GetProcessor.ResetPin();
@@ -925,7 +927,7 @@ end;
 
 procedure TForm1.ActionResetExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionResetExecute);
   end else begin
     Spectrum.ResetSpectrum;
@@ -935,7 +937,7 @@ end;
 procedure TForm1.ActionRewindExecute(Sender: TObject);
 begin
   if Assigned(TapePlayer) then begin
-    if Sender <> Spectrum then
+    if Sender <> FDummyObj then
       AddEventToQueue(@ActionRewindExecute)
     else begin
       TapePlayer.Rewind;
@@ -945,7 +947,7 @@ end;
 
 procedure TForm1.ActionSaveSnaExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionSaveSnaExecute);
   end else
     SaveSnapshot(TSnapshotSNA);
@@ -953,7 +955,7 @@ end;
 
 procedure TForm1.ActionSaveSzxExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionSaveSzxExecute);
   end else
     SaveSnapshot(TSnapshotSZX);
@@ -961,7 +963,7 @@ end;
 
 procedure TForm1.ActionSaveZ80Execute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionSaveZ80Execute);
   end else
     SaveSnapshot(TSnapshotZ80);
@@ -969,7 +971,7 @@ end;
 
 procedure TForm1.ActionShowDebuggerExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then
+  if Sender <> FDummyObj then
     AddEventToQueue(@ActionShowDebuggerExecute)
   else begin
     DoShowDebuggerForm;
@@ -978,7 +980,7 @@ end;
 
 procedure TForm1.ActionShowKeyboardOnScreenExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then
+  if Sender <> FDummyObj then
     AddEventToQueue(@ActionShowKeyboardOnScreenExecute)
   else
     ShowKeyboardOnScreen();
@@ -986,7 +988,7 @@ end;
 
 procedure TForm1.ActionShowTapePlayerExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then
+  if Sender <> FDummyObj then
     AddEventToQueue(@ActionShowTapePlayerExecute)
   else
     ShowTapeBrowser();
@@ -994,7 +996,7 @@ end;
 
 procedure TForm1.ActionShowHideToolbarExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then
+  if Sender <> FDummyObj then
     AddEventToQueue(@ActionShowHideToolbarExecute)
   else
     ShowOrHideToolbar(FToolBar = nil);
@@ -1002,7 +1004,7 @@ end;
 
 procedure TForm1.ActionSizeDecreaseExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then
+  if Sender <> FDummyObj then
     AddEventToQueue(@ActionSizeDecreaseExecute)
   else
     SetScreenSizeFactor(ScreenSizeFactor - 1);
@@ -1010,7 +1012,7 @@ end;
 
 procedure TForm1.ActionSizeIncreaseExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then
+  if Sender <> FDummyObj then
     AddEventToQueue(@ActionSizeIncreaseExecute)
   else
     SetScreenSizeFactor(ScreenSizeFactor + 1);
@@ -1018,7 +1020,7 @@ end;
 
 procedure TForm1.ActionSpeedDecreaseExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionSpeedDecreaseExecute);
   end else begin
     if Spectrum.Speed = 0 then
@@ -1031,7 +1033,7 @@ end;
 
 procedure TForm1.ActionSpeedIncreaseExecute(Sender: TObject);
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionSpeedIncreaseExecute);
   end else begin
 
@@ -1046,7 +1048,7 @@ end;
 procedure TForm1.ActionStopExecute(Sender: TObject);
 begin
   if Assigned(TapePlayer) then begin
-    if Sender <> Spectrum then
+    if Sender <> FDummyObj then
       AddEventToQueue(@ActionStopExecute)
     else begin
       TapePlayer.StopPlaying();
@@ -1060,7 +1062,7 @@ var
   B: Boolean;
 
 begin
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionToolbarExecute);
   end else begin
     WasPaused := Spectrum.Paused;
@@ -1150,7 +1152,7 @@ end;
 procedure TForm1.ToolButton1ArrowClick(Sender: TObject);
 begin
   if FSoundVolumeForm = nil then begin
-    if Sender <> Spectrum then
+    if Sender <> FDummyObj then
       AddEventToQueue(@ToolButton1ArrowClick)
     else begin
       ShowSoundVolumeForm(False);
@@ -1161,7 +1163,7 @@ end;
 procedure TForm1.ToolButton1Click(Sender: TObject);
 begin
   if FSoundVolumeForm = nil then begin
-    if Sender <> Spectrum then
+    if Sender <> FDummyObj then
       AddEventToQueue(@ToolButton1Click)
     else begin
       ShowSoundVolumeForm(True);
@@ -1326,7 +1328,7 @@ end;
 procedure TForm1.DebuggerRunStop(Sender: TObject);
 begin
   if Assigned(FormDebug) then begin
-    if Sender <> Spectrum then begin
+    if Sender <> FDummyObj then begin
       AddEventToQueue(@DebuggerRunStop);
     end else begin
       if FormDebug.GetActive() then begin
@@ -2031,7 +2033,7 @@ end;
 
 procedure TForm1.RecentFilesOnClick(Sender: TObject);
 begin
-  if Sender = Spectrum then begin
+  if Sender = FDummyObj then begin
     DoLoad(AllSpectrumFileKinds, FFileToOpen);
   end else if Sender is TMenuItem then begin
     FFileToOpen := TMenuItem(Sender).Caption;
@@ -2425,7 +2427,7 @@ end;
 procedure TForm1.SoundVolumeOnChg(Sender: TObject);
 begin
   if Assigned(FSoundVolumeForm) then begin
-    if Sender <> Spectrum then begin
+    if Sender <> FDummyObj then begin
       AddEventToQueue(@SoundVolumeOnChg);
     end else begin
       TSoundPlayer.Volume := FSoundVolumeForm.Level;
@@ -3090,7 +3092,7 @@ begin
     // So, do not use for loop, use while.
     I := 0;
     while I < EventsQueueCount do begin
-      EventsQueue[I](Spectrum);
+      EventsQueue[I](FDummyObj);
       Inc(I);
     end;
     EventsQueueCount := 0;
@@ -3366,7 +3368,7 @@ end;
 procedure TForm1.SetNewAutoSize(Sender: TObject);
 begin
   AutoSize := False;
-  if Sender <> Spectrum then begin
+  if Sender <> FDummyObj then begin
     AutoSize := True;
     AddEventToQueue(@SetNewAutoSize);
   end else

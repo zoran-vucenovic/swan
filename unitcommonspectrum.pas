@@ -20,8 +20,10 @@ type
       FBuildYear: Word;
       FBuildMonth: Word;
       FBuildDay: Word;
+      FDummyObj: TObject;
   private
     class function GetBuildDateString: String; static;
+    class function GetDummyObj: TObject; static;
     class procedure Init;
     class procedure Final;
   public
@@ -37,6 +39,7 @@ type
 
     class procedure SetBuildDate(const AYear, AMonth, ADay: Word); static;
     class property BuildDateString: String read GetBuildDateString;
+    class property DummyObj: TObject read GetDummyObj;
   end;
 
 implementation
@@ -121,14 +124,23 @@ begin
     Format('%.4d-%.2d-%.2d', [FBuildYear, FBuildMonth, FBuildDay]);
 end;
 
+class function TCommonSpectrum.GetDummyObj: TObject;
+begin
+  if FDummyObj = nil then
+    FDummyObj := TObject.Create;
+  Result := FDummyObj;
+end;
+
 class procedure TCommonSpectrum.Init;
 begin
+  FDummyObj := nil;
   SpectrumKeysSorter := nil;
 end;
 
 class procedure TCommonSpectrum.Final;
 begin
   SpectrumKeysSorter.Free;
+  FDummyObj.Free;
 end;
 
 
