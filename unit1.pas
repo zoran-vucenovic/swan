@@ -2015,6 +2015,7 @@ begin
       M := TMenuItem.Create(nil);
       M.Name := TCommonFunctions.GlobalObjectNameGenerator(M);
       M.Caption := SA[I];
+      M.ImageIndex := MenuItemRecentFiles.ImageIndex;
       M.OnClick := @RecentFilesOnClick;
       MenuItemRecentFiles.Add(M);
     end;

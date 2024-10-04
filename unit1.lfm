@@ -482,6 +482,7 @@ object Form1: TForm1
     object ActionToolbar: TAction
       Category = 'Options'
       Caption = 'Toolbar...'
+      ImageIndex = 35
       OnExecute = ActionToolbarExecute
     end
   end
@@ -514,6 +515,7 @@ object Form1: TForm1
       end
       object MenuItemRecentFiles: TMenuItem
         Caption = 'Recent files'
+        ImageIndex = 36
       end
       object MenuItem23: TMenuItem
         Caption = '-'

@@ -43,6 +43,7 @@ type
   public
     type
       TProcGetDefToolbarActions = procedure (out AToolbarActions: TComponentArray) of object;
+
   strict private
     type
       TGridOptionsList = class(TCustomDrawGrid)
