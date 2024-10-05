@@ -21,7 +21,7 @@ object Form1: TForm1
   OnDropFiles = FormDropFiles
   OnShow = FormShow
   ParentDoubleBuffered = False
-  LCLVersion = '3.5.0.0'
+  LCLVersion = '3.7.0.0'
   object PaintBox1: TPaintBox
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
@@ -347,11 +347,13 @@ object Form1: TForm1
     object ActionMuteSound: TAction
       Category = 'Options'
       Caption = 'Mute sound'
+      ImageIndex = 32
       OnExecute = ActionMuteSoundExecute
     end
     object ActionPortAudioLibPath: TAction
       Category = 'Options'
       Caption = 'Portaudio library path...'
+      ImageIndex = 39
       OnExecute = ActionPortAudioLibPathExecute
     end
     object ActionInputPokes: TAction
@@ -365,6 +367,7 @@ object Form1: TForm1
       Caption = 'Move back'
       Enabled = False
       Hint = 'Rewind to previous snapshot'
+      ImageIndex = 40
       OnExecute = ActionMoveBackExecute
     end
     object ActionHistorySnapshots: TAction
@@ -472,11 +475,13 @@ object Form1: TForm1
       Category = 'Options'
       Caption = 'Show toolbar'
       Hint = 'Show/Hide toolbar'
+      ImageIndex = 36
       OnExecute = ActionShowHideToolbarExecute
     end
     object ActionLoadBinaryFile: TAction
       Category = 'File'
       Caption = 'Load binary file...'
+      ImageIndex = 38
       OnExecute = ActionLoadBinaryFileExecute
     end
     object ActionToolbar: TAction
@@ -515,7 +520,7 @@ object Form1: TForm1
       end
       object MenuItemRecentFiles: TMenuItem
         Caption = 'Recent files'
-        ImageIndex = 36
+        ImageIndex = 37
       end
       object MenuItem23: TMenuItem
         Caption = '-'

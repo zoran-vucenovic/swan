@@ -141,6 +141,11 @@ begin
                   M := TMenuItem.Create(TB.DropdownMenu);
                   M.Name := TCommonFunctions.GlobalObjectNameGenerator(M);
                   M.Action := Mi.Items[II].Action;
+                  if M.Action = nil then begin
+                    M.Caption := Mi.Items[II].Caption;
+                    M.ImageIndex := Mi.Items[II].ImageIndex;
+                    M.Hint := Mi.Items[II].Hint;
+                  end;
                   TB.DropdownMenu.Items.Add(M);
                 end;
               end;

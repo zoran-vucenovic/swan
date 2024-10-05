@@ -449,6 +449,9 @@ begin
   ActionModel128K.Tag := Ord(TSpectrumModel.sm128K);
   ActionModelPlus2.Tag := Ord(TSpectrumModel.smPlus2);
 
+  ActionEnableJoystick.ImageIndex := DataModuleImages.DrawCheckForImage(ActionJoystick.ImageIndex);
+  ActionEnableHistory.ImageIndex := DataModuleImages.DrawCheckForImage(ActionHistorySnapshots.ImageIndex);
+
   UpdateActiveSnapshotHistory;
   FToolBar := nil;
   FInitiallyHideToolBar := False;
@@ -2241,6 +2244,7 @@ begin
         UpdateToolbarItems;
 
         M := TPopupMenu.Create(FToolBar);
+        M.Images := FToolBar.Images;
         Mi := TMenuItem.Create(M);
         Mi.Action := ActionToolbar;
         Mi.Caption := 'Toolbar options...';
