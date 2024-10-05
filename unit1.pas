@@ -1291,10 +1291,12 @@ begin
     MenuItemOpen,
     MenuItemPause,
     MenuItemResetSpectrum,
-    MenuItemLateTimings,
+    MenuItemSpectrumModel,
     MenuItemOnScreenKeyboard,
-    MenuItemFastTapeLoading,
+    MenuItemJoystick,
     MenuItemAutosavingSnapshots,
+    MenuItemFastTapeLoading,
+    MenuItemShowTapePlayer,
     MenuItemAllOptions,
     MenuItemAbout
   ]);
