@@ -332,7 +332,7 @@ begin
   PopupItemRemoveBreakpoint.OnClick := @EditBreakpointExec;
 
   MenuItemDivider := TMenuItem.Create(FPopupMenu1);
-  MenuItemDivider.Caption := '-';
+  MenuItemDivider.Caption := Menus.cLineCaption;
 
   PopupItemRemoveAllBreakpoints := TMenuItem.Create(FPopupMenu1);
   PopupItemRemoveAllBreakpoints.Caption := 'Remove all breakpoints';

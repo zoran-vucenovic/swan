@@ -1183,92 +1183,76 @@ function TForm1.GetTreeWithToolbarActions: TSwanTreeView;
     S: String;
     N: Integer;
     Nd: TTreeNode;
+    ChildrenAdded: Boolean;
 
   begin
+    ChildrenAdded := False;
     Result := FTreeWithToolbarActions.Items.AddChild(nil, ARootNode);
-    FTreeWithToolbarActions.Images := MainMenu1.Images;
 
-    for I := Low(Arr1) to High(Arr1) do begin
-      Cm := Arr1[I];
-      if Cm is TMenuItem then begin
-        S := TMenuItem(Cm).Caption;
-        N := TMenuItem(Cm).ImageIndex;
-      end else if Cm is TCustomAction then begin
-        S := TCustomAction(Cm).Caption;
-        N := TCustomAction(Cm).ImageIndex;
-      end else
-        S := '';
+    try
+      for I := Low(Arr1) to High(Arr1) do begin
+        Cm := Arr1[I];
+        if Cm is TMenuItem then begin
+          S := TMenuItem(Cm).Caption;
+          N := TMenuItem(Cm).ImageIndex;
+        end else if Cm is TCustomAction then begin
+          S := TCustomAction(Cm).Caption;
+          N := TCustomAction(Cm).ImageIndex;
+        end else begin
+          S := '';
+          N := -1;
+        end;
 
-      if S <> '' then begin
-        Nd := FTreeWithToolbarActions.Items.AddChildObject(Result, S, Pointer(Cm));
-        Nd.ImageIndex := N;
-        Nd.SelectedIndex := N;
+        if (N >= 0) and (N < FTreeWithToolbarActions.Images.Count) then begin
+          S := Trim(StripHotkey(S));
+          if S <> '' then begin
+            Nd := FTreeWithToolbarActions.Items.AddChildObject(Result, S, Pointer(Cm));
+            Nd.ImageIndex := N;
+            Nd.SelectedIndex := N;
+            ChildrenAdded := True;
+          end;
+        end;
       end;
+
+    finally
+      if not ChildrenAdded then
+        FreeAndNil(Result);
     end;
   end;
+
+var
+  I, J, K: Integer;
+  Mi, Mi2: TMenuItem;
+  S, S2: String;
+  Ac: array of TComponent;
 
 begin
   if FTreeWithToolbarActions = nil then begin
 
     FTreeWithToolbarActions := TSwanTreeView.Create(nil);
+    FTreeWithToolbarActions.Images := MainMenu1.Images;
 
-    AddNodes('File', [
-      MenuItemOpen,
-      MenuItemSaveSzxSnapshot,
-      MenuItemSaveZ80Snapshot,
-      MenuItemSaveSnaSnapshot,
-      MenuItemLoadBinaryFile,
-      MenuItemRecentFiles
-    ]);
+    for I := 0 to MainMenu1.Items.Count - 1 do begin
+      Mi := MainMenu1.Items.Items[I];
+      S := Trim(StripHotkey(Mi.Caption));
+      if S <> '' then begin
+        K := 0;
+        SetLength(Ac{%H-}, Mi.Count);
+        for J := 0 to Mi.Count - 1 do begin
+          Mi2 := Mi.Items[J];
+          S2 := Trim(StripHotkey(Mi2.Caption));
+          if (Mi2.ImageIndex >= 0) and (S2 <> '') then begin
+            Ac[K] := Mi2;
+            Inc(K);
+          end;
+        end;
+        SetLength(Ac, K);
+        if K > 0 then
+          AddNodes(S, Ac);
+      end;
+    end;
 
-    AddNodes('Emulation', [
-      MenuItemPause,
-      MenuItemResetSpectrum,
-      MenuItemSignalProcessor,
-      MenuItemDecreaseSpeed,
-      MenuItemIncreaseSpeed,
-      MenuItemNormalSpeed,
-      MenuItemFullSpeed
-    ]);
-
-    AddNodes('Options', [
-      MenuItemIncreaseSize,
-      MenuItemDecreaseSize,
-      MenuItemOnScreenKeyboard,
-      MenuItemKeyMappings,
-      MenuItemColourPalette,
-      MenuItemMuteSound,
-      MenuItemPortaudioLibraryPath,
-      MenuItemSpectrumModel,
-      MenuItemLateTimings,
-      MenuItemJoystick,
-      MenuItemJoystickEnabled,
-      MenuItemFastTapeLoading,
-      MenuItemAutosavingSnapshots,
-      MenuItemAutosavingSnapshotsEnabled,
-      //MenuItemShowToolbar,
-      MenuItemAllOptions
-    ]);
-
-    AddNodes('Tape', [
-      MenuItemShowTapePlayer,
-      MenuItemInsertTape,
-      MenuItemEjectTape,
-      MenuItemPlayTape,
-      MenuItemStopTape,
-      MenuItemRewindTape,
-      MenuItemPreviousBlockTape,
-      MenuItemNextBlockTape
-    ]);
-
-    AddNodes('Debug', [
-      MenuItemShowDebugger,
-      MenuItemInputPokes
-    ]);
-
-    AddNodes('Help', [
-      MenuItemAbout
-    ]);
+    AddNodes('Other', [ActionMoveBack]);
   end;
 
   Result := FTreeWithToolbarActions;
