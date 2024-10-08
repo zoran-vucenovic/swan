@@ -41,7 +41,7 @@ type
   public
     class function GlobalClassNameGenerator(C: TClass): String; static;
     class function GlobalObjectNameGenerator(Obj: TObject): String; static;
-    class function SpectrumCharToUtf8(const Is128K: Boolean; S: RawByteString): RawByteString; static;
+    class function SpectrumCharToUtf8(const Is128K: Boolean; const S: RawByteString): RawByteString; static;
     class procedure ConvertCodePageFromCp1252ToUtf8(var S: AnsiString); static;
     class procedure CallRandomizeIfNotCalledAlready(); static;
   strict private
@@ -73,7 +73,7 @@ begin
 end;
 
 class function TCommonFunctions.SpectrumCharToUtf8(const Is128K: Boolean;
-  S: RawByteString): RawByteString;
+  const S: RawByteString): RawByteString;
 const
   UdgDelta = $90 - Ord('A'); // used for UDG area ($90-$A4)
   BlockCodes: array [0..15] of RawByteString = (
