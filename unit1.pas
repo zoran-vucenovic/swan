@@ -1889,6 +1889,7 @@ var
   FrameOtherOptions: TFrameOtherOptions;
   FrameHistorySnapshotOptions: TFrameHistorySnapshotOptions;
   SzxSaveTapeOptions: TSzxSaveTapeOptions;
+  FrameToolbarOptions: TFrameToobarOptions;
 
 begin
   WasPaused := Spectrum.Paused;
@@ -1941,6 +1942,12 @@ begin
             Break;
           FrameSound.VolLevel := TSoundPlayer.Volume;
 
+          FrameToolbarOptions := TFrameToobarOptions.CreateForAllOptions(
+            OptionsDialog, GetTreeWithToolbarActions, FToolbarActions, Assigned(FToolBar)
+          );
+          if not Assigned(FrameToolbarOptions) then
+            Break;
+
           FrameOtherOptions := TFrameOtherOptions.CreateForAllOptions(OptionsDialog);
           if not Assigned(FrameOtherOptions) then
             Break;
@@ -1980,6 +1987,12 @@ begin
             else
               if Assigned(HistoryQueue) then
                 HistoryQueue.UpdateOptions(SnapshotHistoryOptions);
+
+            FToolbarActions := FrameToolbarOptions.GetSelectedItems;
+            if FrameToolbarOptions.CheckBox1.Checked then
+              UpdateToolbarItems;
+            ShowOrHideToolbar(FrameToolbarOptions.CheckBox1.Checked);
+
           end;
 
         until True;

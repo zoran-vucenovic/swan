@@ -23,6 +23,7 @@ type
   public
     constructor Create(AnOwner: TComponent); override;
 
+    procedure Expand(Node: TTreeNode); override;
     procedure MakeAllNodesVisible;
     function LoadComponentsFromJSonArray(const JArr: TJSONArray; out AArr: TComponentArray): Boolean;
   end;
@@ -44,6 +45,11 @@ begin
   Options := Options
     + [TTreeViewOption.tvoReadOnly, TTreeViewOption.tvoAutoItemHeight]
     - [TTreeViewOption.tvoAutoExpand, TTreeViewOption.tvoAllowMultiselect];
+end;
+
+procedure TSwanTreeView.Expand(Node: TTreeNode);
+begin
+  inherited Expand(Node);
 end;
 
 procedure TSwanTreeView.MakeAllNodesVisible;

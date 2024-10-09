@@ -24,7 +24,7 @@ object FrameToobarOptions: TFrameToobarOptions
     BevelOuter = bvNone
     ClientHeight = 556
     ClientWidth = 473
-    TabOrder = 0
+    TabOrder = 1
     object PanelAll: TPanel
       AnchorSideLeft.Control = Panel1
       AnchorSideTop.Control = Panel1
@@ -199,7 +199,7 @@ object FrameToobarOptions: TFrameToobarOptions
     BevelOuter = bvNone
     ClientHeight = 24
     ClientWidth = 473
-    TabOrder = 1
+    TabOrder = 0
     object CheckBox1: TCheckBox
       Left = 5
       Height = 19

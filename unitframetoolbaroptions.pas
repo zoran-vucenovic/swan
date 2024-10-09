@@ -9,8 +9,9 @@ interface
 
 uses
   Classes, SysUtils, Types, CommonFunctionsLCL, UnitSwanTreeView,
-  UnitFormForOptionsBasic, UnitColourFunctions, Forms, Controls, ExtCtrls,
-  Buttons, ComCtrls, Grids, ActnList, Menus, Dialogs, Graphics, StdCtrls;
+  UnitFormForOptionsBasic, UnitColourFunctions, UnitOptions, Forms, Controls,
+  ExtCtrls, Buttons, ComCtrls, Grids, ActnList, Menus, Dialogs, Graphics,
+  StdCtrls;
 
 type
 
@@ -91,6 +92,11 @@ type
 
     class function ShowOnForm(ATree: TSwanTreeView;
       var ASelectedItems: TComponentArray; var AShowToolbar: Boolean): Boolean;
+    class function CreateForAllOptions(AOptionsDialog: TFormOptions;
+      ATree: TSwanTreeView; const ASelectedItems: TComponentArray;
+      const AShowToolbar: Boolean): TFrameToobarOptions;
+
+    function GetSelectedItems(): TComponentArray;
 
     class property OnGetDefToolbarActions: TProcGetDefToolbarActions write FOnGetDefToolbarActions;
   end;
@@ -351,7 +357,12 @@ procedure TFrameToobarOptions.SetTreeAndSelectedItems(ATree: TSwanTreeView;
 var
   H: Integer;
   Sz: TSize;
+  Nd: TTreeNode;
+  Ndd: TTreeNode;
+
 begin
+  ATree.FullCollapse;
+
   ATree.Anchors := [];
   ATree.AnchorParallel(akLeft, 0, PanelAll);
   ATree.AnchorParallel(akTop, 0, PanelAll);
@@ -376,6 +387,19 @@ begin
     Grid.DefaultRowHeight := H;
 
   FillGrid(SelectedItems);
+
+  Nd := FTreeViewAll.Items.GetFirstVisibleNode;
+  if Assigned(Nd) then begin
+    Nd := Nd.GetFirstVisibleChild();
+    if Assigned(Nd) then begin
+      Ndd := Nd.GetFirstVisibleChild();
+      if Ndd = nil then
+        Ndd := Nd;
+      Ndd.ExpandParents;
+      FTreeViewAll.Selected := Ndd;
+    end;
+  end;
+
   Grid.OnDrawCell := @GridOnDrawCell;
 end;
 
@@ -455,6 +479,38 @@ begin
       Fm.Free;
     end;
   end;
+end;
+
+class function TFrameToobarOptions.CreateForAllOptions(
+  AOptionsDialog: TFormOptions; ATree: TSwanTreeView;
+  const ASelectedItems: TComponentArray; const AShowToolbar: Boolean
+  ): TFrameToobarOptions;
+
+var
+  Fm: TFrameToobarOptions;
+
+begin
+  Result := nil;
+  if Assigned(AOptionsDialog) and Assigned(ATree) then begin
+    Fm := TFrameToobarOptions.Create(AOptionsDialog);
+    try
+      Fm.SetTreeAndSelectedItems(ATree, ASelectedItems);
+      Fm.CheckBox1.Checked := AShowToolbar;
+      AOptionsDialog.AddCloseQuery(@Fm.FormCloseQuery);
+      AOptionsDialog.AddHandlerFirstShow(@Fm.FormOnFirstShow);
+
+      AOptionsDialog.AddAnOptionControl(Fm);
+
+      Result := Fm;
+    except
+      FreeAndNil(Fm);
+    end;
+  end;
+end;
+
+function TFrameToobarOptions.GetSelectedItems(): TComponentArray;
+begin
+  Result := FSelectedItems;
 end;
 
 { TFrameToobarOptions.TGridOptionsList }
