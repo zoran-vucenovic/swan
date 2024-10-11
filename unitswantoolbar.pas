@@ -24,6 +24,8 @@ type
 
     procedure RemoveAllButtons;
   protected
+    procedure CalculatePreferredSize(var PreferredWidth,
+      PreferredHeight: integer; WithThemeSpace: Boolean); override;
   public
     constructor Create(TheOwner: TComponent); override;
     procedure AddButtons(AItems: array of TComponent);
@@ -196,6 +198,12 @@ begin
   finally
     EnableAlign;
   end;
+end;
+
+procedure TSwanToolBar.CalculatePreferredSize(var PreferredWidth,
+  PreferredHeight: integer; WithThemeSpace: Boolean);
+begin
+  WrapButtons(Width, PreferredWidth, PreferredHeight, True);
 end;
 
 procedure TSwanToolBar.UpdateRecentFiles;

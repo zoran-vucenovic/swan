@@ -2230,6 +2230,9 @@ begin
     try
       if AShow then begin
         FToolBar := TSwanToolBar.Create(nil);
+        FToolBar.AutoSize := False;
+        UpdateToolbarItems;
+
         FToolBar.Align := alNone;
         FToolBar.Anchors := [];
         FToolBar.AnchorParallel(akTop, 0, Self);
@@ -2239,8 +2242,6 @@ begin
         FToolBar.Images := ActionList1.Images;
         FToolBar.Wrapable := True;
         FToolBar.AutoSize := True;
-
-        UpdateToolbarItems;
 
         M := TPopupMenu.Create(FToolBar);
         M.Images := FToolBar.Images;
@@ -2282,6 +2283,9 @@ begin
     end;
     FToolBar.RecentFilesMenuItem := Mi;
     FToolBar.AddButtons(FToolbarActions);
+
+    if FToolBar.AutoSize then
+      SetNewAutoSize(nil);
   end;
 end;
 
