@@ -255,7 +255,7 @@ type
     FDummyObj: TObject;
 
     function GetTreeWithToolbarActions: TSwanTreeView;
-    procedure FillDefaultToolbarActions(out AToolbarActions: TComponentArray);
+    procedure FillDefaultToolbarActions(out AToolbarActions: TObjectArray);
     procedure ClearKeyboardAndJoystickState; inline;
     procedure SpectrumOnChangeModel();
     class function SpectrumOnGetDebuggerClass(): TSpectrum.TAbstractDebuggerClass; static;
@@ -312,7 +312,7 @@ type
 
   strict private
     FTreeWithToolbarActions: TSwanTreeView;
-    FToolbarActions: TComponentArray;
+    FToolbarActions: TObjectArray;
     FTapeBrowser: TFormBrowseTape;
     FKeyboardOnScreen: UnitKeyboardOnScreen.TFormKeyboardOnScreen;
     PrevTicks: Int64;
@@ -1258,10 +1258,9 @@ begin
   Result := FTreeWithToolbarActions;
 end;
 
-procedure TForm1.FillDefaultToolbarActions(out
-  AToolbarActions: TComponentArray);
+procedure TForm1.FillDefaultToolbarActions(out AToolbarActions: TObjectArray);
 
-  procedure InternalFillDefaultToolbarActions(const Arr1: array of TComponent);
+  procedure InternalFillDefaultToolbarActions(const Arr1: array of TObject);
   var
     I: Integer;
   begin
@@ -1545,7 +1544,7 @@ var
   SzxSaveTapeOptions: TSzxSaveTapeOptions;
 
   FullVersionFromConf: DWord;
-  Arr: TComponentArray;
+  Arr: TObjectArray;
 
 begin
   JObj := TConfJSON.GetJSONObject(cSection0);
@@ -1697,6 +1696,7 @@ procedure TForm1.SaveToConf;
     I: Integer;
     S: RawByteString;
     A: TJSONArray;
+    Obj: TObject;
 
   begin
     Result := False;
@@ -1705,7 +1705,16 @@ procedure TForm1.SaveToConf;
       A := TJSONArray.Create;
       try
         for I := Low(FToolbarActions) to High(FToolbarActions) do begin
-          S := FToolbarActions[I].Name;
+          S := '';
+          Obj := FToolbarActions[I];
+          if Obj = nil then begin
+            S := TCommonFunctions.NonBreakSpace;
+          end else if Obj = FDummyObj then begin
+            S := TCommonFunctions.NarrowNonBreakSpace;
+          end else if Obj is TComponent then begin
+            S := TComponent(Obj).Name;
+          end;
+
           if S <> '' then begin
             if A.Add(S) < 0 then begin
               FreeAndNil(A);

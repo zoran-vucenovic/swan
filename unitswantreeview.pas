@@ -8,11 +8,11 @@ unit UnitSwanTreeView;
 interface
 
 uses
-  Classes, SysUtils, ComCtrls, fpjson;
+  Classes, SysUtils, UnitCommon, UnitCommonSpectrum, ComCtrls, fpjson;
 
 type
 
-  TComponentArray = array of TComponent;
+  TObjectArray = array of TObject;
 
   TSwanTreeNode = class(TTreeNode)
   end;
@@ -24,7 +24,7 @@ type
     constructor Create(AnOwner: TComponent); override;
 
     procedure MakeAllNodesVisible;
-    function LoadComponentsFromJSonArray(const JArr: TJSONArray; out AArr: TComponentArray): Boolean;
+    function LoadComponentsFromJSonArray(const JArr: TJSONArray; out AArr: TObjectArray): Boolean;
   end;
 
 implementation
@@ -58,44 +58,61 @@ begin
 end;
 
 function TSwanTreeView.LoadComponentsFromJSonArray(const JArr: TJSONArray; out
-  AArr: TComponentArray): Boolean;
+  AArr: TObjectArray): Boolean;
 var
   JD: TJSONData;
   I: Integer;
   J: Integer;
+  L: Integer;
   S: RawByteString;
   Nd: TTreeNode;
+  Obj: TObject;
   Cm: TComponent;
 
 begin
   Result := False;
   if Assigned(JArr) then begin
+    L := 0;
     J := 0;
-
     SetLength(AArr{%H-}, JArr.Count);
     for I := 0 to JArr.Count - 1 do begin
       S := '';
       JD := JArr.Items[I];
       if JD is TJSONString then begin
         S := JD.AsString;
-
-        Nd := Items.GetFirstNode;
-        while Assigned(Nd) do begin
-          if TObject(Nd.Data) is TComponent then begin
-            Cm := TComponent(Nd.Data);
-            if (Cm.Name <> '') and (AnsiCompareText(Cm.Name, S) = 0) then begin
-              AArr[J] := Cm;
+        if S <> '' then begin
+          if S = TCommonFunctions.NonBreakSpace then begin
+            if L > 0 then begin
+              AArr[J] := nil;
               Inc(J);
+            end;
+          end else if S = TCommonFunctions.NarrowNonBreakSpace then begin
+            if L > 0 then begin
+              AArr[J] := TCommonSpectrum.DummyObj;
+              Inc(J);
+            end;
+          end else begin
+            Nd := Items.GetFirstNode;
+            while Assigned(Nd) do begin
+              if TObject(Nd.Data) is TComponent then begin
+                Cm := TComponent(Nd.Data);
+                if (Cm.Name <> '') and (AnsiCompareText(Cm.Name, S) = 0) then begin
+                  Obj := Cm;
+                  AArr[J] := Cm;
+                  Inc(J);
+                  L := J;
 
-              Break;
+                  Break;
+                end;
+              end;
+              Nd := Nd.GetNext;
             end;
           end;
-          Nd := Nd.GetNext;
         end;
       end;
     end;
-    SetLength(AArr, J);
-    Result := J > 0;
+    SetLength(AArr, L);
+    Result := L > 0;
   end;
 end;
 

@@ -8,8 +8,8 @@ unit UnitSwanToolbar;
 interface
 
 uses
-  Classes, SysUtils, UnitCommon, Controls, ActnList, Buttons, ComCtrls,
-  Graphics, Menus;
+  Classes, SysUtils, UnitCommon, UnitCommonSpectrum, Controls, ActnList,
+  Buttons, ComCtrls, Graphics, Menus;
 
 type
 
@@ -28,7 +28,7 @@ type
       PreferredHeight: integer; WithThemeSpace: Boolean); override;
   public
     constructor Create(TheOwner: TComponent); override;
-    procedure AddButtons(AItems: array of TComponent);
+    procedure AddButtons(AItems: array of TObject);
 
     procedure UpdateRecentFiles();
     property RecentFilesMenuItem: TMenuItem write FRecentFilesMenuItem;
@@ -78,12 +78,12 @@ begin
   ShowCaptions := False;
 end;
 
-procedure TSwanToolBar.AddButtons(AItems: array of TComponent);
+procedure TSwanToolBar.AddButtons(AItems: array of TObject);
 var
   I: Integer;
   TB: TSwanToolButton;
   C: TControl;
-  Cm: TComponent;
+  Obj: TObject;
   Ac: TCustomAction;
   Mi: TMenuItem;
   J: Integer;
@@ -96,14 +96,14 @@ begin
     RemoveAllButtons;
     J := 0;
     for I := Low(AItems) to High(AItems) do begin
-      Cm := AItems[I];
-      if Cm = nil then begin
-        C := TCustomControl.Create(Self);
+      Obj := AItems[I];
+      if Obj = nil then begin
+        C := TGraphicControl.Create(Self);
         C.Name := TCommonFunctions.GlobalObjectNameGenerator(C);
+        C.AutoSize := False;
         C.Width := Self.ButtonWidth div 4;
         C.Height := 1;
         C.Constraints.MinWidth := C.Width;
-        C.AutoSize := False;
         C.Parent := Self;
 
         if Length(FSpacers) <= J then
@@ -114,14 +114,20 @@ begin
       end else begin
         Ac := nil;
         Mi := nil;
-        if Cm is TCustomAction then begin
+        if Obj = TCommonSpectrum.DummyObj then begin
           TB := TSwanToolButton.Create(Self);
           TB.Name := TCommonFunctions.GlobalObjectNameGenerator(TB);
-          Ac := TCustomAction(Cm);
-        end else if Cm is TMenuItem then begin
+          TB.Style := tbsDivider;
+          TB.Caption := '';
+          TB.ShowHint := False;
+        end else if Obj is TCustomAction then begin
           TB := TSwanToolButton.Create(Self);
           TB.Name := TCommonFunctions.GlobalObjectNameGenerator(TB);
-          Mi := TMenuItem(Cm);
+          Ac := TCustomAction(Obj);
+        end else if Obj is TMenuItem then begin
+          TB := TSwanToolButton.Create(Self);
+          TB.Name := TCommonFunctions.GlobalObjectNameGenerator(TB);
+          Mi := TMenuItem(Obj);
           if Mi.Action is TCustomAction then begin
             Ac := TCustomAction(Mi.Action);
 

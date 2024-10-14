@@ -9,13 +9,15 @@ interface
 
 uses
   Classes, SysUtils, Types, CommonFunctionsLCL, UnitSwanTreeView,
-  UnitFormForOptionsBasic, UnitColourFunctions, UnitOptions, Forms, Controls,
-  ExtCtrls, Buttons, ComCtrls, Grids, ActnList, Menus, Dialogs, Graphics,
-  StdCtrls;
+  UnitFormForOptionsBasic, UnitColourFunctions, UnitOptions, UnitCommon,
+  UnitCommonSpectrum, Forms, Controls, ExtCtrls, Buttons, ComCtrls, Grids,
+  ActnList, Menus, Dialogs, Graphics, StdCtrls, ImgList;
 
 type
 
   TFrameToobarOptions = class(TFrame)
+    ActionAddDivider: TAction;
+    ActionAddSpacer: TAction;
     ActionReset: TAction;
     ActionMoveDown: TAction;
     ActionMoveUp: TAction;
@@ -27,6 +29,8 @@ type
     BitBtn3: TBitBtn;
     BitBtn4: TBitBtn;
     BitBtn5: TBitBtn;
+    BitBtn6: TBitBtn;
+    BitBtn7: TBitBtn;
     CheckBox1: TCheckBox;
     Panel1: TPanel;
     Panel2: TPanel;
@@ -35,7 +39,9 @@ type
     PanelAll: TPanel;
     PanelSelected: TPanel;
     Splitter1: TSplitter;
+    procedure ActionAddDividerExecute(Sender: TObject);
     procedure ActionAddExecute(Sender: TObject);
+    procedure ActionAddSpacerExecute(Sender: TObject);
     procedure ActionMoveDownExecute(Sender: TObject);
     procedure ActionMoveUpExecute(Sender: TObject);
     procedure ActionRemoveExecute(Sender: TObject);
@@ -43,7 +49,7 @@ type
 
   public
     type
-      TProcGetDefToolbarActions = procedure (out AToolbarActions: TComponentArray) of object;
+      TProcGetDefToolbarActions = procedure (out AToolbarActions: TObjectArray) of object;
 
   strict private
     type
@@ -51,8 +57,8 @@ type
       protected
         function MouseButtonAllowed(Button: TMouseButton): boolean; override;
       public
-        NodeArr: array of TSwanTreeNode;
-        NodeCount: Integer;
+        ItemsArr: array of TObject;
+        ItemsCount: Integer;
 
         constructor Create(AOwner: TComponent); override;
         procedure PrepareCanvas(aCol, aRow: Integer; aState: TGridDrawState);
@@ -60,14 +66,14 @@ type
         procedure DrawFocusRect(aCol, aRow: Integer; ARect: TRect); override;
         procedure DrawCellGrid(aCol, aRow: Integer; aRect: TRect;
           aState: TGridDrawState); override;
-        function AddNode(Nd: TSwanTreeNode): Integer;
-        function RemoveNode(N: Integer): TSwanTreeNode;
+        function AddItem(AObj: TObject): Integer;
+        procedure RemoveItem(N: Integer);
       end;
 
   strict private
     class var
       FOnGetDefToolbarActions: TProcGetDefToolbarActions;
-      FDefToolbarActions: TComponentArray;
+      FDefToolbarActions: TObjectArray;
 
   private
     class procedure Init;
@@ -75,15 +81,15 @@ type
   strict private
     Grid: TGridOptionsList;
     FTreeViewAll: TSwanTreeView;
-    FSelectedItems: TComponentArray;
+    FSelectedItems: TObjectArray;
 
     procedure ShowToolbarCannotBeEmptyMsg;
-    procedure FillGrid(const SelectedItems: TComponentArray);
+    procedure FillGrid(const ASelectedItems: TObjectArray);
     procedure GridOnDrawCell(Sender: TObject; aCol, aRow: Integer; aRect: TRect;
               aState:TGridDrawState);
     procedure FormCloseQuery(Sender : TObject; var CanClose: Boolean);
     procedure SetTreeAndSelectedItems(ATree: TSwanTreeView;
-              const SelectedItems: TComponentArray);
+              const ASelectedItems: TObjectArray);
     procedure FormOnFirstShow(Sender: TObject);
     procedure AfterShowForm(Data: PtrInt);
 
@@ -91,12 +97,12 @@ type
     constructor Create(TheOwner: TComponent); override;
 
     class function ShowOnForm(ATree: TSwanTreeView;
-      var ASelectedItems: TComponentArray; var AShowToolbar: Boolean): Boolean;
+      var ASelectedItems: TObjectArray; var AShowToolbar: Boolean): Boolean;
     class function CreateForAllOptions(AOptionsDialog: TFormOptions;
-      ATree: TSwanTreeView; const ASelectedItems: TComponentArray;
+      ATree: TSwanTreeView; const ASelectedItems: TObjectArray;
       const AShowToolbar: Boolean): TFrameToobarOptions;
 
-    function GetSelectedItems(): TComponentArray;
+    function GetSelectedItems(): TObjectArray;
 
     class property OnGetDefToolbarActions: TProcGetDefToolbarActions write FOnGetDefToolbarActions;
   end;
@@ -149,7 +155,7 @@ begin
     Nd := TSwanTreeNode(Ndd);
 
   if Assigned(Nd) and (Nd.Owner = FTreeViewAll.Items) and Assigned(Nd.Data) then begin
-    N := Grid.AddNode(Nd);
+    N := Grid.AddItem(Nd);
     if N >= 0 then begin
       N := N + Grid.FixedRows;
       Nd.Visible := False;
@@ -162,16 +168,26 @@ begin
   end;
 end;
 
+procedure TFrameToobarOptions.ActionAddSpacerExecute(Sender: TObject);
+begin
+  Grid.AddItem(nil);
+end;
+
+procedure TFrameToobarOptions.ActionAddDividerExecute(Sender: TObject);
+begin
+  Grid.AddItem(TCommonSpectrum.DummyObj);
+end;
+
 procedure TFrameToobarOptions.ActionMoveDownExecute(Sender: TObject);
 var
   N: Integer;
-  Nd: TSwanTreeNode;
+  Obj: TObject;
 begin
   N := Grid.Row - Grid.FixedRows;
-  if (N >= 0) and (N < Grid.NodeCount - 1) then begin
-    Nd := Grid.NodeArr[N];
-    Grid.NodeArr[N] := Grid.NodeArr[N + 1];
-    Grid.NodeArr[N + 1] := Nd;
+  if (N >= 0) and (N < Grid.ItemsCount - 1) then begin
+    Obj := Grid.ItemsArr[N];
+    Grid.ItemsArr[N] := Grid.ItemsArr[N + 1];
+    Grid.ItemsArr[N + 1] := Obj;
     Grid.Row := Grid.Row + 1;
     Grid.Invalidate;
   end;
@@ -180,13 +196,13 @@ end;
 procedure TFrameToobarOptions.ActionMoveUpExecute(Sender: TObject);
 var
   N: Integer;
-  Nd: TSwanTreeNode;
+  Obj: TObject;
 begin
   N := Grid.Row - Grid.FixedRows;
-  if (N > 0) and (N < Grid.NodeCount) then begin
-    Nd := Grid.NodeArr[N];
-    Grid.NodeArr[N] := Grid.NodeArr[N - 1];
-    Grid.NodeArr[N - 1] := Nd;
+  if (N > 0) and (N < Grid.ItemsCount) then begin
+    Obj := Grid.ItemsArr[N];
+    Grid.ItemsArr[N] := Grid.ItemsArr[N - 1];
+    Grid.ItemsArr[N - 1] := Obj;
     Grid.Row := Grid.Row - 1;
     Grid.Invalidate;
   end;
@@ -194,7 +210,7 @@ end;
 
 procedure TFrameToobarOptions.ActionRemoveExecute(Sender: TObject);
 begin
-  Grid.RemoveNode(-1);
+  Grid.RemoveItem(-1);
 end;
 
 procedure TFrameToobarOptions.ActionResetExecute(Sender: TObject);
@@ -223,10 +239,11 @@ begin
   MessageDlg(Msg, TMsgDlgType.mtError, [mbClose], 0);
 end;
 
-procedure TFrameToobarOptions.FillGrid(const SelectedItems: TComponentArray);
+procedure TFrameToobarOptions.FillGrid(const ASelectedItems: TObjectArray);
 var
-  I, N: Integer;
+  I, N, L: Integer;
   Nd: TTreeNode;
+  Obj: TObject;
 begin
   if Assigned(FTreeViewAll) then begin
     FTreeViewAll.BeginUpdate;
@@ -234,21 +251,31 @@ begin
       Grid.BeginUpdate;
       try
         FTreeViewAll.MakeAllNodesVisible;
-        SetLength(Grid.NodeArr, Length(SelectedItems));
+        SetLength(Grid.ItemsArr, Length(ASelectedItems));
+        L := 0;
         N := 0;
-        for I := Low(SelectedItems) to High(SelectedItems) do begin
-          Nd := FTreeViewAll.Items.FindNodeWithData(SelectedItems[I]);
+        for I := Low(ASelectedItems) to High(ASelectedItems) do begin
+          Obj := ASelectedItems[I];
+          if (Obj = nil) or (Obj = TCommonSpectrum.DummyObj) then begin
+            if L > 0 then begin
+              Grid.ItemsArr[N] := Obj;
+              Inc(N);
+            end;
+          end else if Obj is TComponent then begin
+            Nd := FTreeViewAll.Items.FindNodeWithData(ASelectedItems[I]);
 
-          if Nd is TSwanTreeNode then begin
-            Grid.NodeArr[N] := TSwanTreeNode(Nd);
-            Nd.Visible := False;
-            Inc(N);
+            if Nd is TSwanTreeNode then begin
+              Grid.ItemsArr[N] := TSwanTreeNode(Nd);
+              Nd.Visible := False;
+              Inc(N);
+              L := N;
+            end;
           end;
         end;
 
-        SetLength(Grid.NodeArr, N);
-        Grid.NodeCount := N;
-        Grid.RowCount := Grid.FixedRows + N;
+        SetLength(Grid.ItemsArr, L);
+        Grid.ItemsCount := L;
+        Grid.RowCount := Grid.FixedRows + L;
       finally
         Grid.EndUpdate();
       end;
@@ -262,6 +289,7 @@ end;
 procedure TFrameToobarOptions.GridOnDrawCell(Sender: TObject; aCol,
   aRow: Integer; aRect: TRect; aState: TGridDrawState);
 var
+  Obj: TObject;
   Nd: TSwanTreeNode;
   I: Integer;
   S: AnsiString;
@@ -270,15 +298,44 @@ var
   Re: TRect;
   N: Integer;
   Cl: TColor;
+  ImgList: TCustomImageList;
+  ImgIndex: Integer;
+  Spec: Boolean;
 
 begin
   if (aRow >= Grid.FixedRows) then begin
     I := aRow - Grid.FixedRows;
-    if I < Grid.NodeCount then begin
-      Nd := Grid.NodeArr[I];
-      S := Nd.Text;
+    if I < Grid.ItemsCount then begin
+      Obj := Grid.ItemsArr[I];
+      S := '';
+      ImgIndex := -1;
+      ImgList := nil;
+      Nd := nil;
+
+      Spec := True;
+      if Obj = nil then begin
+        ImgIndex := ActionAddSpacer.ImageIndex;
+        S := '<space>';
+      end else if Obj = UnitCommonSpectrum.TCommonSpectrum.DummyObj then begin
+        ImgIndex := ActionAddDivider.ImageIndex;
+        S := '<divider>';
+      end else if Obj is TSwanTreeNode then begin
+        Nd := TSwanTreeNode(Obj);
+        if Assigned(Nd.TreeView) then begin
+          Spec := False;
+          S := Nd.Text;
+          ImgList := Nd.TreeView.Images;
+          ImgIndex := Nd.ImageIndex;
+        end;
+      end;
 
       if S <> '' then begin
+        if Spec then begin
+          ImgList := ActionList1.Images;
+          Grid.Canvas.Font.Color := clMaroon;
+          Grid.Canvas.Font.Style := Grid.Canvas.Font.Style + [fsItalic];
+        end;
+
         R := (aRect.Height - FTreeViewAll.Images.Width) div 2;
         TS := Grid.Canvas.TextStyle;
 
@@ -310,12 +367,15 @@ begin
         end;
 
         TS.Layout := TTextLayout.tlCenter;
+        TS.Alignment := TAlignment.taLeftJustify;
+        TS.Wordbreak := False;
+        TS.SingleLine := True;
 
         Grid.Canvas.TextRect(aRect, aRect.Left + R + aRect.Height, aRect.Top, S, TS);
 
-        if Nd.ImageIndex >= 0 then begin
-          FTreeViewAll.Images.Draw(
-            Grid.Canvas, aRect.Left + R, aRect.Top + R, Nd.ImageIndex);
+        if Assigned(ImgList) and (ImgIndex >= 0) then begin
+          ImgList.Draw(
+            Grid.Canvas, aRect.Left + R, aRect.Top + R, ImgIndex);
         end;
       end;
     end;
@@ -329,22 +389,35 @@ var
   I: Integer;
   J: Integer;
   Obj: TObject;
+  L: Integer;
 begin
   if Sender is TCustomForm then begin
     F := TCustomForm(Sender);
     if F.ModalResult = mrOK then begin
-      if Grid.NodeCount > 0 then begin
-        SetLength(FSelectedItems, Grid.NodeCount);
+      if Grid.ItemsCount > 0 then begin
+        SetLength(FSelectedItems, Grid.ItemsCount);
         J := 0;
-        for I := 0 to Grid.NodeCount - 1 do begin
-          Obj := TObject(Grid.NodeArr[I].Data);
-          if Obj is TComponent then begin
-            FSelectedItems[J] := TComponent(Obj);
-            Inc(J);
+        L := 0;
+        for I := 0 to Grid.ItemsCount - 1 do begin
+          Obj := Grid.ItemsArr[I];
+          if Obj is TSwanTreeNode then begin
+            Obj := TObject(TSwanTreeNode(Obj).Data);
+            if Obj is TComponent then begin
+              FSelectedItems[J] := Obj;
+              Inc(J);
+              L := J;
+            end;
+          end else if L > 0 then begin
+            if (Obj = nil) or (Obj = TCommonSpectrum.DummyObj) then begin
+              FSelectedItems[J] := Obj;
+              Inc(J);
+            end;
           end;
         end;
-        SetLength(FSelectedItems, J);
-      end else begin
+        SetLength(FSelectedItems, L);
+      end;
+
+      if L <= 0 then begin
         ShowToolbarCannotBeEmptyMsg;
         CanClose := False;
       end;
@@ -353,7 +426,7 @@ begin
 end;
 
 procedure TFrameToobarOptions.SetTreeAndSelectedItems(ATree: TSwanTreeView;
-  const SelectedItems: TComponentArray);
+  const ASelectedItems: TObjectArray);
 var
   H: Integer;
   Sz: TSize;
@@ -386,7 +459,7 @@ begin
   if H > Grid.DefaultRowHeight then
     Grid.DefaultRowHeight := H;
 
-  FillGrid(SelectedItems);
+  FillGrid(ASelectedItems);
 
   Nd := FTreeViewAll.Items.GetFirstVisibleNode;
   if Assigned(Nd) then begin
@@ -449,7 +522,7 @@ begin
 end;
 
 class function TFrameToobarOptions.ShowOnForm(ATree: TSwanTreeView;
-  var ASelectedItems: TComponentArray; var AShowToolbar: Boolean): Boolean;
+  var ASelectedItems: TObjectArray; var AShowToolbar: Boolean): Boolean;
 
 var
   Fm: TFrameToobarOptions;
@@ -483,7 +556,7 @@ end;
 
 class function TFrameToobarOptions.CreateForAllOptions(
   AOptionsDialog: TFormOptions; ATree: TSwanTreeView;
-  const ASelectedItems: TComponentArray; const AShowToolbar: Boolean
+  const ASelectedItems: TObjectArray; const AShowToolbar: Boolean
   ): TFrameToobarOptions;
 
 var
@@ -508,7 +581,7 @@ begin
   end;
 end;
 
-function TFrameToobarOptions.GetSelectedItems(): TComponentArray;
+function TFrameToobarOptions.GetSelectedItems: TObjectArray;
 begin
   Result := FSelectedItems;
 end;
@@ -556,76 +629,83 @@ begin
   //inherited DrawCellGrid(aCol, aRow, aRect, aState);
 end;
 
-function TFrameToobarOptions.TGridOptionsList.AddNode(Nd: TSwanTreeNode
-  ): Integer;
+function TFrameToobarOptions.TGridOptionsList.AddItem(AObj: TObject): Integer;
 var
   N: Integer;
   Found: Boolean;
   I: Integer;
+  Nd: TSwanTreeNode;
+
 begin
   Result := -1;
-  if Assigned(Nd) then begin
-    Found := False;
+
+  Found := False;
+  if AObj is TSwanTreeNode then begin
+    Nd := TSwanTreeNode(AObj);
     N := 0;
-    while (not Found) and (N < NodeCount) do begin
-      Found := NodeArr[N] = Nd;
+    while (not Found) and (N < ItemsCount) do begin
+      Found := ItemsArr[N] = Nd;
       Inc(N);
     end;
+  end;
 
-    if not Found then begin
-      BeginUpdate;
-      try
-        if Length(NodeArr) <= NodeCount then begin
-          SetLength(NodeArr, Length(NodeArr) * 10 div 7 + 2);
-        end;
-
-        I := NodeCount;
-        Inc(NodeCount);
-        RowCount := FixedRows + NodeCount;
-
-        N := Row + 1;
-        if N > FixedRows then
-          N := N - FixedRows
-        else
-          N := 0;
-
-        while I > N do begin
-          NodeArr[I] := NodeArr[I - 1];
-          Dec(I);
-        end;
-        NodeArr[I] := Nd;
-        Result := I;
-
-      finally
-        EndUpdate;
+  if not Found then begin
+    BeginUpdate;
+    try
+      if Length(ItemsArr) <= ItemsCount then begin
+        SetLength(ItemsArr, Length(ItemsArr) * 10 div 7 + 2);
       end;
+
+      I := ItemsCount;
+      Inc(ItemsCount);
+      RowCount := FixedRows + ItemsCount;
+
+      N := Row + 1;
+      if N > FixedRows then
+        N := N - FixedRows
+      else
+        N := 0;
+
+      while I > N do begin
+        ItemsArr[I] := ItemsArr[I - 1];
+        Dec(I);
+      end;
+      ItemsArr[I] := AObj;
+      Result := I;
+
+    finally
+      EndUpdate;
     end;
   end;
+
 end;
 
-function TFrameToobarOptions.TGridOptionsList.RemoveNode(N: Integer
-  ): TSwanTreeNode;
+procedure TFrameToobarOptions.TGridOptionsList.RemoveItem(N: Integer);
 var
   I: Integer;
+  Nd: TSwanTreeNode;
+  Obj: TObject;
 begin
-  Result := nil;
   if N < 0 then
     N := Row - FixedRows;
 
-  if (N >= 0) and (N < NodeCount) then begin
+  if (N >= 0) and (N < ItemsCount) then begin
     BeginUpdate;
     try
-      Result := NodeArr[N];
-      if Assigned(Result) then begin
-        for I := N to NodeCount - 2 do
-          NodeArr[I] := NodeArr[I + 1];
+      Obj := ItemsArr[N];
 
-        Dec(NodeCount);
-        RowCount := FixedRows + NodeCount;
+      for I := N to ItemsCount - 2 do
+        ItemsArr[I] := ItemsArr[I + 1];
 
-        Result.Visible := True;
-        Result.ExpandParents;
-        Result.Selected := True;
+      Dec(ItemsCount);
+      RowCount := FixedRows + ItemsCount;
+
+      if Obj is TSwanTreeNode then begin
+        Nd := TSwanTreeNode(Obj);
+
+        Nd.Visible := True;
+        Nd.ExpandParents;
+        Nd.Selected := True;
       end;
 
     finally

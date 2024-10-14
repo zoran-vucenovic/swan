@@ -81,12 +81,12 @@ object FrameToobarOptions: TFrameToobarOptions
       BevelOuter = bvNone
       ClientHeight = 556
       ClientWidth = 50
-      TabOrder = 1
+      TabOrder = 2
       object Panel3: TPanel
         AnchorSideLeft.Control = Panel2
         AnchorSideTop.Control = Panel2
         Left = 3
-        Height = 186
+        Height = 264
         Top = 54
         Width = 42
         AutoSize = True
@@ -94,7 +94,7 @@ object FrameToobarOptions: TFrameToobarOptions
         BorderSpacing.Top = 54
         BorderSpacing.Right = 5
         BevelOuter = bvNone
-        ClientHeight = 186
+        ClientHeight = 264
         ClientWidth = 42
         ParentShowHint = False
         ShowHint = True
@@ -167,11 +167,11 @@ object FrameToobarOptions: TFrameToobarOptions
         end
         object BitBtn5: TBitBtn
           AnchorSideLeft.Control = Panel3
-          AnchorSideTop.Control = BitBtn4
+          AnchorSideTop.Control = BitBtn7
           AnchorSideTop.Side = asrBottom
           Left = 0
           Height = 30
-          Top = 156
+          Top = 234
           Width = 42
           Action = ActionReset
           AutoSize = True
@@ -180,7 +180,39 @@ object FrameToobarOptions: TFrameToobarOptions
           Layout = blGlyphTop
           Images = DataModuleImages.ImageList2
           ImageIndex = 4
+          TabOrder = 6
+        end
+        object BitBtn6: TBitBtn
+          AnchorSideLeft.Control = Panel3
+          AnchorSideTop.Control = BitBtn4
+          AnchorSideTop.Side = asrBottom
+          Left = 0
+          Height = 30
+          Top = 156
+          Width = 42
+          Action = ActionAddDivider
+          AutoSize = True
+          BorderSpacing.Top = 9
+          Layout = blGlyphTop
+          Images = DataModuleImages.ImageList2
+          ImageIndex = 5
           TabOrder = 4
+        end
+        object BitBtn7: TBitBtn
+          AnchorSideLeft.Control = Panel3
+          AnchorSideTop.Control = BitBtn6
+          AnchorSideTop.Side = asrBottom
+          Left = 0
+          Height = 30
+          Top = 195
+          Width = 42
+          Action = ActionAddSpacer
+          AutoSize = True
+          BorderSpacing.Top = 9
+          Layout = blGlyphTop
+          Images = DataModuleImages.ImageList2
+          ImageIndex = 6
+          TabOrder = 5
         end
       end
     end
@@ -239,6 +271,16 @@ object FrameToobarOptions: TFrameToobarOptions
       Hint = 'Reset to default set of buttons'
       ImageIndex = 4
       OnExecute = ActionResetExecute
+    end
+    object ActionAddDivider: TAction
+      Hint = 'Add divider'
+      ImageIndex = 5
+      OnExecute = ActionAddDividerExecute
+    end
+    object ActionAddSpacer: TAction
+      Hint = 'Add space'
+      ImageIndex = 6
+      OnExecute = ActionAddSpacerExecute
     end
   end
 end
