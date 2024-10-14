@@ -131,6 +131,7 @@ procedure TFrameToobarOptions.ActionAddExecute(Sender: TObject);
 
       if Assigned(Nd0) then begin
         if (Nd0.Visible) and Assigned(Nd0.Data) then begin
+          Nd0.ExpandParents;
           Nd0.Selected := True;
           Break;
         end;
@@ -146,7 +147,6 @@ procedure TFrameToobarOptions.ActionAddExecute(Sender: TObject);
 var
   Nd: TSwanTreeNode;
   Ndd: TTreeNode;
-  N: Integer;
 
 begin
   Nd := nil;
@@ -155,15 +155,9 @@ begin
     Nd := TSwanTreeNode(Ndd);
 
   if Assigned(Nd) and (Nd.Owner = FTreeViewAll.Items) and Assigned(Nd.Data) then begin
-    N := Grid.AddItem(Nd);
-    if N >= 0 then begin
-      N := N + Grid.FixedRows;
+    if Grid.AddItem(Nd) >= 0 then begin
       Nd.Visible := False;
       SelectNextNode(Nd);
-      if N < Grid.RowCount then
-        Grid.Row := N;
-
-      Grid.Invalidate;
     end;
   end;
 end;
@@ -671,6 +665,9 @@ begin
         Dec(I);
       end;
       ItemsArr[I] := AObj;
+
+      Row := FixedRows + I;
+
       Result := I;
 
     finally

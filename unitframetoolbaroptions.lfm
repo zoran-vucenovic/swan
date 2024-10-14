@@ -81,7 +81,7 @@ object FrameToobarOptions: TFrameToobarOptions
       BevelOuter = bvNone
       ClientHeight = 556
       ClientWidth = 50
-      TabOrder = 2
+      TabOrder = 1
       object Panel3: TPanel
         AnchorSideLeft.Control = Panel2
         AnchorSideTop.Control = Panel2
