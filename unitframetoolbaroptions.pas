@@ -567,6 +567,7 @@ begin
       AOptionsDialog.AddHandlerFirstShow(@Fm.FormOnFirstShow);
 
       AOptionsDialog.AddAnOptionControl(Fm);
+      Fm.AnchorParallel(akBottom, 0, Fm.Parent);
 
       Result := Fm;
     except
