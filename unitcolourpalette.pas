@@ -428,17 +428,15 @@ end;
 procedure TFrameColourPalette.SwitchToCB(CBFrom, CBTo: TCustomComboBox);
 var
   O: TObject;
-  CM: TLCLColourMap;
   I: Integer;
 begin
   if CBTo.ItemIndex >= 0 then begin
-    CBFrom.ItemIndex := -1;
     O := CBTo.Items.Objects[CBTo.ItemIndex];
 
     if O is TObjColoursMap then begin
-      CM := TObjColoursMap(O).LCLColourMap;
+      CBFrom.ItemIndex := -1;
       for I := Low(ColourPanels) to High(ColourPanels) do
-        ColourPanels[I].Color := CM.Colours[I > 7, I mod 8];
+        ColourPanels[I].Color := TObjColoursMap(O).LCLColourMap.Colours[I > 7, I mod 8];
     end;
 
   end;

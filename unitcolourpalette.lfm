@@ -99,9 +99,9 @@ object FrameColourPalette: TFrameColourPalette
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Left = 4
         ItemHeight = 15
-        OnChange = ComboBoxPredefinedChange
         Style = csDropDownList
         TabOrder = 0
+        OnChange = ComboBoxPredefinedChange
       end
       object Label2: TLabel
         AnchorSideLeft.Control = Panel5
@@ -159,9 +159,9 @@ object FrameColourPalette: TFrameColourPalette
         Anchors = [akTop, akLeft, akRight]
         BorderSpacing.Left = 4
         ItemHeight = 15
-        OnChange = ComboBoxCustomChange
         Style = csDropDownList
         TabOrder = 0
+        OnChange = ComboBoxCustomChange
       end
     end
     object Label3: TLabel
