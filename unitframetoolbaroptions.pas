@@ -388,10 +388,11 @@ begin
   if Sender is TCustomForm then begin
     F := TCustomForm(Sender);
     if F.ModalResult = mrOK then begin
+      L := 0;
+
       if Grid.ItemsCount > 0 then begin
         SetLength(FSelectedItems, Grid.ItemsCount);
         J := 0;
-        L := 0;
         for I := 0 to Grid.ItemsCount - 1 do begin
           Obj := Grid.ItemsArr[I];
           if Obj is TSwanTreeNode then begin
