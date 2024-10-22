@@ -561,12 +561,13 @@ begin
   if Assigned(AOptionsDialog) and Assigned(ATree) then begin
     Fm := TFrameToobarOptions.Create(AOptionsDialog);
     try
+      AOptionsDialog.AddAnOptionControl(Fm);
+
       Fm.SetTreeAndSelectedItems(ATree, ASelectedItems);
       Fm.CheckBox1.Checked := AShowToolbar;
       AOptionsDialog.AddCloseQuery(@Fm.FormCloseQuery);
       AOptionsDialog.AddHandlerFirstShow(@Fm.FormOnFirstShow);
 
-      AOptionsDialog.AddAnOptionControl(Fm);
       Fm.AnchorParallel(akBottom, 0, Fm.Parent);
 
       Result := Fm;
