@@ -349,10 +349,6 @@ begin
   FillKeyMappingsNames;
   FillCurrentMap;
   ComboBox1.OnChange := @ComboMappingNamesChg;
-
-  FillKeyMappingsNames;
-  FillCurrentMap;
-  ComboBox1.OnChange := @(ComboMappingNamesChg);
 end;
 
 destructor TFrameKeyMappings.Destroy;
