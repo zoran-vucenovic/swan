@@ -15,7 +15,7 @@ uses
 
 type
 
-  TFrameToobarOptions = class(TFrame)
+  TFrameToobarOptions = class(TFrame, ICheckStateValid)
     ActionAddDivider: TAction;
     ActionAddSpacer: TAction;
     ActionReset: TAction;
@@ -63,9 +63,9 @@ type
         constructor Create(AOwner: TComponent); override;
         procedure PrepareCanvas(aCol, aRow: Integer; aState: TGridDrawState);
           override;
-        procedure DrawFocusRect(aCol, aRow: Integer; ARect: TRect); override;
-        procedure DrawCellGrid(aCol, aRow: Integer; aRect: TRect;
-          aState: TGridDrawState); override;
+        procedure DrawFocusRect({%H-}aCol, {%H-}aRow: Integer; {%H-}ARect: TRect); override;
+        procedure DrawCellGrid({%H-}aCol, {%H-}aRow: Integer; {%H-}aRect: TRect;
+          {%H-}aState: TGridDrawState); override;
         function AddItem(AObj: TObject): Integer;
         procedure RemoveItem(N: Integer);
       end;
@@ -85,7 +85,7 @@ type
 
     procedure ShowToolbarCannotBeEmptyMsg;
     procedure FillGrid(const ASelectedItems: TObjectArray);
-    procedure GridOnDrawCell(Sender: TObject; aCol, aRow: Integer; aRect: TRect;
+    procedure GridOnDrawCell(Sender: TObject; {%H-}aCol, aRow: Integer; aRect: TRect;
               aState:TGridDrawState);
     procedure FormCloseQuery(Sender : TObject; var CanClose: Boolean);
     procedure SetTreeAndSelectedItems(ATree: TSwanTreeView;
@@ -102,6 +102,7 @@ type
       ATree: TSwanTreeView; const ASelectedItems: TObjectArray;
       const AShowToolbar: Boolean): TFrameToobarOptions;
 
+    function IsStateValid: Boolean;
     function GetSelectedItems(): TObjectArray;
 
     class property OnGetDefToolbarActions: TProcGetDefToolbarActions write FOnGetDefToolbarActions;
@@ -378,44 +379,10 @@ end;
 
 procedure TFrameToobarOptions.FormCloseQuery(Sender: TObject;
   var CanClose: Boolean);
-var
-  F: TCustomForm;
-  I: Integer;
-  J: Integer;
-  Obj: TObject;
-  L: Integer;
 begin
   if Sender is TCustomForm then begin
-    F := TCustomForm(Sender);
-    if F.ModalResult = mrOK then begin
-      L := 0;
-
-      if Grid.ItemsCount > 0 then begin
-        SetLength(FSelectedItems, Grid.ItemsCount);
-        J := 0;
-        for I := 0 to Grid.ItemsCount - 1 do begin
-          Obj := Grid.ItemsArr[I];
-          if Obj is TSwanTreeNode then begin
-            Obj := TObject(TSwanTreeNode(Obj).Data);
-            if Obj is TComponent then begin
-              FSelectedItems[J] := Obj;
-              Inc(J);
-              L := J;
-            end;
-          end else if L > 0 then begin
-            if (Obj = nil) or (Obj = TCommonSpectrum.DummyObj) then begin
-              FSelectedItems[J] := Obj;
-              Inc(J);
-            end;
-          end;
-        end;
-        SetLength(FSelectedItems, L);
-      end;
-
-      if L <= 0 then begin
-        ShowToolbarCannotBeEmptyMsg;
-        CanClose := False;
-      end;
+    if TCustomForm(Sender).ModalResult = mrOK then begin
+      CanClose := IsStateValid;
     end;
   end;
 end;
@@ -487,6 +454,7 @@ constructor TFrameToobarOptions.Create(TheOwner: TComponent);
 begin
   inherited Create(TheOwner);
 
+  Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
   Self.Caption := 'Toolbar options';
 
   BitBtn1.Caption := '';
@@ -575,6 +543,45 @@ begin
     except
       FreeAndNil(Fm);
     end;
+  end;
+end;
+
+function TFrameToobarOptions.IsStateValid: Boolean;
+var
+  I: Integer;
+  J: Integer;
+  Obj: TObject;
+  L: Integer;
+
+begin
+  Result := True;
+  L := 0;
+
+  if Grid.ItemsCount > 0 then begin
+    SetLength(FSelectedItems, Grid.ItemsCount);
+    J := 0;
+    for I := 0 to Grid.ItemsCount - 1 do begin
+      Obj := Grid.ItemsArr[I];
+      if Obj is TSwanTreeNode then begin
+        Obj := TObject(TSwanTreeNode(Obj).Data);
+        if Obj is TComponent then begin
+          FSelectedItems[J] := Obj;
+          Inc(J);
+          L := J;
+        end;
+      end else if L > 0 then begin
+        if (Obj = nil) or (Obj = TCommonSpectrum.DummyObj) then begin
+          FSelectedItems[J] := Obj;
+          Inc(J);
+        end;
+      end;
+    end;
+    SetLength(FSelectedItems, L);
+  end;
+
+  if L <= 0 then begin
+    ShowToolbarCannotBeEmptyMsg;
+    Result := False;
   end;
 end;
 

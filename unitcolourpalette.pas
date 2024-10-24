@@ -346,12 +346,12 @@ begin
   if Sender is TColourArea then begin
     CA := TColourArea(Sender);
     if CA.Tag > 7 then
-      S := ' bright'
+      S := 'bright '
     else
       S := '';
 
-    S := Format('Spectrum colour%s %s', [S, TCommonSpectrum.SpectrumColourNames[CA.Tag mod 8]]);
-    ColorDialog1.Title := S;
+    ColorDialog1.Title := 'Spectrum colour '
+         + S + TCommonSpectrum.SpectrumColourNames[CA.Tag mod 8];
     ColorDialog1.Color := CA.Color;
     if ColorDialog1.Execute then begin
       if CA.Color <> ColorDialog1.Color then begin
@@ -467,7 +467,7 @@ begin
   C := TObjColoursMap.Create;
   FillColourMapFromColourPanels(C.LCLColourMap);
   C.LCLColourMap.Name := S;
-  if N >= 0 then begin
+  if (N >= 0) and (N < ComboBoxCustom.Items.Count) then begin
     ComboBoxCustom.Items.Objects[N].Free;
     ComboBoxCustom.Items.Objects[N] := nil;
     ComboBoxCustom.Items.Delete(N);
@@ -516,6 +516,7 @@ var
 begin
   inherited Create(TheOwner);
 
+  Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
   ComboBoxCustom.Items.UseLocale := True;
   ComboBoxPredefined.Items.UseLocale := ComboBoxCustom.Items.UseLocale;
   if ComboBoxCustom.Items is TStringList then

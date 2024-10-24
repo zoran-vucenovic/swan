@@ -127,7 +127,7 @@ object FrameJoystickSetup: TFrameJoystickSetup
         Left = 336
         Height = 19
         Top = 3
-        Width = 62
+        Width = 60
         BorderSpacing.Left = 51
         Caption = 'Enabled'
         TabOrder = 1

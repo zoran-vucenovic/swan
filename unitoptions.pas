@@ -8,8 +8,8 @@ unit UnitOptions;
 interface
 
 uses
-  Classes, SysUtils, Types, CommonFunctionsLCL, Forms, Controls, Graphics,
-  Dialogs, ExtCtrls, ButtonPanel, Grids, LCLType, LCLIntf, StdCtrls,
+  Classes, SysUtils, Types, CommonFunctionsLCL, UnitCommon, Forms, Controls,
+  Graphics, Dialogs, ExtCtrls, ButtonPanel, Grids, LCLType, LCLIntf, StdCtrls,
   LazMethodList;
 
 type
@@ -36,8 +36,14 @@ type
         LabTitle: String;
       end;
 
+  { #todo : Instead of using grid, think of designing a custom control }
       TGridSelector = class(TCustomDrawGrid)
+      protected
+        procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
+      public
+        property GridState: TGridState read FGridState write FGridState;
       end;
+
   private
     CloseQueryList: TMethodList;
 
@@ -52,6 +58,7 @@ type
     procedure SetCurrentControlNumber(ANumber: Integer);
     procedure GridOnSelectCell(Sender: TObject; {%H-}aCol, aRow: Integer;
           var {%H-}CanSelect: Boolean);
+    procedure GridOnSelection(Sender: TObject; aCol, aRow: Integer);
     procedure GridOnDrawCell(Sender: TObject; {%H-}aCol, aRow: Integer;
           aRect: TRect; {%H-}aState: TGridDrawState);
     procedure GridOnPrepareCanvas(Sender: TObject; {%H-}aCol, {%H-}aRow: Integer;
@@ -65,6 +72,7 @@ type
     procedure AddCloseQuery(C: TCloseQueryEvent);
     procedure SetCurrentControlByClass(AControlClass: TControlClass);
 
+    property CurrentControl: TControl read FCurrentControl;
     property OptionControlsCount: Integer read FOptionControlsCount;
   end;
 
@@ -76,6 +84,8 @@ implementation
 
 procedure TFormOptions.FormCreate(Sender: TObject);
 begin
+  Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
+
   CloseQueryList := nil;
   Label1.Caption := ' ';
 
@@ -116,7 +126,8 @@ begin
   Grid.Flat := True;
   Grid.Options := Grid.Options
     + [goRowSelect]
-    - [goDrawFocusSelected, goFixedHorzLine, goFixedVertLine, goHorzLine, goVertLine, goRangeSelect]
+    - [goDrawFocusSelected, goFixedHorzLine, goFixedVertLine, goHorzLine,
+       goVertLine, goRangeSelect]
     ;
   Grid.ExtendedSelect := False;
   Grid.AllowOutboundEvents := False;
@@ -170,9 +181,6 @@ var
   FontHeight: Integer;
 
 begin
-  //Panel6.Color := clWhite;
-  //Grid.Constraints.MinWidth := Panel2.ClientWidth;
-
   Grid.ParentFont := False;
 
   Grid.Font.Style := Grid.Font.Style + [fsBold];
@@ -209,6 +217,37 @@ end;
 
 procedure TFormOptions.GridOnSelectCell(Sender: TObject; aCol,
   aRow: Integer; var CanSelect: Boolean);
+var
+  C: TControl;
+  N: Integer;
+begin
+  if CanSelect and (aRow <> Grid.Row) then begin
+    if FOptionControlsCount <= 0 then begin
+      CanSelect := False;
+    end else begin
+      N := aRow - Grid.FixedRows;
+      if (N < 0) or (N >= FOptionControlsCount) then begin
+        N := 0;
+      end;
+
+      C := FOptionControls[N].Control;
+
+      CanSelect := Assigned(C) and (C <> FCurrentControl);
+      if CanSelect then begin
+        if FCurrentControl is ICheckStateValid then begin
+          CanSelect := (FCurrentControl as ICheckStateValid).IsStateValid;
+          if not CanSelect then begin
+            if Grid.GridState = TGridState.gsSelecting then
+              Grid.GridState:= TGridState.gsNormal;
+          end;
+        end;
+      end;
+    end;
+
+  end;
+end;
+
+procedure TFormOptions.GridOnSelection(Sender: TObject; aCol, aRow: Integer);
 begin
   if not FInternalSettingRow then
     SetCurrentControlNumber(aRow - Grid.FixedRows);
@@ -274,6 +313,7 @@ begin
     Panel3.Constraints.MinHeight := 0;
 
     Grid.OnSelectCell := @GridOnSelectCell;
+    Grid.OnSelection := @GridOnSelection;
     if FCurrentControl = nil then
       SetCurrentControlNumber(0);
   end;
@@ -417,6 +457,20 @@ begin
 
     C.Parent := Panel3;
   end;
+end;
+
+{ TFormOptions.TGridSelector }
+
+procedure TFormOptions.TGridSelector.MouseMove(Shift: TShiftState; X, Y: Integer
+  );
+begin
+  // prevent moving selection with the mouse
+  if GridState = TGridState.gsSelecting then begin
+    GridState := TGridState.gsNormal;
+    inherited MouseMove(Shift, X, Y);
+    GridState := TGridState.gsSelecting;
+  end else
+    inherited MouseMove(Shift, X, Y);
 end;
 
 end.

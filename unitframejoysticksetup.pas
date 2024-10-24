@@ -10,11 +10,11 @@ interface
 
 uses
   Classes, SysUtils, UnitKeyMaps, CommonFunctionsLCL, UnitFormPressAKey,
-  UnitJoystick, UnitFormForOptionsBasic, UnitOptions, Forms, Controls, Graphics,
-  Dialogs, ExtCtrls, StdCtrls;
+  UnitJoystick, UnitFormForOptionsBasic, UnitOptions, UnitCommon, Forms,
+  Controls, Graphics, Dialogs, ExtCtrls, StdCtrls;
 
 type
-  TFrameJoystickSetup = class(TFrame)
+  TFrameJoystickSetup = class(TFrame, ICheckStateValid)
     CheckBox1: TCheckBox;
     ComboBox1: TComboBox;
     Label1: TLabel;
@@ -96,6 +96,8 @@ type
 
     procedure GetJoystickSetup(out AJoystickType: TJoystick.TJoystickType;
       out AKeys: TJoystick.TJoystickDirectionsKeys; out AEnabled: Boolean);
+
+    function IsStateValid: Boolean;
 
     class function ShowJoystickOptionsDialog(var AJoystickType: TJoystick.TJoystickType;
       var AKeys: TJoystick.TJoystickDirectionsKeys; var AEnabled: Boolean): Boolean;
@@ -307,24 +309,11 @@ end;
 
 procedure TFrameJoystickSetup.FormOnCloseQuery(Sender: TObject;
   var CanClose: Boolean);
-var
-  JD: TJoystick.TJoystickDirection;
-  F: TCustomForm;
 begin
   Application.RemoveAsyncCalls(Self);
   if Sender is TCustomForm then begin
-    F := TCustomForm(Sender);
-    if (F.ModalResult = mrOK) and CheckBox1.Checked then begin
-      for JD := Low(TJoystick.TJoystickDirection) to High(TJoystick.TJoystickDirection) do begin
-        if JoystickKeys[JD].Key = 0 then begin
-          CanClose := False;
-          MessageDlg('Joystick cannot be enabled, because not all keys are assigned.'
-            + LineEnding + LineEnding
-            + 'To be able to enable joystick, you have to assign a key to each joystick direction/button.',
-            mtError, [mbClose], 0);
-          Break;
-        end;
-      end;
+    if TCustomForm(Sender).ModalResult = mrOK then begin
+      CanClose := IsStateValid;
     end;
   end;
 end;
@@ -404,6 +393,25 @@ begin
   ComboBox1.Clear;
 end;
 
+function TFrameJoystickSetup.IsStateValid: Boolean;
+var
+  JD: TJoystick.TJoystickDirection;
+begin
+  Result := True;
+  if CheckBox1.Checked then begin
+    for JD := Low(TJoystick.TJoystickDirection) to High(TJoystick.TJoystickDirection) do begin
+      if JoystickKeys[JD].Key = 0 then begin
+        Result := False;
+        MessageDlg('Joystick cannot be enabled, because not all keys are assigned.'
+          + LineEnding + LineEnding
+          + 'To be able to enable joystick, you have to assign a key to each joystick direction/button.',
+          mtError, [mbClose], 0);
+        Break;
+      end;
+    end;
+  end;
+end;
+
 constructor TFrameJoystickSetup.Create(TheOwner: TComponent);
 var
   JD: TJoystick.TJoystickDirection;
@@ -411,6 +419,7 @@ var
 begin
   inherited Create(TheOwner);
 
+  Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
   Caption := 'Joystick options';
   Label2.Font.Color := clMaroon;
   Label3.Font.Color := clMaroon;

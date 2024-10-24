@@ -16,7 +16,7 @@ type
 
   { TFrameSpectrumModel }
 
-  TFrameSpectrumModel = class(TFrame)
+  TFrameSpectrumModel = class(TFrame, ICheckStateValid)
     CheckBoxCustomRoms: TCheckBox;
     Label1: TLabel;
     Label2: TLabel;
@@ -48,6 +48,8 @@ type
     constructor CreateFrameSpectrumModel(AOwner: TComponent;
       ASpectrum: TSpectrum; ARomPaths: TRomPaths);
     destructor Destroy; override;
+
+    function IsStateValid: Boolean;
 
     class function CreateForAllOptions(AOptionsDialog: TFormOptions;
       ASpectrum: TSpectrum; ARomPaths: TRomPaths): TFrameSpectrumModel;
@@ -103,10 +105,8 @@ begin
   end;
 end;
 
-procedure TFrameSpectrumModel.FormOnCloseQuery(Sender: TObject;
-  var CanClose: Boolean);
+function TFrameSpectrumModel.IsStateValid: Boolean;
 var
-  F: TCustomForm;
   I, J: Integer;
   Stream: TStream;
   RomsCount: Integer;
@@ -118,104 +118,117 @@ var
   NeededSize, NeededSizeKB: Integer;
 
 begin
+  Result := False;
+
+  FreeAndNil(Roms);
+  ErrMsg := '';
+
+  case RadioGroupSpectrumModel.ItemIndex of
+    0:
+      ModelToSet := TSpectrumModel.sm16K_issue_3;
+    1:
+      ModelToSet := TSpectrumModel.sm48K_issue_3;
+    2:
+      ModelToSet := TSpectrumModel.sm128K;
+    3:
+      ModelToSet := TSpectrumModel.smPlus2;
+    // ...
+  otherwise
+    ModelToSet := TSpectrumModel.smNone;
+  end;
+
+  if ModelToSet <> TSpectrumModel.smNone then begin
+
+    if RadioGroupKeyboardModel.Enabled and (RadioGroupKeyboardModel.ItemIndex = 0) then
+      Dec(ModelToSet);
+
+    Result := not CheckBoxCustomRoms.Checked;
+    if not Result then begin
+      BadFile := True;
+      ErrMsg := '';
+      RomFile := '';
+      Roms := TMemoryStream.Create;
+      try
+        RomsCount := ((RadioGroupSpectrumModel.ItemIndex div 2) * 3) div 2 + 1;
+        NeededSizeKB := RomsCount shl 4;
+        NeededSize := NeededSizeKB shl 10;
+        Roms.Size := NeededSize;
+        L := 0;
+        J := 0;
+        for I := 0 to RomsCount - 1 do begin
+          RomFile := FramesChooseFile[I].Path;
+          if Trim(RomFile) <> '' then begin
+            Inc(J);
+
+            Stream := nil;
+            try
+              Stream := TFileStream.Create(RomFile, fmOpenRead or fmShareDenyWrite);
+              BadFile := False;
+            except
+              BadFile := True;
+            end;
+            if BadFile then begin
+              FreeAndNil(Roms);
+              Stream.Free;
+              ErrMsg := 'Cannot load custom rom file'
+                + LineEnding + RomFile + LineEnding + LineEnding
+                + 'Check if the file exists.';
+              Break;
+            end;
+
+            try
+              K := L;
+              L := L + Stream.Size;
+              BadFile := L > NeededSize;
+              if not BadFile then begin
+                Stream.Position := 0;
+                if Stream.Read((Roms.Memory + K)^, Stream.Size) <> Stream.Size then begin
+                  FreeAndNil(Roms);
+                  BadFile := True;
+                  ErrMsg := 'Cannot load custom rom file' + LineEnding + RomFile;
+                end;
+              end;
+            finally
+              Stream.Free;
+            end;
+            if BadFile then
+              Break;
+          end;
+        end;
+
+        if ErrMsg = '' then begin
+          if J = 0 then begin
+            ErrMsg := 'Custom rom file paths must not be empty.';
+          end else if L <> NeededSize then begin
+            ErrMsg := Format('Total size of provided files must be exactly %d KB.', [NeededSizeKB]);
+          end;
+        end;
+
+        Result := ErrMsg = '';
+      finally
+        if not Result then begin
+          FreeAndNil(Roms);
+          MessageDlg(ErrMsg, mtError, [mbClose], 0);
+        end;
+      end;
+    end;
+  end;
+
+end;
+
+procedure TFrameSpectrumModel.FormOnCloseQuery(Sender: TObject;
+  var CanClose: Boolean);
+var
+  F: TCustomForm;
+
+begin
   FreeAndNil(Roms);
 
-  ErrMsg := '';
   if Sender is TCustomForm then begin
     F := TCustomForm(Sender);
 
     if F.ModalResult = mrOK then begin
-      CanClose := False;
-      case RadioGroupSpectrumModel.ItemIndex of
-        0:
-          ModelToSet := TSpectrumModel.sm16K_issue_3;
-        1:
-          ModelToSet := TSpectrumModel.sm48K_issue_3;
-        2:
-          ModelToSet := TSpectrumModel.sm128K;
-        3:
-          ModelToSet := TSpectrumModel.smPlus2;
-        // ...
-      otherwise
-        ModelToSet := TSpectrumModel.smNone;
-      end;
-
-      if ModelToSet <> TSpectrumModel.smNone then begin
-
-        if RadioGroupKeyboardModel.Enabled and (RadioGroupKeyboardModel.ItemIndex = 0) then
-          Dec(ModelToSet);
-
-        CanClose := not CheckBoxCustomRoms.Checked;
-        if not CanClose then begin
-          BadFile := True;
-          ErrMsg := '';
-          RomFile := '';
-          Roms := TMemoryStream.Create;
-          try
-            RomsCount := ((RadioGroupSpectrumModel.ItemIndex div 2) * 3) div 2 + 1;
-            NeededSizeKB := RomsCount shl 4;
-            NeededSize := NeededSizeKB shl 10;
-            Roms.Size := NeededSize;
-            L := 0;
-            J := 0;
-            for I := 0 to RomsCount - 1 do begin
-              RomFile := FramesChooseFile[I].Path;
-              if Trim(RomFile) <> '' then begin
-                Inc(J);
-
-                Stream := nil;
-                try
-                  Stream := TFileStream.Create(RomFile, fmOpenRead or fmShareDenyWrite);
-                  BadFile := False;
-                except
-                  BadFile := True;
-                end;
-                if BadFile then begin
-                  FreeAndNil(Roms);
-                  Stream.Free;
-                  ErrMsg := 'Cannot load custom rom file'
-                    + LineEnding + RomFile + LineEnding + LineEnding
-                    + 'Check if the file exists.';
-                  Break;
-                end;
-
-                try
-                  K := L;
-                  L := L + Stream.Size;
-                  BadFile := L > NeededSize;
-                  if not BadFile then begin
-                    Stream.Position := 0;
-                    if Stream.Read((Roms.Memory + K)^, Stream.Size) <> Stream.Size then begin
-                      FreeAndNil(Roms);
-                      BadFile := True;
-                      ErrMsg := 'Cannot load custom rom file' + LineEnding + RomFile;
-                    end;
-                  end;
-                finally
-                  Stream.Free;
-                end;
-                if BadFile then
-                  Break;
-              end;
-            end;
-
-            if ErrMsg = '' then begin
-              if J = 0 then begin
-                ErrMsg := 'Custom rom file paths must not be empty.';
-              end else if L <> NeededSize then begin
-                ErrMsg := Format('Total size of provided files must be exactly %d KB.', [NeededSizeKB]);
-              end;
-            end;
-
-            CanClose := ErrMsg = '';
-          finally
-            if not CanClose then begin
-              FreeAndNil(Roms);
-              MessageDlg(ErrMsg, mtError, [mbClose], 0);
-            end;
-          end;
-        end;
-      end;
+      CanClose := IsStateValid;
     end;
   end;
 end;
@@ -256,6 +269,7 @@ var
 begin
   inherited Create(TheOwner);
 
+  Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
   Caption := 'Spectrum model';
   SkipUpdateControls := True;
 

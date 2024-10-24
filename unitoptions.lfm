@@ -10,7 +10,7 @@ object FormOptions: TFormOptions
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '3.3.0.0'
+  LCLVersion = '3.7.0.0'
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

@@ -9,10 +9,11 @@ interface
 
 uses
   Classes, SysUtils, UnitInputLibraryPathDialog, UnitSpectrum, UnitOptions,
-  UnitFrameSoundVolume, Forms, Controls, ExtCtrls, StdCtrls;
+  UnitFrameSoundVolume, CommonFunctionsLCL, UnitCommon, Forms, Controls,
+  ExtCtrls, StdCtrls;
 
 type
-  TFrameSound = class(TFrame)
+  TFrameSound = class(TFrame, ICheckStateValid)
     Bevel1: TBevel;
     CheckBox1: TCheckBox;
     LabelVolume: TLabel;
@@ -31,6 +32,8 @@ type
     function GetVolLevel: Integer;
     procedure SetFrameSoundLib(AFrameSoundLib: TFrameInputLibraryPath);
     procedure SetSoundMuted(const AValue: Boolean);
+
+    procedure FormOnCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCloseCallback(Sender: TObject; var {%H-}CloseAction: TCloseAction);
     procedure SetVolLevel(AValue: Integer);
   public
@@ -39,6 +42,7 @@ type
     class function CreateForAllOptions(AOptionsDialog: TFormOptions;
       ASpectrum: TSpectrum; AFrameSoundLib: TFrameInputLibraryPath): TFrameSound;
 
+    function IsStateValid: Boolean;
     property VolLevel: Integer read GetVolLevel write SetVolLevel;
   end;
 
@@ -85,6 +89,13 @@ begin
   CheckBox1.Checked := AValue;
 end;
 
+procedure TFrameSound.FormOnCloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+  if (not (Sender is TFormOptions)) or (TFormOptions(Sender).CurrentControl = Self) then
+    if Assigned(FrameSoundLib) then
+      FrameSoundLib.FormOnCloseQuery(Sender, CanClose);
+end;
+
 procedure TFrameSound.FormCloseCallback(Sender: TObject;
   var CloseAction: TCloseAction);
 begin
@@ -101,6 +112,7 @@ constructor TFrameSound.Create(TheOwner: TComponent);
 begin
   inherited Create(TheOwner);
 
+  Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
   Caption := 'Sound options';
 
   PanelSoundLibrary.BevelOuter := bvNone;
@@ -153,14 +165,25 @@ begin
       Fm.FSpectrum := ASpectrum;
       Fm.SetSoundMuted(ASpectrum.SoundMuted);
 
+      AOptionsDialog.AddHandlerFirstShow(@AFrameSoundLib.OnFormFirstShow);
+      AOptionsDialog.AddHandlerClose(@AFrameSoundLib.FormOnClose);
+
       AOptionsDialog.AddHandlerFirstShow(@Fm.FormOnShow);
+      AOptionsDialog.AddCloseQuery(@Fm.FormOnCloseQuery);
       AOptionsDialog.AddHandlerClose(@Fm.FormCloseCallback);
+
       AOptionsDialog.AddAnOptionControl(Fm, 'Sound');
+
       Result := Fm;
     except
       FreeAndNil(Fm);
     end;
   end;
+end;
+
+function TFrameSound.IsStateValid: Boolean;
+begin
+  Result := (FrameSoundLib = nil) or FrameSoundLib.IsStateValid;
 end;
 
 end.

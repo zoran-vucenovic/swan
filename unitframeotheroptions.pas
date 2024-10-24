@@ -8,7 +8,8 @@ unit UnitFrameOtherOptions;
 interface
 
 uses
-  Classes, SysUtils, UnitOptions, Forms, Controls, ExtCtrls, StdCtrls;
+  Classes, SysUtils, UnitOptions, UnitCommon, Forms, Controls, ExtCtrls,
+  StdCtrls;
 
 type
 
@@ -95,6 +96,7 @@ constructor TFrameOtherOptions.Create(TheOwner: TComponent);
 begin
   inherited Create(TheOwner);
 
+  Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
   Caption := 'Other options';
 end;
 

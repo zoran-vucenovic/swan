@@ -59,6 +59,11 @@ type
     procedure AddCloseQuery(C: TCloseQueryEvent);
   end;
 
+  ICheckStateValid = interface
+  ['{E4BC4B3E-795A-4744-8D89-6621DD4F6628}']
+    function IsStateValid: Boolean;
+  end;
+
 implementation
 
 { TCommonFunctionsLCL.TLinkLabel }

@@ -9,8 +9,8 @@ interface
 
 uses
   Classes, SysUtils, UnitFrameOneKeyMap, UnitKeyMapRecords, UnitFormPressAKey,
-  CommonFunctionsLCL, UnitFormForOptionsBasic, UnitOptions, Forms, Controls,
-  Graphics, Dialogs, ExtCtrls, StdCtrls, LazUTF8;
+  CommonFunctionsLCL, UnitFormForOptionsBasic, UnitOptions, UnitCommon, Forms,
+  Controls, Graphics, Dialogs, ExtCtrls, StdCtrls, LazUTF8;
 
 type
   TFrameKeyMappings = class(TFrame)
@@ -291,6 +291,7 @@ var
 begin
   inherited Create(TheOwner);
 
+  Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
   Caption := 'Key mapping schemes';
   LastComboItemIndex := -1;
   Label5.Caption := 'Note: ';

@@ -1944,7 +1944,6 @@ begin
           FrameSoundLib := TFrameInputLibraryPath.CreateLibraryPathDialog(
             OptionsDialog, TSoundPlayer.LibPath, @SoundLibraryDialogCheckLoad,
             @SoundLibraryOnSave);
-          FrameSoundLib.AddFormEvents(OptionsDialog);
           FrameSound := TFrameSound.CreateForAllOptions(OptionsDialog, Spectrum,
             FrameSoundLib);
           if not Assigned(FrameSound) then
