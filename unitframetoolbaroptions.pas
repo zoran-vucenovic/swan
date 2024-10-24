@@ -423,16 +423,18 @@ begin
 
   FillGrid(ASelectedItems);
 
-  Nd := FTreeViewAll.Items.GetFirstVisibleNode;
-  if Assigned(Nd) then begin
-    Nd := Nd.GetFirstVisibleChild();
-    if Assigned(Nd) then begin
-      Ndd := Nd.GetFirstVisibleChild();
-      if Ndd = nil then
-        Ndd := Nd;
-      Ndd.ExpandParents;
-      FTreeViewAll.Selected := Ndd;
+  Ndd := FTreeViewAll.Items.GetFirstVisibleNode;
+  while Assigned(Ndd) do begin
+    if Ndd.Visible then begin
+      Nd := Ndd.GetFirstVisibleChild();
+      if Assigned(Nd) then begin
+        Nd.ExpandParents;
+        FTreeViewAll.Selected := Nd;
+        Break;
+      end;
     end;
+
+    Ndd := Ndd.GetNextSibling;
   end;
 
   Grid.OnDrawCell := @GridOnDrawCell;
