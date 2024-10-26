@@ -93,13 +93,12 @@ end;
 
 procedure TFrameInputLibraryPath.FormOnCloseQuery(Sender: TObject;
   var CanClose: Boolean);
-var
-  F: TCustomForm;
 begin
-  if Sender is TCustomForm then begin
-    F := TCustomForm(Sender);
-    CanClose := (F.ModalResult <> mrOK) or (not IsVisible) or IsStateValid;
-  end;
+  if Sender is TCustomForm then
+    if TCustomForm(Sender).ModalResult = mrOK then
+      if not IsStateValid then
+        CanClose := False;
+
 end;
 
 procedure TFrameInputLibraryPath.FormOnClose(Sender: TObject;

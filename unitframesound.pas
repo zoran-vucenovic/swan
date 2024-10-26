@@ -91,9 +91,8 @@ end;
 
 procedure TFrameSound.FormOnCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-  if (not (Sender is TFormOptions)) or (TFormOptions(Sender).CurrentControl = Self) then
-    if Assigned(FrameSoundLib) then
-      FrameSoundLib.FormOnCloseQuery(Sender, CanClose);
+  if Assigned(FrameSoundLib) then
+    FrameSoundLib.FormOnCloseQuery(Sender, CanClose);
 end;
 
 procedure TFrameSound.FormCloseCallback(Sender: TObject;
