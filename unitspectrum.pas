@@ -43,10 +43,6 @@ type
     end;
 
     TAbstractDebugger = class abstract (TObject)
-    strict private
-      FBreakpointsListening: Boolean;
-    strict protected
-      FSpectrum: TSpectrum;
     public
       constructor CreateDebugger; virtual; abstract;
       procedure SetSpectrum(ASpectrum: TSpectrum); virtual; abstract;

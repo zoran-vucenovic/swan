@@ -34,6 +34,7 @@ type
     FBreakpoints: TBreakpoints;
     FDisassembler: TDisassembler;
     FOnBreakpointChangeList: TMethodList;
+    FSpectrum: TSpectrum;
 
     procedure DoOnBreakpointChange;
   public
