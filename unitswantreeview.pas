@@ -66,7 +66,6 @@ var
   L: Integer;
   S: RawByteString;
   Nd: TTreeNode;
-  Obj: TObject;
   Cm: TComponent;
 
 begin
@@ -96,8 +95,7 @@ begin
             while Assigned(Nd) do begin
               if TObject(Nd.Data) is TComponent then begin
                 Cm := TComponent(Nd.Data);
-                if (Cm.Name <> '') and (AnsiCompareText(Cm.Name, S) = 0) then begin
-                  Obj := Cm;
+                if AnsiCompareText(Cm.Name, S) = 0 then begin
                   AArr[J] := Cm;
                   Inc(J);
                   L := J;
