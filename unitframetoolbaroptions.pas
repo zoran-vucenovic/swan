@@ -24,6 +24,8 @@ type
     ActionAdd: TAction;
     ActionRemove: TAction;
     ActionList1: TActionList;
+    Bevel1: TBevel;
+    Bevel2: TBevel;
     BitBtn1: TBitBtn;
     BitBtn2: TBitBtn;
     BitBtn3: TBitBtn;
@@ -32,10 +34,14 @@ type
     BitBtn6: TBitBtn;
     BitBtn7: TBitBtn;
     CheckBox1: TCheckBox;
+    Label1: TLabel;
+    Label2: TLabel;
     Panel1: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
     Panel4: TPanel;
+    Panel5: TPanel;
+    Panel6: TPanel;
     PanelAll: TPanel;
     PanelSelected: TPanel;
     Splitter1: TSplitter;
@@ -400,9 +406,9 @@ begin
 
   ATree.Anchors := [];
   ATree.AnchorParallel(akLeft, 0, PanelAll);
-  ATree.AnchorParallel(akTop, 0, PanelAll);
   ATree.AnchorParallel(akBottom, 0, PanelAll);
   ATree.AnchorParallel(akRight, 0, PanelAll);
+  ATree.AnchorToNeighbour(akTop, 0, Panel5);
 
   ATree.Parent := PanelAll;
 
@@ -457,7 +463,7 @@ begin
   inherited Create(TheOwner);
 
   Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
-  Self.Caption := 'Toolbar options';
+  Self.Caption := 'Toolbar';
 
   BitBtn1.Caption := '';
   BitBtn2.Caption := '';
@@ -473,9 +479,9 @@ begin
 
   Grid.Anchors := [];
   Grid.AnchorParallel(akLeft, 0, PanelSelected);
-  Grid.AnchorParallel(akTop, 0, PanelSelected);
   Grid.AnchorParallel(akRight, 0, PanelSelected);
   Grid.AnchorParallel(akBottom, 0, PanelSelected);
+  Grid.AnchorToNeighbour(akTop, 0, Panel6);
 
   Grid.Color := clWhite;
   Grid.Font.Color := clBlack;
@@ -604,6 +610,7 @@ constructor TFrameToobarOptions.TGridOptionsList.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
+  BorderStyle := bsNone;
   Flat := True;
   FixedCols := 0;
   FixedRows := 0;
@@ -620,7 +627,7 @@ end;
 procedure TFrameToobarOptions.TGridOptionsList.PrepareCanvas(aCol,
   aRow: Integer; aState: TGridDrawState);
 begin
-  inherited PrepareCanvas(aCol, aRow, aState - [gdSelected]);
+  inherited PrepareCanvas(aCol, aRow, aState - [gdSelected, gdFocused]);
 end;
 
 procedure TFrameToobarOptions.TGridOptionsList.DrawFocusRect(aCol,

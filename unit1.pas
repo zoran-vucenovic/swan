@@ -1230,6 +1230,8 @@ begin
   if FTreeWithToolbarActions = nil then begin
 
     FTreeWithToolbarActions := TSwanTreeView.Create(nil);
+    FTreeWithToolbarActions.BorderStyle := bsNone;
+    FTreeWithToolbarActions.ParentColor := True;
     FTreeWithToolbarActions.Images := MainMenu1.Images;
 
     for I := 0 to MainMenu1.Items.Count - 1 do begin

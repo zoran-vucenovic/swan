@@ -17,12 +17,12 @@ object FrameToobarOptions: TFrameToobarOptions
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 0
-    Height = 556
-    Top = 24
+    Height = 551
+    Top = 29
     Width = 473
     Anchors = [akTop, akLeft, akRight, akBottom]
     BevelOuter = bvNone
-    ClientHeight = 556
+    ClientHeight = 551
     ClientWidth = 473
     TabOrder = 1
     object PanelAll: TPanel
@@ -32,12 +32,58 @@ object FrameToobarOptions: TFrameToobarOptions
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
       Left = 0
-      Height = 556
+      Height = 551
       Top = 0
       Width = 171
       Anchors = [akTop, akLeft, akRight, akBottom]
       BevelOuter = bvNone
+      BorderStyle = bsSingle
+      ClientHeight = 547
+      ClientWidth = 167
+      Color = clWhite
+      ParentBackground = False
+      ParentColor = False
       TabOrder = 0
+      object Panel5: TPanel
+        AnchorSideLeft.Control = PanelAll
+        AnchorSideTop.Control = PanelAll
+        AnchorSideRight.Control = PanelAll
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 22
+        Top = 0
+        Width = 167
+        Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
+        BevelOuter = bvNone
+        ClientHeight = 22
+        ClientWidth = 167
+        ParentBackground = False
+        TabOrder = 0
+        object Label1: TLabel
+          AnchorSideLeft.Control = Panel5
+          AnchorSideTop.Control = Panel5
+          Left = 2
+          Height = 15
+          Top = 2
+          Width = 114
+          BorderSpacing.Around = 2
+          Caption = 'Available menu items'
+        end
+        object Bevel1: TBevel
+          AnchorSideLeft.Control = Panel5
+          AnchorSideTop.Control = Label1
+          AnchorSideTop.Side = asrBottom
+          AnchorSideRight.Control = Panel5
+          AnchorSideRight.Side = asrBottom
+          Left = 0
+          Height = 3
+          Top = 19
+          Width = 167
+          Anchors = [akTop, akLeft, akRight]
+          Shape = bsTopLine
+        end
+      end
     end
     object PanelSelected: TPanel
       AnchorSideLeft.Control = Panel2
@@ -48,19 +94,65 @@ object FrameToobarOptions: TFrameToobarOptions
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
       Left = 226
-      Height = 556
+      Height = 551
       Top = 0
       Width = 247
       Anchors = [akTop, akLeft, akRight, akBottom]
       BevelOuter = bvNone
+      BorderStyle = bsSingle
+      ClientHeight = 547
+      ClientWidth = 243
+      Color = clWhite
+      ParentBackground = False
+      ParentColor = False
       TabOrder = 3
+      object Panel6: TPanel
+        AnchorSideLeft.Control = PanelSelected
+        AnchorSideTop.Control = PanelSelected
+        AnchorSideRight.Control = PanelSelected
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 22
+        Top = 0
+        Width = 243
+        Anchors = [akTop, akLeft, akRight]
+        AutoSize = True
+        BevelOuter = bvNone
+        ClientHeight = 22
+        ClientWidth = 243
+        ParentBackground = False
+        TabOrder = 0
+        object Label2: TLabel
+          AnchorSideLeft.Control = Panel6
+          AnchorSideTop.Control = Panel6
+          Left = 2
+          Height = 15
+          Top = 2
+          Width = 140
+          BorderSpacing.Around = 2
+          Caption = 'Buttons shown on tool bar'
+        end
+        object Bevel2: TBevel
+          AnchorSideLeft.Control = Panel6
+          AnchorSideTop.Control = Label2
+          AnchorSideTop.Side = asrBottom
+          AnchorSideRight.Control = Panel6
+          AnchorSideRight.Side = asrBottom
+          Left = 0
+          Height = 3
+          Top = 19
+          Width = 243
+          Anchors = [akTop, akLeft, akRight]
+          Shape = bsTopLine
+        end
+      end
     end
     object Splitter1: TSplitter
       AnchorSideTop.Control = Panel1
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
       Left = 171
-      Height = 556
+      Height = 551
       Top = 0
       Width = 5
       Align = alNone
@@ -73,13 +165,13 @@ object FrameToobarOptions: TFrameToobarOptions
       AnchorSideBottom.Control = Panel1
       AnchorSideBottom.Side = asrBottom
       Left = 176
-      Height = 556
+      Height = 551
       Top = 0
       Width = 50
       Anchors = [akTop, akLeft, akBottom]
       AutoSize = True
       BevelOuter = bvNone
-      ClientHeight = 556
+      ClientHeight = 551
       ClientWidth = 50
       TabOrder = 1
       object Panel3: TPanel
@@ -96,6 +188,7 @@ object FrameToobarOptions: TFrameToobarOptions
         BevelOuter = bvNone
         ClientHeight = 264
         ClientWidth = 42
+        ParentBackground = False
         ParentShowHint = False
         ShowHint = True
         TabOrder = 0
@@ -223,13 +316,13 @@ object FrameToobarOptions: TFrameToobarOptions
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     Left = 0
-    Height = 24
+    Height = 29
     Top = 0
     Width = 473
     Anchors = [akTop, akLeft, akRight]
     AutoSize = True
     BevelOuter = bvNone
-    ClientHeight = 24
+    ClientHeight = 29
     ClientWidth = 473
     TabOrder = 0
     object CheckBox1: TCheckBox
@@ -237,8 +330,7 @@ object FrameToobarOptions: TFrameToobarOptions
       Height = 19
       Top = 5
       Width = 88
-      BorderSpacing.Left = 5
-      BorderSpacing.Top = 5
+      BorderSpacing.Around = 5
       Caption = 'Show toolbar'
       TabOrder = 0
     end
