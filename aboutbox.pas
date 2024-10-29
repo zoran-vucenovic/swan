@@ -459,7 +459,7 @@ var
     CC3.Anchors := [];
     CC3.AnchorHorizontalCenterTo(Panel6);
     //
-    CC1 := CreateLinkLabel(CC3, 'http://www.portaudio.com/', 'PortAudio', '', ' sound library');
+    CC1 := CreateLinkLabel(CC3, 'https://www.portaudio.com/', 'PortAudio', '', ' sound library');
     CC1.AnchorParallel(akTop, 0, CC3);
     CC1.AnchorParallel(akLeft, 0, CC3);
     CC1.Parent := CC3;
