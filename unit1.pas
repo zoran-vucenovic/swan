@@ -2503,7 +2503,13 @@ begin
 end;
 
 procedure TForm1.PlayerOnChangeBlock;
+var
+  I: Integer;
 begin
+  for I := 0 to EventsQueueCount - 1 do begin
+    if EventsQueue[I] = @EventPlayerOnChangeBlock then
+      Exit;
+  end;
   AddEventToQueue(@EventPlayerOnChangeBlock);
 end;
 
