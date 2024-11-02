@@ -343,7 +343,7 @@ var
       // Loop end
       if FLoopArrayCount > 0 then begin
         LoopRec := @(FLoopArray[FLoopArrayCount - 1]);
-        if LoopRec^.LoopCount > 0 then begin
+        if LoopRec^.LoopCount > 1 then begin
           LoopRec^.LoopCount := LoopRec^.LoopCount - 1;
           FCurrentBlockNumber := LoopRec^.StartBlockNumber;
         end else
