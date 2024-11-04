@@ -9,7 +9,7 @@ interface
 
 uses
   Classes, SysUtils, UnitGridSpectrumMemory, UnitDisassembler, UnitDebugger,
-  Forms, Controls, ExtCtrls, StdCtrls, Spin, Buttons, fpjson;
+  Forms, Controls, ExtCtrls, StdCtrls, Buttons, fpjson;
 
 type
   TFrameGridMemory = class(TFrame)
@@ -23,6 +23,7 @@ type
     CheckBoxFollowPC: TCheckBox;
     ComboBoxNumBase: TComboBox;
     ComboBoxHexFormat: TComboBox;
+    EditAddr: TEdit;
     ImageList1: TImageList;
     Label1: TLabel;
     Label2: TLabel;
@@ -38,7 +39,6 @@ type
     PanelOptions: TPanel;
     PanelNumBase: TPanel;
     PanelHexFormat: TPanel;
-    SpinEdit1: TSpinEdit;
     procedure BitBtn1Click(Sender: TObject);
     procedure ButtonJumpGoClick(Sender: TObject);
     procedure ButtonJumpToPCClick(Sender: TObject);
@@ -70,9 +70,19 @@ type
         'Relative offsets in JR and DJNZ instructions are displayed'
         + LineEnding + 'as absolute addresses of the destination.'
         ;
+      cJumpToAddrHint: RawByteString = 'Jump to address'
+        + LineEnding + 'For hex, use $ as prefix'
+        ;
+      cJumpToPC: RawByteString = 'Jump to programme counter';
+      cJumpToSP: RawByteString = 'Jump to stack pointer';
+      cStartHint: RawByteString = 'Continue running';
+      cStopHint: RawByteString = 'Stop running';
+      cStepHint: RawByteString = 'Step to next instruction';
+
   private
     FGrid: TSpectrumMemoryGrid;
     FOneStep: Boolean;
+    EditAddrPrevValue: String;
 
     function GetActive: Boolean;
     function GetDisassembler: TDisassembler;
@@ -87,6 +97,8 @@ type
     procedure CheckBoxFollowPcOnChange(Sender: TObject);
     procedure DisassemblerDisplayChange(Sender: TObject);
     procedure UpdateValuesFromDisassembler;
+    function ValidateEditAddr: Integer;
+    procedure EditAddrEditingDone(Sender: TObject);
 
   public
     constructor Create(TheOwner: TComponent); override;
@@ -118,7 +130,7 @@ end;
 
 procedure TFrameGridMemory.ButtonJumpGoClick(Sender: TObject);
 begin
-  FGrid.JumpTo(SpinEdit1.Value);
+  FGrid.JumpTo(StrToInt(EditAddr.Text));
 end;
 
 procedure TFrameGridMemory.BitBtn1Click(Sender: TObject);
@@ -179,10 +191,13 @@ begin
   if AValue xor GetActive then begin
     PanelOptions.Enabled := AValue;
     Panel1.Enabled := AValue;
-    if AValue then
-      ButtonRunStop.Caption := 'Run'
-    else
+    if AValue then begin
+      ButtonRunStop.Caption := 'Run';
+      ButtonRunStop.Hint := cStartHint;
+    end else begin
       ButtonRunStop.Caption := 'Stop';
+      ButtonRunStop.Hint := cStopHint;
+    end;
     FGrid.Enabled := AValue;
   end;
 end;
@@ -236,7 +251,7 @@ var
 begin
   D := GetDisassembler;
   if Assigned(D) then begin
-    SpinEdit1.MaxValue := FGrid.RowCount - FGrid.FixedRows - 1;
+    ValidateEditAddr;
     ComboBoxNumBase.ItemIndex := Ord(D.NumDisplay);
     ComboBoxHexFormat.ItemIndex := D.HexFormatIndex;
     CheckBoxDisplayRelativeJumpOffsetAsAbsolute.OnChange := nil;
@@ -246,6 +261,43 @@ begin
     CheckBoxDisplayRelativeJumpOffsetAsAbsolute.OnChange := @DisassemblerDisplayChange;
     CheckBoxFollowPC.OnChange := @CheckBoxFollowPcOnChange;
   end;
+end;
+
+function TFrameGridMemory.ValidateEditAddr: Integer;
+
+  function ValidateAddr(const S: AnsiString): Integer;
+  var
+    C: AnsiChar;
+  begin
+    C := PAnsiChar(S)^;
+    if (C in ['%', '&']) // don't allow binary or octal
+       or (not TryStrToInt(S, Result)) or (Result < 0) // allow decimal or hex
+       or (Result >= FGrid.RowCount - FGrid.FixedRows)
+    then
+      Result := -1;
+  end;
+
+var
+  S: AnsiString;
+begin
+  S := Trim(EditAddr.Text);
+  Result := ValidateAddr(S);
+  if Result < 0 then begin
+    if ValidateAddr(EditAddrPrevValue) < 0 then
+      EditAddrPrevValue := '0';
+  end else begin
+    EditAddrPrevValue := S;
+  end;
+  EditAddr.Text := EditAddrPrevValue;
+end;
+
+procedure TFrameGridMemory.EditAddrEditingDone(Sender: TObject);
+var
+  N: Integer;
+begin
+  N := ValidateEditAddr;
+  if (N >= 0) and EditAddr.Focused then
+    FGrid.JumpTo(N);
 end;
 
 constructor TFrameGridMemory.Create(TheOwner: TComponent);
@@ -258,7 +310,8 @@ begin
 
   SetOnRunStop(nil);
   FOneStep := False;
-  SpinEdit1.Value := 0;
+  EditAddrPrevValue := '0';
+  EditAddr.Text := EditAddrPrevValue;
 
   Panel7.BevelOuter := bvNone;
   Panel6.BevelOuter := bvNone;
@@ -315,16 +368,18 @@ begin
     S2 := S2 + ' "' + S + '"';
   end;
 
-  PanelNumBase.ShowHint := True;
-  PanelHexFormat.ShowHint := True;
-  CheckBoxDisplayRelativeJumpOffsetAsAbsolute.ShowHint := True;
-  CheckBoxFollowPC.ShowHint := True;
-
   PanelNumBase.Hint := cPanelNumBaseHint;
   PanelHexFormat.Hint := Format(cPanelHexFormatHint, [S1, S2]);
   CheckBoxDisplayRelativeJumpOffsetAsAbsolute.Hint :=
     cCheckBoxDisplayRelativeJumpOffsetAsAbsoluteHint;
   CheckBoxFollowPC.Hint := cCheckBoxFollowPCHint;
+  ButtonStep.Hint := cStepHint;
+  ButtonJumpGo.Hint := cJumpToAddrHint;
+  EditAddr.Hint := cJumpToAddrHint;
+  ButtonJumpToPC.Hint := cJumpToPC;
+  ButtonJumpToSP.Hint := cJumpToSP;
+
+  Panel5.ShowHint := True;
 
   ComboBoxNumBase.OnChange := @DisassemblerDisplayChange;
   ComboBoxHexFormat.OnChange := @DisassemblerDisplayChange;
@@ -334,6 +389,7 @@ begin
   SetActive(True);
   FGrid.Parent := Panel2;
   ButtonRunStop.Constraints.MinWidth := ButtonRunStop.Width;
+  EditAddr.OnEditingDone := @EditAddrEditingDone;
 end;
 
 destructor TFrameGridMemory.Destroy;

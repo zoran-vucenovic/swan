@@ -45,7 +45,7 @@ object FrameGridMemory: TFrameGridMemory
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = Panel6
       AnchorSideRight.Side = asrBottom
-      Left = 186
+      Left = 169
       Height = 24
       Top = 44
       Width = 413
@@ -56,7 +56,7 @@ object FrameGridMemory: TFrameGridMemory
       BevelOuter = bvNone
       ClientHeight = 24
       ClientWidth = 413
-      TabOrder = 0
+      TabOrder = 1
       Visible = False
       object PanelNumBase: TPanel
         AnchorSideLeft.Control = PanelOptions
@@ -170,12 +170,12 @@ object FrameGridMemory: TFrameGridMemory
       Left = 3
       Height = 38
       Top = 3
-      Width = 596
+      Width = 579
       AutoSize = True
       BorderSpacing.Around = 3
       ClientHeight = 38
-      ClientWidth = 596
-      TabOrder = 1
+      ClientWidth = 579
+      TabOrder = 0
       object Panel1: TPanel
         AnchorSideLeft.Control = Panel7
         AnchorSideLeft.Side = asrBottom
@@ -185,13 +185,13 @@ object FrameGridMemory: TFrameGridMemory
         Left = 63
         Height = 36
         Top = 1
-        Width = 532
+        Width = 515
         AutoSize = True
         BorderSpacing.Left = 5
         BevelOuter = bvNone
         ClientHeight = 36
-        ClientWidth = 532
-        TabOrder = 0
+        ClientWidth = 515
+        TabOrder = 1
         object ButtonStep: TButton
           AnchorSideLeft.Control = Panel1
           AnchorSideTop.Control = Panel1
@@ -227,13 +227,13 @@ object FrameGridMemory: TFrameGridMemory
           Left = 138
           Height = 36
           Top = 0
-          Width = 303
+          Width = 286
           AutoSize = True
           BorderSpacing.Left = 9
           BevelOuter = bvNone
           BorderStyle = bsSingle
           ClientHeight = 32
-          ClientWidth = 299
+          ClientWidth = 282
           TabOrder = 2
           object Panel3: TPanel
             AnchorSideLeft.Control = Panel4
@@ -241,12 +241,12 @@ object FrameGridMemory: TFrameGridMemory
             Left = 3
             Height = 26
             Top = 3
-            Width = 293
+            Width = 276
             AutoSize = True
             BorderSpacing.Around = 3
             BevelOuter = bvNone
             ClientHeight = 26
-            ClientWidth = 293
+            ClientWidth = 276
             TabOrder = 0
             object Label2: TLabel
               AnchorSideLeft.Control = ButtonJumpToSP
@@ -300,11 +300,11 @@ object FrameGridMemory: TFrameGridMemory
               Caption = 'jump to'
             end
             object ButtonJumpGo: TButton
-              AnchorSideLeft.Control = SpinEdit1
+              AnchorSideLeft.Control = EditAddr
               AnchorSideLeft.Side = asrBottom
               AnchorSideTop.Control = Panel3
               AnchorSideTop.Side = asrCenter
-              Left = 253
+              Left = 236
               Height = 25
               Top = 1
               Width = 40
@@ -314,7 +314,7 @@ object FrameGridMemory: TFrameGridMemory
               TabOrder = 3
               OnClick = ButtonJumpGoClick
             end
-            object SpinEdit1: TSpinEdit
+            object EditAddr: TEdit
               AnchorSideLeft.Control = Label2
               AnchorSideLeft.Side = asrBottom
               AnchorSideTop.Control = Panel3
@@ -322,11 +322,11 @@ object FrameGridMemory: TFrameGridMemory
               Left = 191
               Height = 23
               Top = 2
-              Width = 59
+              Width = 42
               Alignment = taRightJustify
               BorderSpacing.Left = 3
               TabOrder = 2
-              Value = 60555
+              Text = '60555'
             end
           end
         end
@@ -335,7 +335,7 @@ object FrameGridMemory: TFrameGridMemory
           AnchorSideLeft.Side = asrBottom
           AnchorSideTop.Control = Panel1
           AnchorSideTop.Side = asrCenter
-          Left = 446
+          Left = 429
           Height = 26
           Top = 5
           Width = 86
@@ -360,7 +360,7 @@ object FrameGridMemory: TFrameGridMemory
         AutoSize = True
         ClientHeight = 28
         ClientWidth = 57
-        TabOrder = 1
+        TabOrder = 0
         object ButtonRunStop: TButton
           AnchorSideLeft.Control = Panel7
           AnchorSideTop.Control = Panel7
