@@ -71,7 +71,7 @@ type
         + LineEnding + 'as absolute addresses of the destination.'
         ;
       cJumpToAddrHint: RawByteString = 'Jump to address'
-        + LineEnding + 'For hex, use $ as prefix'
+        + LineEnding + 'To input address in hexadecimal, use $ as prefix.'
         ;
       cJumpToPC: RawByteString = 'Jump to programme counter';
       cJumpToSP: RawByteString = 'Jump to stack pointer';

@@ -45,7 +45,7 @@ object FrameGridMemory: TFrameGridMemory
       AnchorSideTop.Side = asrBottom
       AnchorSideRight.Control = Panel6
       AnchorSideRight.Side = asrBottom
-      Left = 169
+      Left = 166
       Height = 24
       Top = 44
       Width = 413
@@ -170,11 +170,11 @@ object FrameGridMemory: TFrameGridMemory
       Left = 3
       Height = 38
       Top = 3
-      Width = 579
+      Width = 576
       AutoSize = True
       BorderSpacing.Around = 3
       ClientHeight = 38
-      ClientWidth = 579
+      ClientWidth = 576
       TabOrder = 0
       object Panel1: TPanel
         AnchorSideLeft.Control = Panel7
@@ -185,12 +185,12 @@ object FrameGridMemory: TFrameGridMemory
         Left = 63
         Height = 36
         Top = 1
-        Width = 515
+        Width = 512
         AutoSize = True
         BorderSpacing.Left = 5
         BevelOuter = bvNone
         ClientHeight = 36
-        ClientWidth = 515
+        ClientWidth = 512
         TabOrder = 1
         object ButtonStep: TButton
           AnchorSideLeft.Control = Panel1
@@ -227,13 +227,13 @@ object FrameGridMemory: TFrameGridMemory
           Left = 138
           Height = 36
           Top = 0
-          Width = 286
+          Width = 283
           AutoSize = True
           BorderSpacing.Left = 9
           BevelOuter = bvNone
           BorderStyle = bsSingle
           ClientHeight = 32
-          ClientWidth = 282
+          ClientWidth = 279
           TabOrder = 2
           object Panel3: TPanel
             AnchorSideLeft.Control = Panel4
@@ -241,12 +241,12 @@ object FrameGridMemory: TFrameGridMemory
             Left = 3
             Height = 26
             Top = 3
-            Width = 276
+            Width = 273
             AutoSize = True
             BorderSpacing.Around = 3
             BevelOuter = bvNone
             ClientHeight = 26
-            ClientWidth = 276
+            ClientWidth = 273
             TabOrder = 0
             object Label2: TLabel
               AnchorSideLeft.Control = ButtonJumpToSP
@@ -304,12 +304,11 @@ object FrameGridMemory: TFrameGridMemory
               AnchorSideLeft.Side = asrBottom
               AnchorSideTop.Control = Panel3
               AnchorSideTop.Side = asrCenter
-              Left = 236
+              Left = 233
               Height = 25
               Top = 1
               Width = 40
               AutoSize = True
-              BorderSpacing.Left = 3
               Caption = 'go'
               TabOrder = 3
               OnClick = ButtonJumpGoClick
@@ -335,7 +334,7 @@ object FrameGridMemory: TFrameGridMemory
           AnchorSideLeft.Side = asrBottom
           AnchorSideTop.Control = Panel1
           AnchorSideTop.Side = asrCenter
-          Left = 429
+          Left = 426
           Height = 26
           Top = 5
           Width = 86
