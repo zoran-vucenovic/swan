@@ -22,6 +22,9 @@ type
   TSnapshotSZX = class(TSnapshotFile)
   public
     type
+      TSzxSaveTapeOptions = (sstoSkip, sstoEmbeddedCompressed,
+        sstoEmbeddedUncompressed, sstoFilePathOnly);
+
       TOnSzxLoadTape = procedure(AStream: TStream; const AFileName: String;
         const AExtension: String; ACurrentBlock: Integer) of object;
       TOnSzxSaveTape = procedure(out ATapePlayer: TTapePlayer) of object;
@@ -89,14 +92,13 @@ type
         constructor Create;
       end;
 
-  private
+  strict private
     class var
       SzxBlocksMap: TSzxBlocksMap;
       FSkipJoystickInfoLoad: Boolean;
       FOnSzxLoadTape: TOnSzxLoadTape;
       FOnSzxSaveTape: TOnSzxSaveTape;
-      FSaveTapeEmbedded: Boolean;
-      FSaveTapeCompressed: Boolean;
+      FSaveTapeOptions: TSzxSaveTapeOptions;
 
   private
     Mem: TMemoryStream;
@@ -127,8 +129,7 @@ type
     class property SkipJoystickInfoLoad: Boolean read FSkipJoystickInfoLoad write FSkipJoystickInfoLoad;
     class property OnSzxLoadTape: TOnSzxLoadTape read FOnSzxLoadTape write FOnSzxLoadTape;
     class property OnSzxSaveTape: TOnSzxSaveTape read FOnSzxSaveTape write FOnSzxSaveTape;
-    class property SaveTapeEmbedded: Boolean read FSaveTapeEmbedded write FSaveTapeEmbedded;
-    class property SaveTapeCompressed: Boolean read FSaveTapeCompressed write FSaveTapeCompressed;
+    class property SaveTapeOptions: TSzxSaveTapeOptions read FSaveTapeOptions write FSaveTapeOptions;
   end;
 
 implementation
@@ -474,7 +475,7 @@ var
   I: Integer;
 
 begin
-  if not Assigned(Szx.FOnSzxLoadTape) then begin
+  if not Assigned(Szx.OnSzxLoadTape) then begin
     Stream.Seek(BlockSize, TSeekOrigin.soCurrent);
     Result := True;
   end else begin
@@ -541,7 +542,7 @@ begin
           end;
           //
           if Result then
-            Szx.FOnSzxLoadTape(Str1, S, FileExtension, RecTape.CurrentBlockNo);
+            Szx.OnSzxLoadTape(Str1, S, FileExtension, RecTape.CurrentBlockNo);
         finally
           Str1.Free;
         end;
@@ -599,7 +600,7 @@ begin
 
       if FTapePlayer.GetCurrentBlockNumber >= 0 then begin
         Rec.CurrentBlockNo := FTapePlayer.GetCurrentBlockNumber;
-        if not Szx.FSaveTapeEmbedded then begin
+        if Szx.SaveTapeOptions = TSnapshotSZX.TSzxSaveTapeOptions.sstoFilePathOnly then begin
           Rec.CompressedSize := Length(FileName);
           Rec.UncompressedSize := Rec.CompressedSize;
           Result := WriteRec and (Stream.Write(FileName[1], Length(FileName)) = Length(FileName));
@@ -611,7 +612,7 @@ begin
               Rec.UncompressedSize := Str0.Size;
               if Rec.UncompressedSize > 0 then begin
                 try
-                  if not Szx.FSaveTapeCompressed then begin
+                  if Szx.SaveTapeOptions <> TSnapshotSZX.TSzxSaveTapeOptions.sstoEmbeddedCompressed then begin
                     Rec.CompressedSize := Rec.UncompressedSize;
                     Result := True;
                   end else begin
@@ -1156,11 +1157,10 @@ end;
 procedure TSnapshotSZX.SetMemSize(ASize: Integer);
 begin
   if Mem = nil then
-    Mem := TMemoryStream.Create
-  else if Mem.Size = ASize then
-    Exit;
+    Mem := TMemoryStream.Create;
 
-  Mem.Size := ASize;
+  if Mem.Size <> ASize then
+    Mem.Size := ASize;
 end;
 
 procedure TSnapshotSZX.RaiseSnapshotLoadErrorSZX(const S: AnsiString);
@@ -1183,8 +1183,7 @@ class procedure TSnapshotSZX.Init;
 begin
   FSkipJoystickInfoLoad := True;
   FOnSzxLoadTape := nil;
-  FSaveTapeEmbedded := True;
-  FSaveTapeCompressed := True;
+  FSaveTapeOptions := TSzxSaveTapeOptions.sstoSkip;
 
   SzxBlocksMap := TSzxBlocksMap.Create;
 
@@ -1358,6 +1357,7 @@ begin
             GetMemStr().Position := 0;
             Result := FSpectrum.Memory.LoadRamFromStream(GetMemStr());
           end;
+
           Break;
         end;
 
@@ -1474,11 +1474,15 @@ begin
           if State.HasAy and (not SaveBlock(TZxstAYBlock.Create)) then
             Exit;
 
-          if Assigned(FOnSzxSaveTape) then begin
+          if (FSaveTapeOptions <> TSzxSaveTapeOptions.sstoSkip) and Assigned(FOnSzxSaveTape) then begin
             FOnSzxSaveTape(TapePlayer);
-            if Assigned(TapePlayer) then
-              if not SaveBlock(TZxstTape.Create(TapePlayer)) then
-                Exit;
+            if Assigned(TapePlayer) then begin
+              if (FSaveTapeOptions <> TSzxSaveTapeOptions.sstoFilePathOnly)
+                or (TapePlayer.IsRealPath) // file wasn't loaded from zip or from another szx where it had been embedded
+              then
+                if not SaveBlock(TZxstTape.Create(TapePlayer)) then
+                  Exit;
+            end;
           end;
 
           Result := True;

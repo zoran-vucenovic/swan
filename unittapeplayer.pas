@@ -102,6 +102,7 @@ type
       TapePlayerMap: TTapePlayerMap;
 
   private
+    FIsRealPath: Boolean;
     FSpectrum: TSpectrum;
 
     class procedure Init;
@@ -133,6 +134,7 @@ type
 
     function GetBlockCount: Integer;
     property FileName: String read FFileName write FFileName;
+    property IsRealPath: Boolean read FIsRealPath write FIsRealPath;
     property OnChangeBlock: TProcedureOfObject read FOnChangeBlock write SetOnChangeBlock;
     property OnSelectBlock: TOnSelectBlock read FOnSelectBlock write FOnSelectBlock;
   end;
@@ -243,6 +245,7 @@ begin
   inherited Create;
 
   FStream := nil;
+  FIsRealPath := False;
   SetLength(Blocks, 2);
   FBlockCount := 0;
   FOnSelectBlock := nil;

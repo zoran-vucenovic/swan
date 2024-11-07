@@ -298,9 +298,6 @@ type
         Filename: String;
       end;
 
-      TSzxSaveTapeOptions = (sstoSkip, sstoEmbeddedCompressed,
-        sstoEmbeddedUncompressed, sstoFilePathOnly);
-
     const
       SnapshotExtensions: array [0..2] of String = ('szx', 'z80', 'sna');
       TapeExtensions: array [0..3] of String = ('tap', 'tzx', 'pzx', 'csw');
@@ -343,8 +340,6 @@ type
     SnapshotHistoryOptions: TSnapshotHistoryOptions;
     FToolBar: TSwanToolBar;
 
-    procedure SetSzxSaveOptionsToSzx(const SzxSaveTapeOptions: TSzxSaveTapeOptions);
-    procedure GetSzxSaveOptionsFromSzx(out SzxSaveTapeOptions: TSzxSaveTapeOptions);
     procedure SoundLibraryOnSave(var LibPath: String);
     function SoundLibraryDialogCheckLoad(const APath: String): Boolean;
     procedure TryLoadFromFiles(const SpectrumFileKinds: TSpectrumFileKinds; const AFileNames: Array of String);
@@ -1543,7 +1538,6 @@ var
   S, S1: String;
   SPortaudioLib32, SPortaudioLib64: String;
   K: Integer;
-  SzxSaveTapeOptions: TSzxSaveTapeOptions;
 
   FullVersionFromConf: DWord;
   Arr: TObjectArray;
@@ -1616,14 +1610,12 @@ begin
       else
         TSnapshotSZX.OnSzxLoadTape := nil;
 
-      GetSzxSaveOptionsFromSzx(SzxSaveTapeOptions);
-      K := Integer(SzxSaveTapeOptions);
+      K := Integer(TSnapshotSZX.SaveTapeOptions);
       K := JObj2.Get(cSectionSzxSaveOptions, K);
-      if (K >= Integer(Low(TSzxSaveTapeOptions)))
-         and (K <= Integer(High(TSzxSaveTapeOptions)))
+      if (K >= Integer(Low(TSnapshotSZX.TSzxSaveTapeOptions)))
+         and (K <= Integer(High(TSnapshotSZX.TSzxSaveTapeOptions)))
       then begin
-        SzxSaveTapeOptions := TSzxSaveTapeOptions(K);
-        SetSzxSaveOptionsToSzx(SzxSaveTapeOptions);
+        TSnapshotSZX.SaveTapeOptions := TSnapshotSZX.TSzxSaveTapeOptions(K);
       end;
     end;
 
@@ -1744,7 +1736,6 @@ var
   S: String;
   K: Integer;
   JObj2: TJSONObject;
-  SzxSaveTapeOptions: TSzxSaveTapeOptions;
   JArr: TJSONArray;
 
 begin
@@ -1839,8 +1830,7 @@ begin
         K := 1;
       JObj2.Add(cSectionSkipTapeInfoSzxLoad, K);
 
-      GetSzxSaveOptionsFromSzx(SzxSaveTapeOptions);
-      K := Integer(SzxSaveTapeOptions);
+      K := Integer(TSnapshotSZX.SaveTapeOptions);
       JObj2.Add(cSectionSzxSaveOptions, K);
 
       if JObj.Add(cSectionOtherOptions, JObj2) >= 0 then
@@ -1899,7 +1889,6 @@ var
   FrameSoundLib: TFrameInputLibraryPath;
   FrameOtherOptions: TFrameOtherOptions;
   FrameHistorySnapshotOptions: TFrameHistorySnapshotOptions;
-  SzxSaveTapeOptions: TSzxSaveTapeOptions;
   FrameToolbarOptions: TFrameToobarOptions;
 
 begin
@@ -1964,8 +1953,7 @@ begin
           FrameOtherOptions.AutoShowTapePlayerOnLoadTape := FAutoShowTapePlayerWhenTapeLoaded;
           FrameOtherOptions.SkipJoystickInfoSzxLoad := TSnapshotSZX.SkipJoystickInfoLoad;
           FrameOtherOptions.SkipTapeInfoSzxLoad := not Assigned(TSnapshotSZX.OnSzxLoadTape);
-          GetSzxSaveOptionsFromSzx(SzxSaveTapeOptions);
-          FrameOtherOptions.SaveTapeInfoSzxSave := Integer(SzxSaveTapeOptions);
+          FrameOtherOptions.SaveTapeInfoSzxSave := Integer(TSnapshotSZX.SaveTapeOptions);
 
           if ControlClass = nil then
             ControlClass := TFrameOtherOptions;
@@ -1987,8 +1975,8 @@ begin
               TSnapshotSZX.OnSzxLoadTape := nil
             else
               TSnapshotSZX.OnSzxLoadTape := @SzxOnLoadTape;
-            SzxSaveTapeOptions := TSzxSaveTapeOptions(FrameOtherOptions.SaveTapeInfoSzxSave);
-            SetSzxSaveOptionsToSzx(SzxSaveTapeOptions);
+            TSnapshotSZX.SaveTapeOptions :=
+              TSnapshotSZX.TSzxSaveTapeOptions(FrameOtherOptions.SaveTapeInfoSzxSave);
 
             FrameHistorySnapshotOptions.UpdateSnapshotHistoryOptionsFromValues(SnapshotHistoryOptions);
             ActionMoveBack.ShortCut := SnapshotHistoryOptions.KeyGoBack;
@@ -2097,32 +2085,6 @@ begin
       Key := 0;
     end;
   end;
-end;
-
-procedure TForm1.SetSzxSaveOptionsToSzx(
-  const SzxSaveTapeOptions: TSzxSaveTapeOptions);
-begin
-  if SzxSaveTapeOptions = TSzxSaveTapeOptions.sstoSkip then
-    TSnapshotSZX.OnSzxSaveTape := nil
-  else begin
-    TSnapshotSZX.OnSzxSaveTape := @SzxOnSaveTape;
-
-    TSnapshotSZX.SaveTapeEmbedded := SzxSaveTapeOptions <> TSzxSaveTapeOptions.sstoFilePathOnly;
-    TSnapshotSZX.SaveTapeCompressed := SzxSaveTapeOptions = TSzxSaveTapeOptions.sstoEmbeddedCompressed;
-  end;
-end;
-
-procedure TForm1.GetSzxSaveOptionsFromSzx(out
-  SzxSaveTapeOptions: TSzxSaveTapeOptions);
-begin
-  if not Assigned(TSnapshotSZX.OnSzxSaveTape) then
-    SzxSaveTapeOptions := TSzxSaveTapeOptions.sstoSkip
-  else if not TSnapshotSZX.SaveTapeEmbedded then
-    SzxSaveTapeOptions := TSzxSaveTapeOptions.sstoFilePathOnly
-  else if TSnapshotSZX.SaveTapeCompressed then
-    SzxSaveTapeOptions := TSzxSaveTapeOptions.sstoEmbeddedCompressed
-  else
-    SzxSaveTapeOptions := TSzxSaveTapeOptions.sstoEmbeddedUncompressed;
 end;
 
 procedure TForm1.SoundLibraryOnSave(var LibPath: String);
@@ -2801,6 +2763,7 @@ var
   Extension: String;
   AcceptedExtensions: TStringDynArray;
   LoadAsBinary: Boolean;
+  InZip: Boolean;
 
 begin
   FFileToOpen := '';
@@ -2815,6 +2778,7 @@ begin
       Extension := ExtractFileExt(ASourceFile);
       LoadAsBinary := SpectrumFileKinds = BinFileKindOnly;
       SnapshotFile := nil;
+      InZip := False;
 
       L := False;
       if (not LoadAsBinary)
@@ -2833,6 +2797,7 @@ begin
             DoDirSeparators(FileName);
             Extension := ExtractFileExt(FileName);
             FileName := IncludeTrailingPathDelimiter(ASourceFile) + FileName;
+            InZip := True;
           end;
         end;
       end else
@@ -2897,8 +2862,12 @@ begin
                    and StrInArr(Extension, BinaryExtensions)
                   );
 
-              if sfkTape in SpectrumFileKinds then
-                L := LoadTape(Stream, FileName, Extension, not LoadAsBinary);
+              if sfkTape in SpectrumFileKinds then begin
+                if LoadTape(Stream, FileName, Extension, not LoadAsBinary) then begin
+                  TapePlayer.IsRealPath := not InZip;
+                  L := True;
+                end;
+              end;
 
               if not L then begin
                 if sfkBinary in SpectrumFileKinds then
@@ -3011,6 +2980,7 @@ begin
       if LoadTape(AStream, AFileName, AExtension, True) then begin
         if ACurrentBlock > 0 then
           TapePlayer.GoToBlock(ACurrentBlock);
+        TapePlayer.IsRealPath := Assigned(FS);
       end else begin
         HasError := True;
         BadFilePath := Assigned(FS);
