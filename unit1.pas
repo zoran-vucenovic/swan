@@ -362,11 +362,12 @@ type
     procedure SoundVolumeOnShow(Sender: TObject);
     procedure ToolButtonOnShowHint(Sender: TObject; HintInfo: PHintInfo);
     procedure EventPlayerOnChangeBlock(Sender: TObject);
+    procedure EventPlayerOnChangeBlockAux(Sender: TObject);
     procedure PlayerOnChangeBlock;
     procedure EventTapeBrowserGoToBlock(Sender: TObject);
     procedure TapeBrowserGoToBlock();
     procedure TapeBrowserAttachTape;
-    procedure EventTapePlayerSelectBlock(Sender: TObject);
+    procedure EventTapePlayerSelectBlock;
     function TapePlayerOnSelectBlock(const ASelections: TTapePlayer.TSelections): Boolean;
     procedure GetAcceptableExtensions(const SpectrumFileKinds: TSpectrumFileKinds; const IncludeZip: Boolean; out Extensions: TStringDynArray);
     procedure LoadAsk(const SpectrumFileKinds: TSpectrumFileKinds);
@@ -2464,15 +2465,21 @@ begin
   UpdateWriteScreen;
 end;
 
+procedure TForm1.EventPlayerOnChangeBlockAux(Sender: TObject);
+begin
+  // Postpone, add it to the end of the queue.
+  AddEventToQueue(@EventPlayerOnChangeBlock);
+end;
+
 procedure TForm1.PlayerOnChangeBlock;
 var
   I: Integer;
 begin
   for I := 0 to EventsQueueCount - 1 do begin
-    if EventsQueue[I] = @EventPlayerOnChangeBlock then
+    if EventsQueue[I] = @EventPlayerOnChangeBlockAux then
       Exit;
   end;
-  AddEventToQueue(@EventPlayerOnChangeBlock);
+  AddEventToQueue(@EventPlayerOnChangeBlockAux);
 end;
 
 procedure TForm1.EventTapeBrowserGoToBlock(Sender: TObject);
@@ -2495,24 +2502,25 @@ begin
 
 end;
 
-procedure TForm1.EventTapePlayerSelectBlock(Sender: TObject);
+procedure TForm1.EventTapePlayerSelectBlock;
 const
   DlgCaption: AnsiString = 'Select block found';
   DlgMsg: AnsiString = 'Please select the block to jump to:';
   ItemText: AnsiString = 'block %d: %s';
 var
   I, N: Integer;
-  WasPaused: Boolean;
   SA: TStringDynArray;
+  WasPaused: Boolean;
+
 begin
   if Assigned(TapePlayer) and (Length(FSelections) > 0) then begin
     WasPaused := Spectrum.Paused;
     try
       Spectrum.Paused := True;
-
-      UpdateWriteScreen;
-      if Assigned(FTapeBrowser) then
+      if Assigned(FTapeBrowser) then begin
+        EventPlayerOnChangeBlock(nil);
         FTapeBrowser.Invalidate;
+      end;
 
       SetLength(SA{%H-}, Length(FSelections));
       for I := Low(FSelections) to High(FSelections) do begin
@@ -2526,24 +2534,25 @@ begin
             TapePlayer.GoToBlock(TapePlayer.GetCurrentBlockNumber + N);
             TapePlayer.Continue;
           end;
+          SetLength(FSelections, 0);
         end;
       end;
     finally
       Spectrum.Paused := WasPaused;
     end;
   end;
-  SetLength(FSelections, 0);
 end;
 
 function TForm1.TapePlayerOnSelectBlock(const ASelections: TTapePlayer.TSelections
   ): Boolean;
 begin
-  Result := Assigned(TapePlayer) and (Length(ASelections) > 0);
-  if Result then begin
+  Result := False;
+  if Assigned(TapePlayer) and (Length(ASelections) > 0) then begin
     FSelections := ASelections;
-    Result := True;
-    AddEventToQueue(@EventTapePlayerSelectBlock);
-  end else
+    TThread.Synchronize(Spectrum, @EventTapePlayerSelectBlock);
+    Result := Length(FSelections) = 0;
+  end;
+  if not Result then
     SetLength(FSelections, 0);
 end;
 

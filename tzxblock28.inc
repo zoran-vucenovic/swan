@@ -18,8 +18,7 @@ public
   class function GetBlockDescription: String; override;
   function GetBlockLength: Integer; override;
   function LoadBlock(const Stream: TStream): Boolean; override;
-  function GetStopPlaying: Boolean; override;
-  function ForwardOneWhenStarting: Boolean; override;
+  function CheckUserInteraction: Boolean; override;
   procedure Details(out S: String); override;
 end;
 
@@ -174,20 +173,15 @@ begin
     SetLength(FSelections, 0);
 end;
 
-function TTzxBlock28.GetStopPlaying: Boolean;
+function TTzxBlock28.CheckUserInteraction: Boolean;
 begin
-  Result := inherited GetStopPlaying;
+  Result := inherited CheckUserInteraction;
 
   if Assigned(FTapePlayer.OnSelectBlock) then begin
     if Length(FSelections) > 0 then begin
       Result := FTapePlayer.OnSelectBlock(FSelections);
     end;
   end;
-end;
-
-function TTzxBlock28.ForwardOneWhenStarting: Boolean;
-begin
-  Result := False;
 end;
 
 procedure TTzxBlock28.Details(out S: String);

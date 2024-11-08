@@ -121,6 +121,7 @@ type
     function GetCallBlockNumber(const {%H-}I: Integer): Integer; virtual;
     function CheckReturnFromCallSequence: Boolean; virtual;
     function CheckLoopEnd: Boolean; virtual;
+    function CheckUserInteraction: Boolean; virtual;
 
   public
     constructor Create(ATapPlayer: TTapePlayer); override;
@@ -200,6 +201,11 @@ begin
 end;
 
 function TTzxBlock.CheckLoopEnd: Boolean;
+begin
+  Result := False;
+end;
+
+function TTzxBlock.CheckUserInteraction: Boolean;
 begin
   Result := False;
 end;
@@ -380,6 +386,7 @@ begin
        JumptoBlock
        or AddCallSeq
        or ReturnFromSequence
+       or BL.CheckUserInteraction
        )
     then begin
       LoopCheck;

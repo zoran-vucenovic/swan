@@ -33,7 +33,6 @@ type
     function LoadBlock(const Stream: TStream): Boolean; virtual; abstract;
     function GetNextPulse(): Boolean; virtual;
     function GetStopPlaying: Boolean; virtual;
-    function ForwardOneWhenStarting: Boolean; virtual;
 
     procedure Start; virtual;
     procedure Details(out S: String); virtual;
@@ -166,11 +165,6 @@ end;
 function TTapeBlock.GetStopPlaying: Boolean;
 begin
   Result := False;
-end;
-
-function TTapeBlock.ForwardOneWhenStarting: Boolean;
-begin
-  Result := GetStopPlaying;
 end;
 
 function TTapeBlock.GetNextPulse: Boolean;
@@ -395,7 +389,7 @@ begin
   ActiveBit := 0;
 
   StartBlock(FCurrentBlockNumber);
-  if Assigned(FCurrentBlock) and FCurrentBlock.ForwardOneWhenStarting then
+  if Assigned(FCurrentBlock) and FCurrentBlock.GetStopPlaying then
     StartBlock(FCurrentBlockNumber + 1);
 end;
 
