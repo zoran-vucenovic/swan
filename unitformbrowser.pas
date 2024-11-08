@@ -10,7 +10,7 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Grids, ExtCtrls,
   StdCtrls, ActnList, Menus, Buttons, Types, UnitTapePlayer, CommonFunctionsLCL,
-  UnitConfigs, fpjson;
+  UnitConfigs, UnitCommon, fpjson;
 
 type
   TFormBrowseTape = class(TForm)
@@ -392,14 +392,16 @@ procedure TFormBrowseTape.FillGrid;
   function AdjustText(CC: TCellContent): Integer;
   var
     S1, S2: String;
-    P, K, P0: Integer;
+    P, P0: Integer;
     Sz: TSize;
+    K, K1: Integer;
   begin
     Result := 0;
     K := 1;
-    S2 := AdjustLineBreaks(CC.Details, TTextLineBreakStyle.tlbsCR);
+    S2 := TCommonFunctions.AdjLineBreaks(CC.Details, TTextLineBreakStyle.tlbsCR);
     CC.Details := '';
     P0 := 1;
+    K1 := 0;
     repeat
       P := Pos(#13, S2, P0);
 
@@ -409,13 +411,15 @@ procedure TFormBrowseTape.FillGrid;
         S1 := Copy(S2, P0, P - P0);
         P0 := P + 1;
       end;
+      Inc(K1);
       if S1 <> '' then begin
         S1 := ' ' + S1 + ' ';
         TCommonFunctionsLCL.CalculateTextSize(Grid.Font, S1, Sz);
         if CC.Details <> '' then begin
-          S1 := #13 + S1;
-          Inc(K);
+          S1 := StringOfChar(#13, K1) + S1;
+          Inc(K, K1);
         end;
+        K1 := 0;
         CC.Details := CC.Details + S1;
         if Sz.cx > Result then
           Result := Sz.cx;

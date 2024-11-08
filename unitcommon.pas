@@ -44,6 +44,8 @@ type
     class function SpectrumCharToUtf8(const Is128K: Boolean; const S: RawByteString): RawByteString; static;
     class procedure ConvertCodePageFromCp1252ToUtf8(var S: AnsiString); static;
     class procedure CallRandomizeIfNotCalledAlready(); static;
+    class function AdjLineBreaks(const S: RawByteString; Style: TTextLineBreakStyle
+      ): RawByteString; static;
   strict private
     class function CheckStartForDecimal(const S: String): Boolean; static;
   public
@@ -258,6 +260,82 @@ class function TCommonFunctions.TryStrToInt64Decimal(const S: String; out
   N: Int64): Boolean;
 begin
   Result := CheckStartForDecimal(S) and TryStrToInt64(S, N);
+end;
+
+class function TCommonFunctions.AdjLineBreaks(const S: RawByteString;
+  Style: TTextLineBreakStyle): RawByteString;
+
+var
+  L: SizeInt;
+  L2: SizeInt;
+  J: SizeInt;
+  I: SizeInt;
+  C: AnsiChar;
+
+begin
+  L := Length(S);
+
+  if L = 0 then
+    Exit(S);
+
+  if Style = TTextLineBreakStyle.tlbsLF then
+    C := #10
+  else
+    C := #13;
+
+  J := 0;
+  I := 0;
+  if Style = TTextLineBreakStyle.tlbsCRLF then begin
+    L2 := L * 6 div 5;
+    SetLength(Result, L2);
+    while I < L do begin
+      Inc(I);
+      Inc(J);
+
+      if J >= L2 then begin
+        L2 := L2 + ((Int64(L) - I) * J * 9) div (Int64(I) * 8) + 4;
+        SetLength(Result, L2);
+      end;
+
+      case S[I] of
+        #13:
+          begin
+            Result[J] := #13;
+            inc(J);
+            Result[J] := #10;
+            if (I < L) and (S[I + 1] = #10) then
+              Inc(I);
+          end;
+        #10:
+          Result[J] := C;
+      otherwise
+        Result[J] := S[I];
+      end;
+    end;
+
+  end else begin
+    SetLength(Result, L);
+
+    while I < L do begin
+      Inc(I);
+      Inc(J);
+
+      case S[I] of
+        #13:
+          begin
+            Result[J] := C;
+            if (I < L) and (S[I + 1] = #10) then
+              Inc(I);
+          end;
+        #10:
+          Result[J] := C;
+      otherwise
+        Result[J] := S[I];
+      end;
+    end;
+  end;
+
+  SetLength(Result, J);
 end;
 
 { TGlobalCounter }

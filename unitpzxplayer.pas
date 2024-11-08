@@ -781,12 +781,15 @@ begin
         S0 := UTF8Trim(Copy(S, I, P - I));
 
         if IsKey then begin
-          if Length(S0) > 0 then begin
-            if S0[Length(S0)] <> ':' then
-              S0 := S0 + ':';
-            S0 := S0 + ' ';
-          end;
           S0 := #13 + S0;
+        end else begin
+          if FDetails <> '' then
+            case FDetails[Length(FDetails)] of
+              #13, ':':
+                ;
+            otherwise
+              S0 := ': ' + S0;
+            end;
         end;
 
         FDetails := FDetails + S0;
@@ -820,15 +823,22 @@ begin
     // We will try to load the file anyway.
     S0 := '';
     if VerMajor > SupportedPZXVersionMajor then begin
-      S0 := 'WARNING: %sTape loading might not%s!';
+      S0 := 'WARNING: %smight not%s!';
     end else if VerMajor = SupportedPZXVersionMajor then begin
       if VerMinor > SupportedPZXVersionMinor then
-        S0 := 'NOTE: %sTape loading should still%s.';
+        S0 := 'NOTE: %sshould still%s.';
     end;
     if S0 <> '' then begin
-      S0 := #13 + Format(S0, [Format('Swan supports PZX ver %d.%d%s', [SupportedPZXVersionMajor, SupportedPZXVersionMinor, #13]), ' work correctly']);
+      S0 := #13
+        + Format(S0, [
+            Format('Swan supports PZX ver %d.%d%sTape loading ', [
+              SupportedPZXVersionMajor, SupportedPZXVersionMinor, #13
+            ])
+            , ' work correctly'
+          ]);
+
       if FDetails <> '' then
-        S0 := S0 + #13 + ' ';
+        S0 := S0 + #13;
     end;
     if FDetails <> '' then
       S0 := S0 + #13;
