@@ -2773,6 +2773,7 @@ var
   AcceptedExtensions: TStringDynArray;
   LoadAsBinary: Boolean;
   InZip: Boolean;
+  ErrMsg: String;
 
 begin
   FFileToOpen := '';
@@ -2789,15 +2790,24 @@ begin
       SnapshotFile := nil;
       InZip := False;
 
+      ErrMsg := '';
       L := False;
       if (not LoadAsBinary)
          and (AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0)
       then begin
         GetAcceptableExtensions(SpectrumFileKinds, True, AcceptedExtensions);
-        if not TFileUnzipper.GetFileFromZipFile(ASourceFile, AcceptedExtensions, Stream, FileName) then begin
-          Stream := nil;
-          NoSpectrumFileInZip;
-        end else begin
+        try
+          InZip := TFileUnzipper.GetFileFromZipFile(ASourceFile, AcceptedExtensions, Stream, FileName);
+        except
+          on E: Exception do begin
+            if E is ENoSpectrumFilesInZip then
+              NoSpectrumFileInZip
+            else
+              ErrMsg := E.Message;
+          end;
+        else
+        end;
+        if InZip then begin
           if Stream = nil then begin
             // Canceled by user (a dialog was offered to the user, to choose
             // from multiple files inside zip. Then he canceled loading, so no error).
@@ -2806,7 +2816,6 @@ begin
             DoDirSeparators(FileName);
             Extension := ExtractFileExt(FileName);
             FileName := IncludeTrailingPathDelimiter(ASourceFile) + FileName;
-            InZip := True;
           end;
         end;
       end else
@@ -2814,7 +2823,9 @@ begin
           Stream := TFileStream.Create(ASourceFile, fmOpenRead or fmShareDenyWrite);
           FileName := ASourceFile;
         except
-          Stream := nil;
+          on E: Exception do
+            ErrMsg := E.Message;
+        else
         end;
 
       if not L then begin
@@ -2822,7 +2833,7 @@ begin
         if not Assigned(Stream) then begin
           if FRecentFiles.Remove(ASourceFile) then
             UpdateRecentFiles;
-          LoadingFailed;
+          LoadingFailed(ErrMsg);
 
         end else begin
           try

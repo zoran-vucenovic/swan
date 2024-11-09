@@ -12,24 +12,24 @@ uses
 
 type
 
-  { TFileUnzipper }
+  ENoSpectrumFilesInZip = class(Exception);
 
   TFileUnzipper = class(TObject)
-    strict private
-      InStream: TStream;
-      OutStream: TStream;
+  strict private
+    InStream: TStream;
+    OutStream: TStream;
 
-      procedure DoOpenInputStream(Sender: TObject; var AStream: TStream);
-      procedure DoCloseInputStream(Sender: TObject; var AStream: TStream);
-      procedure DoCreateOutZipStream(Sender : TObject; var AStream : TStream; {%H-}AItem : TFullZipFileEntry);
-      procedure DoDoneOutZipStream(Sender : TObject; var AStream : TStream; {%H-}AItem : TFullZipFileEntry);
+    procedure DoOpenInputStream(Sender: TObject; var AStream: TStream);
+    procedure DoCloseInputStream(Sender: TObject; var AStream: TStream);
+    procedure DoCreateOutZipStream(Sender : TObject; var AStream : TStream; {%H-}AItem : TFullZipFileEntry);
+    procedure DoDoneOutZipStream(Sender : TObject; var AStream : TStream; {%H-}AItem : TFullZipFileEntry);
 
-    public
-      class function GetFileFromZipStream(const AZipStream: TStream; const Extensions: array of String;
-        out AStream: TStream; out FileNameInZip: String): Boolean; static;
-      class function GetFileFromZipFile(const ZipFileName: String; const Extensions: array of String;
-        out AStream: TStream; out FileNameInZip: String): Boolean; static;
-    end;
+    class function GetFileFromZipStream(const AZipStream: TStream; const Extensions: array of String;
+      out AStream: TStream; out FileNameInZip: String): Boolean; static;
+  public
+    class function GetFileFromZipFile(const ZipFileName: String; const Extensions: array of String;
+      out AStream: TStream; out FileNameInZip: String): Boolean; static;
+  end;
 
 
 implementation
@@ -147,6 +147,9 @@ begin
           end;
           SetLength(SA, L);
 
+          if L <= 0 then
+            raise ENoSpectrumFilesInZip.Create('No Spectrum files in zip.');
+
           if UnitFormChooseString.TFormChooseString.ShowFormChooseString(
             SA, CaptionText, Format(MessageText, [L]), N)
           then begin
@@ -162,29 +165,25 @@ begin
 
                 FiUnz.OutStream := nil;
                 try
-                  try
-                    UnZ.OnCreateStream := @(FiUnz.DoCreateOutZipStream);
-                    UnZ.OnDoneStream := @(FiUnz.DoDoneOutZipStream);
-                    UnZ.UnZipFiles(SL);
-                    if Assigned(FiUnz.OutStream) then begin
-                      if FiUnz.OutStream.Size > 0 then begin
-                        Extension := ExtractFileExt(FileNameInZip);
-                        if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
-                          if GetFileFromZipStream(FiUnz.OutStream, Extensions, AStream, S) then begin
-                            FileNameInZip := IncludeTrailingPathDelimiter(FileNameInZip) + S;
+                  UnZ.OnCreateStream := @(FiUnz.DoCreateOutZipStream);
+                  UnZ.OnDoneStream := @(FiUnz.DoDoneOutZipStream);
+                  UnZ.UnZipFiles(SL);
+                  if Assigned(FiUnz.OutStream) then begin
+                    if FiUnz.OutStream.Size > 0 then begin
+                      Extension := ExtractFileExt(FileNameInZip);
+                      if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
+                        if GetFileFromZipStream(FiUnz.OutStream, Extensions, AStream, S) then begin
+                          FileNameInZip := IncludeTrailingPathDelimiter(FileNameInZip) + S;
 
-                            Result := True;
-                          end else
-                            AStream := nil;
-                        end else begin
-                          AStream := FiUnz.OutStream;
-                          FiUnz.OutStream := nil;
                           Result := True;
-                        end;
+                        end else
+                          AStream := nil;
+                      end else begin
+                        AStream := FiUnz.OutStream;
+                        FiUnz.OutStream := nil;
+                        Result := True;
                       end;
                     end;
-                  except
-                    AStream := nil;
                   end;
                 finally
                   FiUnz.OutStream.Free;
@@ -213,29 +212,28 @@ var
 begin
   Result := False;
   AStream := nil;
-  try
-    FileStream := TFileStream.Create(ZipFileName, fmOpenRead or fmShareDenyWrite);
-    try
-      // Create auxiliary in-memory stream, instead of passing the file stream
-      // directly, so that we can release file locks immediately.
-      ZipStream := TMemoryStream.Create;
-      try
-        ZipStream.Size := FileStream.Size;
-        FileStream.Position := 0;
-        ZipStream.Position := 0;
-        if FileStream.Read(ZipStream.Memory^, ZipStream.Size) = ZipStream.Size then begin
-          FreeAndNil(FileStream); // release file locks immediately
-          Result := GetFileFromZipStream(ZipStream, Extensions, AStream, FileNameInZip);
-        end;
-      finally
-        ZipStream.Free;
-      end;
 
+  FileStream := TFileStream.Create(ZipFileName, fmOpenRead or fmShareDenyWrite);
+  try
+    // Create auxiliary in-memory stream, instead of passing the file stream
+    // directly, so that we can release file locks immediately.
+    ZipStream := TMemoryStream.Create;
+    try
+      ZipStream.Size := FileStream.Size;
+      FileStream.Position := 0;
+      ZipStream.Position := 0;
+      if FileStream.Read(ZipStream.Memory^, ZipStream.Size) = ZipStream.Size then begin
+        FreeAndNil(FileStream); // release file locks immediately
+        Result := GetFileFromZipStream(ZipStream, Extensions, AStream, FileNameInZip);
+      end;
     finally
-      FileStream.Free;
+      ZipStream.Free;
     end;
-  except
+
+  finally
+    FileStream.Free;
   end;
+
 end;
 
 end.
