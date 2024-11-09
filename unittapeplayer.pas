@@ -331,19 +331,19 @@ end;
 
 function TTapePlayer.LoadFromStream(const AStream: TStream): Boolean;
 begin
-  AStream.Position := 0;
-  if FStream = nil then
-    FStream := TMemoryStream.Create;
-  FStream.Size := AStream.Size;
-  if AStream.Read(FStream.Memory^, FStream.Size) = AStream.Size then begin
-    FStream.Position := 0;
-    if CheckHeader(FStream) then
-      while AddBlock(FStream) do
-        if FStream.Position = FStream.Size then
-          Exit(True);
-  end;
-
   Result := False;
+  AStream.Position := 0;
+
+  if CheckHeader(AStream) then
+    while AddBlock(AStream) do
+      if AStream.Position = AStream.Size then begin
+        if FStream = nil then
+          FStream := TMemoryStream.Create;
+        FStream.Size := AStream.Size;
+        AStream.Position := 0;
+        Result := AStream.Read(FStream.Memory^, FStream.Size) = AStream.Size;
+        Break;
+      end;
 end;
 
 function TTapePlayer.SaveToStream(const AStream: TStream): Boolean;
