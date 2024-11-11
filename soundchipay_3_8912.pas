@@ -395,8 +395,8 @@ constructor TSoundAY_3_8912.Create;
 begin
   inherited Create;
 
-  FOutputMode := TOutputMode.omStereoABC;
-  SetOutputMode(TOutputMode.omMono);
+  FOutputMode := TOutputMode.omMono;
+  SetOutputMode(TOutputMode.omStereoABC);
   SetOnCheckTicks(nil);
   InitRegPointers();
   Reset();

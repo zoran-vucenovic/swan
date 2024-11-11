@@ -20,7 +20,7 @@ uses
   UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions, UnitRecentFiles,
   UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA, UnitFileZip,
   UnitRomPaths, UnitSwanToolbar, UnitFormChooseString, UnitDlgStartAdress,
-  UnitDebugger, UnitSwanTreeView, UnitFrameToolbarOptions;
+  UnitDebugger, UnitSwanTreeView, UnitFrameToolbarOptions, SoundChipAY_3_8912;
 
 // On Linux, bgra drawing directly to PaintBox in its OnPaint event seems to be
 // extremly slow. However, we get better time when we have an auxiliary bitmap
@@ -229,6 +229,7 @@ type
       cSectionScreenSizeFactor = 'screen_size_factor';
       cSectionSoundVolume = 'sound_volume';
       cSectionSoundMuted = 'sound_muted';
+      cSectionAYOutputMode = 'ay_output_mode';
       cSectionPortAudioLibPath32 = 'portaudio_lib_path32';
       cSectionPortAudioLibPath64 = 'portaudio_lib_path64';
       cSectionSpectrumModel = 'spectrum_model';
@@ -1539,6 +1540,7 @@ var
   S, S1: String;
   SPortaudioLib32, SPortaudioLib64: String;
   K: Integer;
+  AYOutputMode: TSoundAY_3_8912.TOutputMode;
 
   FullVersionFromConf: DWord;
   Arr: TObjectArray;
@@ -1671,6 +1673,19 @@ begin
       end;
     end;
 
+    S := '';
+    S := Trim(JObj.Get(cSectionAYOutputMode, S));
+    if S <> '' then begin
+      S := 'om' + S;
+      for AYOutputMode := Low(TSoundAY_3_8912.TOutputMode) to High(TSoundAY_3_8912.TOutputMode) do begin
+        WriteStr(S1, AYOutputMode);
+        if AnsiCompareText(S1, S) = 0 then begin
+          Spectrum.AYOutputMode := AYOutputMode;
+          Break;
+        end;
+      end;
+    end;
+
     JD := JObj.Find(cSectionToolbarButtons);
     if JD is TJSONArray then begin
       if GetTreeWithToolbarActions.LoadComponentsFromJSonArray(TJSONArray(JD), Arr) then
@@ -1750,6 +1765,11 @@ begin
     else
       N := 0;
     JObj.Add(cSectionSkipWriteScr, N);
+
+    WriteStr(S, Spectrum.AYOutputMode);
+    if (Length(S) > 2) and (AnsiCompareText('om', Copy(S, 1, 2)) = 0) then begin
+      JObj.Add(cSectionAYOutputMode, Copy(S, 3));
+    end;
 
     N := TSoundPlayer.Volume;
     JObj.Add(cSectionSoundVolume, N);
