@@ -29,12 +29,15 @@ type
     class function InitPortAudio(out Err: TPaError): Boolean; static;
     class function TerminatePortAudio(out Err: TPaError): Boolean; static;
     class procedure SetVolume(AValue: Integer); static;
+    class procedure SetStereo(AValue: Boolean); static;
     class procedure SetBufferLen(const AValue: Integer); static;
+    class function GetStereo: Boolean; static;
 
   private
     class var
       FBufferLen: Integer;
       PlayPosition: Integer;
+      FChMove: Integer;
 
     class procedure Init; static;
     class procedure Final; static;
@@ -57,6 +60,10 @@ type
     class property BufferLen: Integer read FBufferLen write SetBufferLen;
     class property Volume: Integer read FVolume write SetVolume;
     class property Playing: Boolean read FPlaying;
+    class property Stereo: Boolean read GetStereo write SetStereo;
+    { with mono output ChMove is 2, with stereo it is 3 - meaning multiply
+      by 4 or by 8 (number of bytes used in buffer for each audio sample) }
+    class property ChMove: Integer read FChMove;
   end;
 
 implementation
@@ -72,7 +79,7 @@ var
 begin
   Data := TSoundPlayer.SoundBuffer + TSoundPlayer.PlayPosition;
   //
-  N := FrameCount shl 2;
+  N := FrameCount shl TSoundPlayer.FChMove;
 
   M := TSoundPlayer.FBufferLen - TSoundPlayer.PlayPosition;
   if N >= M then begin
@@ -115,6 +122,12 @@ begin
   SoundBuffer := nil;
   FBufferLen := 0;
   FVolume := 104;
+  FChMove := 2;
+end;
+
+class function TSoundPlayer.GetStereo: Boolean;
+begin
+  Result := FChMove = 3;
 end;
 
 class procedure TSoundPlayer.Final;
@@ -123,6 +136,20 @@ var
 begin
   SetBufferLen(0);
   TerminatePortAudio(Err);
+end;
+
+class procedure TSoundPlayer.SetStereo(AValue: Boolean);
+var
+  N: Integer;
+begin
+  if AValue then
+    N := 3
+  else
+    N := 2;
+  if FChMove <> N then begin
+    if StopAndTerminate then
+      FChMove := N;
+  end;
 end;
 
 class procedure TSoundPlayer.SetVolume(AValue: Integer);
@@ -245,7 +272,7 @@ begin
   FillChar(SoundBuffer^, FBufferLen, #0);
 
   if InError(
-    PortAudioHeader.Pa_OpenDefaultStream(@Stream, 0, 1, paFloat32,
+    PortAudioHeader.Pa_OpenDefaultStream(@Stream, 0, FChMove - 1, paFloat32,
     SampleRate, {256} paFramesPerBufferUnspecified,
     @PortAudioCallbackFun, SoundBuffer)
   )

@@ -9,16 +9,20 @@ interface
 
 uses
   Classes, SysUtils, UnitInputLibraryPathDialog, UnitSpectrum, UnitOptions,
-  UnitFrameSoundVolume, CommonFunctionsLCL, UnitCommon, Forms, Controls,
-  ExtCtrls, StdCtrls;
+  UnitFrameSoundVolume, CommonFunctionsLCL, UnitCommon, SoundChipAY_3_8912,
+  Forms, Controls, ExtCtrls, StdCtrls;
 
 type
   TFrameSound = class(TFrame, ICheckStateValid)
     Bevel1: TBevel;
+    Bevel2: TBevel;
     CheckBox1: TCheckBox;
+    ComboBox1: TComboBox;
+    Label1: TLabel;
     LabelVolume: TLabel;
     Panel1: TPanel;
     Panel2: TPanel;
+    Panel4: TPanel;
     PanelVolume: TPanel;
     PanelSoundLibrary: TPanel;
   private
@@ -29,12 +33,14 @@ type
     procedure FormOnShow(Sender: TObject);
     procedure AfterShow(Data: PtrInt);
     function GetSoundMuted: Boolean;
+    function GetAYOutputMode: TSoundAY_3_8912.TOutputMode;
     function GetVolLevel: Integer;
     procedure SetFrameSoundLib(AFrameSoundLib: TFrameInputLibraryPath);
     procedure SetSoundMuted(const AValue: Boolean);
 
     procedure FormOnCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCloseCallback(Sender: TObject; var {%H-}CloseAction: TCloseAction);
+    procedure SetAYOutputMode(AValue: TSoundAY_3_8912.TOutputMode);
     procedure SetVolLevel(AValue: Integer);
   public
     constructor Create(TheOwner: TComponent); override;
@@ -44,6 +50,7 @@ type
 
     function IsStateValid: Boolean;
     property VolLevel: Integer read GetVolLevel write SetVolLevel;
+    property AYOutputMode: TSoundAY_3_8912.TOutputMode read GetAYOutputMode write SetAYOutputMode;
   end;
 
 implementation
@@ -79,6 +86,11 @@ begin
   Result := CheckBox1.Checked;
 end;
 
+function TFrameSound.GetAYOutputMode: TSoundAY_3_8912.TOutputMode;
+begin
+  Result := TSoundAY_3_8912.TOutputMode(ComboBox1.ItemIndex);
+end;
+
 function TFrameSound.GetVolLevel: Integer;
 begin
   Result := FrameSoundVolume.Level;
@@ -98,8 +110,15 @@ end;
 procedure TFrameSound.FormCloseCallback(Sender: TObject;
   var CloseAction: TCloseAction);
 begin
-  if (Sender is TCustomForm) and (TCustomForm(Sender).ModalResult = mrOK) then
+  if (Sender is TCustomForm) and (TCustomForm(Sender).ModalResult = mrOK) then begin
     FSpectrum.SoundMuted := GetSoundMuted;
+    FSpectrum.AYOutputMode := GetAYOutputMode;
+  end;
+end;
+
+procedure TFrameSound.SetAYOutputMode(AValue: TSoundAY_3_8912.TOutputMode);
+begin
+  ComboBox1.ItemIndex := Integer(AValue);
 end;
 
 procedure TFrameSound.SetVolLevel(AValue: Integer);
@@ -119,6 +138,8 @@ begin
   Panel1.BevelOuter := bvNone;
   Panel1.Caption := '';
   Panel2.Caption := '';
+  Panel4.BevelOuter := bvNone;
+  Panel4.Caption := '';
   PanelVolume.BevelOuter := bvNone;
   PanelVolume.Caption := '';
 
@@ -136,6 +157,7 @@ begin
 
   PanelVolume.AutoSize := True;
   Panel1.AutoSize := True;
+  Panel4.AutoSize := True;
   Self.AutoSize := True;
 end;
 

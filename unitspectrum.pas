@@ -96,6 +96,7 @@ type
     FDebugger: TAbstractDebugger;
     FTapePlayer: TAbstractTapePlayer;
     FAYSoundChip: TSoundAY_3_8912;
+    FAYOutputMode: TSoundAY_3_8912.TOutputMode;
 
     // screen processing
     FCodedBorderColour: Byte;
@@ -128,7 +129,7 @@ type
 
     FSoundPlayerRatePortAudio: Int64;
     FSoundPlayerRateProcessor: Int64;
-    FDivVol: Single;
+    FDivBeeperVol: Single;
 
     procedure StopSoundPlayer; inline;
     procedure UpdateSoundBuffer; inline;
@@ -183,6 +184,7 @@ type
     class function DefaultSpectrumModel: TSpectrumModel; static;
 
     procedure SetSpectrumModel(ASpectrumModel: TSpectrumModel; ACustomRoms: TStream);
+    procedure SetAYOutputMode(AValue: TSoundAY_3_8912.TOutputMode);
     procedure AttachFormDebug(AFormDebug: IFormDebug);
     procedure DettachFormDebug;
     procedure SetTapePlayer(ATapePlayer: TAbstractTapePlayer);
@@ -206,6 +208,7 @@ type
     function GetTotalTicks(): Int64;
     function GetCustomRomFiles(out ARomFiles: TStringDynArray): Integer;
     procedure SetCustomRomFiles(const ARomFiles: TStringDynArray);
+    procedure UpdateSoundOutputMode;
 
     property RemainingIntPinUp: Integer // for szx file
       read GetRemainingIntPinUp write SetRemainingIntPinUp;
@@ -228,6 +231,7 @@ type
     property Is128KModel: Boolean read FIs128KModel;
     property Memory: TMemory read FMemory;
     property AYSoundChip: TSoundAY_3_8912 read FAYSoundChip;
+    property AYOutputMode: TSoundAY_3_8912.TOutputMode read FAYOutputMode write SetAYOutputMode;
     property IsPagingEnabled: Boolean read FPagingEnabled write FPagingEnabled;
     property CustomRomsMounted: Boolean read FCustomRomsMounted;
     property OnBreakpoint: TThreadMethod write FOnBreakpoint;
@@ -252,13 +256,13 @@ begin
       FLatestTickUpdatedSoundBuffer := FLatestTickUpdatedSoundBuffer + N * FSoundPlayerRateProcessor;
 
       F := FEar + FMic;
-      F := F * TSoundPlayer.Volume / FDivVol;
+      F := F * TSoundPlayer.Volume / FDivBeeperVol;
 
       P := TSoundPlayer.SoundBuffer + TSoundPlayer.CurrentPosition;
       M := TSoundPlayer.BufferLen - TSoundPlayer.CurrentPosition;
 
-      if N * 4 >= M then begin
-        M := M div 4;
+      if N shl TSoundPlayer.ChMove >= M then begin
+        M := M shr TSoundPlayer.ChMove;
         if Assigned(FAYSoundChip) then
           FAYSoundChip.Fill(F, PSingle(P), M)
         else
@@ -274,7 +278,7 @@ begin
       else
         FillDWord(P^, N, BB);
 
-      TSoundPlayer.CurrentPosition := TSoundPlayer.CurrentPosition + N * 4;
+      TSoundPlayer.CurrentPosition := TSoundPlayer.CurrentPosition + (N shl TSoundPlayer.ChMove);
     end;
   end;
 end;
@@ -550,6 +554,20 @@ begin
   end;
 end;
 
+procedure TSpectrum.UpdateSoundOutputMode;
+begin
+  FDivBeeperVol := 127 * 64;
+  if Assigned(FAYSoundChip) then begin
+    TSoundPlayer.Stereo := FAYOutputMode <> TSoundAY_3_8912.TOutputMode.omMono;
+    FAYSoundChip.OutputMode := FAYOutputMode;
+    if TSoundPlayer.Stereo then
+      FDivBeeperVol := FDivBeeperVol * 2.0;
+  end else begin
+    TSoundPlayer.Stereo := False;
+    FDivBeeperVol := FDivBeeperVol * 4.1;
+  end;
+end;
+
 procedure TSpectrum.CheckStartSoundPlayer;
 begin
   if (not FSoundMuted) and AskForSpeedCorrection and FRunning and (FKeepRunning or FBreakpointsListening)
@@ -627,13 +645,14 @@ begin
   SetLength(FCustomRomsFileNames, 0);
   FPagingEnabled := False;
   FSoundMuted := False;
-  FDivVol := 1.0;
+  FDivBeeperVol := 1.0;
 
   FFormDebug := nil;
   FTapePlayer := nil;
 
   FCustomRomsMounted := False;
   FIs128KModel := False;
+  FAYOutputMode := TSoundAY_3_8912.TOutputMode.omMono;
 
   FMemory := TMemory.Create;
   FProcessor := TProcessor.Create;
@@ -758,7 +777,7 @@ begin
 
   NewRamSize := 128;
   FIs128KModel := True;
-  FDivVol := 127 * 64;
+
   FModelWithHALbug := False;
   TicksPerScanLine := TicksPerScanLine128;
   RomsCount := 1;
@@ -771,7 +790,6 @@ begin
         begin
           TicksPerScanLine := TicksPerScanLine48;
           FIs128KModel := False;
-          FDivVol := FDivVol * 4.1;
 
           FProcessor.FrameTicks := FrameTicks48;
           case ASpectrumModel of
@@ -795,6 +813,9 @@ begin
     otherwise
       Abort;
     end;
+
+    if not SkipReset then
+      StopSoundPlayer;
 
     FProcessor.TicksPerLine := TicksPerScanLine;
 
@@ -842,17 +863,18 @@ begin
   if FIs128KModel then begin
     FSoundPlayerRatePortAudio := SoundPlayerRatePortAudio128;
     FSoundPlayerRateProcessor := SoundPlayerRateProcessor128;
-
     if FAYSoundChip = nil then begin
       FAYSoundChip := TSoundAY_3_8912.Create;
       FAYSoundChip.OnCheckTicks := @GetTotalTicks;
     end else
       FAYSoundChip.Reset();
+
   end else begin
     FreeAndNil(FAYSoundChip);
     FSoundPlayerRatePortAudio := SoundPlayerRatePortAudio48;
     FSoundPlayerRateProcessor := SoundPlayerRateProcessor48;
   end;
+  UpdateSoundOutputMode;
 
   if FInLoadingSnapshot then begin
     if FBkpSpectrumModel = smNone then
@@ -869,6 +891,7 @@ begin
   if Assigned(FOnChangeModel) then
     Synchronize(FOnChangeModel);
 
+  // updating speed recalculates the "speed correction", which is dependent on Spectrum model
   PrevSpeed := FSpeed;
   FSpeed := 0;
   if not SkipReset then
@@ -1327,6 +1350,15 @@ begin
     FProcessor.ContentionTo := FProcessor.ContentionFrom + (CentralScreenHeight - 1) * TicksPerScanLine + 128;
     FloatBusFirstInterestingTick := FProcessor.ContentionFrom + 4;
     FloatBusLastInterestingTick := FProcessor.ContentionTo + 3;
+  end;
+end;
+
+procedure TSpectrum.SetAYOutputMode(AValue: TSoundAY_3_8912.TOutputMode);
+begin
+  if FAYOutputMode <> AValue then begin
+    FAYOutputMode := AValue;
+    UpdateSoundOutputMode;
+    CheckStartSoundPlayer;
   end;
 end;
 

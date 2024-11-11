@@ -1941,6 +1941,7 @@ begin
           if not Assigned(FrameSound) then
             Break;
           FrameSound.VolLevel := TSoundPlayer.Volume;
+          FrameSound.AYOutputMode := Spectrum.AYOutputMode;
 
           FrameToolbarOptions := TFrameToobarOptions.CreateForAllOptions(
             OptionsDialog, GetTreeWithToolbarActions, FToolbarActions, Assigned(FToolBar)

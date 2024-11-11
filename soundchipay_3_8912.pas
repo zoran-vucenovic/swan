@@ -4,6 +4,7 @@ unit SoundChipAY_3_8912;
 
 {$mode ObjFPC}{$H+}
 {$i zxinc.inc}
+{$ScopedEnums on}
 
 interface
 
@@ -17,6 +18,10 @@ type
   { TSoundAY_3_8912 }
 
   TSoundAY_3_8912 = class(TObject)
+  public
+    type
+      TOutputMode = (omMono, omStereoABC);
+
   strict private
     FRegA: Word;
     FRegB: Word;
@@ -58,8 +63,11 @@ type
     NoiseGenerator: UInt32;
     NoiseOnCh: array [0..2] of Byte;
 
-    FOnCheckTicks: TFuncTicks;
     StartFadingTicks: Int64;
+
+    FOutputMode: TOutputMode;
+    FOnCheckTicks: TFuncTicks;
+    FIsStereo: Boolean;
 
     procedure InitRegPointers();
     procedure RecalcOutputChannels;
@@ -67,6 +75,7 @@ type
     procedure ResetEnvelope;
     procedure SetOnCheckTicks(const AValue: TFuncTicks);
     function EmptyCheckTicks(): Int64;
+    procedure SetOutputMode(AValue: TOutputMode);
 
   private
     FActiveRegisterNum: Byte;
@@ -82,6 +91,8 @@ type
   strict private
     class var
       Vols: array [0..15] of Single;
+      Vols1: array [0..2, 0..15] of Single;
+      Vols2: array [0..2, 0..15] of Single;
 
   private
     class procedure Init; static;
@@ -95,6 +106,7 @@ type
     procedure Reset();
     procedure SetActiveRegNum(const ARegNumber: Byte);
 
+    property OutputMode: TOutputMode read FOutputMode write SetOutputMode;
     property OnCheckTicks: TFuncTicks read FOnCheckTicks write SetOnCheckTicks;
   end;
 
@@ -211,7 +223,27 @@ begin
     X := 1.0 / N;
     if I and 1 = 0 then
       X := X / Sqrt(2.0);
-    Vols[I] := X;
+
+    Vols[I] := X; // used in mono output by all channels
+
+    // stereo output (A-B-C)
+    Vols1[0][I] := X;  // left stereo channel - register A - full output
+    Vols2[2][I] := X;  // right stereo channel - register C - full output
+
+    X := X / 2;
+    Vols1[1][I] := X; // register B - half of volume to each stereo output channel
+    Vols2[1][I] := X;
+
+    Vols1[2][I] := 0.0; // right stereo channel - register A (no output)
+    Vols2[0][I] := 0.0; // left stereo channel - register C (no output)
+  end;
+end;
+
+procedure TSoundAY_3_8912.SetOutputMode(AValue: TOutputMode);
+begin
+  if FOutputMode <> AValue then begin
+    FOutputMode := AValue;
+    FIsStereo := AValue <> TOutputMode.omMono;
   end;
 end;
 
@@ -271,13 +303,19 @@ var
   J, K, Q, L: Integer;
   N: Integer;
   PE: PSingle;
-  NW: Single;
+  NW1: Single;
+  NW2: Single;
 
 begin
-  PE := P + Len;
+  if FIsStereo then
+    PE := P + 2 * Len
+  else
+    PE := P + Len;
+
   while P < PE do begin
 
-    NW := 0.0;
+    NW1 := 0.0;
+    NW2 := 0.0;
 
     Inc(NoisePosition);
     if NoisePosition >= NoiseHalfPeriod then begin
@@ -303,14 +341,22 @@ begin
 
         N := N and (NoiseLevel or NoiseOnCh[J]);
 
-        NW := NW + Vols[N];
+        if FIsStereo then begin
+          NW1 := NW1 + Vols1[J][N];
+          NW2 := NW2 + Vols2[J][N];
+        end else
+          NW1 := NW1 + Vols[N];
 
       end;
 
       OutputChCurrentPositions[J] := K + 1;
     end;
 
-    P^ := (NW * TSoundPlayer.Volume + F) / 4.1;
+    P^ := (NW1 * TSoundPlayer.Volume + F) / 4.1;
+    if FIsStereo then begin
+      Inc(P);
+      P^ := (NW2 * TSoundPlayer.Volume + F) / 4.1;
+    end;
 
     Inc(FEnvelopePosition);
     if FEnvelopeDirection <> 0 then begin
@@ -349,6 +395,8 @@ constructor TSoundAY_3_8912.Create;
 begin
   inherited Create;
 
+  FOutputMode := TOutputMode.omStereoABC;
+  SetOutputMode(TOutputMode.omMono);
   SetOnCheckTicks(nil);
   InitRegPointers();
   Reset();

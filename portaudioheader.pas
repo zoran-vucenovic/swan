@@ -3,8 +3,8 @@ unit PortAudioHeader;
 // SPDX-License-Identifier: Apache-2.0
 {
   Some declarations from file portaudio.h, translated from C to Free Pascal.
-  http://www.portaudio.com/
-  http://files.portaudio.com/docs/v19-doxydocs/portaudio_8h_source.html
+  https://www.portaudio.com/
+  https://files.portaudio.com/docs/v19-doxydocs/portaudio_8h_source.html
 
   Not all declarations from the C file are included; the purpose of this
   translation is to be used by Swan ZX Spectrum emulator for producing sound
