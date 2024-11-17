@@ -117,9 +117,10 @@ begin
   Panel4.Anchors := [];
   Panel4.AnchorParallel(akLeft, 3, Panel3);
   Panel4.AnchorToNeighbour(akTop, 3, FDebugCPUState);
+  Panel4.BorderSpacing.Bottom := 2;
   Panel7.Anchors := [];
   Panel7.AnchorToNeighbour(akLeft, 3, Panel4);
-  Panel7.AnchorToNeighbour(akTop, 3, FDebugCPUState);
+  Panel7.AnchorParallel(akTop, 0, Panel4);
 
   FDebugCPUState.Parent := Panel3;
   FrameGridMemory.Parent := Panel2;
