@@ -13,6 +13,19 @@ uses
   StdCtrls;
 
 type
+
+  TFlagsCtrl = class(TCustomControl)
+  public
+    const
+      DefColour = $fefdf8;
+  strict private
+    FFlagCtrls: array of TCustomControl;
+  public
+    constructor Create(AOwner: TComponent); override;
+    constructor Create(AOwner: TComponent; FlagCtrls: array of AnsiString; const LabelsLeft: Boolean; AVertical: Boolean);
+    procedure SetValues(AValue: Byte);
+  end;
+
   TDebugCpuState = class(TCustomControl)
   private
     FrAF: TFrameWordDisplay;
@@ -31,10 +44,10 @@ type
     FrSP: TFrameWordDisplay;
     FrWZ: TFrameWordDisplay;
 
-    FlCtrlsFlags: TCustomControl;
-    FlCtrlsIff: TCustomControl;
-    FlCtrlsInterruptPin: TCustomControl;
-    FlCtrlsHalt: TCustomControl;
+    FlCtrlsFlags: TFlagsCtrl;
+    FlCtrlsIff: TFlagsCtrl;
+    FlCtrlsInterruptPin: TFlagsCtrl;
+    FlCtrlsHalt: TFlagsCtrl;
 
     InterruptModeCtrl: TCustomControl;
     LabInterruptMode: TLabel;
@@ -82,15 +95,6 @@ type
     procedure SetLabel(const ACaption: AnsiString);
   end;
 
-  TFlagsCtrl = class(TCustomControl)
-  strict private
-    FFlagCtrls: array of TFlagCtrl;
-  public
-    constructor Create(AOwner: TComponent); override;
-    constructor Create(AOwner: TComponent; FlagCtrls: array of AnsiString; const LabelsLeft: Boolean; AVertical: Boolean);
-    procedure SetValues(AValue: Byte);
-  end;
-
 { TFlagCtrl.TPaintCtrl }
 
 class procedure TFlagCtrl.TPaintCtrl.Init;
@@ -134,9 +138,7 @@ end;
 
 constructor TFlagsCtrl.Create(AOwner: TComponent);
 begin
-  inherited Create(AOwner);
-  Color := $fefdf8;
-  BorderStyle := bsSingle;
+  Create(AOwner, [''], True, False);
 end;
 
 constructor TFlagsCtrl.Create(AOwner: TComponent;
@@ -146,7 +148,11 @@ var
   Fl, FlPrev: TFlagCtrl;
   N, FlagsCount: Integer;
 begin
-  Create(AOwner);
+  inherited Create(AOwner);
+
+  Color := DefColour;
+
+  BorderStyle := bsSingle;
 
   FlagsCount := Length(FlagCtrls);
   if FlagsCount > 8 then
@@ -190,7 +196,7 @@ var
   I: Integer;
 begin
   for I := Low(FFlagCtrls) to High(FFlagCtrls) do begin
-    FFlagCtrls[High(FFlagCtrls) - I].SetValue((AValue shr I) and 1 <> 0);
+    TFlagCtrl(FFlagCtrls[High(FFlagCtrls) - I]).SetValue((AValue shr I) and 1 <> 0);
   end;
 end;
 
@@ -314,8 +320,8 @@ begin
   FrBC.AnchorToNeighbour(akTop, SpcRegs, FrAF);
   FrDE.AnchorToNeighbour(akTop, SpcRegs, FrBC);
   FrHL.AnchorToNeighbour(akTop, SpcRegs, FrDE);
-  FrIx.AnchorToNeighbour(akTop, SpcRegs + 2, FrHL);
-  FrPC.AnchorToNeighbour(akTop, SpcRegs + 2, FrIx);
+  FrIx.AnchorToNeighbour(akTop, SpcRegs, FrHL);
+  FrPC.AnchorToNeighbour(akTop, SpcRegs, FrIx);
 
   FrAF1.AnchorToNeighbour(akLeft, SpcRegs, FrAF);
   FrBC1.AnchorParallel(akLeft, 0, FrAF1);
@@ -328,17 +334,17 @@ begin
   FrBC1.AnchorToNeighbour(akTop, SpcRegs, FrAF1);
   FrDE1.AnchorToNeighbour(akTop, SpcRegs, FrBC1);
   FrHL1.AnchorToNeighbour(akTop, SpcRegs, FrDE1);
-  FrIy.AnchorToNeighbour(akTop, SpcRegs + 2, FrHL1);
-  FrSP.AnchorToNeighbour(akTop, SpcRegs + 2, FrIy);
+  FrIy.AnchorToNeighbour(akTop, SpcRegs, FrHL1);
+  FrSP.AnchorToNeighbour(akTop, SpcRegs, FrIy);
 
   FrI.AnchorParallel(akLeft, 0, FrAF);
-  FrI.AnchorToNeighbour(akTop, SpcRegs + 2, FrPC);
+  FrI.AnchorToNeighbour(akTop, SpcRegs, FrPC);
 
   FrR.AnchorParallel(akLeft, 0, FrI);
   FrR.AnchorToNeighbour(akTop, SpcRegs, FrI);
 
   FrWZ.AnchorParallel(akLeft, 0, FrAF);
-  FrWZ.AnchorToNeighbour(akTop, SpcRegs + 2, FrR);
+  FrWZ.AnchorToNeighbour(akTop, SpcRegs, FrR);
 
   FrAF.Parent := RegistersContainer;
   FrBC.Parent := RegistersContainer;
@@ -372,7 +378,7 @@ begin
   FlCtrlsFlags.AnchorParallel(akLeft, 0, FlagsContainer);
   FlCtrlsFlags.AnchorParallel(akTop, 0, FlagsContainer);
   FlCtrlsIff.AnchorParallel(akLeft, 0, FlagsContainer);
-  FlCtrlsIff.AnchorToNeighbour(akTop, 7, FlCtrlsFlags);
+  FlCtrlsIff.AnchorToNeighbour(akTop, 3, FlCtrlsFlags);
 
   FlCtrlsHalt.AnchorToNeighbour(akLeft, SpcRegs, FlCtrlsIff);
   FlCtrlsHalt.AnchorParallel(akTop, 0, FlCtrlsIff);
@@ -487,26 +493,26 @@ begin
     FrDE1.Value := AProc.RegDE1;
     FrHL1.Value := AProc.RegHL1;
 
-    TFlagsCtrl(FlCtrlsFlags).SetValues(AProc.RegF);
+    FlCtrlsFlags.SetValues(AProc.RegF);
     if AProc.Iff1 then
       B := 2
     else
       B := 0;
     if AProc.Iff2 then
       B := B + 1;
-    TFlagsCtrl(FlCtrlsIff).SetValues(B);
+    FlCtrlsIff.SetValues(B);
 
     if AProc.Halt then
       B := 1
     else
       B := 0;
-    TFlagsCtrl(FlCtrlsHalt).SetValues(B);
+    FlCtrlsHalt.SetValues(B);
 
     if AProc.IntPin then
       B := 1
     else
       B := 0;
-    TFlagsCtrl(FlCtrlsInterruptPin).SetValues(B);
+    FlCtrlsInterruptPin.SetValues(B);
 
     LabInterruptModeValue.Caption := AProc.InterruptMode.ToString;
   end;

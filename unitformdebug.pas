@@ -17,15 +17,22 @@ type
   TFormDebug = class (TForm, TSpectrum.IFormDebug)
     Label1: TLabel;
     Label2: TLabel;
+    Label3: TLabel;
+    LabelRomBanks: TLabel;
+    Label5: TLabel;
+    LabelRamBanks: TLabel;
     LabelTicksInCurrentFrame: TLabel;
     LabelFramesPassed: TLabel;
     Panel1: TPanel;
+    Panel10: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
     Panel4: TPanel;
     Panel5: TPanel;
     Panel6: TPanel;
     Panel7: TPanel;
+    Panel8: TPanel;
+    Panel9: TPanel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
 
@@ -38,6 +45,7 @@ type
     FrameGridMemory: TFrameGridMemory;
     FDebugCPUState: TDebugCpuState;
     FormBreakpoints: TCustomForm;
+    ScrDisplayCtrl: TFlagsCtrl;
 
     procedure FormFirstShow(Sender: TObject);
     function GetDebugger: TDebugger;
@@ -91,11 +99,27 @@ begin
   Panel7.BorderStyle := bsSingle;
   Panel7.AutoSize := True;
 
+  Panel8.Caption := '';
+  Panel8.BevelOuter := bvNone;
+  Panel9.Caption := '';
+  Panel9.BevelOuter := bvNone;
+  Panel9.BorderStyle := bsSingle;
+  Panel9.AutoSize := True;
+  Panel10.Caption := '';
+  Panel10.BevelOuter := bvNone;
+
   Panel2.Anchors := [];
   Panel3.Anchors := [];
 
-  Panel3.AnchorParallel(akLeft, 0, Panel1);
-  Panel3.AnchorParallel(akTop, 0, Panel1);
+  FDebugCPUState := TDebugCpuState.Create(Self);
+  FDebugCPUState.Anchors := [];
+  FDebugCPUState.AnchorParallel(akTop, 0, Panel1);
+  FDebugCPUState.AnchorParallel(akLeft, 0, Panel1);
+
+  Panel3.AnchorParallel(akLeft, 3, Panel1);
+  Panel3.AnchorToNeighbour(akTop, 0, FDebugCPUState);
+  Panel3.AnchorParallel(akRight, 4, Panel1);
+  Panel3.BorderSpacing.Bottom := 2;
 
   Panel2.AnchorParallel(akLeft, 0, Panel1);
   Panel2.AnchorToNeighbour(akTop, 0, Panel3);
@@ -109,37 +133,51 @@ begin
   FrameGridMemory.AnchorParallel(akRight, 0, Panel2);
   FrameGridMemory.AnchorParallel(akBottom, 0, Panel2);
 
-  FDebugCPUState := TDebugCpuState.Create(Self);
-  FDebugCPUState.Anchors := [];
-  FDebugCPUState.AnchorParallel(akTop, 0, Panel3);
-  FDebugCPUState.AnchorParallel(akLeft, 0, Panel3);
-
   Panel4.Anchors := [];
-  Panel4.AnchorParallel(akLeft, 3, Panel3);
-  Panel4.AnchorToNeighbour(akTop, 3, FDebugCPUState);
-  Panel4.BorderSpacing.Bottom := 2;
+  Panel4.AnchorParallel(akLeft, 0, Panel3);
+  Panel4.AnchorParallel(akBottom, 0, Panel3);
+  Panel4.BorderSpacing.Top := 2;
   Panel7.Anchors := [];
   Panel7.AnchorToNeighbour(akLeft, 3, Panel4);
-  Panel7.AnchorParallel(akTop, 0, Panel4);
+  Panel7.AnchorParallel(akBottom, 0, Panel3);
+  Panel9.Anchors := [];
+  Panel9.AnchorToNeighbour(akLeft, 3, Panel7);
+  Panel9.AnchorParallel(akBottom, 0, Panel3);
 
-  FDebugCPUState.Parent := Panel3;
+  ScrDisplayCtrl := TFlagsCtrl.Create(Panel3, ['Shadow screen'], True, False);
+  ScrDisplayCtrl.Anchors := [];
+  ScrDisplayCtrl.AnchorToNeighbour(akLeft, 3, Panel9);
+  ScrDisplayCtrl.AnchorParallel(akBottom, 0, Panel3);
+
+  Panel4.Color := ScrDisplayCtrl.Color;
+  Panel7.Color := ScrDisplayCtrl.Color;
+  Panel9.Color := ScrDisplayCtrl.Color;
+
+  FDebugCPUState.Parent := Panel1;
   FrameGridMemory.Parent := Panel2;
+  ScrDisplayCtrl.Parent := Panel3;
 
   Panel3.AutoSize := True;
 
-  Lab := TCommonFunctionsLCL.CreateLinkLabel(Panel3, 'Edit breakpoints');
+  Lab := TCommonFunctionsLCL.CreateLinkLabel(Panel10, 'Breakpoints');
   Lab.OnClick := @LabelBreakpointsOnClick;
   Lab.Anchors := [];
-
-  Lab.AnchorParallel(akRight, 9, Panel3);
-  Lab.AnchorParallel(akTop, 0, Panel7);
-  Lab.Parent := Panel3;
+  Lab.AnchorParallel(akLeft, 0, Panel10);
+  Lab.AnchorParallel(akTop, 0, Panel10);
+  Lab.Parent := Panel10;
+  Panel10.Anchors := [];
+  Panel10.AnchorParallel(akBottom, 0, Panel3);
+  Panel10.AnchorParallel(akRight, 0, Panel3);
+  Panel10.AutoSize := True;
 
   TCommonFunctionsLCL.GrowFormHeight(Self);
   Self.Constraints.MinHeight := Self.Height;
 
   LabelFramesPassed.Caption := ' ';
   LabelTicksInCurrentFrame.Caption := ' ';
+  LabelRomBanks.Caption := ' ';
+  LabelRamBanks.Caption := ' ';
+  ScrDisplayCtrl.SetValues(0);
 
   Panel4.Hint := 'Frames passed since Spectrum was switched on'
     + LineEnding + '(application start or last hard reset)';
@@ -147,6 +185,12 @@ begin
 
   Panel7.Hint := 'Clock ticks passed since last interrupt';
   Panel7.ShowHint := True;
+
+  Panel9.Hint := 'Currently mounted rom and ram banks';
+  Panel9.ShowHint := True;
+
+  ScrDisplayCtrl.Hint := 'Is "shadow" screen (bank 7) mounted';
+  ScrDisplayCtrl.ShowHint := True;
 
   FrameGridMemory.Grid.OnEditBreakPoints := @LabelBreakpointsOnClick;
   AfterShow(-1);
@@ -220,6 +264,7 @@ begin
     Application.QueueAsyncCall(@AfterShow, Data - 1);
   end else if Data = 0 then begin
     Constraints.MinHeight := 0;
+    Panel10.BringToFront;
   end;
 end;
 
@@ -293,6 +338,8 @@ begin
 end;
 
 procedure TFormDebug.AfterStep;
+var
+  B: Byte;
 begin
   if Assigned(FrameGridMemory) then
     if Assigned(FSpectrum) then begin
@@ -301,6 +348,20 @@ begin
       FDebugCPUState.SetAll(FSpectrum.GetProcessor);
       LabelFramesPassed.Caption := FSpectrum.GetFrameCount.ToString;
       LabelTicksInCurrentFrame.Caption := FSpectrum.GetProcessor.TStatesInCurrentFrame.ToString;
+
+      if Panel9.Visible xor (FSpectrum.Is128KModel) then begin
+        Panel9.Visible := FSpectrum.Is128KModel;
+        ScrDisplayCtrl.Visible := FSpectrum.Is128KModel;
+      end;
+      if Panel9.Visible then begin
+        LabelRomBanks.Caption := FSpectrum.Memory.ActiveRomPageNo.ToString;
+        LabelRamBanks.Caption := FSpectrum.Memory.ActiveRamPageNo.ToString;
+        if FSpectrum.Memory.ShadowScreenDisplay then
+          B := 1
+        else
+          B := 0;
+        ScrDisplayCtrl.SetValues(B);
+      end;
       FrameGridMemory.AfterStep;
     end;
 end;

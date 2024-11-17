@@ -39,6 +39,7 @@ type
     procedure SetShadowScreenDisplay(B: Boolean);
     function GetShadowScreenDisplay: Boolean;
     function GetRamSizeKB: Word;
+    procedure FreeBanks;
 
   public
     constructor Create;
@@ -65,7 +66,6 @@ type
 
     procedure InitBanks(const ARamSizeKB: Word; ARomBanksCount: Integer = 0);
     procedure InitBanks();
-    procedure FreeBanks;
 
     property ActiveRamPageNo: Byte read FActiveRamPageNo write SetActiveRamPageNo;
     property ActiveRomPageNo: Byte read FActiveRomPageNo write SetActiveRomPageNo;
@@ -104,25 +104,11 @@ begin
 end;
 
 constructor TMemory.Create;
-var
-  I: Integer;
 begin
   inherited Create;
 
-  FRamSize := 0;
   MemStart := nil;
-  FActiveRomPageNo := 0;
-  FActiveRamPageNo := 0;
-  FActiveScreenPageNo := 0;
-  ActiveRomBank := nil;
-  ActiveRamBank := nil;
-  ActiveScreenBank := nil;
-
-  for I := Low(FRamBanks) to High(FRamBanks) do
-    FRamBanks[I] := nil;
-
-  for I := Low(FRomBanks) to High(FRomBanks) do
-    FRomBanks[I] := nil;
+  FreeBanks;
 end;
 
 destructor TMemory.Destroy;
@@ -436,8 +422,8 @@ begin
     end;
   end;
 
-  ActiveRomBank := FRomBanks[0];
-  ActiveRamBank := FRamBanks[0];
+  SetActiveRomPageNo(0);
+  SetActiveRamPageNo(0);
   SetShadowScreenDisplay(False);
 end;
 
