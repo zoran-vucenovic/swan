@@ -136,7 +136,6 @@ begin
   Panel4.Anchors := [];
   Panel4.AnchorParallel(akLeft, 0, Panel3);
   Panel4.AnchorParallel(akBottom, 0, Panel3);
-  Panel4.BorderSpacing.Top := 2;
   Panel7.Anchors := [];
   Panel7.AnchorToNeighbour(akLeft, 3, Panel4);
   Panel7.AnchorParallel(akBottom, 0, Panel3);
@@ -167,7 +166,7 @@ begin
   Lab.Parent := Panel10;
   Panel10.Anchors := [];
   Panel10.AnchorParallel(akBottom, 0, Panel3);
-  Panel10.AnchorParallel(akRight, 0, Panel3);
+  Panel10.AnchorToNeighbour(akLeft, 2, ScrDisplayCtrl);
   Panel10.AutoSize := True;
 
   TCommonFunctionsLCL.GrowFormHeight(Self);
@@ -186,10 +185,12 @@ begin
   Panel7.Hint := 'Clock ticks passed since last interrupt';
   Panel7.ShowHint := True;
 
-  Panel9.Hint := 'Currently mounted rom and ram banks';
+  Panel9.Hint := 'Currently mounted rom and ram banks'
+    + LineEnding + '(interesting on 128K models only)';
   Panel9.ShowHint := True;
 
-  ScrDisplayCtrl.Hint := 'Is "shadow" screen (bank 7) mounted';
+  ScrDisplayCtrl.Hint := 'Is "shadow" screen (bank 7) mounted'
+    + LineEnding + '(interesting on 128K models only)';
   ScrDisplayCtrl.ShowHint := True;
 
   FrameGridMemory.Grid.OnEditBreakPoints := @LabelBreakpointsOnClick;
@@ -349,19 +350,19 @@ begin
       LabelFramesPassed.Caption := FSpectrum.GetFrameCount.ToString;
       LabelTicksInCurrentFrame.Caption := FSpectrum.GetProcessor.TStatesInCurrentFrame.ToString;
 
-      if Panel9.Visible xor (FSpectrum.Is128KModel) then begin
-        Panel9.Visible := FSpectrum.Is128KModel;
-        ScrDisplayCtrl.Visible := FSpectrum.Is128KModel;
+      if Panel9.Enabled xor (FSpectrum.Is128KModel) then begin
+        Panel9.Enabled := FSpectrum.Is128KModel;
+        ScrDisplayCtrl.Enabled := FSpectrum.Is128KModel;
       end;
-      if Panel9.Visible then begin
-        LabelRomBanks.Caption := FSpectrum.Memory.ActiveRomPageNo.ToString;
-        LabelRamBanks.Caption := FSpectrum.Memory.ActiveRamPageNo.ToString;
-        if FSpectrum.Memory.ShadowScreenDisplay then
-          B := 1
-        else
-          B := 0;
-        ScrDisplayCtrl.SetValues(B);
-      end;
+
+      LabelRomBanks.Caption := FSpectrum.Memory.ActiveRomPageNo.ToString;
+      LabelRamBanks.Caption := FSpectrum.Memory.ActiveRamPageNo.ToString;
+      if FSpectrum.Memory.ShadowScreenDisplay then
+        B := 1
+      else
+        B := 0;
+      ScrDisplayCtrl.SetValues(B);
+
       FrameGridMemory.AfterStep;
     end;
 end;

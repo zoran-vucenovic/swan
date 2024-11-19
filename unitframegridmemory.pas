@@ -98,6 +98,7 @@ type
     procedure DisassemblerDisplayChange(Sender: TObject);
     procedure UpdateValuesFromDisassembler;
     function ValidateEditAddr: Integer;
+    procedure ValidateEditAddrAndJumpTo();
     procedure EditAddrEditingDone(Sender: TObject);
 
   public
@@ -130,7 +131,7 @@ end;
 
 procedure TFrameGridMemory.ButtonJumpGoClick(Sender: TObject);
 begin
-  FGrid.JumpTo(StrToInt(EditAddr.Text));
+  ValidateEditAddrAndJumpTo();
 end;
 
 procedure TFrameGridMemory.BitBtn1Click(Sender: TObject);
@@ -284,20 +285,28 @@ begin
   Result := ValidateAddr(S);
   if Result < 0 then begin
     if ValidateAddr(EditAddrPrevValue) < 0 then
-      EditAddrPrevValue := '0';
-  end else begin
-    EditAddrPrevValue := S;
+      S := '0'
+    else
+      S := EditAddrPrevValue;
   end;
-  EditAddr.Text := EditAddrPrevValue;
+  EditAddr.Text := S;
 end;
 
-procedure TFrameGridMemory.EditAddrEditingDone(Sender: TObject);
+procedure TFrameGridMemory.ValidateEditAddrAndJumpTo();
 var
   N: Integer;
 begin
   N := ValidateEditAddr;
-  if (N >= 0) and EditAddr.Focused then
+  if N >= 0 then begin
     FGrid.JumpTo(N);
+    EditAddrPrevValue := EditAddr.Text;
+  end;
+end;
+
+procedure TFrameGridMemory.EditAddrEditingDone(Sender: TObject);
+begin
+  if EditAddr.Focused then
+    ValidateEditAddrAndJumpTo();
 end;
 
 constructor TFrameGridMemory.Create(TheOwner: TComponent);
@@ -310,7 +319,7 @@ begin
 
   SetOnRunStop(nil);
   FOneStep := False;
-  EditAddrPrevValue := '0';
+  EditAddrPrevValue := #0;
   EditAddr.Text := EditAddrPrevValue;
 
   Panel7.BevelOuter := bvNone;

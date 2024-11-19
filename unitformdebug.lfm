@@ -58,11 +58,12 @@ object FormDebug: TFormDebug
         object Panel5: TPanel
           AnchorSideLeft.Control = Panel4
           AnchorSideTop.Control = Panel4
-          Left = 1
+          Left = 2
           Height = 17
-          Top = 1
+          Top = 2
           Width = 188
           AutoSize = True
+          BorderSpacing.Around = 1
           Caption = 'Panel5'
           ClientHeight = 17
           ClientWidth = 188
@@ -103,11 +104,12 @@ object FormDebug: TFormDebug
         object Panel6: TPanel
           AnchorSideLeft.Control = Panel7
           AnchorSideTop.Control = Panel7
-          Left = 1
+          Left = 2
           Height = 17
-          Top = 1
+          Top = 2
           Width = 275
           AutoSize = True
+          BorderSpacing.Around = 1
           Caption = 'Panel6'
           ClientHeight = 17
           ClientWidth = 275
@@ -146,11 +148,12 @@ object FormDebug: TFormDebug
         object Panel8: TPanel
           AnchorSideLeft.Control = Panel9
           AnchorSideTop.Control = Panel9
-          Left = 1
+          Left = 2
           Height = 17
-          Top = 1
+          Top = 2
           Width = 237
           AutoSize = True
+          BorderSpacing.Around = 1
           Caption = 'Panel8'
           ClientHeight = 17
           ClientWidth = 237
