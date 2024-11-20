@@ -16,6 +16,9 @@ private
   TicksNeeded0: Int64;
   PulsesNeeded: Integer;
 
+protected
+  function GetTicksNextEdge: Int64; override;
+
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: DWord; override;
@@ -29,6 +32,11 @@ public
 end;
 
 {$else}
+
+function TTzxBlock12.GetTicksNextEdge: Int64;
+begin
+  Result := TicksNeeded;
+end;
 
 constructor TTzxBlock12.Create(ATapePlayer: TTapePlayer);
 begin

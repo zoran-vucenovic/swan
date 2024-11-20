@@ -9,6 +9,9 @@ private
   FPauseLength: Integer;
   TicksNeeded: Int64;
 
+protected
+  function GetTicksNextEdge: Int64; override;
+
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: DWord; override;
@@ -29,6 +32,23 @@ end;
 
 {$else}
 
+function TTzxBlockPause.GetTicksNextEdge: Int64;
+begin
+  case State of
+    TPlayState.psData:
+      if FTapePlayer.ActiveBit = 0 then begin
+        Result := FPauseLength * TicksPerMilliSecond;
+        AdjustTicksIfNeeded(Result);
+        Result := Result + TicksNeeded;
+      end else
+        Result := TicksNeeded;
+    TPlayState.psPause:
+      Result := TicksNeeded;
+  otherwise
+    Result := inherited GetTicksNextEdge;
+  end;
+end;
+
 constructor TTzxBlockPause.Create(ATapePlayer: TTapePlayer);
 begin
   inherited Create(ATapePlayer);
@@ -36,17 +56,17 @@ begin
   FPauseLength := 0;
 end;
 
-class function {TTzxPlayer.}TTzxBlockPause.GetBlockId: DWord;
+class function TTzxBlockPause.GetBlockId: DWord;
 begin
   Result := $20;
 end;
 
-function {TTzxPlayer.}TTzxBlockPause.GetBlockLength: Integer;
+function TTzxBlockPause.GetBlockLength: Integer;
 begin
   Result := 2;
 end;
 
-function {TTzxPlayer.}TTzxBlockPause.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlockPause.LoadBlock(const Stream: TStream): Boolean;
 var
   W: Word;
 begin
@@ -61,12 +81,12 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlockPause.GetBlockDescription: String;
+class function TTzxBlockPause.GetBlockDescription: String;
 begin
   Result := 'Pause (silence) or ''Stop the Tape'' command';
 end;
 
-function {TTzxPlayer.}TTzxBlockPause.GetNextPulse: Boolean;
+function TTzxBlockPause.GetNextPulse: Boolean;
 var
   ProcTicks: Int64;
   TicksToWait: Int64;
@@ -104,7 +124,7 @@ begin
   end;
 end;
 
-procedure {TTzxPlayer.}TTzxBlockPause.Start;
+procedure TTzxBlockPause.Start;
 begin
   inherited Start;
   State := TPlayState.psStart;
@@ -112,7 +132,7 @@ begin
   TicksNeeded := TicksNeeded.MinValue;
 end;
 
-procedure {TTzxPlayer.}TTzxBlockPause.SetPauseLen(const APauseLength: Integer);
+procedure TTzxBlockPause.SetPauseLen(const APauseLength: Integer);
 begin
   FPauseLength := APauseLength;
 end;

@@ -17,6 +17,9 @@ strict private
   FDetails: String;
   FDetailsFilled: Boolean;
 
+protected
+  function GetTicksNextEdge: Int64; override;
+
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: DWord; override;
@@ -30,6 +33,11 @@ public
 end;
 
 {$else}
+
+function TTzxBlock13.GetTicksNextEdge: Int64;
+begin
+  Result := TicksNeeded;
+end;
 
 constructor TTzxBlock13.Create(ATapePlayer: TTapePlayer);
 begin

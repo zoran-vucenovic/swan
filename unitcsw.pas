@@ -42,6 +42,8 @@ type
     procedure SetSampleRate(AValue: Int64);
 
     function LoadCswData(const Stream: TStream; const L: Integer): Boolean;
+  protected
+    function GetTicksNextEdge: Int64; override;
 
   public
     constructor Create(ATapePlayer: TTapePlayer); override;
@@ -279,6 +281,11 @@ begin
     end;
 
   end;
+end;
+
+function TCswBlock.GetTicksNextEdge: Int64;
+begin
+  Result := TicksNeeded;
 end;
 
 procedure TCswBlock.SetSampleRate(AValue: Int64);

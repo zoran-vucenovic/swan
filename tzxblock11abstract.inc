@@ -43,6 +43,9 @@ strict private
 strict protected
   function Details2: String; virtual;
 
+protected
+  function GetTicksNextEdge: Int64; override;
+
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
   destructor Destroy; override;
@@ -58,6 +61,11 @@ end;
 function TTzxBlock11abstract.Details2: String;
 begin
   Result := #13 + 'Used bits in last byte: ' + IntToStr(UsedBitsInLastByte);
+end;
+
+function TTzxBlock11abstract.GetTicksNextEdge: Int64;
+begin
+  Result := TicksNeeded;
 end;
 
 constructor TTzxBlock11abstract.Create(ATapePlayer: TTapePlayer);

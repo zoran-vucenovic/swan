@@ -2196,6 +2196,7 @@ end;
 procedure TForm1.UpdateWriteScreen;
 begin
   if FWriteScreen = (FSkipWriteScreen and Assigned(TapePlayer) and TapePlayer.IsPlaying) then begin
+    Spectrum.FastLoad := FWriteScreen;
     FWriteScreen := not FWriteScreen;
 
     Spectrum.SetWriteScreen(FWriteScreen);

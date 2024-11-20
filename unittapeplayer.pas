@@ -24,6 +24,10 @@ type
 
     procedure AdjustTicksIfNeeded(var NeededTicks: Int64);
     function GetCurrentTotalSpectrumTicks: Int64; inline;
+
+  protected
+    function GetTicksNextEdge: Int64; virtual;
+
   public
     constructor Create(ATapePlayer: TTapePlayer); virtual;
     {returns whole block length, without id byte}
@@ -117,6 +121,7 @@ type
     procedure SetSpectrum(Spectrum: TSpectrum);
     function GetSpectrum: TSpectrum;
     procedure GetNextPulse; override;
+    function GetTicksNextEdge: Int64; override;
     procedure Continue;
     procedure Rewind; virtual;
     procedure StopPlaying();
@@ -188,6 +193,11 @@ end;
 function TTapeBlock.GetCurrentTotalSpectrumTicks: Int64;
 begin
   Result := FTapePlayer.FSpectrum.GetTotalTicks();
+end;
+
+function TTapeBlock.GetTicksNextEdge: Int64;
+begin
+  Result := Int64.MinValue;
 end;
 
 procedure TTapeBlock.Start;
@@ -374,6 +384,14 @@ begin
     end;
     CheckNextBlock();
   end;
+end;
+
+function TTapePlayer.GetTicksNextEdge: Int64;
+begin
+  if Assigned(FCurrentBlock) then
+    Result := FCurrentBlock.GetTicksNextEdge
+  else
+    Result := Int64.MinValue;
 end;
 
 procedure TTapePlayer.Continue;

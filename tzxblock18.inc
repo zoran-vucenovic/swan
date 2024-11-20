@@ -6,12 +6,20 @@
 
 TTzxBlock18 = class (TTzxBlockStandard)
 strict private
-  Csw: TCswBlock;
+  type
+    TCswBlock18 = class(TCswBlock)
+    end;
+
+strict private
+  Csw: TCswBlock18;
 
   FPauseAfterBlock: Integer;
 
 strict protected
   function Load2(const Stream: TStream; L: Integer): Boolean; override;
+
+protected
+  function GetTicksNextEdge: Int64; override;
 
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
@@ -32,7 +40,7 @@ constructor TTzxBlock18.Create(ATapePlayer: TTapePlayer);
 begin
   inherited Create(ATapePlayer);
 
-  Csw := TCswBlock.Create(ATapePlayer);
+  Csw := TCswBlock18.Create(ATapePlayer);
 end;
 
 destructor TTzxBlock18.Destroy;
@@ -117,6 +125,11 @@ begin
       end;
     end;
   end;
+end;
+
+function TTzxBlock18.GetTicksNextEdge: Int64;
+begin
+  Result := Csw.GetTicksNextEdge;
 end;
 
 {$endif}
