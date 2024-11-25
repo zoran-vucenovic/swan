@@ -10,6 +10,8 @@ TTzxBlock26 = class (TTzxBlock)
 strict private
   CallBlockNumbers: array of Int16;
   NumOfCalls: Integer;
+protected
+  function IsReallyPlayableBlock: Boolean; override;
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: DWord; override;
@@ -24,6 +26,11 @@ end;
 
 {$else}
 
+function TTzxBlock26.IsReallyPlayableBlock: Boolean;
+begin
+  Result := True;
+end;
+
 constructor TTzxBlock26.Create(ATapePlayer: TTapePlayer);
 begin
   inherited Create(ATapePlayer);
@@ -32,17 +39,17 @@ begin
   SetLength(CallBlockNumbers, 0);
 end;
 
-class function {TTzxPlayer.}TTzxBlock26.GetBlockId: DWord;
+class function TTzxBlock26.GetBlockId: DWord;
 begin
   Result := $26;
 end;
 
-function {TTzxPlayer.}TTzxBlock26.GetBlockLength: Integer;
+function TTzxBlock26.GetBlockLength: Integer;
 begin
   Result := 2 + 2 * Length(CallBlockNumbers);
 end;
 
-function {TTzxPlayer.}TTzxBlock26.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock26.LoadBlock(const Stream: TStream): Boolean;
 var
   W: Word;
   I: Integer;
@@ -65,17 +72,17 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock26.GetBlockDescription: String;
+class function TTzxBlock26.GetBlockDescription: String;
 begin
   Result := 'Call sequence';
 end;
 
-function {TTzxPlayer.}TTzxBlock26.GetNumOfCalls: Integer;
+function TTzxBlock26.GetNumOfCalls: Integer;
 begin
   Result := NumOfCalls;
 end;
 
-function {TTzxPlayer.}TTzxBlock26.GetCallBlockNumber(const I: Integer): Integer;
+function TTzxBlock26.GetCallBlockNumber(const I: Integer): Integer;
 begin
   if (I >= 0) and (I < NumOfCalls) then
     Result := CallBlockNumbers[I]
@@ -83,7 +90,7 @@ begin
     Result := inherited GetCallBlockNumber(I);
 end;
 
-procedure {TTzxPlayer.}TTzxBlock26.Details(out S: String);
+procedure TTzxBlock26.Details(out S: String);
 var
   I: Integer;
   MaybeComma: String;

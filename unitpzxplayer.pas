@@ -112,6 +112,7 @@ type
     procedure FillDetails;
   protected
     function LoadBlock2(const Stream: TStream): Boolean; override;
+    function IsReallyPlayableBlock: Boolean; override;
   public
     constructor Create(ATapePlayer: TTapePlayer); override;
 
@@ -150,6 +151,7 @@ type
     procedure FillDetails;
   protected
     function LoadBlock2(const Stream: TStream): Boolean; override;
+    function IsReallyPlayableBlock: Boolean; override;
   public
     constructor Create(ATapePlayer: TTapePlayer); override;
     destructor Destroy; override;
@@ -502,6 +504,11 @@ begin
   end;
 end;
 
+function TPzxBlockDATA.IsReallyPlayableBlock: Boolean;
+begin
+  Result := True;
+end;
+
 constructor TPzxBlockDATA.Create(ATapePlayer: TTapePlayer);
 begin
   inherited Create(ATapePlayer);
@@ -684,6 +691,11 @@ begin
 
   SetLength(Pulses, 0);
   Result := False;
+end;
+
+function TPzxBlockPULS.IsReallyPlayableBlock: Boolean;
+begin
+  Result := True;
 end;
 
 constructor TPzxBlockPULS.Create(ATapePlayer: TTapePlayer);

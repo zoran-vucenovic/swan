@@ -137,6 +137,7 @@ type
     procedure UpdateAskForSpeedCorrection;
     procedure SetPaused(AValue: Boolean);
     procedure WriteToScreen(TicksTo: Int32Fast);
+    procedure WriteToScreen2(TicksTo: Int32Fast);
     procedure InitTimes; inline;
     procedure AdjustSpectrumColours;
     procedure SetCodedBorderColour(AValue: Byte); inline;
@@ -169,7 +170,6 @@ type
     procedure UpdateDebuggedOrPaused;
     procedure SetInternalEar(AValue: Byte);
     procedure SetLateTimings(AValue: Boolean);
-    procedure SetFastLoad(AValue: Boolean);
 
   strict private
     class var
@@ -193,7 +193,7 @@ type
     procedure SetTapePlayer(ATapePlayer: TAbstractTapePlayer);
     procedure SetSpectrumColours(const Colours: TLCLColourMap);
     procedure GetSpectrumColours(out Colours: TLCLColourMap);
-    procedure SetWriteScreen(const AValue: Boolean);
+    procedure SetFastLoading(const AValue: Boolean);
     procedure SetEarFromTape(AValue: Byte);
     procedure CheckStartSoundPlayer;
     procedure StepToInstructionEndIfNeeded;
@@ -238,7 +238,6 @@ type
     property IsPagingEnabled: Boolean read FPagingEnabled write FPagingEnabled;
     property CustomRomsMounted: Boolean read FCustomRomsMounted;
     property OnBreakpoint: TThreadMethod write FOnBreakpoint;
-    property FastLoad: Boolean read FFastLoad write SetFastLoad;
     class property OnGetDebuggerClass: TFunctionGetDebuggerClass write FOnGetDebuggerClass;
   end;
 
@@ -615,7 +614,6 @@ begin
   if AskForSpeedCorrection xor (
      (FKeepRunning or FBreakpointsListening) and (SpeedCorrection <> 0)
              and (FProcessor.OnNeedWriteScreen = @WriteToScreen)
-             and (not (FFastLoad and Assigned(FTapePlayer)))
      )
   then begin
     KeyBoard.ClearKeyboard;
@@ -652,7 +650,7 @@ begin
   FPagingEnabled := False;
   FSoundMuted := False;
   FDivBeeperVol := 1.0;
-  FFastLoad := False;
+  FFastLoad := True;
 
   FFormDebug := nil;
   FTapePlayer := nil;
@@ -687,7 +685,7 @@ begin
 
   FProcessor.OnInputRequest := @ProcessorInput;
   FProcessor.OnOutputRequest := @ProcessorOutput;
-  SetWriteScreen(True);
+  SetFastLoading(False);
 
   FOnSync := nil;
   FOnStartRun := nil;
@@ -964,14 +962,15 @@ begin
   Colours := FLCLColours;
 end;
 
-procedure TSpectrum.SetWriteScreen(const AValue: Boolean);
+procedure TSpectrum.SetFastLoading(const AValue: Boolean);
 begin
-  if AValue xor (FProcessor.OnNeedWriteScreen = @WriteToScreen) then begin
+  if AValue xor FFastLoad then begin
     StopSoundPlayer;
-    if AValue then
-      FProcessor.OnNeedWriteScreen := @WriteToScreen
-    else
-      FProcessor.OnNeedWriteScreen := nil;
+    FFastLoad := AValue;
+    if AValue then begin
+      FProcessor.OnNeedWriteScreen := @WriteToScreen2
+    end else
+      FProcessor.OnNeedWriteScreen := @WriteToScreen;
 
     UpdateAskForSpeedCorrection;
     CheckStartSoundPlayer;
@@ -1077,19 +1076,19 @@ procedure TSpectrum.DoStep;
 
   procedure CheckFastLoad;
   var
-    Tne: Int64;
     N: Int64;
     B: Byte;
   begin
+    // LD_EDGE_1 - https://skoolkid.github.io/rom/asm/05E3.html#05E7
     if FProcessor.RegPC = $05E7 then begin
-      Tne := FTapePlayer.GetTicksNextEdge;
-      if Tne <> Int64.MinValue then begin
-        Tne := Tne - GetTotalTicks;
+      N := FTapePlayer.GetTicksNextEdge;
+      if N <> Int64.MinValue then begin
+        N := N - GetTotalTicks;
         B := not FProcessor.RegB; // = 255-RegB
 
         repeat // never loops, but allows break
           if B > 0 then begin
-            N := (Tne - 385) div 59;
+            N := (N - 385) div 59;
             if N < B then begin
               if N < 0 then
                 N := 0;
@@ -1105,6 +1104,7 @@ procedure TSpectrum.DoStep;
               Break;
             end;
           end;
+
           N := B;
           N := N * 59 + 362;
 
@@ -1114,6 +1114,7 @@ procedure TSpectrum.DoStep;
 
           FProcessor.RegPC := $05EE;
         until True;
+
         FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame + N;
       end;
     end;
@@ -1125,7 +1126,7 @@ var
 begin
   if Assigned(FTapePlayer) then begin
     FTapePlayer.GetNextPulse();
-    if FastLoad then
+    if FFastLoad then
       CheckFastLoad;
   end;
   FProcessor.DoProcess;
@@ -1368,6 +1369,12 @@ begin
   end;
 end;
 
+procedure TSpectrum.WriteToScreen2(TicksTo: Int32Fast);
+begin
+  if FFlashState and $0f = 0 then
+    WriteToScreen(TicksTo);
+end;
+
 procedure TSpectrum.SetPaused(AValue: Boolean);
 begin
   if FPaused xor AValue then begin
@@ -1408,15 +1415,6 @@ begin
     FProcessor.ContentionTo := FProcessor.ContentionFrom + (CentralScreenHeight - 1) * TicksPerScanLine + 128;
     FloatBusFirstInterestingTick := FProcessor.ContentionFrom + 4;
     FloatBusLastInterestingTick := FProcessor.ContentionTo + 3;
-  end;
-end;
-
-procedure TSpectrum.SetFastLoad(AValue: Boolean);
-begin
-  if AValue xor FFastLoad then begin
-    FFastLoad := AValue;
-    UpdateAskForSpeedCorrection;
-    CheckStartSoundPlayer;
   end;
 end;
 

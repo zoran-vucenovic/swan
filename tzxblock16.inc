@@ -12,12 +12,12 @@ end;
 
 {$else}
 
-class function {TTzxPlayer.}TTzxBlock16.GetBlockId: DWord;
+class function TTzxBlock16.GetBlockId: DWord;
 begin
   Result := $16;
 end;
 
-class function {TTzxPlayer.}TTzxBlock16.GetBlockDescription: String;
+class function TTzxBlock16.GetBlockDescription: String;
 begin
   Result := 'C64 ROM Type Data Block';
 end;

@@ -20,6 +20,7 @@ strict protected
 
 protected
   function GetTicksNextEdge: Int64; override;
+  function IsReallyPlayableBlock: Boolean; override;
 
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
@@ -130,6 +131,11 @@ end;
 function TTzxBlock18.GetTicksNextEdge: Int64;
 begin
   Result := Csw.GetTicksNextEdge;
+end;
+
+function TTzxBlock18.IsReallyPlayableBlock: Boolean;
+begin
+  Result := True;
 end;
 
 {$endif}

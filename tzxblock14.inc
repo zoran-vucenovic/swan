@@ -24,12 +24,12 @@ begin
   Sync2TicksNeeded := 0;
 end;
 
-class function {TTzxPlayer.}TTzxBlock14.GetBlockId: DWord;
+class function TTzxBlock14.GetBlockId: DWord;
 begin
   Result := $14;
 end;
 
-function {TTzxPlayer.}TTzxBlock14.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock14.LoadBlock(const Stream: TStream): Boolean;
 var
   L: Int32;
   W: Word;
@@ -87,7 +87,7 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock14.GetBlockDescription: String;
+class function TTzxBlock14.GetBlockDescription: String;
 begin
   Result := 'Pure Data Block';
 end;

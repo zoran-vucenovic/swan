@@ -7,6 +7,7 @@
 TTzxBlock27 = class (TTzxBlock)
 protected
   function CheckReturnFromCallSequence: Boolean; override;
+  function IsReallyPlayableBlock: Boolean; override;
 public
   class function GetBlockId: DWord; override;
   {returns whole block length, without id byte}
@@ -22,22 +23,27 @@ begin
   Result := True;
 end;
 
-class function {TTzxPlayer.}TTzxBlock27.GetBlockId: DWord;
-begin
-  Result := $27;
-end;
-
-function {TTzxPlayer.}TTzxBlock27.GetBlockLength: Integer;
-begin
-  Result := 0;
-end;
-
-function {TTzxPlayer.}TTzxBlock27.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock27.IsReallyPlayableBlock: Boolean;
 begin
   Result := True;
 end;
 
-class function {TTzxPlayer.}TTzxBlock27.GetBlockDescription: String;
+class function TTzxBlock27.GetBlockId: DWord;
+begin
+  Result := $27;
+end;
+
+function TTzxBlock27.GetBlockLength: Integer;
+begin
+  Result := 0;
+end;
+
+function TTzxBlock27.LoadBlock(const Stream: TStream): Boolean;
+begin
+  Result := True;
+end;
+
+class function TTzxBlock27.GetBlockDescription: String;
 begin
   Result := 'Return from sequence';
 end;

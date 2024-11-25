@@ -21,6 +21,8 @@ strict private
   P: PByte;
   PEnd: PByte;
   BitPosition: Integer;
+protected
+  function IsReallyPlayableBlock: Boolean; override;
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
   destructor Destroy; override;
@@ -34,6 +36,11 @@ public
 end;
 
 {$else}
+
+function TTzxBlock15.IsReallyPlayableBlock: Boolean;
+begin
+  Result := True;
+end;
 
 constructor TTzxBlock15.Create(ATapePlayer: TTapePlayer);
 begin
@@ -53,17 +60,17 @@ begin
   inherited Destroy;
 end;
 
-class function {TTzxPlayer.}TTzxBlock15.GetBlockId: DWord;
+class function TTzxBlock15.GetBlockId: DWord;
 begin
   Result := $15;
 end;
 
-function {TTzxPlayer.}TTzxBlock15.GetBlockLength: Integer;
+function TTzxBlock15.GetBlockLength: Integer;
 begin
   Result := FLen;
 end;
 
-function {TTzxPlayer.}TTzxBlock15.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock15.LoadBlock(const Stream: TStream): Boolean;
 var
   W: Word;
   B: Byte;
@@ -110,12 +117,12 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock15.GetBlockDescription: String;
+class function TTzxBlock15.GetBlockDescription: String;
 begin
   Result := 'Direct Recording';
 end;
 
-function {TTzxPlayer.}TTzxBlock15.GetNextPulse: Boolean;
+function TTzxBlock15.GetNextPulse: Boolean;
 var
   ProcTicks: Int64;
 

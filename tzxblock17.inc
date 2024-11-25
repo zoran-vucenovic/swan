@@ -12,12 +12,12 @@ end;
 
 {$else}
 
-class function {TTzxPlayer.}TTzxBlock17.GetBlockId: DWord;
+class function TTzxBlock17.GetBlockId: DWord;
 begin
   Result := $17;
 end;
 
-class function {TTzxPlayer.}TTzxBlock17.GetBlockDescription: String;
+class function TTzxBlock17.GetBlockDescription: String;
 begin
   Result := 'C64 Turbo Tape Data Block';
 end;

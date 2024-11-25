@@ -58,6 +58,9 @@ strict private
 strict protected
   function Load2(const Stream: TStream; L: Integer): Boolean; override;
 
+protected
+  function IsReallyPlayableBlock: Boolean; override;
+
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
   destructor Destroy; override;
@@ -280,6 +283,11 @@ begin
       FillDetails;
     end
   end;
+end;
+
+function TTzxBlock19.IsReallyPlayableBlock: Boolean;
+begin
+  Result := True;
 end;
 
 constructor TTzxBlock19.Create(ATapePlayer: TTapePlayer);

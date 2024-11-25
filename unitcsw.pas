@@ -44,6 +44,7 @@ type
     function LoadCswData(const Stream: TStream; const L: Integer): Boolean;
   protected
     function GetTicksNextEdge: Int64; override;
+    function IsReallyPlayableBlock: Boolean; override;
 
   public
     constructor Create(ATapePlayer: TTapePlayer); override;
@@ -286,6 +287,11 @@ end;
 function TCswBlock.GetTicksNextEdge: Int64;
 begin
   Result := TicksNeeded;
+end;
+
+function TCswBlock.IsReallyPlayableBlock: Boolean;
+begin
+  Result := True;
 end;
 
 procedure TCswBlock.SetSampleRate(AValue: Int64);

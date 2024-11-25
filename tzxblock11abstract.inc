@@ -45,6 +45,7 @@ strict protected
 
 protected
   function GetTicksNextEdge: Int64; override;
+  function IsReallyPlayableBlock: Boolean; override;
 
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
@@ -66,6 +67,11 @@ end;
 function TTzxBlock11abstract.GetTicksNextEdge: Int64;
 begin
   Result := TicksNeeded;
+end;
+
+function TTzxBlock11abstract.IsReallyPlayableBlock: Boolean;
+begin
+  Result := True;
 end;
 
 constructor TTzxBlock11abstract.Create(ATapePlayer: TTapePlayer);

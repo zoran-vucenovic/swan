@@ -576,12 +576,12 @@
         <UnitName Value="UnitOptions"/>
       </Unit>
       <Unit>
-        <Filename Value="unitframeotheroptions.pas"/>
+        <Filename Value="unitframesnapshotoptions.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="FrameOtherOptions"/>
+        <ComponentName Value="FrameSnapshotOptions"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="UnitFrameOtherOptions"/>
+        <UnitName Value="UnitFrameSnapshotOptions"/>
       </Unit>
       <Unit>
         <Filename Value="unitframespectrummodel.pas"/>
@@ -745,6 +745,14 @@
         <Filename Value="unitswantreeview.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitSwanTreeView"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitframetapeoptions.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameTapeOptions"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="UnitFrameTapeOptions"/>
       </Unit>
     </Units>
   </ProjectOptions>

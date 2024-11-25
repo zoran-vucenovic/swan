@@ -58,7 +58,7 @@ type
     procedure SetCurrentControlNumber(ANumber: Integer);
     procedure GridOnSelectCell(Sender: TObject; {%H-}aCol, aRow: Integer;
           var {%H-}CanSelect: Boolean);
-    procedure GridOnSelection(Sender: TObject; aCol, aRow: Integer);
+    procedure GridOnSelection(Sender: TObject; {%H-}aCol, aRow: Integer);
     procedure GridOnDrawCell(Sender: TObject; {%H-}aCol, aRow: Integer;
           aRect: TRect; {%H-}aState: TGridDrawState);
     procedure GridOnPrepareCanvas(Sender: TObject; {%H-}aCol, {%H-}aRow: Integer;
@@ -415,12 +415,10 @@ procedure TFormOptions.SetCurrentControlByClass(AControlClass: TControlClass);
 var
   I: Integer;
 begin
-  if Assigned(AControlClass) then begin
-    for I := 0 to FOptionControlsCount - 1 do begin
-      if FOptionControls[I].Control.ClassType = AControlClass then begin
-        SetCurrentControlNumber(I);
-        Break;
-      end;
+  for I := 0 to FOptionControlsCount - 1 do begin
+    if (AControlClass = nil) or (FOptionControls[I].Control.ClassType = AControlClass) then begin
+      SetCurrentControlNumber(I);
+      Break;
     end;
   end;
 end;

@@ -1,4 +1,4 @@
-object FrameOtherOptions: TFrameOtherOptions
+object FrameSnapshotOptions: TFrameSnapshotOptions
   Left = 0
   Height = 151
   Top = 0
@@ -13,47 +13,35 @@ object FrameOtherOptions: TFrameOtherOptions
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
     Left = 0
-    Height = 141
+    Height = 114
     Top = 0
-    Width = 350
+    Width = 318
     AutoSize = True
     BevelOuter = bvNone
-    ClientHeight = 141
-    ClientWidth = 350
+    ClientHeight = 114
+    ClientWidth = 318
     TabOrder = 0
     object Panel2: TPanel
       AnchorSideLeft.Control = Panel1
       AnchorSideTop.Control = Panel1
       Left = 10
-      Height = 121
+      Height = 94
       Top = 10
-      Width = 330
+      Width = 298
       AutoSize = True
       BorderSpacing.Around = 10
       BevelOuter = bvNone
-      ClientHeight = 121
-      ClientWidth = 330
+      ClientHeight = 94
+      ClientWidth = 298
       TabOrder = 0
       object CheckBoxSkipJoystickInfoSzxLoad: TCheckBox
-        AnchorSideLeft.Control = Panel2
-        AnchorSideTop.Control = CheckBoxAutoShowTapePlayerOnLoadTape
-        AnchorSideTop.Side = asrBottom
-        Left = 0
-        Height = 19
-        Top = 27
-        Width = 296
-        BorderSpacing.Top = 8
-        Caption = 'when loading szx snapshot, skip joystick information'
-        TabOrder = 1
-      end
-      object CheckBoxAutoShowTapePlayerOnLoadTape: TCheckBox
         AnchorSideLeft.Control = Panel2
         AnchorSideTop.Control = Panel2
         Left = 0
         Height = 19
         Top = 0
-        Width = 330
-        Caption = 'on insert tape file (tzx, pzx, tap, csw), auto show tape player'
+        Width = 298
+        Caption = 'When loading szx snapshot, skip joystick information'
         TabOrder = 0
       end
       object CheckBoxSkipTapeInfoSzxLoad: TCheckBox
@@ -62,11 +50,11 @@ object FrameOtherOptions: TFrameOtherOptions
         AnchorSideTop.Side = asrBottom
         Left = 0
         Height = 19
-        Top = 54
-        Width = 252
+        Top = 27
+        Width = 254
         BorderSpacing.Top = 8
-        Caption = 'when loading szx snapshot, skip cassete info'
-        TabOrder = 2
+        Caption = 'When loading szx snapshot, skip cassete info'
+        TabOrder = 1
       end
       object Panel3: TPanel
         AnchorSideLeft.Control = Panel2
@@ -74,22 +62,22 @@ object FrameOtherOptions: TFrameOtherOptions
         AnchorSideTop.Side = asrBottom
         Left = 0
         Height = 40
-        Top = 81
+        Top = 54
         Width = 283
         AutoSize = True
         BorderSpacing.Top = 8
         BevelOuter = bvNone
         ClientHeight = 40
         ClientWidth = 283
-        TabOrder = 3
+        TabOrder = 2
         object Label1: TLabel
           AnchorSideLeft.Control = Panel3
           AnchorSideTop.Control = Panel3
           Left = 0
           Height = 15
           Top = 0
-          Width = 139
-          Caption = 'when saving szx snapshot:'
+          Width = 141
+          Caption = 'When saving szx snapshot:'
         end
         object ComboBox1: TComboBox
           AnchorSideLeft.Control = Label1
@@ -104,14 +92,14 @@ object FrameOtherOptions: TFrameOtherOptions
           ItemHeight = 15
           ItemIndex = 2
           Items.Strings = (
-            'skip cassete info'
-            'embed and compress tape file'
-            'embed but not compress tape file'
-            'only save tape file path'
+            'Skip cassete info'
+            'Embed and compress tape file'
+            'Embed but not compress tape file'
+            'Only save tape file path'
           )
           Style = csDropDownList
           TabOrder = 0
-          Text = 'embed but not compress tape file'
+          Text = 'Embed but not compress tape file'
         end
       end
     end

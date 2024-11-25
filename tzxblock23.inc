@@ -9,6 +9,10 @@
 TTzxBlock23 = class (TTzxBlock)
 strict private
   RelativeJumpValue: Integer;
+  FIsPlayable: Boolean;
+protected
+  function IsReallyPlayableBlock: Boolean; override;
+
 public
   constructor Create(ATapePlayer: TTapePlayer); override;
   class function GetBlockId: DWord; override;
@@ -22,23 +26,29 @@ end;
 
 {$else}
 
+function TTzxBlock23.IsReallyPlayableBlock: Boolean;
+begin
+  Result := FIsPlayable;
+end;
+
 constructor TTzxBlock23.Create(ATapePlayer: TTapePlayer);
 begin
   inherited Create(ATapePlayer);
   RelativeJumpValue := 0;
+  FIsPlayable := False;
 end;
 
-class function {TTzxPlayer.}TTzxBlock23.GetBlockId: DWord;
+class function TTzxBlock23.GetBlockId: DWord;
 begin
   Result := $23;
 end;
 
-function {TTzxPlayer.}TTzxBlock23.GetBlockLength: Integer;
+function TTzxBlock23.GetBlockLength: Integer;
 begin
   Result := 2;
 end;
 
-function {TTzxPlayer.}TTzxBlock23.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock23.LoadBlock(const Stream: TStream): Boolean;
 var
   W: Word;
   N: Int16 absolute W;
@@ -48,22 +58,24 @@ begin
     if Stream.Read(W{%H-}, 2) = 2 then begin
       W := LEtoN(W);
       RelativeJumpValue := N;
+      FIsPlayable := FTapePlayer.GetBlockCount + RelativeJumpValue <= FTapePlayer.GetLastReallyPlayableBlock;
+
       Result := True;
     end;
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock23.GetBlockDescription: String;
+class function TTzxBlock23.GetBlockDescription: String;
 begin
   Result := 'Jump to block';
 end;
 
-function {TTzxPlayer.}TTzxBlock23.GetRelativeJumpValue: Integer;
+function TTzxBlock23.GetRelativeJumpValue: Integer;
 begin
   Result := RelativeJumpValue;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock23.Details(out S: String);
+procedure TTzxBlock23.Details(out S: String);
 var
   N: Integer;
 begin

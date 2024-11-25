@@ -445,6 +445,8 @@ end;
 
 procedure TTzxPlayer.StartPauseBlock(const APauseLength: Integer);
 begin
+  inherited StartPauseBlock(APauseLength);
+
   if FPauseBlock = nil then
     FPauseBlock := TTzxBlockPause.Create(Self);
   TTzxBlockPause(FPauseBlock).SetPauseLen(APauseLength);

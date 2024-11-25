@@ -17,10 +17,11 @@ uses
   UnitInputLibraryPathDialog, UnitFormInputPokes, UnitHistorySnapshots, UnitSZX,
   UnitFormHistorySnapshots, UnitTapePlayer, UnitVer, UnitKeyboardOnScreen,
   UnitSoundPlayer, UnitOptions, UnitFrameSpectrumModel, UnitFrameSound,
-  UnitFrameOtherOptions, UnitFrameHistorySnapshotOptions, UnitRecentFiles,
+  UnitFrameSnapshotOptions, UnitFrameHistorySnapshotOptions, UnitRecentFiles,
   UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA, UnitFileZip,
   UnitRomPaths, UnitSwanToolbar, UnitFormChooseString, UnitDlgStartAdress,
-  UnitDebugger, UnitSwanTreeView, UnitFrameToolbarOptions, SoundChipAY_3_8912;
+  UnitDebugger, UnitSwanTreeView, UnitFrameToolbarOptions, SoundChipAY_3_8912,
+  UnitFrameTapeOptions;
 
 // On Linux, bgra drawing directly to PaintBox in its OnPaint event seems to be
 // extremly slow. However, we get better time when we have an auxiliary bitmap
@@ -225,7 +226,6 @@ type
   strict private
     const
       cSection0 = 'general';
-      cSectionSkipWriteScr = 'skip_scr_upd_when_tape_playing';
       cSectionScreenSizeFactor = 'screen_size_factor';
       cSectionSoundVolume = 'sound_volume';
       cSectionSoundMuted = 'sound_muted';
@@ -234,9 +234,11 @@ type
       cSectionPortAudioLibPath64 = 'portaudio_lib_path64';
       cSectionSpectrumModel = 'spectrum_model';
       cSectionVersion = 'version';
-      cSectionOtherOptions = 'other_options';
-      cSectionSkipJoystickInfoSzxLoad = 'skip_load_joystick_info_from_szx';
+      cSectionTapeOptions = 'tape_options';
       cSectionAutoShowTapePlayer = 'auto_show_tape_player';
+      cSectionFastLoad = 'fast_load';
+      cSectionSnapshotOptions = 'snapshot_options';
+      cSectionSkipJoystickInfoSzxLoad = 'skip_load_joystick_info_from_szx';
       cSectionSkipTapeInfoSzxLoad = 'skip_load_tape_info_from_szx';
       cSectionSzxSaveOptions = 'szx_save_options';
       cSectionRecentFiles = 'recent_files';
@@ -332,8 +334,8 @@ type
 
     FormDebug: TFormDebug;
     TapePlayer: TTapePlayer;
-    FWriteScreen: Boolean;
-    FSkipWriteScreen: Boolean;
+    FWriteScreenEachFrame: Boolean;
+    FFastLoad: Boolean;
     FSoundVolumeForm: TFormSoundVolume;
     FRecentFiles: TRecentFiles;
     FPortaudioLibPathOtherBitness: RawByteString;
@@ -346,7 +348,6 @@ type
     procedure TryLoadFromFiles(const SpectrumFileKinds: TSpectrumFileKinds; const AFileNames: Array of String);
     procedure DropFilesLoad(Sender: TObject);
     procedure UpdateActiveSnapshotHistory;
-    procedure UpdateTextTapeRunning;
     procedure UpdateWriteScreen;
     procedure UpdateCheckWriteScreen;
     procedure UpdateCheckHideToolbar;
@@ -436,6 +437,8 @@ begin
 
   ActionHistorySnapshots.Hint := ActionHistorySnapshots.Caption + LineEnding
     + '(' + ActionEnableHistory.Hint + ')';
+  ActionFastLoading.Hint :=
+    'Fast tape loading (detect edges in rom tape' + LineEnding + 'routine, skip some frames drawing while tape is playing)';
 
   ActionMoveBack.ShortCut := SnapshotHistoryOptions.KeyGoBack;
 
@@ -477,8 +480,8 @@ begin
   TSpectrum.OnGetDebuggerClass := @SpectrumOnGetDebuggerClass;
   Spectrum := nil;
 
-  FSkipWriteScreen := True;
-  FWriteScreen := True;
+  FFastLoad := True;
+  FWriteScreenEachFrame := True;
 
   AutoSize := False;
 
@@ -569,7 +572,7 @@ begin
   if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionFastLoadingExecute);
   end else begin
-    FSkipWriteScreen := not FSkipWriteScreen;
+    FFastLoad := not FFastLoad;
     UpdateCheckWriteScreen;
   end;
 end;
@@ -619,7 +622,7 @@ begin
   if Sender <> FDummyObj then begin
     AddEventToQueue(@ActionAllOptionsExecute);
   end else begin
-    ShowAllOptionsDialog(TFrameOtherOptions);
+    ShowAllOptionsDialog(nil);
   end;
 end;
 
@@ -1528,6 +1531,7 @@ procedure TForm1.LoadFromConf;
 
 const
   cOldSectionSwanVersion = 'swan_version';
+  cOldSectionOtherOptions = 'other_options';
 
 var
   JObj: TJSONObject;
@@ -1589,7 +1593,28 @@ begin
       end;
     end;
 
-    JD := JObj.Find(cSectionOtherOptions);
+    JD := JObj.Find(cSectionTapeOptions);
+    if JD = nil then
+      JD := JObj.Find(cOldSectionOtherOptions);
+    if JD is TJSONObject then begin
+      JObj2 := TJSONObject(JD);
+
+      if FAutoShowTapePlayerWhenTapeLoaded then
+        K := 1
+      else
+        K := 0;
+      FAutoShowTapePlayerWhenTapeLoaded := JObj2.Get(cSectionAutoShowTapePlayer, K) <> 0;
+
+      if FFastLoad then
+        K := 1
+      else
+        K := 0;
+      FFastLoad := JObj2.Get(cSectionFastLoad, K) <> 0;
+    end;
+
+    JD := JObj.Find(cSectionSnapshotOptions);
+    if JD = nil then
+      JD := JObj.Find(cOldSectionOtherOptions);
     if JD is TJSONObject then begin
       JObj2 := TJSONObject(JD);
       if TSnapshotSZX.SkipJoystickInfoLoad then
@@ -1597,12 +1622,6 @@ begin
       else
         K := 0;
       TSnapshotSZX.SkipJoystickInfoLoad := JObj2.Get(cSectionSkipJoystickInfoSzxLoad, K) <> 0;
-
-      if FAutoShowTapePlayerWhenTapeLoaded then
-        K := 1
-      else
-        K := 0;
-      FAutoShowTapePlayerWhenTapeLoaded := JObj2.Get(cSectionAutoShowTapePlayer, K) <> 0;
 
       if Assigned(TSnapshotSZX.OnSzxLoadTape) then
         K := 0
@@ -1631,9 +1650,6 @@ begin
     JD := JObj.Find(cSectionCustomRomPaths);
     if JD is TJSONObject then
       TRomPaths.GetRomPaths.LoadFromJSON(TJSONObject(JD));
-
-    FSkipWriteScreen := JObj.Get(cSectionSkipWriteScr, Integer(0)) <> 0;
-    UpdateCheckWriteScreen;
 
     Spectrum.SoundMuted := JObj.Get(cSectionSoundMuted, Integer(0)) <> 0;
     Spectrum.LateTimings := JObj.Get(cSectionLateTimings, Integer(0)) <> 0;
@@ -1760,11 +1776,6 @@ begin
     JObj.Add(cSectionVersion, UnitVer.TVersion.FullVersionString);
     JObj.Add(cSectionBuildDate, TCommonSpectrum.BuildDateString);
     JObj.Add(cSectionScreenSizeFactor, Integer(ScreenSizeFactor));
-    if FSkipWriteScreen then
-      N := 1
-    else
-      N := 0;
-    JObj.Add(cSectionSkipWriteScr, N);
 
     WriteStr(S, Spectrum.AYOutputMode);
     if (Length(S) > 2) and (AnsiCompareText('om', Copy(S, 1, 2)) = 0) then begin
@@ -1839,12 +1850,6 @@ begin
         K := 0;
       JObj2.Add(cSectionSkipJoystickInfoSzxLoad, K);
 
-      if FAutoShowTapePlayerWhenTapeLoaded then
-        K := 1
-      else
-        K := 0;
-      JObj2.Add(cSectionAutoShowTapePlayer, K);
-
       if Assigned(TSnapshotSZX.OnSzxLoadTape) then
         K := 0
       else
@@ -1854,7 +1859,27 @@ begin
       K := Integer(TSnapshotSZX.SaveTapeOptions);
       JObj2.Add(cSectionSzxSaveOptions, K);
 
-      if JObj.Add(cSectionOtherOptions, JObj2) >= 0 then
+      if JObj.Add(cSectionSnapshotOptions, JObj2) >= 0 then
+        JObj2 := nil;
+    finally
+      JObj2.Free;
+    end;
+
+    JObj2 := TJSONObject.Create;
+    try
+      if FAutoShowTapePlayerWhenTapeLoaded then
+        K := 1
+      else
+        K := 0;
+      JObj2.Add(cSectionAutoShowTapePlayer, K);
+
+      if FFastLoad then
+        K := 1
+      else
+        K := 0;
+      JObj2.Add(cSectionFastLoad, K);
+
+      if JObj.Add(cSectionTapeOptions, JObj2) >= 0 then
         JObj2 := nil;
     finally
       JObj2.Free;
@@ -1908,7 +1933,8 @@ var
   FrameSpectrumModel: TFrameSpectrumModel;
   FrameSound: TFrameSound;
   FrameSoundLib: TFrameInputLibraryPath;
-  FrameOtherOptions: TFrameOtherOptions;
+  FrameSnapshotOptions: TFrameSnapshotOptions;
+  FrameTapeOptions: TFrameTapeOptions;
   FrameHistorySnapshotOptions: TFrameHistorySnapshotOptions;
   FrameToolbarOptions: TFrameToobarOptions;
 
@@ -1923,6 +1949,17 @@ begin
     if Assigned(OptionsDialog) then
       try
         repeat // this never loops, but allows break
+          FrameTapeOptions := TFrameTapeOptions.CreateForAllOptions(OptionsDialog);
+          FrameTapeOptions.AutoShowTapePlayerOnLoadTape := FAutoShowTapePlayerWhenTapeLoaded;
+          FrameTapeOptions.FastLoad := FFastLoad;
+
+          FrameSnapshotOptions := TFrameSnapshotOptions.CreateForAllOptions(OptionsDialog);
+          if not Assigned(FrameSnapshotOptions) then
+            Break;
+          FrameSnapshotOptions.SkipJoystickInfoSzxLoad := TSnapshotSZX.SkipJoystickInfoLoad;
+          FrameSnapshotOptions.SkipTapeInfoSzxLoad := not Assigned(TSnapshotSZX.OnSzxLoadTape);
+          FrameSnapshotOptions.SaveTapeInfoSzxSave := Integer(TSnapshotSZX.SaveTapeOptions);
+
           FrameHistorySnapshotOptions :=
             TFrameHistorySnapshotOptions.CreateForAllOptions(OptionsDialog);
           if not Assigned(FrameHistorySnapshotOptions) then
@@ -1969,16 +2006,6 @@ begin
           if not Assigned(FrameToolbarOptions) then
             Break;
 
-          FrameOtherOptions := TFrameOtherOptions.CreateForAllOptions(OptionsDialog);
-          if not Assigned(FrameOtherOptions) then
-            Break;
-          FrameOtherOptions.AutoShowTapePlayerOnLoadTape := FAutoShowTapePlayerWhenTapeLoaded;
-          FrameOtherOptions.SkipJoystickInfoSzxLoad := TSnapshotSZX.SkipJoystickInfoLoad;
-          FrameOtherOptions.SkipTapeInfoSzxLoad := not Assigned(TSnapshotSZX.OnSzxLoadTape);
-          FrameOtherOptions.SaveTapeInfoSzxSave := Integer(TSnapshotSZX.SaveTapeOptions);
-
-          if ControlClass = nil then
-            ControlClass := TFrameOtherOptions;
           OptionsDialog.SetCurrentControlByClass(ControlClass);
 
           if OptionsDialog.ShowModal = mrOK then begin
@@ -1991,14 +2018,18 @@ begin
             TJoystick.Joystick.JoystickType := JoystickType;
             UpdateShowCurrentlyActiveJoystick;
             UpdateCheckLateTimings;
-            FAutoShowTapePlayerWhenTapeLoaded := FrameOtherOptions.AutoShowTapePlayerOnLoadTape;
-            TSnapshotSZX.SkipJoystickInfoLoad := FrameOtherOptions.SkipJoystickInfoSzxLoad;
-            if FrameOtherOptions.SkipTapeInfoSzxLoad then
+
+            FAutoShowTapePlayerWhenTapeLoaded := FrameTapeOptions.AutoShowTapePlayerOnLoadTape;
+            FFastLoad := FrameTapeOptions.FastLoad;
+            UpdateCheckWriteScreen;
+
+            TSnapshotSZX.SkipJoystickInfoLoad := FrameSnapshotOptions.SkipJoystickInfoSzxLoad;
+            if FrameSnapshotOptions.SkipTapeInfoSzxLoad then
               TSnapshotSZX.OnSzxLoadTape := nil
             else
               TSnapshotSZX.OnSzxLoadTape := @SzxOnLoadTape;
             TSnapshotSZX.SaveTapeOptions :=
-              TSnapshotSZX.TSzxSaveTapeOptions(FrameOtherOptions.SaveTapeInfoSzxSave);
+              TSnapshotSZX.TSzxSaveTapeOptions(FrameSnapshotOptions.SaveTapeInfoSzxSave);
 
             FrameHistorySnapshotOptions.UpdateSnapshotHistoryOptionsFromValues(SnapshotHistoryOptions);
             ActionMoveBack.ShortCut := SnapshotHistoryOptions.KeyGoBack;
@@ -2129,84 +2160,23 @@ begin
   ActionMoveBack.Enabled := Assigned(HistoryQueue);
 end;
 
-procedure TForm1.UpdateTextTapeRunning;
-const
-  cTapeRunningMsg =
-    'Tape running...' + LineEnding + LineEnding
-    + 'You chose the option which turns off updating the screen'
-    + ' while tape is running. You can turn it off in'
-    + ' main menu:' + LineEnding + 'Options -> '
-    ;
-
-var
-  R: TRect;
-  TS: TTextStyle;
-  STapeRunningMsg: String;
-begin
-  if not FWriteScreen then begin
-    if Bmp = nil then
-      Bmp := TBitmap.Create;
-
-    Bmp.SetSize(
-      PaintBox1.ClientWidth,
-      PaintBox1.ClientHeight
-      );
-    Bmp.Canvas.GetUpdatedHandle([
-      TCanvasStates.csHandleValid,
-      TCanvasStates.csPenvalid,
-      TCanvasStates.csBrushValid
-      ]);
-
-    Bmp.Canvas.Brush.Color := TColor($522200);
-    Bmp.Canvas.Brush.Style := bsSolid;
-    R := Rect(0, 0, Bmp.Canvas.Width, Bmp.Canvas.Height);
-    R.Inflate(-(R.Width div 11), -(R.Height div 11));
-    Bmp.Canvas.Clear;
-
-    TS := Bmp.Canvas.TextStyle;
-    TS.Layout := TTextLayout.tlCenter;
-    TS.Alignment := TAlignment.taCenter;
-    TS.Opaque := False;
-    TS.SingleLine := False;
-    TS.Wordbreak := True;
-
-    Bmp.Canvas.Font.Height := MulDiv(GetFontData(Self.Font.Handle).Height, ScreenSizeFactor * 5 , 4);
-    Bmp.Canvas.Font.Color := TColor($d17700);
-
-    STapeRunningMsg := cTapeRunningMsg + ActionFastLoading.Caption;
-
-    Bmp.Canvas.Pen.Color := Bmp.Canvas.Font.Color;
-    Bmp.Canvas.Pen.Width := 2;
-
-    Bmp.Canvas.TextRect(R, R.Left, R.Top, STapeRunningMsg, TS);
-
-    PaintBox1.OnPaint := @PaintBmp;
-  end else begin
-    {$ifdef UseАuxiliaryBmp}
-    if (Bmp.Width <> WholeScreenWidth) or (Bmp.Height <> WholeScreenHeight) then
-      Bmp.SetSize(WholeScreenWidth, WholeScreenHeight);
-    {$else}
-    PaintBox1.OnPaint := @PaintScreen;
-    {$endif}
-  end;
-
-  PaintBox1.Invalidate;
-end;
-
 procedure TForm1.UpdateWriteScreen;
 begin
-  if FWriteScreen = (FSkipWriteScreen and Assigned(TapePlayer) and TapePlayer.IsPlaying) then begin
-    Spectrum.FastLoad := FWriteScreen;
-    FWriteScreen := not FWriteScreen;
+  if FWriteScreenEachFrame = (
+    FFastLoad and Assigned(TapePlayer) and TapePlayer.IsPlaying
+          and (not TapePlayer.NoMoreReallyPlayableBlocks)
+    )
+  then begin
+    Spectrum.SetFastLoading(FWriteScreenEachFrame);
+    FWriteScreenEachFrame := not FWriteScreenEachFrame;
 
-    Spectrum.SetWriteScreen(FWriteScreen);
-    UpdateTextTapeRunning;
+    PaintBox1.Invalidate;
   end;
 end;
 
 procedure TForm1.UpdateCheckWriteScreen;
 begin
-  ActionFastLoading.Checked := FSkipWriteScreen;
+  ActionFastLoading.Checked := FFastLoad;
   UpdateWriteScreen;
 end;
 
@@ -3150,7 +3120,7 @@ begin
     KeyEventCount := 0;
   end;
 
-  if FWriteScreen then begin
+  if FWriteScreenEachFrame or (Spectrum.FlashState and $0f = 1) then begin
     {$ifdef UseАuxiliaryBmp}
     Spectrum.DrawToCanvas(Bmp.Canvas, Rect(0, 0, WholeScreenWidth, WholeScreenHeight));
     {$endif}
@@ -3222,7 +3192,11 @@ begin
   PaintBox1.ClientHeight := WholeScreenHeight * ScreenSizeFactor;
   DrawingRect := PaintBox1.ClientRect;
 
-  UpdateTextTapeRunning;
+  {$ifdef UseАuxiliaryBmp}
+    if (Bmp.Width <> WholeScreenWidth) or (Bmp.Height <> WholeScreenHeight) then
+      Bmp.SetSize(WholeScreenWidth, WholeScreenHeight);
+  {$endif}
+  PaintBox1.Invalidate;
 end;
 
 procedure TForm1.SetScreenSizeFactor(NewFactor: Integer);

@@ -23,14 +23,14 @@ uses
   UnitStreamCompression, UnitFormHistorySnapshots, UnitControlScreenBitmap,
   UnitTapePlayer, UnitPzxPlayer, UnitSpectrumKeysControl, UnitKeyboardOnScreen,
   UnitFormForOptionsBasic, UnitFrameKeyMappings, UnitOptions,
-  UnitFrameOtherOptions, UnitFrameSpectrumModel, UnitFrameSound,
+  UnitFrameSnapshotOptions, UnitFrameSpectrumModel, UnitFrameSound,
   UnitFrameHistorySnapshotOptions, UnitRecentFiles, UnitMemory, SnapshotZ80,
   SnapshotSNA, SoundChipAY_3_8912, UnitFrameChooseFile, UnitFileZip,
   UnitRomPaths, UnitSwanToolbar, UnitFrameSoundVolume, UnitFormChooseString,
   UnitCSW, UnitDisassembler, UnitDlgStartAdress, UnitGridSpectrumMemory,
   UnitFormDebug, UnitFrameGridMemory, UnitDebugCpuState, UnitDebugger,
   UnitDebugBreakpointsGrid, UnitFrameBreakpoints, UnitFrameToolbarOptions,
-  UnitSwanTreeView;
+  UnitSwanTreeView, UnitFrameTapeOptions;
 
 {$R *.res}
 

@@ -27,6 +27,7 @@ type
 
   protected
     function GetTicksNextEdge: Int64; virtual;
+    function IsReallyPlayableBlock: Boolean; virtual;
 
   public
     constructor Create(ATapePlayer: TTapePlayer); virtual;
@@ -107,6 +108,8 @@ type
   private
     FIsRealPath: Boolean;
     FSpectrum: TSpectrum;
+    FLastReallyPlayableBlock: Integer;
+    FNoMoreReallyPlayableBlocks: Boolean;
 
     class procedure Init;
     class procedure Final;
@@ -116,6 +119,8 @@ type
     constructor Create; virtual;
     destructor Destroy; override;
 
+    function GetLastReallyPlayableBlock: Integer;
+    function NoMoreReallyPlayableBlocks: Boolean;
     function LoadFromStream(const AStream: TStream): Boolean; //virtual;
     function SaveToStream(const AStream: TStream): Boolean;
     procedure SetSpectrum(Spectrum: TSpectrum);
@@ -200,6 +205,11 @@ begin
   Result := Int64.MinValue;
 end;
 
+function TTapeBlock.IsReallyPlayableBlock: Boolean;
+begin
+  Result := False;
+end;
+
 procedure TTapeBlock.Start;
 begin
   FTapePlayer.InPause := False;
@@ -239,6 +249,11 @@ begin
   end;
 end;
 
+function TTapePlayer.NoMoreReallyPlayableBlocks: Boolean;
+begin
+  Result := FNoMoreReallyPlayableBlocks;
+end;
+
 procedure TTapePlayer.DoOnChangeBlock;
 begin
   FOnChangeBlock();
@@ -259,6 +274,7 @@ end;
 
 procedure TTapePlayer.StartBlock(BlockNumber: Integer);
 begin
+  FNoMoreReallyPlayableBlocks := False;
   if (BlockNumber < 0) then
     BlockNumber := 0;
 
@@ -267,8 +283,12 @@ begin
     FCurrentBlock := Blocks[FCurrentBlockNumber];
 
     FCurrentBlock.Start;
+    if FCurrentBlockNumber > FLastReallyPlayableBlock then begin
+      FNoMoreReallyPlayableBlocks := True;
+    end;
   end else begin
     FCurrentBlock := nil;
+    FNoMoreReallyPlayableBlocks := True;
   end;
   DoOnChangeBlock;
 end;
@@ -295,6 +315,8 @@ begin
           if Length(Blocks) <= FBlockCount then
             SetLength(Blocks, FBlockCount * 7 div 5 + 2);
           Blocks[FBlockCount] := BL;
+          if BL.IsReallyPlayableBlock then
+            FLastReallyPlayableBlock := FBlockCount;
           Inc(FBlockCount);
           Result := True;
         end;
@@ -339,10 +361,16 @@ begin
   inherited Destroy;
 end;
 
+function TTapePlayer.GetLastReallyPlayableBlock: Integer;
+begin
+  Result := FLastReallyPlayableBlock;
+end;
+
 function TTapePlayer.LoadFromStream(const AStream: TStream): Boolean;
 begin
   Result := False;
   AStream.Position := 0;
+  FLastReallyPlayableBlock := -1;
 
   if CheckHeader(AStream) then
     while AddBlock(AStream) do
@@ -428,7 +456,8 @@ end;
 
 procedure TTapePlayer.StartPauseBlock(const APauseLength: Integer);
 begin
-  //
+  if FCurrentBlockNumber >= GetLastReallyPlayableBlock then
+    FNoMoreReallyPlayableBlocks := True;
 end;
 
 function TTapePlayer.IsPlaying: Boolean;
