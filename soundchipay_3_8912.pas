@@ -234,8 +234,8 @@ begin
     Vols1[1][I] := X; // register B - half of volume to each stereo output channel
     Vols2[1][I] := X;
 
-    Vols1[2][I] := 0.0; // right stereo channel - register A (no output)
-    Vols2[0][I] := 0.0; // left stereo channel - register C (no output)
+    Vols1[2][I] := 0.0; // left stereo channel - register C (no output)
+    Vols2[0][I] := 0.0; // right stereo channel - register A (no output)
   end;
 end;
 
