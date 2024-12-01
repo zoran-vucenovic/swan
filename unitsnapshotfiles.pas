@@ -39,7 +39,7 @@ type
     PrefixByte: Byte;
     RemainingIntPinUp: UInt16;
     BorderColour: Byte;
-    FlashState: UInt16;
+    FlashState: Byte;
     Ear: Byte;
     SpectrumModel: TSpectrumModel;
     LateTimings: Boolean;
@@ -154,7 +154,7 @@ begin
 
       RemainingIntPinUp := ASpectrum.RemainingIntPinUp;
       BorderColour := ASpectrum.CodedBorderColour;
-      FlashState := ASpectrum.FlashState;
+      FlashState := ASpectrum.FlashState and $1F;
       Ear := ASpectrum.InternalEar;
       SpectrumModel := ASpectrum.SpectrumModel;
       LateTimings := ASpectrum.LateTimings;
@@ -232,7 +232,7 @@ begin
 
       ASpectrum.RemainingIntPinUp := RemainingIntPinUp;
       ASpectrum.CodedBorderColour := BorderColour and %111;
-      ASpectrum.FlashState := FlashState;
+      ASpectrum.FlashState := FlashState and $1F;
       ASpectrum.InternalEar := Ear;
 
       if not ASpectrum.Is128KModel then

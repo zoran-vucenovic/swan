@@ -102,7 +102,7 @@ type
     // screen processing
     FCodedBorderColour: Byte;
     FLCLColours: TLCLColourMap;
-    FFlashState: Int16Fast;
+    FFlashState: Byte;
     TicksFrom: Int32Fast;
     FSumTicks: Int64;
     MicrosecondsNeeded: Int64;
@@ -162,9 +162,7 @@ type
     FLateTimings: Boolean;
     FFastLoad: Boolean;
 
-    function GetFlashState: UInt16;
     function GetRemainingIntPinUp: Integer;
-    procedure SetFlashState(AValue: UInt16);
     procedure SetRemainingIntPinUp(AValue: Integer);
     procedure SetSoundMuted(AValue: Boolean);
     procedure UpdateDebuggedOrPaused;
@@ -227,7 +225,7 @@ type
     property Paused: Boolean read FPaused write SetPaused;
     property SoundMuted: Boolean read FSoundMuted write SetSoundMuted;
     property InternalEar: Byte read FInternalEar write SetInternalEar;
-    property FlashState: UInt16 read GetFlashState write SetFlashState;
+    property FlashState: Byte read FFlashState write FFlashState;
     property SpectrumModel: TSpectrumModel read FSpectrumModel;
     property BkpSpectrumModel: TSpectrumModel read FBkpSpectrumModel write FBkpSpectrumModel;
     property InLoadingSnapshot: Boolean read FInLoadingSnapshot write FInLoadingSnapshot;
@@ -1096,8 +1094,11 @@ procedure TSpectrum.DoStep;
               FProcessor.RegB := FProcessor.RegB + N + 1;
               {$pop}
               FProcessor.RegC := not FProcessor.RegC;
-              FProcessor.RegA := (FProcessor.RegC and 7) or 8;
-              FProcessor.RegF := %00000001;
+              B := FProcessor.RegC and 7;
+              FProcessor.RegA := B or 8;
+              B := (B xor (B shl 1) xor (B shl 2)) and 4; // parity flag
+              FProcessor.RegF := %00001001 or B;
+
               FProcessor.RegPC := $0604;
 
               N := N * 59 + 453;
@@ -1151,8 +1152,6 @@ begin
 
     TicksFrom := ScreenStart;
 
-    FFlashState := (FFlashState + 1) and 31;
-
     if AskForSpeedCorrection then begin
       UpdateSoundBuffer;
       //
@@ -1167,6 +1166,9 @@ begin
     end;
 
     DoSync;
+    {$push}{$Q-}{$R-}
+    Inc(FFlashState);
+    {$pop}
   end;
 end;
 
@@ -1248,22 +1250,12 @@ begin
   CheckStartSoundPlayer;
 end;
 
-procedure TSpectrum.SetFlashState(AValue: UInt16);
-begin
-  FFlashState := AValue and 31;
-end;
-
 function TSpectrum.GetRemainingIntPinUp: Integer;
 begin
   if FProcessor.IntPin and (FIntPinUpCount > FProcessor.TStatesInCurrentFrame) then begin
     Result := FIntPinUpCount - FProcessor.TStatesInCurrentFrame;
   end else
     Result := 0;
-end;
-
-function TSpectrum.GetFlashState: UInt16;
-begin
-  Result := FFlashState and 31;
 end;
 
 procedure TSpectrum.SetRemainingIntPinUp(AValue: Integer);

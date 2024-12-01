@@ -3120,7 +3120,7 @@ begin
     KeyEventCount := 0;
   end;
 
-  if FWriteScreenEachFrame or (Spectrum.FlashState and $0f = 1) then begin
+  if FWriteScreenEachFrame or (Spectrum.FlashState and $0f = 0) then begin
     {$ifdef UseАuxiliaryBmp}
     Spectrum.DrawToCanvas(Bmp.Canvas, Rect(0, 0, WholeScreenWidth, WholeScreenHeight));
     {$endif}
