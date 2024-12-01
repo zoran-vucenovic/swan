@@ -33,20 +33,31 @@ end;
 {$else}
 
 function TTzxBlockPause.GetTicksNextEdge: Int64;
+var
+  N: Int64;
+  B: Byte;
 begin
   case State of
+    TPlayState.psPause:
+      Result := TicksNeeded;
     TPlayState.psData:
-      if FTapePlayer.ActiveBit = 0 then begin
+      begin
+        if FTapePlayer.ActiveBit <> 0 then
+          Exit(TicksNeeded);
         Result := FPauseLength * TicksPerMilliSecond;
         AdjustTicksIfNeeded(Result);
         Result := Result + TicksNeeded;
-      end else
-        Result := TicksNeeded;
-    TPlayState.psPause:
-      Result := TicksNeeded;
+      end;
   otherwise
     Result := inherited GetTicksNextEdge;
+    Exit;
   end;
+
+  B := not FTapePlayer.GetSpectrum.GetProcessor.RegB;
+  N := Result - GetCurrentTotalSpectrumTicks;
+  N := (N - 385) div 59;
+  if N < B then
+    Result := inherited GetTicksNextEdge;
 end;
 
 constructor TTzxBlockPause.Create(ATapePlayer: TTapePlayer);
