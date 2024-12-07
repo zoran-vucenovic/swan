@@ -147,6 +147,7 @@ type
     procedure DoSync; inline;
     procedure CheckFormDebugStep;
     procedure AfterFormDebugStep;
+    procedure CheckFastLoad;
     procedure DoStep; inline;
     procedure RunSpectrum;
 
@@ -759,7 +760,7 @@ const
   SoundPlayerRateProcessor128 = 563; //  it is 44100 / 3546900 = 7 / 563
 
   HoldInterruptPinTicks48 = 32; // 48K and +3 models hold interrupt for 32 t-states,
-  HoldInterruptPinTicks128 = 36; // whereas 128K hods it for 36 t-states
+  HoldInterruptPinTicks128 = 36; // whereas 128K holds it for 36 t-states
 
 var
   RomStream: TStream;
@@ -1070,57 +1071,56 @@ begin
   Result := FIssue2Keyboard;
 end;
 
-procedure TSpectrum.DoStep;
+procedure TSpectrum.CheckFastLoad;
+var
+  N: Int64;
+  B: Byte;
+begin
+  // LD_EDGE_1 - https://skoolkid.github.io/rom/asm/05E3.html#05E7
+  if FProcessor.RegPC = $05E7 then begin
+    N := FTapePlayer.GetTicksNextEdge;
+    if N <> Int64.MinValue then begin
+      N := N - GetTotalTicks;
+      B := not FProcessor.RegB; // = 255-RegB
 
-  procedure CheckFastLoad;
-  var
-    N: Int64;
-    B: Byte;
-  begin
-    // LD_EDGE_1 - https://skoolkid.github.io/rom/asm/05E3.html#05E7
-    if FProcessor.RegPC = $05E7 then begin
-      N := FTapePlayer.GetTicksNextEdge;
-      if N <> Int64.MinValue then begin
-        N := N - GetTotalTicks;
-        B := not FProcessor.RegB; // = 255-RegB
+      repeat // never loops, but allows break
+        if B > 0 then begin
+          N := (N - 385) div 59;
+          if N < B then begin
+            if N < 0 then
+              N := 0;
+            {$push}{$Q-}{$R-}
+            FProcessor.RegB := FProcessor.RegB + N + 1;
+            {$pop}
+            FProcessor.RegC := not FProcessor.RegC;
+            B := FProcessor.RegC and 7;
+            FProcessor.RegA := B or 8;
+            B := (B xor (B shl 1) xor (B shl 2)) and 4; // parity flag
+            FProcessor.RegF := %00001001 or B;
 
-        repeat // never loops, but allows break
-          if B > 0 then begin
-            N := (N - 385) div 59;
-            if N < B then begin
-              if N < 0 then
-                N := 0;
-              {$push}{$Q-}{$R-}
-              FProcessor.RegB := FProcessor.RegB + N + 1;
-              {$pop}
-              FProcessor.RegC := not FProcessor.RegC;
-              B := FProcessor.RegC and 7;
-              FProcessor.RegA := B or 8;
-              B := (B xor (B shl 1) xor (B shl 2)) and 4; // parity flag
-              FProcessor.RegF := %00001001 or B;
+            FProcessor.RegPC := $0604;
 
-              FProcessor.RegPC := $0604;
-
-              N := N * 59 + 453;
-              Break;
-            end;
+            N := N * 59 + 453;
+            Break;
           end;
+        end;
 
-          N := B;
-          N := N * 59 + 362;
+        N := B;
+        N := N * 59 + 362;
 
-          FProcessor.RegB := 0;
-          FProcessor.RegA := 0;
-          FProcessor.RegF := %01010000; // Z, H
+        FProcessor.RegB := 0;
+        FProcessor.RegA := 0;
+        FProcessor.RegF := %01010000; // Z, H
 
-          FProcessor.RegPC := $05EE;
-        until True;
+        FProcessor.RegPC := $05EE;
+      until True;
 
-        FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame + N;
-      end;
+      FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame + N;
     end;
   end;
+end;
 
+procedure TSpectrum.DoStep;
 var
   MilliSecondsPassed: Int64;
   MilliSecondsToWait: Int64;
