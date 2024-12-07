@@ -113,6 +113,7 @@ type
   protected
     function LoadBlock2(const Stream: TStream): Boolean; override;
     function IsReallyPlayableBlock: Boolean; override;
+    function GetTicksNextEdge: Int64; override;
   public
     constructor Create(ATapePlayer: TTapePlayer); override;
 
@@ -152,6 +153,7 @@ type
   protected
     function LoadBlock2(const Stream: TStream): Boolean; override;
     function IsReallyPlayableBlock: Boolean; override;
+    function GetTicksNextEdge: Int64; override;
   public
     constructor Create(ATapePlayer: TTapePlayer); override;
     destructor Destroy; override;
@@ -169,6 +171,7 @@ type
     TicksNeeded: Int64;
   protected
     function LoadBlock2(const Stream: TStream): Boolean; override;
+    function GetTicksNextEdge: Int64; override;
   public
     class function GetBlockDescription: String; override;
     class function GetBlockIdAsString: String; override;
@@ -343,6 +346,19 @@ begin
   end;
 end;
 
+function TPzxBlockPAUS.GetTicksNextEdge: Int64;
+var
+  N: Int64;
+  B: Byte;
+begin
+  Result := TicksNeeded;
+  B := not FTapePlayer.GetSpectrum.GetProcessor.RegB;
+  N := Result - GetCurrentTotalSpectrumTicks;
+  N := (N - 385) div 59;
+  if N < B then
+    Result := inherited GetTicksNextEdge;
+end;
+
 class function TPzxBlockPAUS.GetBlockDescription: String;
 begin
   Result := 'Pause';
@@ -509,6 +525,30 @@ begin
   Result := True;
 end;
 
+function TPzxBlockDATA.GetTicksNextEdge: Int64;
+var
+  N: Int64;
+  B: Byte;
+
+begin
+  Result := TicksNeeded;
+  if SPulsesPos < PulsesNeeded then
+    Exit;
+
+  if SPulses <> STail then begin
+    if Length(STail) > 0 then
+      Exit;
+    if (P < PEnd) or ((P = PEnd) and (BitPosition >= UnusedBitsInLastByte)) then
+      Exit;
+  end;
+
+  B := not FTapePlayer.GetSpectrum.GetProcessor.RegB;
+  N := Result - GetCurrentTotalSpectrumTicks;
+  N := (N - 385) div 59;
+  if N < B then
+    Result := inherited GetTicksNextEdge;
+end;
+
 constructor TPzxBlockDATA.Create(ATapePlayer: TTapePlayer);
 begin
   inherited Create(ATapePlayer);
@@ -672,12 +712,20 @@ begin
       Pulse.Duration := (Pulse.Duration shl 16) or D;
     end;
 
-    if Pulse.Duration = 0 then
+    if Pulse.Duration = 0 then begin
+      //treat odd repeat count as 1, skip even
       Pulse.RepeatCount := Pulse.RepeatCount and 1;
+
+      // if two consecutive duration zero pulses, skip both:
+      if (Pulse.RepeatCount = 1) and (Count > 0) and (Pulses[Count - 1].Duration = 0) then begin
+        Pulse.RepeatCount := 0; // skip this pulse
+        Dec(Count); // and remove the previous one
+      end;
+    end;
 
     if Pulse.RepeatCount > 0 then begin
       if Length(Pulses) <= Count then
-        SetLength(Pulses, (Length(Pulses) * 7) div 5 + 2);
+        SetLength(Pulses, (Count * 7) div 5 + 2);
       Pulses[Count] := Pulse;
       Inc(Count);
     end;
@@ -696,6 +744,49 @@ end;
 function TPzxBlockPULS.IsReallyPlayableBlock: Boolean;
 begin
   Result := True;
+end;
+
+function TPzxBlockPULS.GetTicksNextEdge: Int64;
+var
+  I: Integer;
+  L: Integer;
+  Prev: Integer;
+  N, R: Int64;
+  B: Byte;
+
+begin
+  Result := TicksNeeded;
+  if RepeatCount > 0 then
+    Exit;
+
+  R := 0;
+  Prev := 0;
+  I := CurrentPulseNumber + 1;
+  L := Length(Pulses);
+  while I < L do begin
+    if Pulses[I].Duration <> 0 then begin
+      if Prev <> 0 then
+        Break;
+      Prev := Pulses[I].Duration;
+      R := R + Prev;
+      if Pulses[I].RepeatCount > 1 then
+        Break;
+    end else
+      Prev := 0;
+
+    Inc(I);
+  end;
+  AdjustTicksIfNeeded(R);
+  Result := Result + R;
+
+  if I = L then begin
+    B := not FTapePlayer.GetSpectrum.GetProcessor.RegB;
+    N := Result - GetCurrentTotalSpectrumTicks;
+    N := (N - 385) div 59;
+    if N < B then
+      Result := inherited GetTicksNextEdge;
+  end;
+
 end;
 
 constructor TPzxBlockPULS.Create(ATapePlayer: TTapePlayer);
