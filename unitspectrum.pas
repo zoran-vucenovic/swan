@@ -1080,42 +1080,42 @@ begin
   if FProcessor.RegPC = $05E7 then begin
     N := FTapePlayer.GetTicksNextEdge;
     if N <> Int64.MinValue then begin
-      N := N - GetTotalTicks;
-      B := not FProcessor.RegB; // = 255-RegB
+      N := N - GetTotalTicks - 385;
+      if N >= 0 then begin
+        B := not FProcessor.RegB; // = 255-RegB
 
-      repeat // never loops, but allows break
-        if B > 0 then begin
-          N := (N - 385) div 59;
-          if N < B then begin
-            if N < 0 then
-              N := 0;
-            {$push}{$Q-}{$R-}
-            FProcessor.RegB := FProcessor.RegB + N + 1;
-            {$pop}
-            FProcessor.RegC := not FProcessor.RegC;
-            B := FProcessor.RegC and 7;
-            FProcessor.RegA := B or 8;
-            B := (B xor (B shl 1) xor (B shl 2)) and 4; // parity flag
-            FProcessor.RegF := %00001001 or B;
+        repeat // never loops, but allows break
+          if B > 0 then begin
+            N := N div 59;
+            if N < B then begin
+              {$push}{$Q-}{$R-}
+              FProcessor.RegB := FProcessor.RegB + N + 1;
+              {$pop}
+              FProcessor.RegC := not FProcessor.RegC;
+              B := FProcessor.RegC and 7;
+              FProcessor.RegA := B or 8;
+              B := (B xor (B shl 1) xor (B shl 2)) and 4; // parity flag
+              FProcessor.RegF := %00001001 or B;
 
-            FProcessor.RegPC := $0604;
+              FProcessor.RegPC := $0604;
 
-            N := N * 59 + 453;
-            Break;
+              N := N * 59 + 453;
+              Break;
+            end;
           end;
-        end;
 
-        N := B;
-        N := N * 59 + 362;
+          N := B;
+          N := N * 59 + 362;
 
-        FProcessor.RegB := 0;
-        FProcessor.RegA := 0;
-        FProcessor.RegF := %01010000; // Z, H
+          FProcessor.RegB := 0;
+          FProcessor.RegA := 0;
+          FProcessor.RegF := %01010000; // Z, H
 
-        FProcessor.RegPC := $05EE;
-      until True;
+          FProcessor.RegPC := $05EE;
+        until True;
 
-      FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame + N;
+        FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame + N;
+      end;
     end;
   end;
 end;
