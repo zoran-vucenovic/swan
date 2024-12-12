@@ -319,12 +319,6 @@ begin
           B.LabCommand.Font := B.Lab.Font;
 
           B.LabSymbol.Font := B.LabCommand.Font;
-          La := B.LabSymbol;
-
-          if B = FButtonSymbolShift then // symbol shift
-            La := B.Lab;
-
-          La.Font.Color := TColor($0b0ba9);
 
           if B.Lab.Alignment <> TAlignment.taCenter then
             B.Lab.Font.Height := FS;
@@ -358,7 +352,7 @@ begin
           end else begin
             LabAbove.Font.Color := TColor($34b934); // green;
           end;
-          LabBelow.Font.Color := TColor($4949FF); // red
+          LabBelow.Font.Color := TColor($4969FF); // red
 
           LabAbove.Parent := Self;
           B.Parent := Self;
@@ -418,8 +412,9 @@ begin
     for I := Low(ColoursArr) to High(ColoursArr) do begin
       ColoursArr[I] := C.Colours[False, I];
     end;
+    ColoursArr[1] := $FF8455; // "blue" is too dark, this is somewhat lighter
 
-    SetLength(CArr, 4);
+    SetLength(CArr, 4); // the four colours rainbow drawn at right bottom corner of the keyboard
     CArr[0] := $222981;
     CArr[1] := $158baf;
     CArr[2] := $155f28;
@@ -579,16 +574,27 @@ begin
 end;
 
 procedure TSpectrumKeyButtonControl.SetChecked(AValue: Boolean);
+var
+  La: TCustomLabel;
 begin
   if AValue then begin
     Self.Color := clWhite;
     LabCommand.Font.Color := clNavy;
   end else begin
-    Self.Color := TColor($9a8b80);
+    Self.Color := TColor($907150);
     LabCommand.Font.Color := clWhite;
   end;
-  if KeyValue <> $0701 then // symbol shift
+  if KeyValue <> $0701 then begin // symbol shift
     Lab.Font.Color := LabCommand.Font.Color;
+    La := LabSymbol;
+  end else begin
+    La := Lab;
+  end;
+
+  if AValue then
+    La.Font.Color := TColor($3242fe)
+  else
+    La.Font.Color := TColor($4290fe);
 
   if FChecked xor AValue then begin
     FChecked := AValue;

@@ -405,9 +405,9 @@ begin
         2:
           AssignKeyTexts(['CLEAR', #$c2#$a3 {pound symbol}, 'EXP', 'INK']); // X
         3:
-          AssignKeyTexts(['CONT', '?', 'LPRINT', 'PAPER']); // C
+          AssignKeyTexts(['CONT', '?', 'L PRINT', 'PAPER']); // C
         4:
-          AssignKeyTexts(['CLS', '/', 'LLIST', 'FLASH']); // V
+          AssignKeyTexts(['CLS', '/', 'L LIST', 'FLASH']); // V
       otherwise
       end;
     1:
@@ -455,7 +455,7 @@ begin
         2:
           AssignKeyTexts([#$e2#$96#$84, '#', 'TRUE VIDEO', 'LINE']); // 3
         3:
-          AssignKeyTexts([#$e2#$96#$9b, '$', 'INV VIDEO', 'OPEN #']); // 4
+          AssignKeyTexts([#$e2#$96#$9b, '$', 'INV. VIDEO', 'OPEN #']); // 4
         4:
           AssignKeyTexts([#$e2#$96#$8c, '%', #$e2#$87#$90 {left double arrow}, 'CLOSE #']); // 5
       otherwise
@@ -485,9 +485,9 @@ begin
         2:
           AssignKeyTexts(['INPUT', 'AT', 'CODE', 'IN']); // I
         3:
-          AssignKeyTexts(['IF', 'OR', 'CHR$', ']']); // U
+          AssignKeyTexts(['IF', 'OR', 'CHR $', ']']); // U
         4:
-          AssignKeyTexts(['RETURN', 'AND', 'STR$', '[']); // Y
+          AssignKeyTexts(['RETURN', 'AND', 'STR $', '[']); // Y
       otherwise
       end;
     6:
@@ -497,9 +497,9 @@ begin
         1:
           AssignKeyTexts(['LET', '=', 'USR', 'ATTR']); // L
         2:
-          AssignKeyTexts(['LIST', '+', 'LEN', 'SCREEN$']); // K
+          AssignKeyTexts(['LIST', '+', 'LEN', 'SCREEN $']); // K
         3:
-          AssignKeyTexts(['LOAD', '-', 'VAL', 'VAL$']); // J
+          AssignKeyTexts(['LOAD', '-', 'VAL', 'VAL $']); // J
         4:
           AssignKeyTexts(['GOSUB', #$e2#$86#$91 {up arrow symbol}, 'SQR', 'CIRCLE']); // H
       otherwise
@@ -513,7 +513,7 @@ begin
         2:
           AssignKeyTexts(['PAUSE', '.', 'PI', 'INVERSE']); // M
         3:
-          AssignKeyTexts(['NEXT', ',', 'INKEY$', 'OVER']); // N
+          AssignKeyTexts(['NEXT', ',', 'IN KEY $', 'OVER']); // N
         4:
           AssignKeyTexts(['BORDER', '*', 'BIN', 'BRIGHT']); // B
       otherwise
