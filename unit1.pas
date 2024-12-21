@@ -502,7 +502,8 @@ begin
   TSnapshotSZX.OnSzxSaveTape := @SzxOnSaveTape;
 
   LoadFromConf;
-  TSoundPlayer.TryLoadLib;
+  if TSoundPlayer.TryLoadLib then
+    FDontAskPortAudioPath := False;
   if FNewModel = TSpectrumModel.smNone then
     FNewModel := TSpectrum.DefaultSpectrumModel;
   DoChangeModel(nil);
@@ -2152,6 +2153,8 @@ begin
   if TSoundPlayer.IsLibLoaded and (APath <> TSoundPlayer.LibPath) then
     TSoundPlayer.TryUnloadLib;
   Result := TSoundPlayer.TryLoadLib(APath);
+  if Result then
+    FDontAskPortAudioPath := False;
 end;
 
 procedure TForm1.UpdateActiveSnapshotHistory;

@@ -29,6 +29,7 @@ type
     FrameSoundLib: TFrameInputLibraryPath;
     FSpectrum: TSpectrum;
     FrameSoundVolume: TFrameSoundVolume;
+    FSaveLibOnClose: Boolean;
 
     procedure FormOnShow(Sender: TObject);
     procedure AfterShow(Data: PtrInt);
@@ -111,6 +112,7 @@ begin
       F := TFormOptions(Sender);
     if (F = nil) or (F.CurrentControl = Self) then begin
       FrameSoundLib.FormOnCloseQuery(Sender, CanClose);
+      FSaveLibOnClose := FSaveLibOnClose or CanClose;
     end;
   end;
 end;
@@ -121,6 +123,9 @@ begin
   if (Sender is TCustomForm) and (TCustomForm(Sender).ModalResult = mrOK) then begin
     FSpectrum.SoundMuted := GetSoundMuted;
     FSpectrum.AYOutputMode := GetAYOutputMode;
+    if Assigned(FrameSoundLib) then
+      if FSaveLibOnClose then
+        FrameSoundLib.FormOnClose(Sender, CloseAction);
   end;
 end;
 
@@ -141,6 +146,7 @@ begin
   Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
   Caption := 'Sound options';
 
+  FSaveLibOnClose := True;
   PanelSoundLibrary.BevelOuter := bvNone;
   PanelSoundLibrary.Caption := '';
   Panel1.BevelOuter := bvNone;
@@ -193,9 +199,9 @@ begin
       Fm.SetFrameSoundLib(AFrameSoundLib);
       Fm.FSpectrum := ASpectrum;
       Fm.SetSoundMuted(ASpectrum.SoundMuted);
+      Fm.FSaveLibOnClose := False;
 
       AOptionsDialog.AddHandlerFirstShow(@AFrameSoundLib.OnFormFirstShow);
-      AOptionsDialog.AddHandlerClose(@AFrameSoundLib.FormOnClose);
 
       AOptionsDialog.AddHandlerFirstShow(@Fm.FormOnShow);
       AOptionsDialog.AddCloseQuery(@Fm.FormOnCloseQuery);
@@ -213,6 +219,7 @@ end;
 function TFrameSound.IsStateValid: Boolean;
 begin
   Result := (FrameSoundLib = nil) or FrameSoundLib.IsStateValid;
+  FSaveLibOnClose := True;
 end;
 
 end.
