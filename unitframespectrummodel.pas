@@ -31,7 +31,7 @@ type
     procedure CheckBoxCustomRomsChange(Sender: TObject);
     procedure RadioGroupSpectrumModelSelectionChanged(Sender: TObject);
     procedure RadioGroupUlaTimingsSelectionChanged(Sender: TObject);
-  private
+  strict private
     FSpectrum: TSpectrum;
     FramesChooseFile: array [0..3] of TFrameChooseFile;
     ModelToSet: TSpectrumModel;
@@ -40,6 +40,7 @@ type
 
     SkipUpdateControls: Boolean;
 
+    function RomTopIndex: Integer;
     procedure UpdateControls();
     procedure FormOnCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCloseCallback(Sender: TObject; var {%H-}CloseAction: TCloseAction);
@@ -73,6 +74,11 @@ begin
   UpdateControls();
 end;
 
+function TFrameSpectrumModel.RomTopIndex: Integer;
+begin
+  Result := ((RadioGroupSpectrumModel.ItemIndex div 2) * 3) div 2;
+end;
+
 procedure TFrameSpectrumModel.CheckBoxCustomRomsChange(Sender: TObject);
 begin
   UpdateControls();
@@ -90,7 +96,7 @@ begin
 
   RadioGroupKeyboardModel.Enabled := RadioGroupSpectrumModel.ItemIndex <= 1;
 
-  R := ((RadioGroupSpectrumModel.ItemIndex div 2) * 3) div 2;
+  R := RomTopIndex;
   for I := 0 to 3 do begin
     B := FramesChooseFile[I];
     B.Enabled := B.IsVisible and CheckBoxCustomRoms.Checked and (I <= R);
@@ -106,6 +112,13 @@ begin
 end;
 
 function TFrameSpectrumModel.IsStateValid: Boolean;
+
+  function EmptyOrSame(F1, F2: String): Boolean;
+  begin
+    Result := ((Trim(F1) = '') and (Trim(F2) = ''))
+      or SameFileName(F1, F2);
+  end;
+
 var
   I, J: Integer;
   Stream: TStream;
@@ -116,6 +129,8 @@ var
   L: Integer;
   K: Integer;
   NeededSize, NeededSizeKB: Integer;
+  SameFiles: Boolean;
+  SameModel: Boolean;
 
 begin
   Result := False;
@@ -142,73 +157,90 @@ begin
     if RadioGroupKeyboardModel.Enabled and (RadioGroupKeyboardModel.ItemIndex = 0) then
       Dec(ModelToSet);
 
+    SameModel := FSpectrum.SpectrumModel = ModelToSet;
+
     Result := not CheckBoxCustomRoms.Checked;
     if not Result then begin
-      BadFile := True;
-      ErrMsg := '';
-      RomFile := '';
-      Roms := TMemoryStream.Create;
-      try
-        RomsCount := ((RadioGroupSpectrumModel.ItemIndex div 2) * 3) div 2 + 1;
-        NeededSizeKB := RomsCount shl 4;
-        NeededSize := NeededSizeKB shl 10;
-        Roms.Size := NeededSize;
-        L := 0;
-        J := 0;
-        for I := 0 to RomsCount - 1 do begin
-          RomFile := FramesChooseFile[I].Path;
-          if Trim(RomFile) <> '' then begin
-            Inc(J);
+      RomsCount := RomTopIndex;
+      if SameModel and FSpectrum.CustomRomsMounted then begin
+        case RomsCount of
+          0:
+            SameFiles :=
+              EmptyOrSame(FRomPaths.RomPaths1[0], FramesChooseFile[0].Path);
+        otherwise
+          SameFiles := EmptyOrSame(FRomPaths.RomPaths2[0], FramesChooseFile[0].Path)
+            and EmptyOrSame(FRomPaths.RomPaths2[1], FramesChooseFile[1].Path);
+        end;
+        Result := SameFiles;
+      end;
+      if not Result then begin
+        Inc(RomsCount);
 
-            Stream := nil;
-            try
-              Stream := TFileStream.Create(RomFile, fmOpenRead or fmShareDenyWrite);
-              BadFile := False;
-            except
-              BadFile := True;
-            end;
-            if BadFile then begin
-              FreeAndNil(Roms);
-              Stream.Free;
-              ErrMsg := 'Cannot load custom rom file'
-                + LineEnding + RomFile + LineEnding + LineEnding
-                + 'Check if the file exists.';
-              Break;
-            end;
+        BadFile := True;
+        ErrMsg := '';
+        RomFile := '';
+        Roms := TMemoryStream.Create;
+        try
+          NeededSizeKB := RomsCount shl 4;
+          NeededSize := NeededSizeKB shl 10;
+          Roms.Size := NeededSize;
+          L := 0;
+          J := 0;
+          for I := 0 to RomsCount - 1 do begin
+            RomFile := FramesChooseFile[I].Path;
+            if Trim(RomFile) <> '' then begin
+              Inc(J);
 
-            try
-              K := L;
-              L := L + Stream.Size;
-              BadFile := L > NeededSize;
-              if not BadFile then begin
-                Stream.Position := 0;
-                if Stream.Read((Roms.Memory + K)^, Stream.Size) <> Stream.Size then begin
-                  FreeAndNil(Roms);
-                  BadFile := True;
-                  ErrMsg := 'Cannot load custom rom file' + LineEnding + RomFile;
-                end;
+              Stream := nil;
+              try
+                Stream := TFileStream.Create(RomFile, fmOpenRead or fmShareDenyWrite);
+                BadFile := False;
+              except
+                BadFile := True;
               end;
-            finally
-              Stream.Free;
+              if BadFile then begin
+                FreeAndNil(Roms);
+                Stream.Free;
+                ErrMsg := 'Cannot load custom rom file'
+                  + LineEnding + RomFile + LineEnding + LineEnding
+                  + 'Check if the file exists.';
+                Break;
+              end;
+
+              try
+                K := L;
+                L := L + Stream.Size;
+                BadFile := L > NeededSize;
+                if not BadFile then begin
+                  Stream.Position := 0;
+                  if Stream.Read((Roms.Memory + K)^, Stream.Size) <> Stream.Size then begin
+                    FreeAndNil(Roms);
+                    BadFile := True;
+                    ErrMsg := 'Cannot load custom rom file' + LineEnding + RomFile;
+                  end;
+                end;
+              finally
+                Stream.Free;
+              end;
+              if BadFile then
+                Break;
             end;
-            if BadFile then
-              Break;
           end;
-        end;
 
-        if ErrMsg = '' then begin
-          if J = 0 then begin
-            ErrMsg := 'Custom rom file paths must not be empty.';
-          end else if L <> NeededSize then begin
-            ErrMsg := Format('Total size of provided files must be exactly %d KB.', [NeededSizeKB]);
+          if ErrMsg = '' then begin
+            if J = 0 then begin
+              ErrMsg := 'Custom rom file paths must not be empty.';
+            end else if L <> NeededSize then begin
+              ErrMsg := Format('Total size of provided files must be exactly %d KB.', [NeededSizeKB]);
+            end;
           end;
-        end;
 
-        Result := ErrMsg = '';
-      finally
-        if not Result then begin
-          FreeAndNil(Roms);
-          MessageDlg(ErrMsg, mtError, [mbClose], 0);
+          Result := ErrMsg = '';
+        finally
+          if not Result then begin
+            FreeAndNil(Roms);
+            MessageDlg(ErrMsg, mtError, [mbClose], 0);
+          end;
         end;
       end;
     end;
@@ -236,26 +268,23 @@ end;
 procedure TFrameSpectrumModel.FormCloseCallback(Sender: TObject;
   var CloseAction: TCloseAction);
 
-var
-  R: Integer;
-
 begin
   if (Sender is TCustomForm) and (TCustomForm(Sender).ModalResult = mrOK) then begin
-    FSpectrum.SetSpectrumModel(ModelToSet, Roms);
-    FSpectrum.LateTimings := RadioGroupUlaTimings.ItemIndex = 1;
-    if Assigned(Roms) and (FSpectrum.SpectrumModel = ModelToSet)
-      and Assigned(FRomPaths) and CheckBoxCustomRoms.Checked
-    then begin
-      R := ((RadioGroupSpectrumModel.ItemIndex div 2) * 3) div 2;
-      case R of
-        0:
-          FRomPaths.RomPaths1[0] := FramesChooseFile[0].Path;
-      otherwise
-        FRomPaths.RomPaths2[0] := FramesChooseFile[0].Path;
-        FRomPaths.RomPaths2[1] := FramesChooseFile[1].Path;
+    if (not CheckBoxCustomRoms.Checked) or Assigned(Roms) then begin
+      FSpectrum.SetSpectrumModel(ModelToSet, Roms);
+      if (FSpectrum.SpectrumModel = ModelToSet) and Assigned(FRomPaths)
+        and CheckBoxCustomRoms.Checked
+      then begin
+        case RomTopIndex of
+          0:
+            FRomPaths.RomPaths1[0] := FramesChooseFile[0].Path;
+        otherwise
+          FRomPaths.RomPaths2[0] := FramesChooseFile[0].Path;
+          FRomPaths.RomPaths2[1] := FramesChooseFile[1].Path;
+        end;
       end;
     end;
-
+    FSpectrum.LateTimings := RadioGroupUlaTimings.ItemIndex = 1;
   end;
 end;
 
@@ -368,6 +397,7 @@ begin
     N := 0;
 
   RadioGroupUlaTimings.ItemIndex := N;
+  CheckBoxCustomRoms.Checked := ASpectrum.CustomRomsMounted;
 
   SkipUpdateControls := False;
   UpdateControls();
