@@ -102,9 +102,17 @@ begin
 end;
 
 procedure TFrameSound.FormOnCloseQuery(Sender: TObject; var CanClose: Boolean);
+var
+  F: TFormOptions;
 begin
-  if Assigned(FrameSoundLib) then
-    FrameSoundLib.FormOnCloseQuery(Sender, CanClose);
+  if Assigned(FrameSoundLib) then begin
+    F := nil;
+    if Sender is TFormOptions then
+      F := TFormOptions(Sender);
+    if (F = nil) or (F.CurrentControl = Self) then begin
+      FrameSoundLib.FormOnCloseQuery(Sender, CanClose);
+    end;
+  end;
 end;
 
 procedure TFrameSound.FormCloseCallback(Sender: TObject;

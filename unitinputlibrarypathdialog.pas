@@ -221,8 +221,7 @@ end;
 
 function TFrameInputLibraryPath.DoCheckLoad: Boolean;
 begin
-  if Assigned(FOnCheckLoad) then
-    Result := FOnCheckLoad(Trim(Edit1.Text));
+  Result := Assigned(FOnCheckLoad) and FOnCheckLoad(Trim(Edit1.Text));
 end;
 
 class function TFrameInputLibraryPath.ShowLibraryPathDialog(const S: String;
