@@ -186,8 +186,6 @@ begin
   end else begin
     DisableAlign;
     try
-      Panel2.AutoSize := False;
-      Panel1.AutoSize := False;
       BitBtn1.Anchors := BitBtn1.Anchors - [akLeft];
       BitBtn1.AnchorParallel(akRight, 0, Panel1);
       Edit1.AnchorToNeighbour(akRight, 0, BitBtn1);
