@@ -337,11 +337,12 @@ begin
     Fm.InitFrameChooseFile(S, OpenDialog1);
 
     Lab.Caption := IntToStr(I) + '.';
-    Lab.Parent := Panel4;
 
-    { #todo : remove this line when +3 is implemented! }
+    { #todo : remove these two lines when +3 is implemented! }
     Fm.Visible := I <= 1;
+    Lab.Visible := Fm.Visible;
 
+    Lab.Parent := Panel4;
     Fm.Parent := Panel4;
 
     Inc(I);
