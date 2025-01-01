@@ -718,10 +718,10 @@ begin
 
   Control0 := TCustomControl.Create(Self);
   Control0.Anchors := [];
-  Control0.AnchorParallel(akLeft, 6, Self);
-  Control0.AnchorParallel(akTop, 5, Self);
-  Control0.BorderSpacing.Right := 6;
-  Control0.BorderSpacing.Bottom := 5;
+  Control0.AnchorParallel(akLeft, 7, Self);
+  Control0.AnchorParallel(akTop, 6, Self);
+  Control0.BorderSpacing.Right := 7;
+  Control0.BorderSpacing.Bottom := 6;
   Control0.AutoSize := False;
 
   Lab := TLabel.Create(Control0);
@@ -753,8 +753,7 @@ begin
   Width := 80;
   Height := 40;
 
-  BorderWidth := 1;
-  BorderStyle := bsSingle;
+  BorderStyle := bsNone;
 end;
 
 destructor TSpectrumKeyButtonControl.Destroy;
@@ -766,23 +765,28 @@ end;
 procedure TSpectrumKeyButtonControl.Paint;
 var
   R: TRect;
+
+  procedure DrawRect(); inline;
+  begin
+    Canvas.Polyline([
+      R.TopLeft, Point(R.Right, R.Top), R.BottomRight, Point(R.Left, R.Bottom), R.TopLeft
+    ]);
+  end;
+
 begin
   inherited Paint;
 
+  R := Self.ClientRect;
+  R := Rect(R.Left, R.Top, R.Right - 1, R.Bottom - 1);
+  Canvas.Pen.Color := TColor($d0c8c0);
+  DrawRect;
+
   if LastMouseInClient then begin
-    R := Self.ClientRect;
-    R := Rect(R.Left + 2, R.Top + 2, R.Right - 3, R.Bottom - 3);
-
+    InflateRect(R, -2, -2);
     Canvas.Pen.Color := Self.LabCommand.Font.Color;
-
-    Canvas.Polyline([
-      R.TopLeft, Point(R.Right, R.Top), R.BottomRight, Point(R.Left, R.Bottom), R.TopLeft
-    ]);
+    DrawRect;
     InflateRect(R, -1, -1);
-    Canvas.Polyline([
-      R.TopLeft, Point(R.Right, R.Top), R.BottomRight, Point(R.Left, R.Bottom), R.TopLeft
-    ]);
-
+    DrawRect;
   end;
 end;
 
