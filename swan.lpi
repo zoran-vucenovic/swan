@@ -26,7 +26,7 @@
       <UseVersionInfo Value="True"/>
       <MinorVersionNr Value="9"/>
       <RevisionNr Value="7"/>
-      <StringTable FileDescription="Swan - ZX Spectrum emulator" LegalCopyright="Copyright 2022-2024 Zoran Vučenović" OriginalFilename="Swan" ProductName="Swan - ZX Spectrum emulator" ProductVersion="0.9.7"/>
+      <StringTable FileDescription="Swan - ZX Spectrum emulator" LegalCopyright="Copyright 2022-2025 Zoran Vučenović" OriginalFilename="Swan" ProductName="Swan - ZX Spectrum emulator" ProductVersion="0.9.7"/>
     </VersionInfo>
     <BuildModes>
       <Item Name="Release" Default="True"/>

@@ -1,5 +1,5 @@
 unit UnitSZX;
-// Copyright 2022-2024 Zoran Vučenović
+// Copyright 2022-2025 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
 { This is implementation of zx-state (szx) file format.
