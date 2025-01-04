@@ -1,4 +1,4 @@
-unit UnitFrameOneKeyMap;
+unit UnitControlKeyMappings;
 // Copyright 2022-2025 Zoran Vučenović
 // SPDX-License-Identifier: Apache-2.0
 
@@ -15,20 +15,7 @@ uses
 
 type
 
-  { TFrameOnePCKeyMapping }
-
-  TFrameOnePCKeyMapping = class(TFrame)
-    Bevel1: TBevel;
-    Label1: TLabel;
-    Panel1: TPanel;
-    Panel2: TPanel;
-    PanelEditSpectrumKeys: TPanel;
-    PanelRemovePCKey: TPanel;
-    PanelPCKey: TPanel;
-    PanelSpectrumKeys: TPanel;
-    Shape1: TShape;
-    procedure FrameResize(Sender: TObject);
-    procedure PanelPCKeyResize(Sender: TObject);
+  TOnePCKeyMappingControl = class(TCustomControl)
   private
     type
       TOneSpectrumKeyControl = class(TCustomControl)
@@ -75,6 +62,10 @@ type
     class procedure Final; static;
 
   strict private
+    LabelPcKey: TLabel;
+    PanelPCKey: TCustomControl;
+    PanelSpectrumKeys: TCustomControl;
+
     FPCKeyName: String;
     FPCKey: Word;
     LabRemovePCKey: TCustomLabel;
@@ -88,6 +79,9 @@ type
     function FindSpectrumKeyControl(const AValue: Word): TOneSpectrumKeyControl;
     procedure OnClickLabEditSpectrumKeys(Sender: TObject);
     procedure UserInputEvent(Sender: TObject; Msg: Cardinal);
+    procedure PanelPCKeyResize(Sender: TObject);
+  protected
+    procedure DoOnResize; override;
   public
     constructor Create(TheOwner: TComponent; Sz: TSize);
     constructor Create(TheOwner: TComponent); override;
@@ -100,19 +94,17 @@ type
     procedure Paint; override;
   end;
 
-  { TControlKeyMappings }
-
   TControlKeyMappings = class(TCustomControl)
   strict private
     type
-      TFrameMappingsMap = class(specialize TFPGMapObject<Word, TFrameOnePCKeyMapping>)
+      TOnePcKeyMappingsMap = class(specialize TFPGMapObject<Word, TOnePCKeyMappingControl>)
       private
       public
         constructor Create(AFreeObjects: Boolean);
       end;
 
   strict private
-    FrameMappingsMap: TFrameMappingsMap;
+    OnePcKeyMappingsMap: TOnePcKeyMappingsMap;
     Sz: TSize;
     ScrollBox: TScrollBox;
     PrevCtrl: TControl;
@@ -134,11 +126,9 @@ type
 
 implementation
 
-{$R *.lfm}
+{ TControlKeyMappings.TOnePcKeyMappingsMap }
 
-{ TControlKeyMappings.TFrameMappingsMap }
-
-constructor TControlKeyMappings.TFrameMappingsMap.Create(AFreeObjects: Boolean);
+constructor TControlKeyMappings.TOnePcKeyMappingsMap.Create(AFreeObjects: Boolean);
 begin
   inherited Create(AFreeObjects);
 
@@ -155,8 +145,8 @@ begin
   if Sender is TControl then begin
     C := TControl(Sender);
     repeat
-      if C is TFrameOnePCKeyMapping then begin
-        RemovePCKey(TFrameOnePCKeyMapping(C).PCKey);
+      if C is TOnePCKeyMappingControl then begin
+        RemovePCKey(TOnePCKeyMappingControl(C).PCKey);
         Break;
       end;
 
@@ -200,7 +190,7 @@ begin
   ScrollBox.BorderStyle := bsNone;
 
   ScrollBox.Parent := Self;
-  FrameMappingsMap := TFrameMappingsMap.Create(False);
+  OnePcKeyMappingsMap := TOnePcKeyMappingsMap.Create(False);
 
   AutoSize := True;
   Screen.AddHandlerActiveControlChanged(@ActiveCtrlChg);
@@ -209,7 +199,7 @@ end;
 destructor TControlKeyMappings.Destroy;
 begin
   Screen.RemoveAllHandlersOfObject(Self);
-  FrameMappingsMap.Free;
+  OnePcKeyMappingsMap.Free;
 
   inherited Destroy;
 end;
@@ -218,43 +208,42 @@ procedure TControlKeyMappings.Clear;
 var
   I: Integer;
 begin
-  for I := 0 to FrameMappingsMap.Count - 1 do begin
-    FrameMappingsMap.Data[I].Free;
-    FrameMappingsMap.Data[I] := nil;
+  for I := 0 to OnePcKeyMappingsMap.Count - 1 do begin
+    OnePcKeyMappingsMap.Data[I].Free;
+    OnePcKeyMappingsMap.Data[I] := nil;
   end;
-  FrameMappingsMap.Clear;
+  OnePcKeyMappingsMap.Clear;
 end;
 
 function TControlKeyMappings.InternalAddPCKey(AValue: Word; WithFocus: Boolean
   ): Integer;
 var
-  F, F1: TFrameOnePCKeyMapping;
+  F, F1: TOnePCKeyMappingControl;
 begin
-  Result := FrameMappingsMap.IndexOf(AValue);
+  Result := OnePcKeyMappingsMap.IndexOf(AValue);
 
   if Result >= 0 then begin
-    F := FrameMappingsMap.Data[Result];
+    F := OnePcKeyMappingsMap.Data[Result];
   end else begin
-    F := TFrameOnePCKeyMapping.Create(ScrollBox, Sz);
+    F := TOnePCKeyMappingControl.Create(ScrollBox, Sz);
 
     F.PCKey := AValue;
-    Result := FrameMappingsMap.Add(AValue, F);
+    Result := OnePcKeyMappingsMap.Add(AValue, F);
     F.Anchors := [];
     F.AnchorParallel(akLeft, 0, ScrollBox);
-    F.Color := clWindow;
-    F.BorderSpacing.Around := 2;
+    F.Color := clWhite;
 
     F.Parent := ScrollBox;
     F.TabStop := True;
     if Result > 0 then begin
-      F1 := FrameMappingsMap.Data[Result - 1];
-      F.AnchorToNeighbour(akTop, 0, F1);
+      F1 := OnePcKeyMappingsMap.Data[Result - 1];
+      F.AnchorToNeighbour(akTop, 1, F1);
     end else begin
       F.AnchorParallel(akTop, 0, ScrollBox);
     end;
 
-    if FrameMappingsMap.Count - 1 > Result then begin
-      F1 := FrameMappingsMap.Data[Result + 1];
+    if OnePcKeyMappingsMap.Count - 1 > Result then begin
+      F1 := OnePcKeyMappingsMap.Data[Result + 1];
       F1.AnchorToNeighbour(akTop, 0, F);
     end;
 
@@ -277,16 +266,16 @@ end;
 procedure TControlKeyMappings.RemovePCKey(AValue: Word);
 var
   N: Integer;
-  F: TFrameOnePCKeyMapping;
+  F: TOnePCKeyMappingControl;
 begin
-  N := FrameMappingsMap.IndexOf(AValue);
+  N := OnePcKeyMappingsMap.IndexOf(AValue);
   if N >= 0 then begin
-    F := FrameMappingsMap.Data[N];
-    if N < FrameMappingsMap.Count - 1 then
-      FrameMappingsMap.Data[N + 1].AnchorSame(akTop, F);
-    FrameMappingsMap.Data[N] := nil;
+    F := OnePcKeyMappingsMap.Data[N];
+    if N < OnePcKeyMappingsMap.Count - 1 then
+      OnePcKeyMappingsMap.Data[N + 1].AnchorSame(akTop, F);
+    OnePcKeyMappingsMap.Data[N] := nil;
     Application.ReleaseComponent(F);
-    FrameMappingsMap.Delete(N);
+    OnePcKeyMappingsMap.Delete(N);
   end;
 end;
 
@@ -300,11 +289,11 @@ begin
     for I := 0 to High(KMRecs) do begin
       N := Self.InternalAddPCKey(KMRecs[I].Key, False);
 
-      FrameMappingsMap.Data[N].AddSpectrumKey(KMRecs[I].SpectrumKey);
+      OnePcKeyMappingsMap.Data[N].AddSpectrumKey(KMRecs[I].SpectrumKey);
     end;
-    for I := 0 to FrameMappingsMap.Count - 1 do begin
-      FrameMappingsMap.Data[I].SortSpectrumKeys;
-      FrameMappingsMap.Data[I].UpdateSpectrumKeysLayout;
+    for I := 0 to OnePcKeyMappingsMap.Count - 1 do begin
+      OnePcKeyMappingsMap.Data[I].SortSpectrumKeys;
+      OnePcKeyMappingsMap.Data[I].UpdateSpectrumKeysLayout;
     end;
   finally
     EnableAlign;
@@ -315,18 +304,18 @@ procedure TControlKeyMappings.SaveToKeyMapRecs(out KMRecs: TKeyMapRecs);
 var
   I, J, K, N: Integer;
   W: Word;
-  SKL: TFrameOnePCKeyMapping.TSpectrumKeyControls;
+  SKL: TOnePCKeyMappingControl.TSpectrumKeyControls;
 begin
-  N := (FrameMappingsMap.Count * 7) div 5 + 2;
+  N := (OnePcKeyMappingsMap.Count * 7) div 5 + 2;
   SetLength(KMRecs{%H-}, N);
   K := 0;
-  for I := 0 to FrameMappingsMap.Count - 1 do begin
-    SKL := FrameMappingsMap.Data[I].SpectrumKeys;
+  for I := 0 to OnePcKeyMappingsMap.Count - 1 do begin
+    SKL := OnePcKeyMappingsMap.Data[I].SpectrumKeys;
     if Length(SKL) > 0 then begin
-      W := FrameMappingsMap.Keys[I];
+      W := OnePcKeyMappingsMap.Keys[I];
       N := K + Length(SKL);
       if N >= Length(KMRecs) then begin
-        N := ((N + FrameMappingsMap.Count - I) * 6) div 5;
+        N := ((N + OnePcKeyMappingsMap.Count - I) * 6) div 5;
         SetLength(KMRecs, N);
       end;
       for J := 0 to High(SKL) do begin
@@ -339,9 +328,9 @@ begin
   SetLength(KMRecs, K);
 end;
 
-{ TFrameOnePCKeyMapping.TOneSpectrumKeyControl }
+{ TOnePCKeyMappingControl.TOneSpectrumKeyControl }
 
-procedure TFrameOnePCKeyMapping.TOneSpectrumKeyControl.SetSpectrumKey(
+procedure TOnePCKeyMappingControl.TOneSpectrumKeyControl.SetSpectrumKey(
   const AValue: Word);
 var
   S: String;
@@ -361,14 +350,14 @@ begin
   end;
 end;
 
-procedure TFrameOnePCKeyMapping.TOneSpectrumKeyControl.ControlsMouseDown(
+procedure TOnePCKeyMappingControl.TOneSpectrumKeyControl.ControlsMouseDown(
   Sender: TObject);
 begin
   if CanSetFocus then
     SetFocus;
 end;
 
-constructor TFrameOnePCKeyMapping.TOneSpectrumKeyControl.Create(
+constructor TOnePCKeyMappingControl.TOneSpectrumKeyControl.Create(
   AOwner: TComponent);
 var
   Shape: TShape;
@@ -438,7 +427,7 @@ begin
   Self.AutoSize := True;
 end;
 
-procedure TFrameOnePCKeyMapping.TOneSpectrumKeyControl.SetHasPlus(
+procedure TOnePCKeyMappingControl.TOneSpectrumKeyControl.SetHasPlus(
   const AValue: Boolean);
 begin
   if AValue then begin
@@ -447,14 +436,14 @@ begin
     LabPlus.Caption := '';
 end;
 
-function TFrameOnePCKeyMapping.TOneSpectrumKeyControl.GetHasPlus: Boolean;
+function TOnePCKeyMappingControl.TOneSpectrumKeyControl.GetHasPlus: Boolean;
 begin
   Result := Trim(LabPlus.Caption) <> '';
 end;
 
-{ TFrameOnePCKeyMapping }
+{ TOnePCKeyMappingControl }
 
-procedure TFrameOnePCKeyMapping.SetPCKey(AValue: Word);
+procedure TOnePCKeyMappingControl.SetPCKey(AValue: Word);
 var
   S: String;
 begin
@@ -468,36 +457,37 @@ begin
   end;
 
   LabRemovePCKey.Hint := Format(cHintRemovePCKey, [S]);
-  Label1.Caption := FPCKeyName;
+  LabelPcKey.Caption := FPCKeyName;
 end;
 
-procedure TFrameOnePCKeyMapping.FrameResize(Sender: TObject);
-begin
-  UpdateSpectrumKeysLayout;
-end;
-
-procedure TFrameOnePCKeyMapping.PanelPCKeyResize(Sender: TObject);
+procedure TOnePCKeyMappingControl.PanelPCKeyResize(Sender: TObject);
 begin
   PanelSpectrumKeys.Constraints.MinHeight := PanelPCKey.Height;
 end;
 
-class function TFrameOnePCKeyMapping.CompareSpectrumKeys(X,
+procedure TOnePCKeyMappingControl.DoOnResize;
+begin
+  UpdateSpectrumKeysLayout;
+  inherited DoOnResize;
+end;
+
+class function TOnePCKeyMappingControl.CompareSpectrumKeys(X,
   Y: TOneSpectrumKeyControl): Integer;
 begin
   Result := TCommonSpectrum.CompareSpectrumKeyValues(X.SpectrumKey, Y.SpectrumKey);
 end;
 
-function TFrameOnePCKeyMapping.GetOnRemoveClick: TNotifyEvent;
+function TOnePCKeyMappingControl.GetOnRemoveClick: TNotifyEvent;
 begin
   Result := LabRemovePCKey.OnClick;
 end;
 
-procedure TFrameOnePCKeyMapping.SetOnRemoveClick(AValue: TNotifyEvent);
+procedure TOnePCKeyMappingControl.SetOnRemoveClick(AValue: TNotifyEvent);
 begin
   LabRemovePCKey.OnClick := AValue;
 end;
 
-function TFrameOnePCKeyMapping.FindSpectrumKeyControl(const AValue: Word
+function TOnePCKeyMappingControl.FindSpectrumKeyControl(const AValue: Word
   ): TOneSpectrumKeyControl;
 var
   I: Integer;
@@ -509,7 +499,7 @@ begin
   Result := nil;
 end;
 
-procedure TFrameOnePCKeyMapping.OnClickLabEditSpectrumKeys(Sender: TObject);
+procedure TOnePCKeyMappingControl.OnClickLabEditSpectrumKeys(Sender: TObject);
 var
   AW: TWordDynArray;
   I: Integer;
@@ -527,7 +517,7 @@ begin
   end;
 end;
 
-procedure TFrameOnePCKeyMapping.UserInputEvent(Sender: TObject; Msg: Cardinal);
+procedure TOnePCKeyMappingControl.UserInputEvent(Sender: TObject; Msg: Cardinal);
 begin
   case Msg of
     LM_LBUTTONDOWN, LM_RBUTTONDOWN:
@@ -537,7 +527,7 @@ begin
   end;
 end;
 
-procedure TFrameOnePCKeyMapping.UpdateSpectrumKeysLayout;
+procedure TOnePCKeyMappingControl.UpdateSpectrumKeysLayout;
 const
   SpcW: Integer = 2;
   SpcH: Integer = 1;
@@ -579,7 +569,7 @@ begin
   end;
 end;
 
-procedure TFrameOnePCKeyMapping.SortSpectrumKeys;
+procedure TOnePCKeyMappingControl.SortSpectrumKeys;
 var
   I: Integer;
 begin
@@ -595,13 +585,85 @@ begin
   end;
 end;
 
-constructor TFrameOnePCKeyMapping.Create(TheOwner: TComponent; Sz: TSize);
+constructor TOnePCKeyMappingControl.Create(TheOwner: TComponent; Sz: TSize);
 var
   C, CP: TControl;
+  Cc: TCustomControl;
+  C2: TCustomControl;
+  PanelRemovePCKey: TCustomControl;
+  Shape1: TShape;
+  PanelEditSpectrumKeys: TCustomControl;
+  Cg: TGraphicControl;
+
 begin
   inherited Create(TheOwner);
 
-  C := Label1;
+  UpdateSpectrumKeysLayoutCnt := 1;
+
+  Cc := TCustomControl.Create(Self);
+  Cc.Anchors := [];
+  Cc.AnchorParallel(akLeft, 0, Self);
+  Cc.AnchorParallel(akTop, 0, Self);
+  Cc.BorderSpacing.Around := 4;
+  Cc.AutoSize := True;
+
+  PanelPCKey := TCustomControl.Create(Cc);
+  PanelPCKey.Anchors := [];
+  PanelPCKey.AnchorParallel(akLeft, 0, Cc);
+  PanelPCKey.AnchorParallel(akTop, 0, Cc);
+
+  C2 := TCustomControl.Create(PanelPCKey);
+  LabelPcKey := TLabel.Create(C2);
+  LabelPcKey.Anchors := [];
+  LabelPcKey.AnchorParallel(akLeft, 2, C2);
+  LabelPcKey.AnchorParallel(akTop, 2, C2);
+  LabelPcKey.Alignment := taCenter;
+  LabelPcKey.Layout := tlCenter;
+  LabelPcKey.AutoSize := True;
+
+  Cg := TGraphicControl.Create(C2);
+  Cg.Width := 2;
+  Cg.Height := 2;
+  Cg.Anchors := [];
+  Cg.AnchorToNeighbour(akLeft, 0, LabelPcKey);
+  Cg.AnchorToNeighbour(akTop, 0, LabelPcKey);
+
+  Shape1 := TShape.Create(C2);
+  Shape1.Shape := stRectangle;
+  Shape1.Anchors := [];
+  Shape1.AnchorParallel(akLeft, 0, C2);
+  Shape1.AnchorParallel(akTop, 0, C2);
+  Shape1.AnchorParallel(akRight, 0, Cg);
+  Shape1.AnchorParallel(akBottom, 0, Cg);
+
+  PanelSpectrumKeys := TCustomControl.Create(Cc);
+  PanelSpectrumKeys.Anchors := [];
+  PanelSpectrumKeys.AnchorToNeighbour(akLeft, 4, PanelPCKey);
+  PanelSpectrumKeys.AnchorParallel(akTop, 0, Cc);
+
+  PanelRemovePCKey := TCustomControl.Create(Cc);
+  PanelRemovePCKey.Anchors := [];
+  PanelRemovePCKey.AnchorParallel(akLeft, 0, Cc);
+  PanelRemovePCKey.AnchorToNeighbour(akTop, 0, PanelPCKey);
+
+  PanelEditSpectrumKeys := TCustomControl.Create(Cc);
+  PanelEditSpectrumKeys.Anchors := [];
+  PanelEditSpectrumKeys.AnchorParallel(akLeft, 0, PanelSpectrumKeys);
+  PanelEditSpectrumKeys.AnchorToNeighbour(akTop, 0, PanelSpectrumKeys);
+
+  LabelPcKey.Parent := C2;
+  Cg.Parent := C2;
+  Shape1.Parent := C2;
+
+  C2.Parent := PanelPCKey;
+  PanelPCKey.Parent := Cc;
+  PanelSpectrumKeys.Parent := Cc;
+  PanelRemovePCKey.Parent := Cc;
+  PanelEditSpectrumKeys.Parent := Cc;
+
+  Cc.Parent := Self;
+
+  C := LabelPcKey;
   while Assigned(C) do begin
     CP := C.Parent;
     if CP = nil then
@@ -612,36 +674,29 @@ begin
     if C = Self then
       Break;
   end;
-  UpdateSpectrumKeysLayoutCnt := 1;
 
   Name := 'fpm' + PtrInt(Self).ToHexString;
   SetLength(SpectrumKeys, 0);
-  Panel2.BevelOuter := bvNone;
-  Panel1.BevelOuter := bvNone;
-
-  PanelRemovePCKey.BevelOuter := bvNone;
-  PanelPCKey.BevelOuter := bvNone;
-  PanelSpectrumKeys.BevelOuter := bvNone;
-  PanelEditSpectrumKeys.BevelOuter := bvNone;
 
   PanelPCKey.Constraints.MinWidth := Sz.cx;
   PanelPCKey.Constraints.MaxWidth := Sz.cx;
 
   PanelSpectrumKeys.Constraints.MinWidth := Sz.cx;
   PanelSpectrumKeys.Constraints.MaxWidth := Sz.cx;
-  Label1.ShowAccelChar := False;
-  Label1.Caption := ' ';
+  LabelPcKey.ShowAccelChar := False;
+  LabelPcKey.Caption := ' ';
 
-  Panel2.Color := $00DAE8EF;
+  C2.Color := $00DAE8EF;
   Shape1.Pen.Color := $00ABCDDE;
+  Shape1.Brush.Style := bsClear;
 
-  LabRemovePCKey := TCommonFunctionsLCL.CreateLinkLabel(Self.PanelRemovePCKey, 'Remove');
+  LabRemovePCKey := TCommonFunctionsLCL.CreateLinkLabel(PanelRemovePCKey, 'Remove');
 
   LabRemovePCKey.Anchors := [];
   LabRemovePCKey.AnchorParallel(akTop, 0, PanelRemovePCKey);
   LabRemovePCKey.AnchorParallel(akLeft, 0, PanelRemovePCKey);
 
-  LabEditSpectrumKeys := TCommonFunctionsLCL.CreateLinkLabel(Self.PanelEditSpectrumKeys, 'Edit...');
+  LabEditSpectrumKeys := TCommonFunctionsLCL.CreateLinkLabel(PanelEditSpectrumKeys, 'Edit...');
   LabEditSpectrumKeys.Hint := 'Edit spectrum keys';
   LabEditSpectrumKeys.Anchors := [];
   LabEditSpectrumKeys.AnchorParallel(akTop, 0, PanelEditSpectrumKeys);
@@ -655,15 +710,16 @@ begin
   PanelSpectrumKeys.Constraints.MinHeight := PanelPCKey.Height;
   PanelSpectrumKeys.AutoSize := True;
   PanelEditSpectrumKeys.AutoSize := True;
-  Panel2.AutoSize := True;
+  C2.AutoSize := True;
 
   Application.AddOnUserInputHandler(@UserInputEvent);
   Self.AutoSize := True;
 
+  PanelPCKey.AddHandlerOnResize(@PanelPCKeyResize);
   UpdateSpectrumKeysLayoutCnt := 0;
 end;
 
-constructor TFrameOnePCKeyMapping.Create(TheOwner: TComponent);
+constructor TOnePCKeyMappingControl.Create(TheOwner: TComponent);
 var
   Sz: TSize;
 begin
@@ -671,7 +727,7 @@ begin
   Create(TheOwner, Sz);
 end;
 
-destructor TFrameOnePCKeyMapping.Destroy;
+destructor TOnePCKeyMappingControl.Destroy;
 begin
   Application.RemoveAllHandlersOfObject(Self);
   DisableAlign;
@@ -680,7 +736,7 @@ begin
   inherited Destroy;
 end;
 
-procedure TFrameOnePCKeyMapping.AddSpectrumKey(const AValue: Word);
+procedure TOnePCKeyMappingControl.AddSpectrumKey(const AValue: Word);
 var
   OSC: TOneSpectrumKeyControl;
 begin
@@ -697,17 +753,17 @@ begin
   end;
 end;
 
-class procedure TFrameOnePCKeyMapping.Init;
+class procedure TOnePCKeyMappingControl.Init;
 begin
   Kcs := nil;
 end;
 
-class procedure TFrameOnePCKeyMapping.Final;
+class procedure TOnePCKeyMappingControl.Final;
 begin
   Kcs.Free;
 end;
 
-procedure TFrameOnePCKeyMapping.ClearSpectrumKeys;
+procedure TOnePCKeyMappingControl.ClearSpectrumKeys;
 var
   I: Integer;
 begin
@@ -722,7 +778,7 @@ begin
   end;
 end;
 
-procedure TFrameOnePCKeyMapping.Paint;
+procedure TOnePCKeyMappingControl.Paint;
 var
   C: TWinControl;
   F: TCustomForm;
@@ -734,6 +790,7 @@ begin
 
     while Assigned(C) do begin
       if C = Self then begin
+        Canvas.Pen.Color := clNavy;
         Canvas.Pen.Style := psSolid;
         R := ClientRect;
         R := Rect(R.Left + 1, R.Top + 1, R.Right - 2, R.Bottom - 2);
@@ -742,23 +799,23 @@ begin
           R.BottomRight, Point(R.Left, R.Bottom), R.TopLeft]);
 
         InflateRect(R, -1, -1);
-        Canvas.Pen.Style := psSolid;
         Canvas.Polyline([R.TopLeft, Point(R.Right, R.Top),
           R.BottomRight, Point(R.Left, R.Bottom), R.TopLeft]);
+
         Break;
       end;
       C := C.Parent;
     end;
 
   end;
+
   inherited Paint;
 end;
 
 initialization
-  TFrameOnePCKeyMapping.Init;
+  TOnePCKeyMappingControl.Init;
 
 finalization
-  TFrameOnePCKeyMapping.Final;
+  TOnePCKeyMappingControl.Final;
 
 end.
-

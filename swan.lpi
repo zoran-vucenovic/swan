@@ -256,14 +256,6 @@
         <UnitName Value="UnitKeyMapRecords"/>
       </Unit>
       <Unit>
-        <Filename Value="unitframeonekeymap.pas"/>
-        <IsPartOfProject Value="True"/>
-        <ComponentName Value="FrameOnePCKeyMapping"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="UnitFrameOneKeyMap"/>
-      </Unit>
-      <Unit>
         <Filename Value="unitspectrumkeysdialog.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FormSpectrumKeysDialog"/>
@@ -753,6 +745,11 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="UnitFrameTapeOptions"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitcontrolkeymappings.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitControlKeyMappings"/>
       </Unit>
     </Units>
   </ProjectOptions>

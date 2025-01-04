@@ -15,7 +15,7 @@ uses
   UnitFrameWordDisplay, UnitSnapshotFiles, UnitSpectrumKeyboard, unit1,
   UnitSpectrum, UnitVer, UnitConfigs, UnitTzxPlayer, UnitFormBrowser,
   UnitColourPalette, UnitSpectrumColourMap, UnitKeyMaps,
-  UnitSpectrumColoursBGRA, UnitKeyMapRecords, UnitFrameOneKeyMap,
+  UnitSpectrumColoursBGRA, UnitKeyMapRecords,
   UnitSpectrumKeysDialog, UnitFormPressAKey, UnitCommon, UnitCommonSpectrum,
   UnitJoystick, UnitFrameJoystickSetup, AboutBox, UnitColourFunctions,
   UnitDataModuleImages, PortAudioHeader, UnitSoundPlayer, unitSoundVolume,
@@ -30,7 +30,7 @@ uses
   UnitCSW, UnitDisassembler, UnitDlgStartAdress, UnitGridSpectrumMemory,
   UnitFormDebug, UnitFrameGridMemory, UnitDebugCpuState, UnitDebugger,
   UnitDebugBreakpointsGrid, UnitFrameBreakpoints, UnitFrameToolbarOptions,
-  UnitSwanTreeView, UnitFrameTapeOptions;
+  UnitSwanTreeView, UnitFrameTapeOptions, UnitControlKeyMappings;
 
 {$R *.res}
 

@@ -8,7 +8,7 @@ unit UnitFrameKeyMappings;
 interface
 
 uses
-  Classes, SysUtils, UnitFrameOneKeyMap, UnitKeyMapRecords, UnitFormPressAKey,
+  Classes, SysUtils, UnitControlKeyMappings, UnitKeyMapRecords, UnitFormPressAKey,
   CommonFunctionsLCL, UnitFormForOptionsBasic, UnitOptions, UnitCommon, Forms,
   Controls, Graphics, Dialogs, ExtCtrls, StdCtrls, LazUTF8;
 
