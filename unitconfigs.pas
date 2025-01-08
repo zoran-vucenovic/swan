@@ -10,25 +10,23 @@ interface
 uses
   Classes, SysUtils, fpjson, jsonparser, jsonscanner
   , UnitInit // initialization in this unit affects GetConfDirectory, so keep it here in uses.
+  , UnitVer, UnitCommon
   ;
 
 type
 
   TConfJSON = class(TObject)
   strict private
-    type
-      TRemapping = record
-        RemapFrom: String;
-        RemapTo: String;
-      end;
-      TRemappings = Array of TRemapping;
+    const
+      cSectionVersion = 'version';
+
   strict private
     class var
       FConf: TJSONObject;
       FFileName: String;
       FConfDirectory: String;
-      FRemappings: TRemappings;
-      FPossible092Conf: Boolean;
+
+      FFullVersionLoadedFromConf: DWord;
   private
     class procedure Init;
     class procedure Final;
@@ -36,19 +34,20 @@ type
     class function GetFileName: String;
     class function GetConf: TJSONObject; static;
     class function GetConfDirectory: String; static;
+    class function GetFullVersionLoadedFromConf: DWord; static;
+    class procedure LoadFullVersionFromConf; static;
     class function LoadFromStream(Stream: TStream): Boolean;
     class function SaveToStream(Stream: TStream): Boolean;
     class function LoadFromFile(): Boolean;
     class function SaveToFile(): Boolean;
-    class procedure Remap(const R: TRemapping);
-    class procedure AddRemapping(RemapFrom, RemapTo: String);
+    class procedure ChangeOldName(AFrom, ATo: String);
   public
     class function AddToConf(const Section: String; Data: TJSONData): Boolean;
     class function GetJSONObject(const Section: String): TJSONObject;
     class function GetJSONArray(const Section: String): TJSONArray;
     class procedure RemoveSection(const Section: String);
 
-    class property Possible092Conf: Boolean read FPossible092Conf;
+    class property FullVersionLoadedFromConf: DWord read GetFullVersionLoadedFromConf;
   end;
 
 implementation
@@ -60,10 +59,7 @@ begin
   FConf := nil;
   FConfDirectory := '';
   FFileName := '';
-  FPossible092Conf := False;
-
-  SetLength(FRemappings, 0);
-  AddRemapping('f1', 'general');
+  FFullVersionLoadedFromConf := 0;
 end;
 
 class procedure TConfJSON.Final;
@@ -90,6 +86,10 @@ begin
     FirstPass := False;
     if FConf = nil then begin
       LoadFromFile();
+      if FConf = nil then
+        FConf := TJSONObject.Create;
+      ChangeOldName('f1', 'general');
+      LoadFullVersionFromConf;
     end;
   end;
   Result := FConf;
@@ -109,12 +109,117 @@ begin
   Result := FConfDirectory;
 end;
 
+class function TConfJSON.GetFullVersionLoadedFromConf: DWord; static;
+begin
+  GetConf;
+  Result := FFullVersionLoadedFromConf;
+end;
+
+class procedure TConfJSON.LoadFullVersionFromConf;
+
+  function UnpackVersionString(S: String): DWord;
+  var
+    P: Integer;
+    N: Integer;
+    S1: String;
+    I, K: Integer;
+    D: DWord;
+  begin
+    D := 0;
+    Result := 0;
+
+    N := 1;
+    I := 0;
+    repeat
+      P := Pos('.', S, N);
+      if P > 0 then begin
+        if I >= 2 then
+          Exit;
+
+        S1 := Copy(S, N, P - N);
+        N := P + 1;
+
+      end else
+        S1 := Copy(S, N);
+
+      if (not TCommonFunctions.TryStrToIntDecimal(S1, K))
+         or (K < 0) or ((I > 0) and (K > 99))
+      then
+        Exit;
+
+      Inc(I);
+
+      D := D * 100 + DWord(K);
+
+    until P <= 0;
+
+    case I of
+      2:
+        Result := D * 100;
+      3:
+        Result := D;
+    otherwise
+    end;
+
+  end;
+
+{$push}
+{$J+}
+const
+  FirstPass: Boolean = True;
+{$pop}
+
+const
+  cGeneral = 'general';
+  cOldSectionSwanVersion = 'swan_version';
+var
+  Jd, JVer: TJSONData;
+  JObj: TJSONObject;
+
+begin
+  if FirstPass then begin
+    FirstPass := False;
+    FFullVersionLoadedFromConf := 0;
+
+    if Assigned(GetConf) then begin
+      JVer := FConf.Find(cSectionVersion);
+      if JVer is TJSONString then begin
+        FFullVersionLoadedFromConf := UnpackVersionString(JVer.AsString);
+        JVer.AsString := TVersion.FullVersionString;
+
+        Exit;
+      end;
+
+      JVer := FConf.Extract(cSectionVersion);
+      FreeAndNil(JVer);
+
+      FConf.Add(cSectionVersion, TVersion.FullVersionString);
+
+      JObj := GetJSONObject(cGeneral);
+      if Assigned(JObj) then begin
+        Jd := JObj.Extract(cOldSectionSwanVersion);
+        JVer := JObj.Extract(cSectionVersion);
+        if not Assigned(JVer) then begin
+          JVer := Jd;
+          Jd := nil;
+        end;
+        Jd.Free;
+
+        if JVer is TJSONString then
+          FFullVersionLoadedFromConf := UnpackVersionString(JVer.AsString);
+
+        JVer.Free;
+      end;
+
+    end;
+  end;
+end;
+
 class function TConfJSON.LoadFromStream(Stream: TStream): Boolean;
 var
   Parser: TJSONParser;
   JSData: TJSONData;
 
-  I: Integer;
 begin
   Result := False;
   FreeAndNil(FConf);
@@ -127,9 +232,6 @@ begin
       if JSData is TJSONObject then begin
         FConf := TJSONObject(JSData);
 
-        for I := Low(FRemappings) to High(FRemappings) do begin
-          Remap(FRemappings[I]);
-        end;
         Result := True;
       end else
         JSData.Free;
@@ -193,35 +295,19 @@ begin
   end;
 end;
 
-class procedure TConfJSON.Remap(const R: TRemapping);
+class procedure TConfJSON.ChangeOldName(AFrom, ATo: String);
 var
   JD: TJSONData;
 begin
   if Assigned(GetConf) then begin
-    JD := GetConf.Extract(R.RemapFrom);
+    JD := GetConf.Extract(AFrom);
     if Assigned(JD) then begin
-      if GetConf.IndexOfName(R.RemapTo) <> -1 then
+      if GetConf.IndexOfName(ATo) <> -1 then
         JD.Free
-      else begin
-        if R.RemapFrom = 'f1' then  // Conf saved before 0.9.4 has this section.
-          FPossible092Conf := True; // We can use this to recognize the old
-                                    // conf version, as it was also 0.9.4 when
-                                    // Swan started to save its version.
-        GetConf.Add(R.RemapTo, JD);
-      end;
-
+      else
+        GetConf.Add(ATo, JD);
     end;
   end;
-end;
-
-class procedure TConfJSON.AddRemapping(RemapFrom, RemapTo: String);
-var
-  L: Integer;
-begin
-  L := Length(FRemappings);
-  SetLength(FRemappings, L + 1);
-  FRemappings[L].RemapFrom := RemapFrom;
-  FRemappings[L].RemapTo := RemapTo;
 end;
 
 class function TConfJSON.AddToConf(const Section: String; Data: TJSONData

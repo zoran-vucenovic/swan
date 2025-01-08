@@ -233,7 +233,6 @@ type
       cSectionPortAudioLibPath32 = 'portaudio_lib_path32';
       cSectionPortAudioLibPath64 = 'portaudio_lib_path64';
       cSectionSpectrumModel = 'spectrum_model';
-      cSectionVersion = 'version';
       cSectionTapeOptions = 'tape_options';
       cSectionAutoShowTapePlayer = 'auto_show_tape_player';
       cSectionFastLoad = 'fast_load';
@@ -1531,13 +1530,12 @@ procedure TForm1.LoadFromConf;
   end;
 
 const
-  cOldSectionSwanVersion = 'swan_version';
   cOldSectionOtherOptions = 'other_options';
 
 var
   JObj: TJSONObject;
   JObj2: TJSONObject;
-  JD, JVer: TJSONData;
+  JD: TJSONData;
 
   M: Integer;
   SoundVol: Integer;
@@ -1547,7 +1545,6 @@ var
   K: Integer;
   AYOutputMode: TSoundAY_3_8912.TOutputMode;
 
-  FullVersionFromConf: DWord;
   Arr: TObjectArray;
 
 begin
@@ -1555,31 +1552,6 @@ begin
   SoundVol := TSoundPlayer.Volume;
   if Assigned(JObj) then begin
     SetScreenSizeFactor(JObj.Get(cSectionScreenSizeFactor, Integer(1)));
-
-    FullVersionFromConf := 0;
-
-    JD := JObj.Extract(cOldSectionSwanVersion);
-    JVer := JObj.Find(cSectionVersion);
-    if not Assigned(JVer) then begin
-      if Assigned(JD) then begin
-        JObj.Add(cSectionVersion, JD);
-        JVer := JD;
-        JD := nil;
-      end;
-    end;
-    JD.Free;
-
-    // Full version which saved the conf. We can use it in this procedure when needed.
-    // if needed, we can compare it with current TVersion.FullVersion
-    if not Assigned(JVer) then begin
-      // before 0.9.4, Swan didn't save version in conf.
-      if TConfJSON.Possible092Conf then begin
-        FullVersionFromConf := 902; // might as well be 0.9.0, never mind.
-      end;
-
-    end else
-      if JVer is TJSONString then
-        FullVersionFromConf := UnpackVersionString(JVer.AsString);
 
     S := '';
     S := Trim(JObj.Get(cSectionSpectrumModel, S));
@@ -1678,7 +1650,7 @@ begin
       SoundVol := M;
 
       // Since 0.9.7, volume is lower... let's raise what was saved when loading from older conf.
-      if (FullVersionFromConf > 0) and (FullVersionFromConf <= 906) and (M <= 31) then begin
+      if (TConfJSON.FullVersionLoadedFromConf <= 906) and (M <= 31) then begin
         SoundVol := 1024;
 
         while M < 31 do begin
@@ -1774,7 +1746,6 @@ var
 begin
   JObj := TJSONObject.Create;
   try
-    JObj.Add(cSectionVersion, UnitVer.TVersion.FullVersionString);
     JObj.Add(cSectionBuildDate, TCommonSpectrum.BuildDateString);
     JObj.Add(cSectionScreenSizeFactor, Integer(ScreenSizeFactor));
 
