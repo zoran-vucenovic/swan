@@ -37,7 +37,7 @@ type
     class var
       FBufferLen: Integer;
       PlayPosition: Integer;
-      FChMove: Integer;
+      FChNum: Integer;
 
     class procedure Init; static;
     class procedure Final; static;
@@ -61,9 +61,8 @@ type
     class property Volume: Integer read FVolume write SetVolume;
     class property Playing: Boolean read FPlaying;
     class property Stereo: Boolean read GetStereo write SetStereo;
-    { with mono output ChMove is 2, with stereo it is 3 - meaning multiply
-      by 4 or by 8 (number of bytes used in buffer for each audio sample) }
-    class property ChMove: Integer read FChMove;
+    { ChNum is number of channels - with mono output ChNum is 1, with stereo it is 2 }
+    class property ChNum: Integer read FChNum;
   end;
 
 implementation
@@ -78,8 +77,9 @@ var
 
 begin
   Data := TSoundPlayer.SoundBuffer + TSoundPlayer.PlayPosition;
-  //
-  N := FrameCount shl TSoundPlayer.FChMove;
+
+  // multiply by 2 or by 4 (number of bytes used in buffer for each audio sample)
+  N := FrameCount shl TSoundPlayer.FChNum;
 
   M := TSoundPlayer.FBufferLen - TSoundPlayer.PlayPosition;
   if N >= M then begin
@@ -121,13 +121,13 @@ begin
   FLibPath := '';
   SoundBuffer := nil;
   FBufferLen := 0;
-  FVolume := 104;
-  FChMove := 2;
+  FVolume := 26;
+  FChNum := 1;
 end;
 
 class function TSoundPlayer.GetStereo: Boolean;
 begin
-  Result := FChMove = 3;
+  Result := FChNum = 2;
 end;
 
 class procedure TSoundPlayer.Final;
@@ -143,19 +143,19 @@ var
   N: Integer;
 begin
   if AValue then
-    N := 3
+    N := 2
   else
-    N := 2;
-  if FChMove <> N then begin
+    N := 1;
+  if FChNum <> N then begin
     if StopAndTerminate then
-      FChMove := N;
+      FChNum := N;
   end;
 end;
 
 class procedure TSoundPlayer.SetVolume(AValue: Integer);
 begin
   if AValue > 0 then
-    FVolume := AValue and 127
+    FVolume := AValue and 31
   else
     FVolume := 0;
 end;
@@ -272,7 +272,7 @@ begin
   FillChar(SoundBuffer^, FBufferLen, #0);
 
   if InError(
-    PortAudioHeader.Pa_OpenDefaultStream(@Stream, 0, FChMove - 1, paFloat32,
+    PortAudioHeader.Pa_OpenDefaultStream(@Stream, 0, FChNum, paInt16,
     SampleRate, {256} paFramesPerBufferUnspecified,
     @PortAudioCallbackFun, SoundBuffer)
   )

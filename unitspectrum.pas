@@ -130,7 +130,7 @@ type
 
     FSoundPlayerRatePortAudio: Int64;
     FSoundPlayerRateProcessor: Int64;
-    FDivBeeperVol: Single;
+    FBpShift: Integer;
 
     procedure StopSoundPlayer; inline;
     procedure UpdateSoundBuffer; inline;
@@ -248,8 +248,7 @@ procedure TSpectrum.UpdateSoundBuffer;
 var
   N, M: Integer;
   P: PByte;
-  F: Single;
-  BB: DWord absolute F;
+  Bp: Int16;
 
 begin
   if TSoundPlayer.Playing then begin
@@ -257,18 +256,17 @@ begin
     if N > 0 then begin
       FLatestTickUpdatedSoundBuffer := FLatestTickUpdatedSoundBuffer + N * FSoundPlayerRateProcessor;
 
-      F := FEar + FMic;
-      F := F * TSoundPlayer.Volume / FDivBeeperVol;
+      Bp := FEar + FMic;
+      Bp := (Bp * TSoundPlayer.Volume) shl FBpShift;
 
       P := TSoundPlayer.SoundBuffer + TSoundPlayer.CurrentPosition;
-      M := TSoundPlayer.BufferLen - TSoundPlayer.CurrentPosition;
+      M := (TSoundPlayer.BufferLen - TSoundPlayer.CurrentPosition) shr TSoundPlayer.ChNum;
 
-      if N shl TSoundPlayer.ChMove >= M then begin
-        M := M shr TSoundPlayer.ChMove;
+      if N >= M then begin
         if Assigned(FAYSoundChip) then
-          FAYSoundChip.Fill(F, PSingle(P), M)
+          FAYSoundChip.Fill(Bp, PInt16(P), M)
         else
-          FillDWord(P^, M, BB);
+          FillWord(P^, M, Word(Bp));
 
         N := N - M;
         TSoundPlayer.CurrentPosition := 0;
@@ -276,11 +274,11 @@ begin
       end;
 
       if Assigned(FAYSoundChip) then
-        FAYSoundChip.Fill(F, PSingle(P), N)
+        FAYSoundChip.Fill(Bp, PInt16(P), N)
       else
-        FillDWord(P^, N, BB);
+        FillWord(P^, N, Word(Bp));
 
-      TSoundPlayer.CurrentPosition := TSoundPlayer.CurrentPosition + (N shl TSoundPlayer.ChMove);
+      TSoundPlayer.CurrentPosition := TSoundPlayer.CurrentPosition + (N shl TSoundPlayer.ChNum);
     end;
   end;
 end;
@@ -558,15 +556,13 @@ end;
 
 procedure TSpectrum.UpdateSoundOutputMode;
 begin
-  FDivBeeperVol := 127 * 64;
   if Assigned(FAYSoundChip) then begin
     TSoundPlayer.Stereo := FAYOutputMode <> TSoundAY_3_8912.TOutputMode.omMono;
     FAYSoundChip.OutputMode := FAYOutputMode;
-    if TSoundPlayer.Stereo then
-      FDivBeeperVol := FDivBeeperVol * 2.0;
+    FBpShift := 4 - TSoundPlayer.ChNum;
   end else begin
     TSoundPlayer.Stereo := False;
-    FDivBeeperVol := FDivBeeperVol * 4.1;
+    FBpShift := 1;
   end;
 end;
 
@@ -648,7 +644,7 @@ begin
   SetLength(FCustomRomsFileNames, 0);
   FPagingEnabled := False;
   FSoundMuted := False;
-  FDivBeeperVol := 1.0;
+  FBpShift := 1;
   FFastLoad := True;
 
   FFormDebug := nil;

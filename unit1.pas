@@ -1646,21 +1646,8 @@ begin
 
     M := JObj.Get(cSectionSoundVolume, SoundVol);
 
-    if (M >= 0) and (M <= 127) then begin
+    if (M >= 0) and (M <= 31) then
       SoundVol := M;
-
-      // Since 0.9.7, volume is lower... let's raise what was saved when loading from older conf.
-      if (TConfJSON.FullVersionLoadedFromConf <= 906) and (M <= 31) then begin
-        SoundVol := 1024;
-
-        while M < 31 do begin
-          Inc(M);
-          SoundVol := (SoundVol * 800) div 729;
-        end;
-
-        SoundVol := 127 - (((SoundVol shr 10) - 1) * 127) div 16;
-      end;
-    end;
 
     S := '';
     S := Trim(JObj.Get(cSectionAYOutputMode, S));
@@ -1754,8 +1741,7 @@ begin
       JObj.Add(cSectionAYOutputMode, Copy(S, 3));
     end;
 
-    N := TSoundPlayer.Volume;
-    JObj.Add(cSectionSoundVolume, N);
+    JObj.Add(cSectionSoundVolume, TSoundPlayer.Volume);
 
     if Spectrum.SoundMuted then
       N := 1

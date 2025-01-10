@@ -15,8 +15,6 @@ type
 
   TFuncTicks = function(): Int64 of object;
 
-  { TSoundAY_3_8912 }
-
   TSoundAY_3_8912 = class(TObject)
   public
     type
@@ -46,7 +44,7 @@ type
     OutputChannelsLengths: array [0..2] of Integer;
     OutputChCurrentPositions: array [0..2] of Integer;
 
-    OutputChannelsVolumes: array [0..2] of Byte;
+    OutputChannelsVolumes: array [0..2] of Integer;
 
     FEnvelopePosition: Integer;
     FEnvelopeValue: Byte;
@@ -55,13 +53,13 @@ type
     FEnvelopeHold: Boolean;
     FEnvelopeHoldUp: Boolean;
     FEnvelopeAlter: Boolean;
-    FEnvelopeOnCh: array [0..2] of Boolean;
 
     NoisePosition: Integer;
     NoiseHalfPeriod: Integer;
     NoiseLevel: Integer;
     NoiseGenerator: UInt32;
-    NoiseOnCh: array [0..2] of Byte;
+    NoiseOnCh: array [0..2] of Integer;
+    ToneFrequencyRegs: array [0..2] of PWord;
 
     StartFadingTicks: Int64;
 
@@ -70,7 +68,6 @@ type
     FIsStereo: Boolean;
 
     procedure InitRegPointers();
-    procedure RecalcOutputChannels;
 
     procedure ResetEnvelope;
     procedure SetOnCheckTicks(const AValue: TFuncTicks);
@@ -81,6 +78,8 @@ type
     FActiveRegisterNum: Byte;
     FRegPointers: array [0..15] of PByte;
 
+    procedure RecalcOutputChannels;
+
   private
     const
       RegMasks: array [0..15] of Byte = (
@@ -90,15 +89,15 @@ type
 
   strict private
     class var
-      Vols: array [0..15] of Single;
-      Vols1: array [0..2, 0..15] of Single;
-      Vols2: array [0..2, 0..15] of Single;
+      Vols: array [0..15] of Integer;
+      Vols1: array [0..2, 0..15] of Integer;
+      Vols2: array [0..2, 0..15] of Integer;
 
   private
     class procedure Init; static;
 
   public
-    procedure Fill(const F: Single; P: PSingle; const Len: Integer);
+    procedure Fill(const Bp: Int16; P: PInt16; const Len: Integer);
 
     constructor Create;
     function GetRegValue(): Byte;
@@ -150,33 +149,16 @@ begin
   FRegPointers[13] := @FEnvelopeShape;
   FRegPointers[14] := @FIOPortA;
   FRegPointers[15] := @FReg15;
+
+  ToneFrequencyRegs[0] := @FRegA;
+  ToneFrequencyRegs[1] := @FRegB;
+  ToneFrequencyRegs[2] := @FRegC;
 end;
 
 procedure TSoundAY_3_8912.RecalcOutputChannels;
-
-  procedure RecalcOutChannel(Ch: Integer; Reg: Word; Vol: Byte);
-  var
-    Le2: Integer;
-  begin
-    NoiseOnCh[Ch] := ((FMixer shr (Ch + 3)) and 1) * $0F;
-    FEnvelopeOnCh[Ch] := FRegPointers[Ch or 8]^ and $10 <> 0;
-
-    if FMixer and (1 shl Ch) = 0 then begin
-
-      Le2 := (Integer(Reg) * 224 + 281) div 563;
-      if Le2 < 1 then begin
-        OutputChannelsLengths[Ch] := 1;
-      end else begin
-        OutputChannelsLengths[Ch] := Le2;
-      end;
-
-    end else begin
-      OutputChannelsLengths[Ch] := 1;
-    end;
-
-    OutputChannelsVolumes[Ch] := Vol;
-
-  end;
+var
+  L: Integer;
+  Ch: Integer;
 
 begin
   if FEnvelopeDuration = 0 then
@@ -189,9 +171,19 @@ begin
   NoiseHalfPeriod := FNoiseWidth;
   NoiseHalfPeriod := (NoiseHalfPeriod * 112 + 281) div 563;
 
-  RecalcOutChannel(0, FRegA, FVolumeA);
-  RecalcOutChannel(1, FRegB, FVolumeB);
-  RecalcOutChannel(2, FRegC, FVolumeC);
+  for Ch := 0 to 2 do begin
+    NoiseOnCh[Ch] := ((FMixer shr (Ch + 3)) and 1) * $0F;
+    if FMixer and (1 shl Ch) = 0 then begin
+      L := (Integer(ToneFrequencyRegs[Ch]^) * 224 + 281) div 563;
+      if L >= 1 then
+        OutputChannelsLengths[Ch] := L
+      else
+        OutputChannelsLengths[Ch] := 1;
+    end else
+      OutputChannelsLengths[Ch] := 1;
+
+    OutputChannelsVolumes[Ch] := FRegPointers[Ch or 8]^;
+  end;
 end;
 
 class procedure TSoundAY_3_8912.Init;
@@ -202,40 +194,48 @@ class procedure TSoundAY_3_8912.Init;
 //  CVols: array [0..15] of UInt16 = (
 //    $0000, $028F, $03B3, $0564, $07DC, $0BA9, $1083, $1B7C, $2068, $347A, $4ACE, $5F72, $7E16, $A2A4, $CE3A, $FFFF
 //  );
-//  CDiv: Double = 65535.0 * 127;
-
+//
+// Another site (https://www.cpcwiki.eu/index.php/PSG#D.2FA_converter_table) lists these:
+//const
+//  CVols: array [0..15] of UInt16 = (
+//    0, 231, 695, 1158, 2084, 2779, 4168, 6716, 8105, 13200, 18294, 24315, 32189, 40757, 52799, 65535
+//  );
 var
   I: Integer;
   N: Integer;
-  X: Single;
+  D: Double;
+  Sqrt2: Double;
 
 begin
-  for I := 0 to 15 do begin
-    // use the values from the link above
-    //Vols[I] := CVols[I] / CDiv;
+  Sqrt2 := System.Sqrt(2.0);
+  N := Int16.MaxValue div 31;
+  D := N;
+  for I := 15 downto 0 do begin
+    // we could use the predefined values from one of the arrays above
+    //D := CVols[I] / 62.0;
 
     // or the formula (described here: https://www.cpcwiki.eu/index.php/PSG#0Ah_-_Channel_C_Volume_.280-0Fh.3Dvolume.2C_10h.3Duse_envelope_instead.29)
     // amplitude = maxVolume / sqrt(2)^(15-i)
     // where maxVolume is the highest volume level.
     // This formula matches the diagram shown in AY datasheet
-    N := 127; // max
-    N := N shl ((15 - I) shr 1);
-    X := 1.0 / N;
-    if I and 1 = 0 then
-      X := X / Sqrt(2.0);
+    if I = 0 then
+      D := 0.0; // set the lowest volume to zero
 
-    Vols[I] := X; // used in mono output by all channels
+    N := Trunc(D + 0.5);
+    Vols[I] := N; // used in mono output by all channels
 
     // stereo output (A-B-C)
-    Vols1[0][I] := X;  // left stereo channel - register A - full output
-    Vols2[2][I] := X;  // right stereo channel - register C - full output
+    Vols1[0, I] := N; // left stereo channel - register A - full output
+    Vols2[2, I] := N; // right stereo channel - register C - full output
 
-    X := X / 2;
-    Vols1[1][I] := X; // register B - half of volume to each stereo output channel
-    Vols2[1][I] := X;
+    N := Trunc(D / 2.0 + 0.5);
+    Vols1[1, I] := N; // register B - half of volume to each stereo output channel
+    Vols2[1, I] := N;
 
-    Vols1[2][I] := 0.0; // left stereo channel - register C (no output)
-    Vols2[0][I] := 0.0; // right stereo channel - register A (no output)
+    Vols1[2, I] := 0; // left stereo channel - register C (no output)
+    Vols2[0, I] := 0; // right stereo channel - register A (no output)
+
+    D := D / Sqrt2;
   end;
 end;
 
@@ -298,13 +298,13 @@ begin
   FEnvelopeAlter := (FEnvelopeShape and %0010) <> 0;
 end;
 
-procedure TSoundAY_3_8912.Fill(const F: Single; P: PSingle; const Len: Integer);
+procedure TSoundAY_3_8912.Fill(const Bp: Int16; P: PInt16; const Len: Integer);
 var
   J, K, Q, L: Integer;
   N: Integer;
-  PE: PSingle;
-  NW1: Single;
-  NW2: Single;
+  PE: PInt16;
+  NW1: Integer;
+  NW2: Integer;
 
 begin
   if FIsStereo then
@@ -314,8 +314,8 @@ begin
 
   while P < PE do begin
 
-    NW1 := 0.0;
-    NW2 := 0.0;
+    NW1 := 0;
+    NW2 := 0;
 
     Inc(NoisePosition);
     if NoisePosition >= NoiseHalfPeriod then begin
@@ -333,17 +333,15 @@ begin
 
       if K shl 1 < L then begin
 
-        if FEnvelopeOnCh[J] then begin
-          // envelope...
+        N := OutputChannelsVolumes[J];
+        if N and $10 <> 0 then
           N := FEnvelopeValue;
-        end else
-          N := OutputChannelsVolumes[J];
 
         N := N and (NoiseLevel or NoiseOnCh[J]);
 
         if FIsStereo then begin
-          NW1 := NW1 + Vols1[J][N];
-          NW2 := NW2 + Vols2[J][N];
+          NW1 := NW1 + Vols1[J, N];
+          NW2 := NW2 + Vols2[J, N];
         end else
           NW1 := NW1 + Vols[N];
 
@@ -352,10 +350,10 @@ begin
       OutputChCurrentPositions[J] := K + 1;
     end;
 
-    P^ := (NW1 * TSoundPlayer.Volume + F) / 4.1;
+    P^ := (NW1 * TSoundPlayer.Volume + Bp) shr 2;
     if FIsStereo then begin
       Inc(P);
-      P^ := (NW2 * TSoundPlayer.Volume + F) / 4.1;
+      P^ := (NW2 * TSoundPlayer.Volume + Bp) shr 2;
     end;
 
     Inc(FEnvelopePosition);
@@ -455,7 +453,6 @@ begin
     OutputChCurrentPositions[I] := 0;
     OutputChannelsVolumes[I] := $0F;
     NoiseOnCh[I] := $0F;
-    FEnvelopeOnCh[I] := False;
   end;
 
   NoisePosition := 0;
@@ -565,6 +562,7 @@ begin
 
     Ay.FActiveRegisterNum := not FActiveRegisterNumber;
     Ay.SetActiveRegNum(FActiveRegisterNumber);
+    Ay.RecalcOutputChannels;
   end;
 end;
 

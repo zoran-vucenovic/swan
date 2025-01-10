@@ -42,8 +42,7 @@ end;
 
 function TFrameSoundVolume.GetLevel: Integer;
 begin
-  Result := (TrackBar1.Position and 31) * 4;
-  Result := Result + (Result shr 5);
+  Result := TrackBar1.Position and 31;
 end;
 
 function TFrameSoundVolume.GetVerticalOrientation: Boolean;
@@ -53,7 +52,7 @@ end;
 
 procedure TFrameSoundVolume.SetLevel(AValue: Integer);
 begin
-  TrackBar1.Position := AValue div 4;
+  TrackBar1.Position := AValue;
 end;
 
 procedure TFrameSoundVolume.SetOnTrackBarPositionChg(AValue: TNotifyEvent);
