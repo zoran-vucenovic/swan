@@ -40,7 +40,7 @@ type
 
   strict private
     class var
-      BmpPC, BmpSP, BmpBk: TBitmap;
+      BmpPC, BmpSP, BmpBk: array [False..True] of TBitmap;
 
   private
     class procedure Init; static;
@@ -137,22 +137,23 @@ begin
 
     if aRow = FPc then begin
       if aRow <> FSp then begin
-        DrawBmp(BmpPC, aRect);
+        DrawBmp(BmpPC[Enabled], aRect);
       end else begin
         Re := aRect;
-        DrawBmp(BmpSP, Re);
-        Re.Offset(-BmpSP.Width, 0);
-        DrawBmp(BmpPc, Re);
+        DrawBmp(BmpSP[Enabled], Re);
+        Re.Right := Re.Right - BmpSP[Enabled].Width;
+        DrawBmp(BmpPc[Enabled], Re);
       end;
     end else if aRow = FSp then begin
-      DrawBmp(BmpSP, aRect);
+      DrawBmp(BmpSP[Enabled], aRect);
     end;
 
     Addr := aRow;
 
     if FDebugger.IsBreakpoint(Addr) then begin
-      Canvas.Draw(aRect.Left + 3, aRect.Top + (aRect.Height - BmpBk.Height) div 2, BmpBk);
+      Canvas.Draw(aRect.Left + 3, aRect.Top + (aRect.Height - BmpBk[Enabled].Height) div 2, BmpBk[Enabled]);
     end;
+
   end else begin
     if aState * [gdSelected, gdFocused] <> [] then begin
       Re := Rect(aRect.Left + 1, aRect.Top + 1, aRect.Right - 2, aRect.Bottom - 2);
@@ -318,7 +319,7 @@ begin
   end;
 
   CreateBmps();
-  ColWidths[0] := BmpSP.Width + BmpPC.Width + BmpBk.Width + 6;
+  ColWidths[0] := BmpSP[True].Width + BmpPC[True].Width + BmpBk[True].Width + 6;
   ShowHint := True;
 
   FPopupMenu1 := TPopupMenu.Create(Self);
@@ -418,17 +419,25 @@ begin
 end;
 
 class procedure TSpectrumMemoryGrid.Init;
+var
+  B: Boolean;
 begin
-  BmpPC := nil;
-  BmpBk := nil;
-  BmpSP := nil;
+  for B := False to True do begin
+    BmpPC[B] := nil;
+    BmpSP[B] := nil;
+    BmpBk[B] := nil;
+  end;
 end;
 
 class procedure TSpectrumMemoryGrid.Final;
+var
+  B: Boolean;
 begin
-  BmpBk.Free;
-  BmpSP.Free;
-  BmpPC.Free;
+  for B := False to True do begin
+    BmpBk[B].Free;
+    BmpSP[B].Free;
+    BmpPC[B].Free;
+  end;
 end;
 
 procedure TSpectrumMemoryGrid.WMContextMenu(var Message: TLMContextMenu);
@@ -458,12 +467,12 @@ class procedure TSpectrumMemoryGrid.CreateBmps;
 var
   F: TFont;
   BackgroundColour: TColor;
-  TS: TTextStyle;
 
   function CreateBmp(const S: RawByteString): TBitmap;
   var
     Sz: TSize;
     R: Integer;
+    TS: TTextStyle;
   begin
     Result := TBitmap.Create;
     Result.Canvas.Font := F;
@@ -497,22 +506,33 @@ var
     Result.Canvas.TextRect(Rect(0, 0, Result.Width, Result.Height), 0, 0, S, TS);
   end;
 
+var
+  B: Boolean;
+
 begin
-  if BmpPC = nil then begin
+  if BmpPC[False] = nil then begin
     F := TFont.Create;
     try
       F.Style := F.Style + [fsBold];
-
       F.Size := 8;
-      F.Color := TColor($e2ffff);
-      BackgroundColour := TColor($2534da);
-      BmpBk := CreateBmp('b');
 
-      F.Color := clNavy;
-      BackgroundColour := clYellow;
-      BmpPC := CreateBmp('PC');
-      BmpSP := CreateBmp('SP');
+      for B := False to True do begin
+        if B then begin
+          F.Color := TColor($e2ffff);
+          BackgroundColour := TColor($2534da);
+        end else begin
+          F.Color := TColor($e2e2d5);
+          BackgroundColour := TColor($4b7661);
+        end;
+        BmpBk[B] := CreateBmp('b');
 
+        if B then begin
+          F.Color := clNavy;
+          BackgroundColour := clYellow;
+        end;
+        BmpPC[B] := CreateBmp('PC');
+        BmpSP[B] := CreateBmp('SP');
+      end;
     finally
       F.Free;
     end;

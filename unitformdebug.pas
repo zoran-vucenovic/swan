@@ -25,6 +25,8 @@ type
     LabelFramesPassed: TLabel;
     Panel1: TPanel;
     Panel10: TPanel;
+    Panel11: TPanel;
+    Panel12: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
     Panel4: TPanel;
@@ -46,6 +48,7 @@ type
     FDebugCPUState: TDebugCpuState;
     FormBreakpoints: TCustomForm;
     ScrDisplayCtrl: TFlagsCtrl;
+    PagingEnabledCtrl: TFlagsCtrl;
 
     procedure FormFirstShow(Sender: TObject);
     function GetDebugger: TDebugger;
@@ -98,6 +101,10 @@ begin
   Panel7.BevelOuter := bvNone;
   Panel7.BorderStyle := bsSingle;
   Panel7.AutoSize := True;
+  Panel11.BevelOuter := bvNone;
+  Panel11.AutoSize := True;
+  Panel12.BevelOuter := bvNone;
+  Panel12.AutoSize := True;
 
   Panel8.Caption := '';
   Panel8.BevelOuter := bvNone;
@@ -110,6 +117,8 @@ begin
 
   Panel2.Anchors := [];
   Panel3.Anchors := [];
+  Panel11.Anchors := [];
+  Panel12.Anchors := [];
 
   FDebugCPUState := TDebugCpuState.Create(Self);
   FDebugCPUState.Anchors := [];
@@ -117,7 +126,7 @@ begin
   FDebugCPUState.AnchorParallel(akLeft, 0, Panel1);
 
   Panel3.AnchorParallel(akLeft, 3, Panel1);
-  Panel3.AnchorToNeighbour(akTop, 0, FDebugCPUState);
+  Panel3.AnchorToNeighbour(akTop, 2, FDebugCPUState);
   Panel3.AnchorParallel(akRight, 4, Panel1);
   Panel3.BorderSpacing.Bottom := 2;
 
@@ -125,6 +134,12 @@ begin
   Panel2.AnchorToNeighbour(akTop, 0, Panel3);
   Panel2.AnchorParallel(akBottom, 0, Panel1);
   Panel2.AnchorParallel(akRight, 0, Panel1);
+
+  Panel12.AnchorParallel(akBottom, 0, Panel3);
+  Panel12.AnchorParallel(akLeft, 0, Panel3);
+
+  Panel11.AnchorToNeighbour(akBottom, 2, Panel12);
+  Panel11.AnchorParallel(akLeft, 0, Panel3);
 
   FrameGridMemory := TFrameGridMemory.Create(Self);
 
@@ -134,19 +149,24 @@ begin
   FrameGridMemory.AnchorParallel(akBottom, 0, Panel2);
 
   Panel4.Anchors := [];
-  Panel4.AnchorParallel(akLeft, 0, Panel3);
-  Panel4.AnchorParallel(akBottom, 0, Panel3);
+  Panel4.AnchorParallel(akLeft, 0, Panel11);
+  Panel4.AnchorParallel(akTop, 0, Panel11);
   Panel7.Anchors := [];
   Panel7.AnchorToNeighbour(akLeft, 3, Panel4);
-  Panel7.AnchorParallel(akBottom, 0, Panel3);
+  Panel7.AnchorParallel(akTop, 0, Panel11);
   Panel9.Anchors := [];
-  Panel9.AnchorToNeighbour(akLeft, 3, Panel7);
-  Panel9.AnchorParallel(akBottom, 0, Panel3);
+  Panel9.AnchorParallel(akLeft, 0, Panel12);
+  Panel9.AnchorParallel(akBottom, 0, Panel12);
 
   ScrDisplayCtrl := TFlagsCtrl.Create(Panel3, ['Shadow screen'], True, False);
   ScrDisplayCtrl.Anchors := [];
   ScrDisplayCtrl.AnchorToNeighbour(akLeft, 3, Panel9);
-  ScrDisplayCtrl.AnchorParallel(akBottom, 0, Panel3);
+  ScrDisplayCtrl.AnchorParallel(akBottom, 0, Panel12);
+
+  PagingEnabledCtrl := TFlagsCtrl.Create(Panel3, ['Paging'], True, False);
+  PagingEnabledCtrl.Anchors := [];
+  PagingEnabledCtrl.AnchorToNeighbour(akLeft, 3, ScrDisplayCtrl);
+  PagingEnabledCtrl.AnchorParallel(akBottom, 0, Panel12);
 
   Panel4.Color := ScrDisplayCtrl.Color;
   Panel7.Color := ScrDisplayCtrl.Color;
@@ -154,7 +174,8 @@ begin
 
   FDebugCPUState.Parent := Panel1;
   FrameGridMemory.Parent := Panel2;
-  ScrDisplayCtrl.Parent := Panel3;
+  ScrDisplayCtrl.Parent := Panel12;
+  PagingEnabledCtrl.Parent := Panel12;
 
   Panel3.AutoSize := True;
 
@@ -164,9 +185,10 @@ begin
   Lab.AnchorParallel(akLeft, 0, Panel10);
   Lab.AnchorParallel(akTop, 0, Panel10);
   Lab.Parent := Panel10;
+
   Panel10.Anchors := [];
   Panel10.AnchorParallel(akBottom, 0, Panel3);
-  Panel10.AnchorToNeighbour(akLeft, 2, ScrDisplayCtrl);
+  Panel10.AnchorToNeighbour(akLeft, 8, Panel12);
   Panel10.AutoSize := True;
 
   TCommonFunctionsLCL.GrowFormHeight(Self);
@@ -177,6 +199,7 @@ begin
   LabelRomBanks.Caption := ' ';
   LabelRamBanks.Caption := ' ';
   ScrDisplayCtrl.SetValues(0);
+  PagingEnabledCtrl.SetValues(0);
 
   Panel4.Hint := 'Frames passed since Spectrum was switched on'
     + LineEnding + '(application start or last hard reset)';
@@ -192,6 +215,10 @@ begin
   ScrDisplayCtrl.Hint := 'Is "shadow" screen (bank 7) mounted'
     + LineEnding + '(interesting on 128K models only)';
   ScrDisplayCtrl.ShowHint := True;
+
+  PagingEnabledCtrl.Hint := 'Is paging enabled'
+    + LineEnding + '(interesting on 128K models only)';
+  PagingEnabledCtrl.ShowHint := True;
 
   FrameGridMemory.Grid.OnEditBreakPoints := @LabelBreakpointsOnClick;
   AfterShow(-1);
@@ -353,6 +380,7 @@ begin
       if Panel9.Enabled xor (FSpectrum.Is128KModel) then begin
         Panel9.Enabled := FSpectrum.Is128KModel;
         ScrDisplayCtrl.Enabled := FSpectrum.Is128KModel;
+        PagingEnabledCtrl.Enabled := FSpectrum.Is128KModel;
       end;
 
       LabelRomBanks.Caption := FSpectrum.Memory.ActiveRomPageNo.ToString;
@@ -362,6 +390,11 @@ begin
       else
         B := 0;
       ScrDisplayCtrl.SetValues(B);
+      if FSpectrum.IsPagingEnabled then
+        B := 1
+      else
+        B := 0;
+      PagingEnabledCtrl.SetValues(B);
 
       FrameGridMemory.AfterStep;
     end;
@@ -372,6 +405,7 @@ begin
   if Panel3.Enabled xor AActive then begin
     Panel3.Enabled := AActive;
     FrameGridMemory.IsActive := AActive;
+    FDebugCPUState.Enabled := AActive;
     AfterStep;
   end;
 end;
