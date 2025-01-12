@@ -21,9 +21,7 @@ type
       TOutputMode = (omMono, omStereoABC);
 
   strict private
-    FRegA: Word;
-    FRegB: Word;
-    FRegC: Word;
+    FRegToneFrequency: array [0..2] of Word; // reg A, B, C
 
     FNoiseWidth: Byte;
     FMixer: Byte;
@@ -59,7 +57,6 @@ type
     NoiseLevel: Integer;
     NoiseGenerator: UInt32;
     NoiseOnCh: array [0..2] of Integer;
-    ToneFrequencyRegs: array [0..2] of PWord;
 
     StartFadingTicks: Int64;
 
@@ -133,12 +130,12 @@ implementation
 
 procedure TSoundAY_3_8912.InitRegPointers();
 begin
-  FRegPointers[0] := @WordRec(FRegA).Lo;
-  FRegPointers[1] := @WordRec(FRegA).Hi;
-  FRegPointers[2] := @WordRec(FRegB).Lo;
-  FRegPointers[3] := @WordRec(FRegB).Hi;
-  FRegPointers[4] := @WordRec(FRegC).Lo;
-  FRegPointers[5] := @WordRec(FRegC).Hi;
+  FRegPointers[0] := @WordRec(FRegToneFrequency[0]).Lo;
+  FRegPointers[1] := @WordRec(FRegToneFrequency[0]).Hi;
+  FRegPointers[2] := @WordRec(FRegToneFrequency[1]).Lo;
+  FRegPointers[3] := @WordRec(FRegToneFrequency[1]).Hi;
+  FRegPointers[4] := @WordRec(FRegToneFrequency[2]).Lo;
+  FRegPointers[5] := @WordRec(FRegToneFrequency[2]).Hi;
   FRegPointers[6] := @FNoiseWidth;
   FRegPointers[7] := @FMixer;
   FRegPointers[8] := @FVolumeA;
@@ -149,10 +146,6 @@ begin
   FRegPointers[13] := @FEnvelopeShape;
   FRegPointers[14] := @FIOPortA;
   FRegPointers[15] := @FReg15;
-
-  ToneFrequencyRegs[0] := @FRegA;
-  ToneFrequencyRegs[1] := @FRegB;
-  ToneFrequencyRegs[2] := @FRegC;
 end;
 
 procedure TSoundAY_3_8912.RecalcOutputChannels;
@@ -174,7 +167,7 @@ begin
   for Ch := 0 to 2 do begin
     NoiseOnCh[Ch] := ((FMixer shr (Ch + 3)) and 1) * $0F;
     if FMixer and (1 shl Ch) = 0 then begin
-      L := (Integer(ToneFrequencyRegs[Ch]^) * 224 + 281) div 563;
+      L := (Integer(FRegToneFrequency[Ch]) * 224 + 281) div 563;
       if L >= 1 then
         OutputChannelsLengths[Ch] := L
       else
@@ -449,6 +442,7 @@ var
   I: Integer;
 begin
   for I := 0 to 2 do begin
+    FRegToneFrequency[I] := 0;
     OutputChannelsLengths[I] := 1;
     OutputChCurrentPositions[I] := 0;
     OutputChannelsVolumes[I] := $0F;
@@ -459,10 +453,6 @@ begin
   NoiseHalfPeriod := 1;
   NoiseGenerator := $1FFFF;
   NoiseLevel := $0F;
-
-  FRegA := 0;
-  FRegB := 0;
-  FRegC := 0;
 
   FNoiseWidth := 0;
   FMixer := $FF;
