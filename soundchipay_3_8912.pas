@@ -18,7 +18,12 @@ type
   TSoundAY_3_8912 = class(TObject)
   public
     type
-      TOutputMode = (omMono, omStereoABC);
+      TOutputMode = (omMono, omStereoABC, omStereoACB);
+
+  strict private
+    class var
+      Vols: array [0..15] of Integer;
+      HalfVols: array [0..15] of Integer;
 
   strict private
     FRegToneFrequency: array [0..2] of Word; // reg A, B, C
@@ -64,6 +69,9 @@ type
     FOnCheckTicks: TFuncTicks;
     FIsStereo: Boolean;
 
+    Vols1: array [0..2, 0..15] of Integer;
+    Vols2: array [0..2, 0..15] of Integer;
+
     procedure InitRegPointers();
 
     procedure ResetEnvelope;
@@ -83,12 +91,6 @@ type
         $FF, $0F, $FF, $0F, $FF, $0F, $1F, $FF,
         $1F, $1F, $1F, $FF, $FF, $0F, $FF, $FF
       );
-
-  strict private
-    class var
-      Vols: array [0..15] of Integer;
-      Vols1: array [0..2, 0..15] of Integer;
-      Vols2: array [0..2, 0..15] of Integer;
 
   private
     class procedure Init; static;
@@ -217,26 +219,48 @@ begin
     N := Trunc(D + 0.5);
     Vols[I] := N; // used in mono output by all channels
 
-    // stereo output (A-B-C)
-    Vols1[0, I] := N; // left stereo channel - register A - full output
-    Vols2[2, I] := N; // right stereo channel - register C - full output
-
     N := Trunc(D / 2.0 + 0.5);
-    Vols1[1, I] := N; // register B - half of volume to each stereo output channel
-    Vols2[1, I] := N;
-
-    Vols1[2, I] := 0; // left stereo channel - register C (no output)
-    Vols2[0, I] := 0; // right stereo channel - register A (no output)
+    HalfVols[I] := N; // used in stereo "middle channel"
 
     D := D / Sqrt2;
   end;
 end;
 
 procedure TSoundAY_3_8912.SetOutputMode(AValue: TOutputMode);
+var
+  I: Integer;
+  N: Integer;
+  M: Integer;
+  R: Integer;
 begin
   if FOutputMode <> AValue then begin
     FOutputMode := AValue;
     FIsStereo := AValue <> TOutputMode.omMono;
+
+    if FIsStereo then begin
+      case AValue of
+        TOutputMode.omStereoABC:
+          R := 2; // right chanel - register C
+      otherwise // TOutputMode.omStereoACB:
+        R := 1; // right chanel - register B
+      end;
+
+      M := 3 - R; // middle channel
+
+      for I := 0 to 15 do begin
+        N := Vols[I];
+        // stereo output (A-B-C or A-C-B)
+        Vols1[0, I] := N; // left stereo channel - register A - full output
+        Vols2[R, I] := N; // right stereo channel - register C - full output
+
+        N := HalfVols[I];
+        Vols1[M, I] := N; // "middle" channel register
+        Vols2[M, I] := N; // - half of volume to each stereo output channel
+
+        Vols1[R, I] := 0; // left stereo channel - register C (no output)
+        Vols2[0, I] := 0; // right stereo channel - register A (no output)
+      end;
+    end;
   end;
 end;
 

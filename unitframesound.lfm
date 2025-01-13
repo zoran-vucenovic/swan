@@ -146,6 +146,7 @@ object FrameSound: TFrameSound
         Items.Strings = (
           'Mono'
           'Stereo (A-B-C)'
+          'Stereo (A-C-B)'
         )
         Style = csDropDownList
         TabOrder = 0
