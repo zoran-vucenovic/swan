@@ -130,10 +130,11 @@ type
 
     FSoundPlayerRatePortAudio: Int64;
     FSoundPlayerRateProcessor: Int64;
-    FBpShift: Integer;
+    FBeepVol: Integer;
 
     procedure StopSoundPlayer; inline;
     procedure UpdateSoundBuffer; inline;
+    procedure UpdateSoundOutputMode;
     procedure UpdateAskForSpeedCorrection;
     procedure SetPaused(AValue: Boolean);
     procedure WriteToScreen(TicksTo: Int32Fast);
@@ -210,7 +211,7 @@ type
     function GetTotalTicks(): Int64;
     function GetCustomRomFiles(out ARomFiles: TStringDynArray): Integer;
     procedure SetCustomRomFiles(const ARomFiles: TStringDynArray);
-    procedure UpdateSoundOutputMode;
+    procedure UpdateBeeperVol;
 
     property RemainingIntPinUp: Integer // for szx file
       read GetRemainingIntPinUp write SetRemainingIntPinUp;
@@ -248,7 +249,7 @@ procedure TSpectrum.UpdateSoundBuffer;
 var
   N, M: Integer;
   P: PByte;
-  Bp: Int16;
+  Bp: Int32;
 
 begin
   if TSoundPlayer.Playing then begin
@@ -257,7 +258,7 @@ begin
       FLatestTickUpdatedSoundBuffer := FLatestTickUpdatedSoundBuffer + N * FSoundPlayerRateProcessor;
 
       Bp := FEar + FMic;
-      Bp := (Bp * TSoundPlayer.Volume) shl FBpShift;
+      Bp := Bp * FBeepVol;
 
       P := TSoundPlayer.SoundBuffer + TSoundPlayer.CurrentPosition;
       M := (TSoundPlayer.BufferLen - TSoundPlayer.CurrentPosition) shr TSoundPlayer.ChNum;
@@ -266,7 +267,7 @@ begin
         if Assigned(FAYSoundChip) then
           FAYSoundChip.Fill(Bp, PInt16(P), M)
         else
-          FillWord(P^, M, Word(Bp));
+          FillWord(P^, M, LongRec(Bp).Lo);
 
         N := N - M;
         TSoundPlayer.CurrentPosition := 0;
@@ -276,7 +277,7 @@ begin
       if Assigned(FAYSoundChip) then
         FAYSoundChip.Fill(Bp, PInt16(P), N)
       else
-        FillWord(P^, N, Word(Bp));
+        FillWord(P^, N, LongRec(Bp).Lo);
 
       TSoundPlayer.CurrentPosition := TSoundPlayer.CurrentPosition + (N shl TSoundPlayer.ChNum);
     end;
@@ -559,11 +560,20 @@ begin
   if Assigned(FAYSoundChip) then begin
     TSoundPlayer.Stereo := FAYOutputMode <> TSoundAY_3_8912.TOutputMode.omMono;
     FAYSoundChip.OutputMode := FAYOutputMode;
-    FBpShift := 4 - TSoundPlayer.ChNum;
   end else begin
     TSoundPlayer.Stereo := False;
-    FBpShift := 1;
   end;
+  UpdateBeeperVol;
+end;
+
+procedure TSpectrum.UpdateBeeperVol;
+begin
+  if Assigned(FAYSoundChip) then
+    FBeepVol := TSoundPlayer.ChNum - 1
+  else
+    FBeepVol := 2;
+
+  FBeepVol := ((Int16.MaxValue * TSoundPlayer.Volume) div (31 * 72)) shr FBeepVol;
 end;
 
 procedure TSpectrum.CheckStartSoundPlayer;
@@ -644,7 +654,7 @@ begin
   SetLength(FCustomRomsFileNames, 0);
   FPagingEnabled := False;
   FSoundMuted := False;
-  FBpShift := 1;
+  FBeepVol := 1;
   FFastLoad := True;
 
   FFormDebug := nil;

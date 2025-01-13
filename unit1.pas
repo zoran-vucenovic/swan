@@ -256,6 +256,7 @@ type
     FDontAskPortAudioPath: Boolean;
     FDummyObj: TObject;
 
+    procedure SetSoundVolume(N: Integer);
     function GetTreeWithToolbarActions: TSwanTreeView;
     procedure FillDefaultToolbarActions(out AToolbarActions: TObjectArray);
     procedure ClearKeyboardAndJoystickState; inline;
@@ -1174,6 +1175,12 @@ begin
   end;
 end;
 
+procedure TForm1.SetSoundVolume(N: Integer);
+begin
+  TSoundPlayer.Volume := N;
+  Spectrum.UpdateBeeperVol;
+end;
+
 function TForm1.GetTreeWithToolbarActions: TSwanTreeView;
 
   function AddNodes(const ARootNode: String; const Arr1: array of TComponent): TTreeNode;
@@ -1672,7 +1679,7 @@ begin
 
     FDontAskPortAudioPath := JObj.Get(cSectionDontAskForPortAudioPath, Integer(0)) <> 0;
   end;
-  TSoundPlayer.Volume := SoundVol;
+  SetSoundVolume(SoundVol);
 end;
 
 procedure TForm1.SaveToConf;
@@ -1969,7 +1976,7 @@ begin
           if OptionsDialog.ShowModal = mrOK then begin
             Spectrum.SetSpectrumColours(FrameColourPalette.LCLColours);
             Spectrum.KeyBoard.LoadFromKeyMappings;
-            TSoundPlayer.Volume := FrameSound.VolLevel;
+            SetSoundVolume(FrameSound.VolLevel);
             FrameJoystickSetup.GetJoystickSetup(JoystickType, AKeys, JoystickEnabled);
             TJoystick.Joystick.SetKeys(AKeys);
             TJoystick.Joystick.Enabled := JoystickEnabled;
@@ -2362,7 +2369,7 @@ begin
     if Sender <> FDummyObj then begin
       AddEventToQueue(@SoundVolumeOnChg);
     end else begin
-      TSoundPlayer.Volume := FSoundVolumeForm.Level;
+      SetSoundVolume(FSoundVolumeForm.Level);
     end;
   end;
 end;

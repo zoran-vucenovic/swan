@@ -94,7 +94,7 @@ type
     class procedure Init; static;
 
   public
-    procedure Fill(const Bp: Int16; P: PInt16; const Len: Integer);
+    procedure Fill(const Bp: Int32; P: PInt16; const Len: Integer);
 
     constructor Create;
     function GetRegValue(): Byte;
@@ -291,7 +291,7 @@ begin
   FEnvelopeAlter := (FEnvelopeShape and %0010) <> 0;
 end;
 
-procedure TSoundAY_3_8912.Fill(const Bp: Int16; P: PInt16; const Len: Integer);
+procedure TSoundAY_3_8912.Fill(const Bp: Int32; P: PInt16; const Len: Integer);
 var
   J, K, Q, L: Integer;
   N: Integer;
