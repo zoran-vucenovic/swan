@@ -24,7 +24,6 @@ type
     Panel1: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
-    Panel4: TPanel;
     Panel5: TPanel;
     Panel6: TPanel;
 
@@ -360,8 +359,6 @@ begin
     Application.QueueAsyncCall(@AfterShow, Data - 1);
   end else begin
     Self.AutoSize := False;
-    Panel3.AnchorParallel(akRight, 0, Self);
-    Panel3.AnchorParallel(akBottom, 0, Self);
     Panel2.AnchorParallel(akRight, 0, Panel3);
     Panel2.AnchorParallel(akBottom, 0, Panel3);
   end;

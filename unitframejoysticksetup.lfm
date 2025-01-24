@@ -49,7 +49,7 @@ object FrameJoystickSetup: TFrameJoystickSetup
       TabOrder = 0
       object Panel2: TPanel
         AnchorSideLeft.Control = Panel3
-        AnchorSideTop.Control = Panel4
+        AnchorSideTop.Control = Label1
         AnchorSideTop.Side = asrBottom
         AnchorSideRight.Side = asrBottom
         Left = 14
@@ -57,36 +57,19 @@ object FrameJoystickSetup: TFrameJoystickSetup
         Top = 32
         Width = 381
         BorderSpacing.Around = 14
-        TabOrder = 1
+        TabOrder = 0
       end
-      object Panel4: TPanel
+      object Label1: TLabel
         AnchorSideLeft.Control = Panel3
         AnchorSideTop.Control = Panel3
-        AnchorSideRight.Control = Panel3
-        AnchorSideRight.Side = asrBottom
-        Left = 0
-        Height = 18
-        Top = 0
-        Width = 395
-        Anchors = [akTop, akLeft, akRight]
-        AutoSize = True
-        BevelOuter = bvNone
-        ClientHeight = 18
-        ClientWidth = 395
-        TabOrder = 0
-        object Label1: TLabel
-          AnchorSideLeft.Control = Panel4
-          AnchorSideTop.Control = Panel4
-          Left = 3
-          Height = 15
-          Top = 3
-          Width = 78
-          BorderSpacing.Left = 3
-          BorderSpacing.Top = 3
-          BorderSpacing.Right = 3
-          Caption = 'Key mappings:'
-          ParentColor = False
-        end
+        Left = 3
+        Height = 15
+        Top = 3
+        Width = 78
+        BorderSpacing.Left = 3
+        BorderSpacing.Top = 3
+        Caption = 'Key mappings:'
+        ParentColor = False
       end
     end
     object Panel5: TPanel
