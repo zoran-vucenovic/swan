@@ -222,7 +222,7 @@ begin
       if FRecentFilesToolButton.DropdownMenu = nil then begin
         FRecentFilesToolButton.DropdownMenu := TPopupMenu.Create(FRecentFilesToolButton);
         FRecentFilesToolButton.DropdownMenu.Name := TCommonFunctions.GlobalObjectNameGenerator(FRecentFilesToolButton.DropdownMenu);
-        FRecentFilesToolButton.DropdownMenu.Images := Self.Images;
+        FRecentFilesToolButton.DropdownMenu.Images := FRecentFilesMenuItem.GetImageList;
       end;
 
       FRecentFilesToolButton.DropdownMenu.Items.Clear;

@@ -1281,6 +1281,7 @@ procedure TForm1.FillDefaultToolbarActions(out AToolbarActions: TObjectArray);
 begin
   InternalFillDefaultToolbarActions([
     MenuItemOpen,
+    MenuItemRecentFiles,
     MenuItemPause,
     MenuItemResetSpectrum,
     MenuItemSpectrumModel,
@@ -1289,6 +1290,8 @@ begin
     MenuItemAutosavingSnapshots,
     MenuItemFastTapeLoading,
     MenuItemShowTapePlayer,
+    MenuItemRewindTape,
+    MenuItemPlayTape,
     MenuItemAllOptions,
     MenuItemAbout
   ]);
