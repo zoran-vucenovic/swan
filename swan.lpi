@@ -64,7 +64,7 @@
           </Other>
         </CompilerOptions>
       </Item>
-      <Item Name="ReleaseQt">
+      <Item Name="ReleaseQt5">
         <MacroValues Count="1">
           <Macro2 Name="LCLWidgetType" Value="qt5"/>
         </MacroValues>
@@ -174,8 +174,8 @@
         </CompilerOptions>
       </Item>
       <SharedMatrixOptions Count="4">
-        <Item1 ID="576288293047" Modes="ReleaseWin64,Release,ReleaseQt,ReleaseGtk2" Value="-XX -CX -Xs -O2"/>
-        <Item2 ID="444597910501" Modes="ReleaseQt" Type="IDEMacro" MacroName="LCLWidgetType" Value="qt5"/>
+        <Item1 ID="576288293047" Modes="ReleaseWin64,Release,ReleaseQt5,ReleaseGtk2" Value="-XX -CX -Xs -O2"/>
+        <Item2 ID="444597910501" Modes="ReleaseQt5" Type="IDEMacro" MacroName="LCLWidgetType" Value="qt5"/>
         <Item3 ID="327698325716" Modes="ReleaseGtk2" Type="IDEMacro" MacroName="LCLWidgetType" Value="gtk2"/>
         <Item4 ID="154215021068" Modes="Debug" Value="-gw3 -gl"/>
       </SharedMatrixOptions>
