@@ -1,5 +1,6 @@
 
 # Swan
+
 ### ZX Spectrum emulator
 For Windows and Linux. Might compile and run on Mac, but not tested.
 
@@ -28,5 +29,6 @@ The executable file swan (swan.exe on Windows) will appear in folder **output/*p
 Predefined build modes in swan project:
 - Release - compile for your current platform (Windows or Linux)
 - ReleaseWin64 - choose this on Windows if you have 32-bit Lazarus and want to compile for 64-bit Windows
-- ReleaseQt - choose this if you want to compile Swan as Qt5 application on Linux in Gtk2 build of Lazarus. Keep in mind that Qt5 build needs libqt5pas library installed (see https://wiki.lazarus.freepascal.org/Qt5_Interface#libqt5pas).
+- ReleaseQt5 - choose this if you want to compile Swan as Qt5 application on Linux in Gtk2 build of Lazarus. Keep in mind that Qt5 build needs libqt5pas library installed (see https://wiki.lazarus.freepascal.org/Qt5_Interface#libqt5pas).
+- ReleaseGtk2 - choose this if you want to compile Swan as Gtk2 application on Linux in Qt build of Lazarus.
 - Debug - this mode is not for building releases, it is used during development only, for debugging.
