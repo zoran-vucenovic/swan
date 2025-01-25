@@ -99,6 +99,41 @@
           </Other>
         </CompilerOptions>
       </Item>
+      <Item Name="ReleaseGtk2">
+        <MacroValues Count="1">
+          <Macro3 Name="LCLWidgetType" Value="gtk2"/>
+        </MacroValues>
+        <CompilerOptions>
+          <Version Value="11"/>
+          <PathDelim Value="\"/>
+          <Target>
+            <Filename Value="$MakeDir($(ProjPath))$MakeDir(output)$MakeDir($(TargetCPU)-$(TargetOS)-$(BuildMode))$MakeExe($NameOnly($(ProjFile)))" ApplyConventions="False"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir)"/>
+            <UnitOutputDirectory Value="$MakeDir($(ProjPath))$MakeDir(output)$MakeDir(lib)$MakeDir($(TargetCPU)-$(TargetOS)-$(BuildMode))"/>
+          </SearchPaths>
+          <CodeGeneration>
+            <Optimizations>
+              <OptimizationLevel Value="0"/>
+            </Optimizations>
+          </CodeGeneration>
+          <Linking>
+            <Debugging>
+              <GenerateDebugInfo Value="False"/>
+              <DebugInfoType Value="dsDwarf3"/>
+            </Debugging>
+            <Options>
+              <Win32>
+                <GraphicApplication Value="True"/>
+              </Win32>
+            </Options>
+          </Linking>
+          <Other>
+            <CustomOptions Value="-dUseCThreads"/>
+          </Other>
+        </CompilerOptions>
+      </Item>
       <Item Name="Debug">
         <CompilerOptions>
           <Version Value="11"/>
@@ -138,10 +173,11 @@
           </Other>
         </CompilerOptions>
       </Item>
-      <SharedMatrixOptions Count="3">
-        <Item1 ID="576288293047" Modes="ReleaseWin64,Release,ReleaseQt" Value="-XX -CX -Xs -O2"/>
+      <SharedMatrixOptions Count="4">
+        <Item1 ID="576288293047" Modes="ReleaseWin64,Release,ReleaseQt,ReleaseGtk2" Value="-XX -CX -Xs -O2"/>
         <Item2 ID="444597910501" Modes="ReleaseQt" Type="IDEMacro" MacroName="LCLWidgetType" Value="qt5"/>
-        <Item3 ID="154215021068" Modes="Debug" Value="-gw3 -gl"/>
+        <Item3 ID="327698325716" Modes="ReleaseGtk2" Type="IDEMacro" MacroName="LCLWidgetType" Value="gtk2"/>
+        <Item4 ID="154215021068" Modes="Debug" Value="-gw3 -gl"/>
       </SharedMatrixOptions>
     </BuildModes>
     <PublishOptions>
