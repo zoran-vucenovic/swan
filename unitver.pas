@@ -108,16 +108,7 @@ class function TVersion.Load: Boolean;
     if FVersionRevision <> 0 then
       Result := Result + '.' + FVersionRevision.ToString;
 
-    // Plan:
-    // - in alpha stage - keep versions 0.1.x - 0.5.x (probably just stick to 0.1.x)
-    // - in beta stage - versions 0.6.x - 0.9.x (probably just 0.9.x)
-    // If we change this plan, change this code.
-    if FVersionMajor < 1 then begin
-      if FVersionMinor <= 5 then
-        Result := Result + ' alpha'
-      else if FVersionMinor <= 9 then
-        Result := Result + ' beta';
-    end;
+    { For 0.9.8 release preparation, "beta" specification removed from version string }
     // and never display build number (FPV[3]).
   end;
 
