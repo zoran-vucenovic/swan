@@ -43,7 +43,6 @@ type
 
     function LoadCswData(const Stream: TStream; const L: Integer): Boolean;
   protected
-    function GetTicksNextEdge: Int64; override;
     function IsReallyPlayableBlock: Boolean; override;
 
   public
@@ -282,11 +281,6 @@ begin
     end;
 
   end;
-end;
-
-function TCswBlock.GetTicksNextEdge: Int64;
-begin
-  Result := TicksNeeded;
 end;
 
 function TCswBlock.IsReallyPlayableBlock: Boolean;
