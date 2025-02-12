@@ -163,6 +163,10 @@ type
     FCustomRomsFileNames: TStringDynArray;
     FLateTimings: Boolean;
     FFastLoad: Boolean;
+    HalfRowsCopy: TSpectrumKeyBoard.THalfRows;
+    JoystickStateCopy: Byte;
+    FKeyboardStateWaiting: Boolean;
+    FKeyboardStateWaitTicks: Integer;
 
     function GetRemainingIntPinUp: Integer;
     procedure SetRemainingIntPinUp(AValue: Integer);
@@ -197,6 +201,7 @@ type
     procedure SetEarFromTape(AValue: Byte);
     procedure CheckStartSoundPlayer;
     procedure StepToInstructionEndIfNeeded;
+    procedure ClearKeyboardAndJoystickState;
 
     function GetDebugger: TAbstractDebugger;
     procedure StopRunning;
@@ -237,6 +242,8 @@ type
     property AYOutputMode: TSoundAY_3_8912.TOutputMode read FAYOutputMode write SetAYOutputMode;
     property IsPagingEnabled: Boolean read FPagingEnabled write FPagingEnabled;
     property CustomRomsMounted: Boolean read FCustomRomsMounted;
+    property KeyboardStateWaitTicks: Integer read FKeyboardStateWaitTicks write FKeyboardStateWaitTicks;
+    property KeyboardStateWaiting: Boolean read FKeyboardStateWaiting write FKeyboardStateWaiting;
     property OnBreakpoint: TThreadMethod write FOnBreakpoint;
     class property OnGetDebuggerClass: TFunctionGetDebuggerClass write FOnGetDebuggerClass;
   end;
@@ -437,9 +444,9 @@ begin
     B := %00011111;
 
     Ba := WordRec(FProcessor.AddressBus).Hi;
-    for I := Low(KeyBoard.HalfRows) to High(KeyBoard.HalfRows) do
+    for I := Low(HalfRowsCopy) to High(HalfRowsCopy) do
       if (Ba shr I) and 1 = 0 then
-        B := B and KeyBoard.HalfRows[I];
+        B := B and HalfRowsCopy[I];
 
     if Assigned(FTapePlayer) then
       FTapePlayer.GetNextPulse();
@@ -459,7 +466,7 @@ begin
           or ((FProcessor.AddressBus and $FF = $7F) and (TJoystick.Joystick.JoystickType = TJoystick.TJoystickType.jtFuller))
       )
     then begin
-      FProcessor.DataBus := TJoystick.Joystick.State;
+      FProcessor.DataBus := JoystickStateCopy;
     end else if Assigned(FAYSoundChip)
         and (FProcessor.AddressBus and $C002 = $C000)
     then begin
@@ -609,6 +616,15 @@ begin
   end;
 end;
 
+procedure TSpectrum.ClearKeyboardAndJoystickState;
+begin
+  Keyboard.ClearKeyboard;
+  TJoystick.Joystick.ResetState;
+  Move(Keyboard.HalfRows, HalfRowsCopy, SizeOf(TSpectrumKeyBoard.THalfRows));
+  JoystickStateCopy := TJoystick.Joystick.State;
+  FKeyboardStateWaiting := False;
+end;
+
 function TSpectrum.GetDebugger: TAbstractDebugger;
 begin
   Result := FDebugger;
@@ -621,8 +637,7 @@ begin
              and (FProcessor.OnNeedWriteScreen = @WriteToScreen)
      )
   then begin
-    KeyBoard.ClearKeyboard;
-    TJoystick.Joystick.ResetState;
+    ClearKeyboardAndJoystickState;
 
     AskForSpeedCorrection := not AskForSpeedCorrection;
     if AskForSpeedCorrection then begin
@@ -700,6 +715,7 @@ begin
   FSumTicks := 0;
   FFrameCount := 0;
   FSumFrameCount := 0;
+  FKeyboardStateWaitTicks := -1;
   ResetSpectrum;
 
   FPaused := False;
@@ -1030,8 +1046,7 @@ begin
   FSumFrameCount := GetTotalFrameCount;
   FFrameCount := 0;
   InitTimes;
-  KeyBoard.ClearKeyboard;
-  TJoystick.Joystick.ResetState;
+  ClearKeyboardAndJoystickState;
 
   if Assigned(FAYSoundChip) then begin
     FAYSoundChip.Reset();
@@ -1137,6 +1152,15 @@ begin
       CheckFastLoad;
   end;
   FProcessor.DoProcess;
+
+  if FKeyboardStateWaiting then begin
+    if FProcessor.TStatesInCurrentFrame >= FKeyboardStateWaitTicks then begin
+      Move(Keyboard.HalfRows, HalfRowsCopy, SizeOf(TSpectrumKeyBoard.THalfRows));
+      JoystickStateCopy := TJoystick.Joystick.State;
+      FKeyboardStateWaiting := False;
+      FKeyboardStateWaitTicks := -1;
+    end;
+  end;
 
   if FIntPinUpCount <> 0 then begin
     if FProcessor.TStatesInCurrentFrame >= FIntPinUpCount then begin

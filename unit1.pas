@@ -415,13 +415,13 @@ implementation
 procedure TForm1.ClearKeyboardAndJoystickState;
 begin
   KeyEventCount := 0;
-  Spectrum.KeyBoard.ClearKeyboard;
-  TJoystick.Joystick.ResetState;
+  Spectrum.ClearKeyboardAndJoystickState;
 end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   FDummyObj := TCommonSpectrum.DummyObj;
+  TCommonFunctions.CallRandomizeIfNotCalledAlready();
   TFrameToobarOptions.OnGetDefToolbarActions := @FillDefaultToolbarActions;
   FTreeWithToolbarActions := nil;
   SetLength(FToolbarActions, 0);
@@ -3086,6 +3086,10 @@ begin
       end;
 
       Inc(I);
+      if Spectrum.KeyboardStateWaitTicks < 0 then begin
+        Spectrum.KeyboardStateWaitTicks := Random(Spectrum.GetProcessor.FrameTicks);
+        Spectrum.KeyboardStateWaiting := True;
+      end;
     end;
     KeyEventCount := 0;
   end;
