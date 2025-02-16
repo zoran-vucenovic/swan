@@ -781,9 +781,6 @@ const
   SoundPlayerRatePortAudio128 = 7; // in 128K spectrum,
   SoundPlayerRateProcessor128 = 563; //  it is 44100 / 3546900 = 7 / 563
 
-  HoldInterruptPinTicks48 = 32; // 48K and +3 models hold interrupt for 32 t-states,
-  HoldInterruptPinTicks128 = 36; // whereas 128K holds it for 36 t-states
-
 var
   RomStream: TStream;
   NewRamSize: Word;
@@ -808,7 +805,6 @@ begin
   TicksPerScanLine := TicksPerScanLine128;
   RomsCount := 1;
   FProcessor.FrameTicks := FrameTicks128;
-  HoldInterruptPinTicks := HoldInterruptPinTicks48; // 48K and +3
 
   try
     case ASpectrumModel of
@@ -831,7 +827,6 @@ begin
 
       sm128K, smPlus2:
         begin
-          HoldInterruptPinTicks := HoldInterruptPinTicks128;
           FModelWithHALbug := True;
           RomsCount := 2;
         end;
@@ -1418,17 +1413,25 @@ const
   CentralScreenStart48 = 14335;
   CentralScreenStart128 = 14361;
 
+  HoldInterruptPinTicks48 = 32; // 48K and +3 models hold interrupt for 32 t-states,
+  HoldInterruptPinTicks128 = 36; // whereas 128K holds it for 36 t-states
+
 begin
   if FLateTimings xor AValue then begin
     FLateTimings := AValue;
 
-    if FIs128KModel then
-      CentralScreenStart := CentralScreenStart128
-    else
+    if FIs128KModel then begin
+      CentralScreenStart := CentralScreenStart128;
+      HoldInterruptPinTicks := HoldInterruptPinTicks128;
+    end else begin
       CentralScreenStart := CentralScreenStart48;
+      HoldInterruptPinTicks := HoldInterruptPinTicks48; // 48K and +3
+    end;
 
-    if AValue then
+    if AValue then begin
       CentralScreenStart := CentralScreenStart + 1;
+      HoldInterruptPinTicks := HoldInterruptPinTicks + 1;
+    end;
 
     ScreenStart := CentralScreenStart - TopBorder * TicksPerScanLine - 24; //6247
     ScreenEnd := ScreenStart + (WholeScreenHeight - 1) * TicksPerScanLine + WholeScreenWidth div 2 - 1; // 65334
