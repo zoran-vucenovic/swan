@@ -278,11 +278,6 @@ begin
   if L = 0 then
     Exit(S);
 
-  if Style = TTextLineBreakStyle.tlbsLF then
-    C := #10
-  else
-    C := #13;
-
   J := 0;
   I := 0;
   if Style = TTextLineBreakStyle.tlbsCRLF then begin
@@ -298,22 +293,26 @@ begin
       end;
 
       case S[I] of
-        #13:
+        #13, #10:
           begin
             Result[J] := #13;
             inc(J);
             Result[J] := #10;
-            if (I < L) and (S[I + 1] = #10) then
-              Inc(I);
+            if S[I] = #13 then
+              if (I < L) and (S[I + 1] = #10) then
+                Inc(I);
           end;
-        #10:
-          Result[J] := C;
       otherwise
         Result[J] := S[I];
       end;
     end;
 
   end else begin
+    if Style = TTextLineBreakStyle.tlbsLF then
+      C := #10
+    else
+      C := #13;
+
     SetLength(Result, L);
 
     while I < L do begin
