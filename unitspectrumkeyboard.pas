@@ -21,7 +21,13 @@ type
 
   strict private
     type
-      TAKeyMaps = specialize TFPGList<Word>;
+      TSpectrumKeyPressCount = array[THalfRowIndex, TKeyIndex] of Byte;
+
+      TAKeyMaps = class(specialize TFPGList<Word>)
+      public
+        IsPcKeyPressed: Boolean;
+        constructor Create;
+      end;
 
       TKeyMapper = class(specialize TFPGMapObject<Word, TAKeyMaps>)
       public
@@ -35,6 +41,7 @@ type
     FExtendedKeySupport: Boolean;
     FHalfRows: THalfRows;
     FKeyMapper: TKeyMapper;
+    FSpectrumKeyPressCount: TSpectrumKeyPressCount;
 
     procedure MapDefaultKeys;
 
@@ -75,13 +82,13 @@ var
 begin
   WR.Hi := HalfRowIndex;
   WR.Lo := KeyIndex;
-  Found := False;
   if Find(AKey, I) then begin
     AKM := Data[I];
     Found := AKM.IndexOf(W) >= 0;
   end else begin
     AKM := TAKeyMaps.Create;
     Add(AKey, AKM);
+    Found := False;
   end;
   if not Found then begin
     AKM.Add(W);
@@ -162,8 +169,10 @@ procedure TSpectrumKeyBoard.MapDefaultKeys;
   begin
     if Length(WA) = 5 then begin
       for I := 0 to High(WA) do begin
-        if FKeyMapper.Find(WA[I], J) then
+        if FKeyMapper.Find(WA[I], J) then begin
           FKeyMapper.Data[J].Clear;
+          FKeyMapper.Data[J].IsPcKeyPressed := False;
+        end;
         FKeyMapper.MapKey(WA[I], HalfRowIndex, I);
       end;
     end;
@@ -277,8 +286,8 @@ end;
 
 class operator TSpectrumKeyBoard.Initialize(var X: TSpectrumKeyBoard);
 begin
-  X.ClearKeyboard;
   X.FKeyMapper := TKeyMapper.Create;
+  X.ClearKeyboard;
   X.FExtendedKeySupport := False;
 
   X.MapDefaultKeys;
@@ -293,21 +302,36 @@ end;
 procedure TSpectrumKeyBoard.ClearKeyboard;
 var
   I: Integer;
+  J: Integer;
 begin
-  for I := Low(FHalfRows) to High(FHalfRows) do
+  for I := Low(FHalfRows) to High(FHalfRows) do begin
+    for J := Low(TKeyIndex) to High(TKeyIndex) do
+      FSpectrumKeyPressCount[I, J] := 0;
     FHalfRows[I] := %00011111;
+  end;
+
+  for I := 0 to FKeyMapper.Count - 1 do
+    FKeyMapper.Data[I].IsPcKeyPressed := False;
 end;
 
 procedure TSpectrumKeyBoard.SetKeyState(const HalfRowIndex: THalfRowIndex;
   const KeyIndex: TKeyIndex; const IsDown: Boolean);
 var
-  B: Byte;
+  P: PByte;
 begin
-  B := 1 shl KeyIndex;
-  if IsDown then
-    FHalfRows[HalfRowIndex] := FHalfRows[HalfRowIndex] and (not B)
-  else
-    FHalfRows[HalfRowIndex] := FHalfRows[HalfRowIndex] or B;
+  P := @FSpectrumKeyPressCount[HalfRowIndex, KeyIndex];
+
+  if IsDown then begin
+    Inc(P^);
+    FHalfRows[HalfRowIndex] := FHalfRows[HalfRowIndex] and (not (1 shl KeyIndex));
+  end else begin
+    if P^ > 0 then begin
+      Dec(P^);
+      if P^ = 0 then begin
+        FHalfRows[HalfRowIndex] := FHalfRows[HalfRowIndex] or (1 shl KeyIndex);
+      end;
+    end;
+  end;
 end;
 
 function TSpectrumKeyBoard.CheckKeyMap(const AKey: Word): Integer;
@@ -323,10 +347,22 @@ var
   WR: WordRec absolute W;
 begin
   AKM := FKeyMapper.Data[I];
-  for I := 0 to AKM.Count - 1 do begin
-    W := AKM.Items[I];
-    SetKeyState(WR.Hi, WR.Lo, IsDown);
+
+  if IsDown xor AKM.IsPcKeyPressed then begin
+    AKM.IsPcKeyPressed := IsDown;
+    for I := 0 to AKM.Count - 1 do begin
+      W := AKM.Items[I];
+      SetKeyState(WR.Hi, WR.Lo, IsDown);
+    end;
   end;
+end;
+
+{ TSpectrumKeyBoard.TAKeyMaps }
+
+constructor TSpectrumKeyBoard.TAKeyMaps.Create;
+begin
+  inherited Create;
+  IsPcKeyPressed := False;
 end;
 
 end.

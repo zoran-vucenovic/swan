@@ -27,6 +27,7 @@ type
       TSpectrumKeyMaps = array [TJoystickType.jtInterface_II_left..TJoystickType.jtCursor] of TSpectrumKeyMap;
       TJoystickMap = array [TJoystickDirection] of Byte;
       TJoystickMaps = array [TJoystickType.jtKempston..TJoystickType.jtFuller] of TJoystickMap;
+      TJoystickDirectionPressed = array [TJoystickDirection] of Boolean;
 
     const
       cSection0 = 'joysticks';
@@ -57,6 +58,7 @@ type
     FJoystickType: TJoystickType;
     FKeys: TJoystickDirectionsKeys;
     FEnabled: Boolean;
+    FJoystickDirectionPressed: TJoystickDirectionPressed;
 
     procedure SetEnabled(AValue: Boolean);
     function GetCurrentJoystickTypeAsString: String;
@@ -332,22 +334,26 @@ var
   WR: WordRec absolute W;
 begin
   JD := TJoystickDirection(I);
-  case FJoystickType of
-    TJoystickType.jtKempston, TJoystickType.jtFuller:
-      begin
-        B := FJoystickDirectionMap[JD];
+  if IsDown xor FJoystickDirectionPressed[JD] then begin
+    case FJoystickType of
+      TJoystickType.jtKempston, TJoystickType.jtFuller:
+        begin
+          B := FJoystickDirectionMap[JD];
 
-        if IsDown xor (FJoystickType = TJoystickType.jtFuller) then
-          FState := FState or B
-        else
-          FState := FState and (not B);
+          if IsDown xor (FJoystickType = TJoystickType.jtFuller) then
+            FState := FState or B
+          else
+            FState := FState and (not B);
 
-      end;
+        end;
 
-  otherwise
-    // other joystick types map to keyboard.
-    W := FSpectrumKeyMap[JD];
-    AKeyBoard.SetKeyState(TSpectrumKeyBoard.THalfRowIndex(WR.Hi), TSpectrumKeyBoard.TKeyIndex(WR.Lo), IsDown);
+    otherwise
+      // other joystick types map to keyboard.
+      W := FSpectrumKeyMap[JD];
+      AKeyBoard.SetKeyState(TSpectrumKeyBoard.THalfRowIndex(WR.Hi), TSpectrumKeyBoard.TKeyIndex(WR.Lo), IsDown);
+    end;
+
+    FJoystickDirectionPressed[JD] := IsDown;
   end;
 
 end;
@@ -374,6 +380,7 @@ begin
     FState := 0
   else
     FState := $FF;
+  FJoystickDirectionPressed := Default(TJoystickDirectionPressed);
 end;
 
 class function TJoystick.JoystickTypeToString(AJoystickType: TJoystickType
