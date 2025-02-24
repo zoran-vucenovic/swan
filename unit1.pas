@@ -3088,8 +3088,8 @@ begin
       Inc(I);
       if Spectrum.KeyboardStateWaitTicks < 0 then begin
         Spectrum.KeyboardStateWaitTicks := Random(Spectrum.GetProcessor.FrameTicks);
-        Spectrum.KeyboardStateWaiting := True;
       end;
+      Spectrum.KeyboardStateWaiting := True;
     end;
     KeyEventCount := 0;
   end;
