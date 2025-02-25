@@ -434,9 +434,6 @@ begin
     Szx.State.AyState.ActiveRegisterNumber := AyRec.CurrentRegister;
     Szx.State.HasAy := True;
 
-    if BlockSize > SizeOf(AyRec) then
-      Stream.Seek(BlockSize - SizeOf(AyRec), TSeekOrigin.soCurrent);
-
     Result := True;
   end;
 end;
