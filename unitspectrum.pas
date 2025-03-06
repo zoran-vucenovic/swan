@@ -60,6 +60,15 @@ type
       function GetTicksNextEdge: Int64; virtual; abstract;
     end;
 
+    TAbstractTapeRecorder = class abstract (TObject)
+    public
+      procedure WritePulses(); virtual; abstract;
+      procedure SetSpectrum(ASpectrum: TSpectrum); virtual; abstract;
+      procedure StartRecording(); virtual; abstract;
+      function StopRecording(AStream: TStream): Boolean; virtual; abstract;
+      class function GetDefExtension: RawByteString; virtual; abstract;
+    end;
+
   public const
     NormalSpeed = 512;
     MaxSpeed = NormalSpeed div 16;
@@ -96,6 +105,7 @@ type
     FFormDebug: IFormDebug;
     FDebugger: TAbstractDebugger;
     FTapePlayer: TAbstractTapePlayer;
+    FTapeRecorder: TAbstractTapeRecorder;
     FAYSoundChip: TSoundAY_3_8912;
     FAYOutputMode: TSoundAY_3_8912.TOutputMode;
 
@@ -195,6 +205,7 @@ type
     procedure AttachFormDebug(AFormDebug: IFormDebug);
     procedure DettachFormDebug;
     procedure SetTapePlayer(ATapePlayer: TAbstractTapePlayer);
+    procedure SetTapeRecorder(ATapeRecorder: TAbstractTapeRecorder);
     procedure SetSpectrumColours(const Colours: TLCLColourMap);
     procedure GetSpectrumColours(out Colours: TLCLColourMap);
     procedure SetFastLoading(const AValue: Boolean);
@@ -232,6 +243,7 @@ type
     property Paused: Boolean read FPaused write SetPaused;
     property SoundMuted: Boolean read FSoundMuted write SetSoundMuted;
     property InternalEar: Byte read FInternalEar write SetInternalEar;
+    property Mic: Byte read FMic;
     property FlashState: Byte read FFlashState write FFlashState;
     property SpectrumModel: TSpectrumModel read FSpectrumModel;
     property BkpSpectrumModel: TSpectrumModel read FBkpSpectrumModel write FBkpSpectrumModel;
@@ -514,6 +526,9 @@ begin
       FCodedBorderColour := Aux;
       SpectrumColoursBGRA.BorderColour2 := SpectrumColoursBGRA.BGRAColours[False, Aux];
     end;
+
+    if Assigned(FTapeRecorder) then
+      FTapeRecorder.WritePulses();
   end;
 
   if FProcessor.AddressBus and $8002 = 0 then begin
@@ -964,6 +979,19 @@ begin
   if ATapePlayer <> FTapePlayer then begin
     FTapePlayer := ATapePlayer;
     UpdateAskForSpeedCorrection;
+  end;
+end;
+
+procedure TSpectrum.SetTapeRecorder(ATapeRecorder: TAbstractTapeRecorder);
+begin
+  if ATapeRecorder <> FTapeRecorder then begin
+    if Assigned(FTapeRecorder) then
+      FTapeRecorder.SetSpectrum(nil);
+
+    if Assigned(ATapeRecorder) then
+      ATapeRecorder.SetSpectrum(Self);
+
+    FTapeRecorder := ATapeRecorder;
   end;
 end;
 

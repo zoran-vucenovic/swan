@@ -21,7 +21,7 @@ uses
   UnitCommon, UnitCommonSpectrum, SnapshotZ80, SnapshotSNA, UnitFileZip,
   UnitRomPaths, UnitSwanToolbar, UnitFormChooseString, UnitDlgStartAdress,
   UnitDebugger, UnitSwanTreeView, UnitFrameToolbarOptions, SoundChipAY_3_8912,
-  UnitFrameTapeOptions;
+  UnitFrameTapeOptions, UnitSaveCSW;
 
 // On Linux, bgra drawing directly to PaintBox in its OnPaint event seems to be
 // extremly slow. However, we get better time when we have an auxiliary bitmap
@@ -39,6 +39,8 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionStopRecording: TAction;
+    ActionStartRecordingCsw: TAction;
     ActionToolbar: TAction;
     ActionLoadBinaryFile: TAction;
     ActionShowHideToolbar: TAction;
@@ -94,6 +96,8 @@ type
     LabelModel: TLabel;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
+    MenuItemStartRecordingCsw: TMenuItem;
+    MenuItem4: TMenuItem;
     MenuItemToolbar: TMenuItem;
     MenuItemKeyMappings: TMenuItem;
     MenuItemJoystick: TMenuItem;
@@ -164,6 +168,7 @@ type
     Separator3: TMenuItem;
     Separator4: TMenuItem;
     Separator5: TMenuItem;
+    Separator6: TMenuItem;
     ToolBar1: TToolBar;
     ToolButton1: TToolButton;
     procedure ActionAboutExecute(Sender: TObject);
@@ -213,7 +218,9 @@ type
     procedure ActionSizeIncreaseExecute(Sender: TObject);
     procedure ActionSpeedDecreaseExecute(Sender: TObject);
     procedure ActionSpeedIncreaseExecute(Sender: TObject);
+    procedure ActionStartRecordingCswExecute(Sender: TObject);
     procedure ActionStopExecute(Sender: TObject);
+    procedure ActionStopRecordingExecute(Sender: TObject);
     procedure ActionToolbarExecute(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -273,6 +280,7 @@ type
     procedure UpdateCheckLateTimings;
     procedure UpdateCheckShowKeyboard;
     procedure UpdateSoundControls;
+    procedure UpdateTapeRecordingActionsEnabled;
     procedure LoadFromConf;
     procedure SaveToConf;
     procedure SetSnapshotHistoryEnabled(const B: Boolean);
@@ -284,6 +292,7 @@ type
     procedure ReleaseShifts(Sender: TObject);
     procedure DoOnKeyDown(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
     procedure DoOnKeyUp(Sender: TObject; var Key: Word; {%H-}Shift: TShiftState);
+
   strict private
     type
       TScreenSizeFactor = 1..4;
@@ -334,6 +343,7 @@ type
 
     FormDebug: TFormDebug;
     TapePlayer: TTapePlayer;
+    TapeRecorder: TSpectrum.TAbstractTapeRecorder;
     FWriteScreenEachFrame: Boolean;
     FFastLoad: Boolean;
     FSoundVolumeForm: TFormSoundVolume;
@@ -358,6 +368,7 @@ type
     {$endif}
     procedure PaintBmp(Sender: TObject);
     procedure DoDetachDebugger(Sender: TObject);
+    function ChooseSaveFilePath(): Boolean;
     procedure SaveSnapshot(SnapshotClass: TSnapshotFileClass);
     procedure SoundVolumeOnChg(Sender: TObject);
     procedure SoundVolumeAfterShow(Data: PtrInt);
@@ -371,6 +382,7 @@ type
     procedure TapeBrowserAttachTape;
     procedure EventTapePlayerSelectBlock;
     function TapePlayerOnSelectBlock(const ASelections: TTapePlayer.TSelections): Boolean;
+    procedure StopRecording(AskSaveFile: Boolean);
     procedure GetAcceptableExtensions(const SpectrumFileKinds: TSpectrumFileKinds; const IncludeZip: Boolean; out Extensions: TStringDynArray);
     procedure LoadAsk(const SpectrumFileKinds: TSpectrumFileKinds);
     procedure DoLoad(const SpectrumFileKinds: TSpectrumFileKinds; ASourceFile: String);
@@ -422,6 +434,7 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   FDummyObj := TCommonSpectrum.DummyObj;
   TCommonFunctions.CallRandomizeIfNotCalledAlready();
+  TapeRecorder := nil;
   TFrameToobarOptions.OnGetDefToolbarActions := @FillDefaultToolbarActions;
   FTreeWithToolbarActions := nil;
   SetLength(FToolbarActions, 0);
@@ -494,6 +507,7 @@ begin
   DropFiles := nil;
   SetLength(FSelections, 0);
   DestroySpectrum;
+  UpdateTapeRecordingActionsEnabled;
   Spectrum := TSpectrum.Create;
   ScreenSizeFactor := 1;
   Spectrum.OnChangeModel := @SpectrumOnChangeModel;
@@ -892,12 +906,18 @@ begin
 end;
 
 procedure TForm1.ActionPlayExecute(Sender: TObject);
+const
+  MsgRecording: RawByteString = 'Tape recorder is running.'
+    + LineEnding + 'Stop it before starting tape player.';
 begin
   if Assigned(TapePlayer) then begin
     if Sender <> FDummyObj then
       AddEventToQueue(@ActionPlayExecute)
     else begin
-      TapePlayer.Continue();
+      if Assigned(TapeRecorder) then begin
+        MessageDlg(MsgRecording, mtWarning, [mbClose], 0);
+      end else
+        TapePlayer.Continue();
     end;
   end;
 end;
@@ -1049,6 +1069,29 @@ begin
   end;
 end;
 
+procedure TForm1.ActionStartRecordingCswExecute(Sender: TObject);
+const
+  MsgRecording: RawByteString = 'The tape is already being recorded.';
+  MsgTapePlaying: RawByteString = 'The tape is playing.'
+                  + LineEnding + 'Stop the tape before starting recording.';
+
+begin
+  if Sender <> FDummyObj then
+    AddEventToQueue(@ActionStartRecordingCswExecute)
+  else begin
+    if Assigned(TapeRecorder) then begin
+      MessageDlg(MsgRecording, mtWarning, [mbClose], 0);
+    end else if Assigned(TapePlayer) and TapePlayer.IsPlaying then begin
+      MessageDlg(MsgTapePlaying, mtWarning, [mbClose], 0);
+    end else begin
+      TapeRecorder := TSaveCsw.Create;
+      Spectrum.SetTapeRecorder(TapeRecorder);
+      TapeRecorder.StartRecording();
+      UpdateTapeRecordingActionsEnabled;
+    end;
+  end;
+end;
+
 procedure TForm1.ActionStopExecute(Sender: TObject);
 begin
   if Assigned(TapePlayer) then begin
@@ -1057,6 +1100,15 @@ begin
     else begin
       TapePlayer.StopPlaying();
     end;
+  end;
+end;
+
+procedure TForm1.ActionStopRecordingExecute(Sender: TObject);
+begin
+  if Sender <> FDummyObj then
+    AddEventToQueue(@ActionStopRecordingExecute)
+  else begin
+    StopRecording(True);
   end;
 end;
 
@@ -1489,6 +1541,12 @@ begin
   ToolButton1.Enabled := SoundAllowed;
   ToolBar1.Enabled := SoundAllowed and (FSoundVolumeForm = nil);
   ToolButton1.Update;
+end;
+
+procedure TForm1.UpdateTapeRecordingActionsEnabled;
+begin
+  ActionStopRecording.Enabled := Assigned(Spectrum) and Assigned(TapeRecorder);
+  ActionStartRecordingCsw.Enabled := Assigned(Spectrum) and (TapeRecorder = nil);
 end;
 
 procedure TForm1.LoadFromConf;
@@ -2261,52 +2319,59 @@ begin
   FormDebug := nil;
 end;
 
-procedure TForm1.SaveSnapshot(SnapshotClass: TSnapshotFileClass);
+function TForm1.ChooseSaveFilePath(): Boolean;
+const
+  SConfirmOverwrite: String =
+    'The file "%s"' + LineEnding
+    + 'already exists. Are you sure you want to overwrite this file?';
 
-  function ChooseSaveFilePath(): Boolean;
-  const
-    SConfirmOverwrite: String =
-      'The file "%s"' + LineEnding
-      + 'already exists. Are you sure you want to overwrite this file?';
+var
+  MR: TModalResult;
+  S: RawByteString;
+  LastFilePath: RawByteString;
 
-  var
-    MR: TModalResult;
-  begin
-    repeat
-      SaveDialog1.FileName := '';
-
-      if not SaveDialog1.Execute then
-        Break;
-
-      if not FileExists(SaveDialog1.FileName) then
-        Exit(True);
-
-      MR := QuestionDlg('',
-        Format(SConfirmOverwrite, [SaveDialog1.FileName]),
-        mtConfirmation, [
-          mrNo, '&No, choose another', 'IsDefault',
-          mrYes, '&Yes, overwrite',
-          mrCancel, '&Cancel', 'IsCancel'
-          ], 0
-        );
-
-      if MR = mrYes then
-        Exit(True);
-
-      if MR <> mrNo then
-        Break;
-
-    until False;
-
-    Result := False;
+begin
+  LastFilePath := FRecentFiles.GetLastFilePath;
+  if LastFilePath <> '' then begin
+    S := ExtractFilePath(LastFilePath);
+    if DirectoryExists(S) then
+      SaveDialog1.InitialDir := S;
   end;
 
+  repeat
+    SaveDialog1.FileName := '';
+
+    if not SaveDialog1.Execute then
+      Break;
+
+    if not FileExists(SaveDialog1.FileName) then
+      Exit(True);
+
+    MR := QuestionDlg('',
+      Format(SConfirmOverwrite, [SaveDialog1.FileName]),
+      mtConfirmation, [
+        mrNo, '&No, choose another', 'IsDefault',
+        mrYes, '&Yes, overwrite',
+        mrCancel, '&Cancel', 'IsCancel'
+        ], 0
+      );
+
+    if MR = mrYes then
+      Exit(True);
+
+    if MR <> mrNo then
+      Break;
+
+  until False;
+
+  Result := False;
+end;
+
+procedure TForm1.SaveSnapshot(SnapshotClass: TSnapshotFileClass);
 var
   FileSnapshot: TSnapshotFile;
   WasPaused: Boolean;
-  S: RawByteString;
   Extension: String;
-  LastFilePath: RawByteString;
   Saved: Boolean;
   ErrMsg: String;
 
@@ -2324,13 +2389,6 @@ begin
         SnapshotClass.GetDefaultExtension
         + '|*' + Extension
         + '|all files|' + '*';
-
-      LastFilePath := FRecentFiles.GetLastFilePath;
-      if LastFilePath <> '' then begin
-        S := ExtractFilePath(LastFilePath);
-        if DirectoryExists(S) then
-          SaveDialog1.InitialDir := S;
-      end;
 
       if ChooseSaveFilePath() then begin
         ErrMsg := '';
@@ -2516,6 +2574,74 @@ begin
   end;
   if not Result then
     SetLength(FSelections, 0);
+end;
+
+procedure TForm1.StopRecording(AskSaveFile: Boolean);
+var
+  WasPaused: Boolean;
+  Extension: String;
+  Saved: Boolean;
+  ErrMsg: String;
+  Stream: TStream;
+begin
+  if Assigned(Spectrum) then begin
+
+    if Assigned(TapeRecorder) and Spectrum.IsRunning and AskSaveFile then begin
+      WasPaused := Spectrum.Paused;
+      try
+        Spectrum.Paused := True;
+        Extension := TapeRecorder.GetDefExtension;
+        if not Extension.StartsWith(ExtensionSeparator, True) then
+          Extension := ExtensionSeparator + Extension;
+
+        SaveDialog1.DefaultExt := Extension;
+        SaveDialog1.Filter :=
+          TapeRecorder.GetDefExtension
+          + '|*' + Extension
+          + '|all files|' + '*';
+
+        Saved := False;
+        if ChooseSaveFilePath() then begin
+          ErrMsg := '';
+
+          try
+            Stream := TFileStream.Create(SaveDialog1.FileName, fmCreate);
+            try
+              Saved := TapeRecorder.StopRecording(Stream);
+            finally
+              Stream.Free;
+            end;
+
+          except
+            on E: Exception do
+              ErrMsg := E.Message;
+          end;
+
+          if ErrMsg = '' then begin
+            if Saved then begin
+              FRecentFiles.Add(SaveDialog1.FileName);
+              UpdateRecentFiles;
+            end else begin
+              ErrMsg := 'Saving failed.' + LineEnding + 'Something went wrong...';
+            end;
+          end;
+
+          if ErrMsg <> '' then
+            MessageDlg(ErrMsg, mtError, [mbClose], 0);
+        end;
+
+      finally
+        Spectrum.Paused := WasPaused;
+      end;
+
+    end;
+
+    Spectrum.SetTapeRecorder(nil);
+  end;
+
+  FreeAndNil(TapeRecorder);
+
+  UpdateTapeRecordingActionsEnabled;
 end;
 
 procedure TForm1.GetAcceptableExtensions(
@@ -3022,6 +3148,7 @@ begin
   PrevTicks := Spectrum.SumTicks;
   PrevPCTicks := GetTickCount64;
   KeyEventCount := 0;
+  StopRecording(True);
 end;
 
 procedure TForm1.DestroySpectrum;
@@ -3041,6 +3168,8 @@ begin
   if Spectrum <> nil then begin
     Spectrum.OnSync := nil;
     FreeTapePlayer;
+    StopRecording(False);
+    UpdateTapeRecordingActionsEnabled;
     Spectrum.DettachFormDebug;
     FreeAndNil(FormDebug);
 

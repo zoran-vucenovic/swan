@@ -14,14 +14,14 @@ object Form1: TForm1
   DoubleBuffered = True
   KeyPreview = True
   Menu = MainMenu1
+  ParentDoubleBuffered = False
+  LCLVersion = '4.0.0.2'
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDeactivate = FormDeactivate
   OnDestroy = FormDestroy
   OnDropFiles = FormDropFiles
   OnShow = FormShow
-  ParentDoubleBuffered = False
-  LCLVersion = '3.7.0.0'
   object PaintBox1: TPaintBox
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
@@ -160,9 +160,9 @@ object Form1: TForm1
           Left = 1
           Top = 0
           Caption = 'ToolButton1'
+          Style = tbsDropDown
           OnArrowClick = ToolButton1ArrowClick
           OnClick = ToolButton1Click
-          Style = tbsDropDown
         end
       end
     end
@@ -182,53 +182,53 @@ object Form1: TForm1
       Caption = 'Pause'
       Hint = 'Pause Spectrum'
       ImageIndex = 2
-      OnExecute = ActionPauseExecute
       SecondaryShortCuts.Strings = (
         'Break'
       )
       ShortCut = 119
+      OnExecute = ActionPauseExecute
     end
     object ActionSpeedIncrease: TAction
       Category = 'Emulation'
       Caption = 'Increase speed'
       ImageIndex = 18
-      OnExecute = ActionSpeedIncreaseExecute
       ShortCut = 121
+      OnExecute = ActionSpeedIncreaseExecute
     end
     object ActionSpeedDecrease: TAction
       Category = 'Emulation'
       Caption = 'Decrease speed'
       ImageIndex = 19
-      OnExecute = ActionSpeedDecreaseExecute
       ShortCut = 120
+      OnExecute = ActionSpeedDecreaseExecute
     end
     object ActionNormalSpeed: TAction
       Category = 'Emulation'
       Caption = 'Normal speed'
       ImageIndex = 12
-      OnExecute = ActionNormalSpeedExecute
       ShortCut = 122
+      OnExecute = ActionNormalSpeedExecute
     end
     object ActionFullSpeed: TAction
       Category = 'Emulation'
       Caption = 'Full speed'
       ImageIndex = 13
-      OnExecute = ActionFullSpeedExecute
       ShortCut = 123
+      OnExecute = ActionFullSpeedExecute
     end
     object ActionSizeIncrease: TAction
       Category = 'Options'
       Caption = 'Increase size'
       ImageIndex = 8
-      OnExecute = ActionSizeIncreaseExecute
       ShortCut = 33
+      OnExecute = ActionSizeIncreaseExecute
     end
     object ActionSizeDecrease: TAction
       Category = 'Options'
       Caption = 'Decrease size'
       ImageIndex = 9
-      OnExecute = ActionSizeDecreaseExecute
       ShortCut = 34
+      OnExecute = ActionSizeDecreaseExecute
     end
     object ActionReset: TAction
       Category = 'Emulation'
@@ -242,8 +242,8 @@ object Form1: TForm1
       Caption = '&Open...'
       Hint = 'Open a file...'
       ImageIndex = 0
-      OnExecute = ActionOpenExecute
       ShortCut = 113
+      OnExecute = ActionOpenExecute
     end
     object ActionColours: TAction
       Category = 'Options'
@@ -385,8 +385,8 @@ object Form1: TForm1
       Caption = 'Save &szx snapshot...'
       Hint = 'Save szx snapshot'
       ImageIndex = 15
-      OnExecute = ActionSaveSzxExecute
       ShortCut = 114
+      OnExecute = ActionSaveSzxExecute
     end
     object ActionSaveZ80: TAction
       Category = 'File'
@@ -488,6 +488,18 @@ object Form1: TForm1
       Caption = 'Toolbar...'
       ImageIndex = 35
       OnExecute = ActionToolbarExecute
+    end
+    object ActionStartRecordingCsw: TAction
+      Category = 'Tape'
+      Caption = 'Start tape recording (csw)'
+      ImageIndex = 41
+      OnExecute = ActionStartRecordingCswExecute
+    end
+    object ActionStopRecording: TAction
+      Category = 'Tape'
+      Caption = 'Stop tape recording'
+      ImageIndex = 42
+      OnExecute = ActionStopRecordingExecute
     end
   end
   object MainMenu1: TMainMenu
@@ -669,6 +681,15 @@ object Form1: TForm1
       end
       object MenuItemNextBlockTape: TMenuItem
         Action = ActionIncTapeBlock
+      end
+      object Separator6: TMenuItem
+        Caption = '-'
+      end
+      object MenuItemStartRecordingCsw: TMenuItem
+        Action = ActionStartRecordingCsw
+      end
+      object MenuItem4: TMenuItem
+        Action = ActionStopRecording
       end
     end
     object MenuItem21: TMenuItem

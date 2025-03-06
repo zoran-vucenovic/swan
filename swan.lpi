@@ -787,6 +787,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitControlKeyMappings"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitsavecsw.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitSaveCSW"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

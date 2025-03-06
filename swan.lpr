@@ -30,7 +30,7 @@ uses
   UnitCSW, UnitDisassembler, UnitDlgStartAdress, UnitGridSpectrumMemory,
   UnitFormDebug, UnitFrameGridMemory, UnitDebugCpuState, UnitDebugger,
   UnitDebugBreakpointsGrid, UnitFrameBreakpoints, UnitFrameToolbarOptions,
-  UnitSwanTreeView, UnitFrameTapeOptions, UnitControlKeyMappings;
+  UnitSwanTreeView, UnitFrameTapeOptions, UnitControlKeyMappings, UnitSaveCSW;
 
 {$R *.res}
 
