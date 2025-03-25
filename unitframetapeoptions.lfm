@@ -1,11 +1,11 @@
 object FrameTapeOptions: TFrameTapeOptions
   Left = 0
-  Height = 120
+  Height = 293
   Top = 0
-  Width = 351
+  Width = 388
   AutoSize = True
-  ClientHeight = 120
-  ClientWidth = 351
+  ClientHeight = 293
+  ClientWidth = 388
   TabOrder = 0
   DesignLeft = 252
   DesignTop = 111
@@ -17,47 +17,102 @@ object FrameTapeOptions: TFrameTapeOptions
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 0
-    Height = 120
+    Height = 293
     Top = 0
-    Width = 351
+    Width = 388
     Anchors = [akTop, akLeft, akRight, akBottom]
     AutoSize = True
-    ClientHeight = 120
-    ClientWidth = 351
+    ClientHeight = 293
+    ClientWidth = 388
     TabOrder = 0
-    object Panel2: TPanel
+    object GroupBox1: TGroupBox
       AnchorSideLeft.Control = Panel1
       AnchorSideTop.Control = Panel1
       Left = 11
-      Height = 49
+      Height = 89
       Top = 11
-      Width = 334
+      Width = 358
       AutoSize = True
       BorderSpacing.Around = 10
-      ClientHeight = 49
-      ClientWidth = 334
+      Caption = 'Loading'
+      ClientHeight = 69
+      ClientWidth = 354
       TabOrder = 0
-      object CheckBoxAutoShowTapePlayerOnLoadTape: TCheckBox
-        AnchorSideLeft.Control = Panel2
-        AnchorSideTop.Control = Panel2
-        Left = 1
-        Height = 19
-        Top = 1
-        Width = 332
-        Caption = 'On insert tape file (tzx, pzx, tap, csw), auto show tape player'
+      object Panel2: TPanel
+        AnchorSideLeft.Control = GroupBox1
+        AnchorSideTop.Control = GroupBox1
+        Left = 10
+        Height = 49
+        Top = 10
+        Width = 334
+        AutoSize = True
+        BorderSpacing.Around = 10
+        ClientHeight = 49
+        ClientWidth = 334
         TabOrder = 0
+        object CheckBoxAutoShowTapePlayerOnLoadTape: TCheckBox
+          AnchorSideLeft.Control = Panel2
+          AnchorSideTop.Control = Panel2
+          Left = 1
+          Height = 19
+          Top = 1
+          Width = 332
+          Caption = 'On insert tape file (tzx, pzx, tap, csw), auto show tape player'
+          TabOrder = 0
+        end
+        object CheckBoxFastLoad: TCheckBox
+          AnchorSideLeft.Control = Panel2
+          AnchorSideTop.Control = CheckBoxAutoShowTapePlayerOnLoadTape
+          AnchorSideTop.Side = asrBottom
+          Left = 1
+          Height = 19
+          Top = 29
+          Width = 301
+          BorderSpacing.Top = 9
+          Caption = 'Fast load (edge detection in standard loading routine)'
+          TabOrder = 1
+        end
       end
-      object CheckBoxFastLoad: TCheckBox
-        AnchorSideLeft.Control = Panel2
-        AnchorSideTop.Control = CheckBoxAutoShowTapePlayerOnLoadTape
-        AnchorSideTop.Side = asrBottom
-        Left = 1
-        Height = 19
-        Top = 29
-        Width = 301
-        BorderSpacing.Top = 9
-        Caption = 'Fast load (edge detection in standard loading routine)'
-        TabOrder = 1
+    end
+    object GroupBox2: TGroupBox
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = GroupBox1
+      AnchorSideTop.Side = asrBottom
+      Left = 11
+      Height = 105
+      Top = 110
+      Width = 310
+      AutoSize = True
+      BorderSpacing.Around = 10
+      Caption = 'Saving'
+      ClientHeight = 85
+      ClientWidth = 306
+      TabOrder = 1
+      object RadioGroup1: TRadioGroup
+        AnchorSideLeft.Control = GroupBox2
+        AnchorSideTop.Control = GroupBox2
+        Left = 10
+        Height = 65
+        Top = 10
+        Width = 286
+        AutoFill = True
+        BorderSpacing.Around = 10
+        Caption = 'CSW compression method'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 2
+        ClientHeight = 45
+        ClientWidth = 282
+        Columns = 2
+        Items.Strings = (
+          'RLE'
+          'Z-RLE (RLE further compressed)'
+        )
+        TabOrder = 0
       end
     end
   end

@@ -243,6 +243,7 @@ type
       cSectionTapeOptions = 'tape_options';
       cSectionAutoShowTapePlayer = 'auto_show_tape_player';
       cSectionFastLoad = 'fast_load';
+      cSectionCswCompressionMethod = 'csw_compression_method';
       cSectionSnapshotOptions = 'snapshot_options';
       cSectionSkipJoystickInfoSzxLoad = 'skip_load_joystick_info_from_szx';
       cSectionSkipTapeInfoSzxLoad = 'skip_load_tape_info_from_szx';
@@ -346,6 +347,7 @@ type
     TapeRecorder: TSpectrum.TAbstractTapeRecorder;
     FWriteScreenEachFrame: Boolean;
     FFastLoad: Boolean;
+    FCswCompressionMethodZRle: Boolean;
     FSoundVolumeForm: TFormSoundVolume;
     FRecentFiles: TRecentFiles;
     FPortaudioLibPathOtherBitness: RawByteString;
@@ -494,6 +496,7 @@ begin
   Spectrum := nil;
 
   FFastLoad := True;
+  FCswCompressionMethodZRle := True;
   FWriteScreenEachFrame := True;
 
   AutoSize := False;
@@ -1075,6 +1078,9 @@ const
   MsgTapePlaying: RawByteString = 'The tape is playing.'
                   + LineEnding + 'Stop the tape before starting recording.';
 
+var
+  CswRecorder: TSaveCsw;
+
 begin
   if Sender <> FDummyObj then
     AddEventToQueue(@ActionStartRecordingCswExecute)
@@ -1084,7 +1090,10 @@ begin
     end else if Assigned(TapePlayer) and TapePlayer.IsPlaying then begin
       MessageDlg(MsgTapePlaying, mtWarning, [mbClose], 0);
     end else begin
-      TapeRecorder := TSaveCsw.Create;
+      CswRecorder := TSaveCsw.Create;
+      CswRecorder.CompressionMethodZRle := FCswCompressionMethodZRle;
+      TapeRecorder := CswRecorder;
+
       Spectrum.SetTapeRecorder(TapeRecorder);
       TapeRecorder.StartRecording();
       UpdateTapeRecordingActionsEnabled;
@@ -1651,6 +1660,10 @@ begin
       else
         K := 0;
       FFastLoad := JObj2.Get(cSectionFastLoad, K) <> 0;
+
+      S := '';
+      S := Trim(JObj2.Get(cSectionCswCompressionMethod, S));
+      FCswCompressionMethodZRle := AnsiCompareText(S, 'RLE') <> 0;
     end;
 
     JD := JObj.Find(cSectionSnapshotOptions);
@@ -1905,6 +1918,12 @@ begin
         K := 0;
       JObj2.Add(cSectionFastLoad, K);
 
+      if FCswCompressionMethodZRle then
+        S := 'Z-RLE'
+      else
+        S := 'RLE';
+      JObj2.Add(cSectionCswCompressionMethod, S);
+
       if JObj.Add(cSectionTapeOptions, JObj2) >= 0 then
         JObj2 := nil;
     finally
@@ -1978,6 +1997,7 @@ begin
           FrameTapeOptions := TFrameTapeOptions.CreateForAllOptions(OptionsDialog);
           FrameTapeOptions.AutoShowTapePlayerOnLoadTape := FAutoShowTapePlayerWhenTapeLoaded;
           FrameTapeOptions.FastLoad := FFastLoad;
+          FrameTapeOptions.CswCompressionMethodZRle := FCswCompressionMethodZRle;
 
           FrameSnapshotOptions := TFrameSnapshotOptions.CreateForAllOptions(OptionsDialog);
           if not Assigned(FrameSnapshotOptions) then
@@ -2045,6 +2065,7 @@ begin
             UpdateShowCurrentlyActiveJoystick;
             UpdateCheckLateTimings;
 
+            FCswCompressionMethodZRle := FrameTapeOptions.CswCompressionMethodZRle;
             FAutoShowTapePlayerWhenTapeLoaded := FrameTapeOptions.AutoShowTapePlayerOnLoadTape;
             FFastLoad := FrameTapeOptions.FastLoad;
             UpdateCheckWriteScreen;

@@ -16,12 +16,17 @@ type
   TFrameTapeOptions = class(TFrame)
     CheckBoxFastLoad: TCheckBox;
     CheckBoxAutoShowTapePlayerOnLoadTape: TCheckBox;
+    GroupBox1: TGroupBox;
+    GroupBox2: TGroupBox;
     Panel1: TPanel;
     Panel2: TPanel;
+    RadioGroup1: TRadioGroup;
   private
     function GetAutoShowTapePlayerOnLoadTape: Boolean;
+    function GetCswCompressionMethodZRle: Boolean;
     function GetFastLoad: Boolean;
     procedure SetAutoShowTapePlayerOnLoadTape(const AValue: Boolean);
+    procedure SetCswCompressionMethodZRle(AValue: Boolean);
     procedure SetFastLoad(const AValue: Boolean);
 
   public
@@ -32,6 +37,7 @@ type
     property AutoShowTapePlayerOnLoadTape: Boolean
       read GetAutoShowTapePlayerOnLoadTape write SetAutoShowTapePlayerOnLoadTape;
     property FastLoad: Boolean read GetFastLoad write SetFastLoad;
+    property CswCompressionMethodZRle: Boolean read GetCswCompressionMethodZRle write SetCswCompressionMethodZRle;
   end;
 
 implementation
@@ -45,6 +51,11 @@ begin
   Result := CheckBoxAutoShowTapePlayerOnLoadTape.Checked;
 end;
 
+function TFrameTapeOptions.GetCswCompressionMethodZRle: Boolean;
+begin
+  Result := RadioGroup1.ItemIndex <> 0;
+end;
+
 function TFrameTapeOptions.GetFastLoad: Boolean;
 begin
   Result := CheckBoxFastLoad.Checked;
@@ -53,6 +64,14 @@ end;
 procedure TFrameTapeOptions.SetAutoShowTapePlayerOnLoadTape(const AValue: Boolean);
 begin
   CheckBoxAutoShowTapePlayerOnLoadTape.Checked := AValue;
+end;
+
+procedure TFrameTapeOptions.SetCswCompressionMethodZRle(AValue: Boolean);
+begin
+  if Avalue then
+    RadioGroup1.ItemIndex := 1
+  else
+    RadioGroup1.ItemIndex := 0;
 end;
 
 procedure TFrameTapeOptions.SetFastLoad(const AValue: Boolean);
