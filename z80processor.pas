@@ -1570,7 +1570,7 @@ var
     WAsRec16: TRec16 absolute W;
   begin
     WriteMem(Adr, WAsRec16.UByteLo);
-    WriteMem(Adr + 1, WAsRec16.UByteHi);;
+    WriteMem(Adr + 1, WAsRec16.UByteHi);
   end;
 
   function GetMemAddressWithDisplacement: Word;
@@ -2231,6 +2231,7 @@ begin
 
       FRegPC := NMIStartAdr;
       FFlagsModified := False;
+      FRegWZ := FRegPC;
 
       Exit;
     end;
@@ -2264,6 +2265,7 @@ begin
 
           FRegPC := IntMode1StartAdr;
         end;
+        FRegWZ := FRegPC;
 
         Exit;
       end;
