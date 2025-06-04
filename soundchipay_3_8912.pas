@@ -84,6 +84,7 @@ type
     FRegPointers: array [0..15] of PByte;
 
     procedure RecalcOutputChannels;
+    procedure StopFading; inline;
 
   private
     const
@@ -179,6 +180,12 @@ begin
 
     OutputChannelsVolumes[Ch] := FRegPointers[Ch or 8]^;
   end;
+end;
+
+procedure TSoundAY_3_8912.StopFading;
+begin
+  FFadingValue := 0;
+  StartFadingTicks := 0;
 end;
 
 class procedure TSoundAY_3_8912.Init;
@@ -431,10 +438,8 @@ begin
       Result := 0;
     end;
 
-    if Result = 0 then begin
-      StartFadingTicks := 0;
-      FFadingValue := 0;
-    end;
+    if Result = 0 then
+      StopFading;
 
   end;
 
@@ -490,8 +495,7 @@ begin
 
   FReg15 := 0;
 
-  FFadingValue := 0;
-  StartFadingTicks := 0;
+  StopFading;
 
   FActiveRegisterNum := 1;
 
@@ -576,6 +580,10 @@ begin
 
     Ay.FActiveRegisterNum := not FActiveRegisterNumber;
     Ay.SetActiveRegNum(FActiveRegisterNumber);
+
+    Ay.StopFading; // When loading from a snapshot we can't tell if the "fading register
+                   // had faded already, so let's assume it had, it's the best we can.
+
     Ay.RecalcOutputChannels;
   end;
 end;
