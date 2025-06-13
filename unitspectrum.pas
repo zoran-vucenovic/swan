@@ -88,6 +88,8 @@ type
     ScreenStart: Int32Fast;
     ScreenEnd: Int32Fast;
     HoldInterruptPinTicks: Int16Fast;
+    TickForLateOrEarlyInterrupt: Int32Fast;
+    TicksIntPin: Int32Fast;
 
     FloatBusFirstInterestingTick: Int32Fast;
     FloatBusLastInterestingTick: Int32Fast;
@@ -796,11 +798,17 @@ const
   SoundPlayerRatePortAudio128 = 7; // in 128K spectrum,
   SoundPlayerRateProcessor128 = 563; //  it is 44100 / 3546900 = 7 / 563
 
+  CentralScreenStart48 = 14335;
+  CentralScreenStart128 = 14361;
+
+  HoldInterruptPinTicks48 = 32; // 48K and +3 models hold interrupt for 32 t-states,
+  HoldInterruptPinTicks128 = 36; // whereas 128K holds it for 36 t-states
+
 var
   RomStream: TStream;
   NewRamSize: Word;
 
-  SkipReset: Boolean;
+  SameBaseModel: Boolean;
   Roms: TStringDynArray;
   I: Integer;
   PrevSpeed: Integer;
@@ -811,15 +819,19 @@ begin
     if ASpectrumModel = FSpectrumModel then
       Exit;
 
-  SkipReset := False;
+  SameBaseModel := False;
 
   NewRamSize := 128;
   FIs128KModel := True;
 
   FModelWithHALbug := False;
+  HoldInterruptPinTicks := HoldInterruptPinTicks48; // 48K and +3
+
   TicksPerScanLine := TicksPerScanLine128;
   RomsCount := 1;
   FProcessor.FrameTicks := FrameTicks128;
+
+  CentralScreenStart := CentralScreenStart128;
 
   try
     case ASpectrumModel of
@@ -827,6 +839,8 @@ begin
         begin
           TicksPerScanLine := TicksPerScanLine48;
           FIs128KModel := False;
+
+          CentralScreenStart := CentralScreenStart48;
 
           FProcessor.FrameTicks := FrameTicks48;
           case ASpectrumModel of
@@ -836,13 +850,14 @@ begin
             NewRamSize := 48;
           end;
 
-          SkipReset := (ACustomRoms = nil) and (not FCustomRomsMounted)
+          SameBaseModel := (ACustomRoms = nil) and (not FCustomRomsMounted)
             and (NewRamSize = FMemory.RamSizeKB);
         end;
 
       sm128K, smPlus2:
         begin
           FModelWithHALbug := True;
+          HoldInterruptPinTicks := HoldInterruptPinTicks128;
           RomsCount := 2;
         end;
 
@@ -850,10 +865,18 @@ begin
       Abort;
     end;
 
-    if not SkipReset then
+    if not SameBaseModel then
       StopSoundPlayer;
 
     FProcessor.TicksPerLine := TicksPerScanLine;
+
+    ScreenStart := CentralScreenStart - TopBorder * TicksPerScanLine - 24; //6247
+    ScreenEnd := ScreenStart + (WholeScreenHeight - 1) * TicksPerScanLine + WholeScreenWidth div 2 - 1; // 65334
+
+    FProcessor.ContentionFrom := CentralScreenStart;
+    FProcessor.ContentionTo := FProcessor.ContentionFrom + (CentralScreenHeight - 1) * TicksPerScanLine + 128;
+    FloatBusFirstInterestingTick := FProcessor.ContentionFrom + 4;
+    FloatBusLastInterestingTick := FProcessor.ContentionTo + 3;
 
     FLateTimings := not FLateTimings; // force recalculations made
     SetLateTimings(not FLateTimings); // when setting early/late ula timings
@@ -889,6 +912,7 @@ begin
         end;
       end;
       FCustomRomsMounted := False;
+
     end;
 
   except
@@ -918,21 +942,20 @@ begin
   end else
     FBkpSpectrumModel := smNone;
 
-  SkipReset :=
-    SkipReset or FRestoringSpectrumModel;
-
   FSpectrumModel := ASpectrumModel;
   FIssue2Keyboard := FSpectrumModel in [sm16K_issue_2, sm48K_issue_2];
 
   if Assigned(FOnChangeModel) then
     Synchronize(FOnChangeModel);
 
-  // updating speed recalculates the "speed correction", which is dependent on Spectrum model
-  PrevSpeed := FSpeed;
-  FSpeed := 0;
-  if not SkipReset then
-    ResetSpectrum;
-  SetSpeed(PrevSpeed);
+  if not SameBaseModel then begin
+    // updating speed recalculates the "speed correction", which is dependent on Spectrum model
+    PrevSpeed := FSpeed;
+    FSpeed := 0;
+    if not FRestoringSpectrumModel then
+      ResetSpectrum;
+    SetSpeed(PrevSpeed);
+  end;
 end;
 
 procedure TSpectrum.UpdateDebuggedOrPaused;
@@ -1168,13 +1191,20 @@ procedure TSpectrum.DoStep;
 var
   MilliSecondsPassed: Int64;
   MilliSecondsToWait: Int64;
+
 begin
   if Assigned(FTapePlayer) then begin
     FTapePlayer.GetNextPulse();
     if FFastLoad then
       CheckFastLoad;
   end;
-  FProcessor.DoProcess;
+
+  if FIs128KModel or (FProcessor.TStatesInCurrentFrame <> TickForLateOrEarlyInterrupt) then begin
+    FProcessor.DoProcess;
+  end else begin
+    FProcessor.DoProcess;
+    FProcessor.IntPin := True;
+  end;
 
   if FKeyboardStateWaiting then begin
     if FProcessor.TStatesInCurrentFrame >= FKeyboardStateWaitTicks then begin
@@ -1185,6 +1215,40 @@ begin
     end;
   end;
 
+  if FProcessor.TStatesInCurrentFrame >= TicksIntPin then begin
+    FProcessor.IntPin := True;
+    if FProcessor.TStatesInCurrentFrame >= FProcessor.FrameTicks then begin
+
+      Inc(FFrameCount);
+      //WriteToScreen(ScreenEnd);
+      FProcessor.OnNeedWriteScreen(ScreenEnd);
+
+      FSumTicks := FSumTicks + FProcessor.FrameTicks;
+      FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame - FProcessor.FrameTicks;
+      FIntPinUpCount := HoldInterruptPinTicks;
+
+      TicksFrom := ScreenStart;
+
+      if AskForSpeedCorrection then begin
+        UpdateSoundBuffer;
+        //
+        MicrosecondsNeeded := MicrosecondsNeeded + SpeedCorrection;
+
+        // speed 100%:
+        MilliSecondsPassed := GetTickCount64 - PCTicksStart;
+        MilliSecondsToWait := MicrosecondsNeeded div 1000 - MilliSecondsPassed;
+
+        if MilliSecondsToWait > 0 then
+          Sleep(MilliSecondsToWait);
+      end;
+
+      DoSync;
+      {$push}{$Q-}{$R-}
+      Inc(FFlashState);
+      {$pop}
+    end;
+  end;
+
   if FIntPinUpCount <> 0 then begin
     if FProcessor.TStatesInCurrentFrame >= FIntPinUpCount then begin
       FProcessor.IntPin := False;
@@ -1192,37 +1256,6 @@ begin
     end;
   end;
 
-  if FProcessor.TStatesInCurrentFrame >= FProcessor.FrameTicks then begin
-    FProcessor.IntPin := True;
-
-    Inc(FFrameCount);
-    //WriteToScreen(ScreenEnd);
-    FProcessor.OnNeedWriteScreen(ScreenEnd);
-
-    FSumTicks := FSumTicks + FProcessor.FrameTicks;
-    FProcessor.TStatesInCurrentFrame := FProcessor.TStatesInCurrentFrame - FProcessor.FrameTicks;
-    FIntPinUpCount := HoldInterruptPinTicks;
-
-    TicksFrom := ScreenStart;
-
-    if AskForSpeedCorrection then begin
-      UpdateSoundBuffer;
-      //
-      MicrosecondsNeeded := MicrosecondsNeeded + SpeedCorrection;
-
-      // speed 100%:
-      MilliSecondsPassed := GetTickCount64 - PCTicksStart;
-      MilliSecondsToWait := MicrosecondsNeeded div 1000 - MilliSecondsPassed;
-
-      if MilliSecondsToWait > 0 then
-        Sleep(MilliSecondsToWait);
-    end;
-
-    DoSync;
-    {$push}{$Q-}{$R-}
-    Inc(FFlashState);
-    {$pop}
-  end;
 end;
 
 procedure TSpectrum.RunSpectrum;
@@ -1437,37 +1470,16 @@ begin
 end;
 
 procedure TSpectrum.SetLateTimings(AValue: Boolean);
-const
-  CentralScreenStart48 = 14335;
-  CentralScreenStart128 = 14361;
-
-  HoldInterruptPinTicks48 = 32; // 48K and +3 models hold interrupt for 32 t-states,
-  HoldInterruptPinTicks128 = 36; // whereas 128K holds it for 36 t-states
-
 begin
   if FLateTimings xor AValue then begin
     FLateTimings := AValue;
-
-    if FIs128KModel then begin
-      CentralScreenStart := CentralScreenStart128;
-      HoldInterruptPinTicks := HoldInterruptPinTicks128;
-    end else begin
-      CentralScreenStart := CentralScreenStart48;
-      HoldInterruptPinTicks := HoldInterruptPinTicks48; // 48K and +3
-    end;
-
+    TickForLateOrEarlyInterrupt := FProcessor.FrameTicks - 4;
+    TicksIntPin := FProcessor.FrameTicks;
     if AValue then begin
-      CentralScreenStart := CentralScreenStart + 1;
-      HoldInterruptPinTicks := HoldInterruptPinTicks + 1;
+      Dec(TickForLateOrEarlyInterrupt);
+      if FIs128KModel then
+        Dec(TicksIntPin);
     end;
-
-    ScreenStart := CentralScreenStart - TopBorder * TicksPerScanLine - 24; //6247
-    ScreenEnd := ScreenStart + (WholeScreenHeight - 1) * TicksPerScanLine + WholeScreenWidth div 2 - 1; // 65334
-
-    FProcessor.ContentionFrom := CentralScreenStart;
-    FProcessor.ContentionTo := FProcessor.ContentionFrom + (CentralScreenHeight - 1) * TicksPerScanLine + 128;
-    FloatBusFirstInterestingTick := FProcessor.ContentionFrom + 4;
-    FloatBusLastInterestingTick := FProcessor.ContentionTo + 3;
   end;
 end;
 
