@@ -422,7 +422,7 @@ procedure TSpectrum.ProcessorInput;
 
   procedure CheckFloatingBus;
   var
-    N, X, Y: Integer;
+    X, Y: Integer;
     W: Word;
     WR: WordRec absolute W;
   begin
@@ -430,10 +430,10 @@ procedure TSpectrum.ProcessorInput;
         and (FProcessor.TStatesInCurrentFrame >= FloatBusFirstInterestingTick)
     then begin
       //
-      N := FProcessor.TStatesInCurrentFrame - FloatBusFirstInterestingTick;
-      X := N mod TicksPerScanLine;
+      X := FProcessor.TStatesInCurrentFrame - FloatBusFirstInterestingTick;
+      Y := X div TicksPerScanLine;
+      X := X - Y * TicksPerScanLine;
       if X and $84 = 0 then begin //if (X <= 127) and (X mod 8 <= 3) then begin
-        Y := N div TicksPerScanLine;
         if X and 1 = 0 then
           WR.Hi := ((Y shr 3) and %00011000) or (Y and %111)
         else
@@ -1412,8 +1412,8 @@ begin
     CCTicks := TicksFrom - ScreenStart;
     CCTicksTo := TicksTo - ScreenStart;
 
-    X := (CCTicks shl 1) mod (TicksPerScanLine shl 1);
     Y := CCTicks div TicksPerScanLine;
+    X := (CCTicks - Y * TicksPerScanLine) shl 1;
 
     if X < WholeScreenWidth then
       ScreenPixel := SpectrumColoursBGRA.Bmp.ScanLine[Y] + X;
