@@ -694,7 +694,7 @@ begin
 
   FCustomRomsMounted := False;
   FIs128KModel := False;
-  FAYOutputMode := TSoundAY_3_8912.TOutputMode.omStereoABC;
+  FAYOutputMode := TSoundAY_3_8912.TOutputMode.omMono;
 
   FMemory := TMemory.Create;
   FProcessor := TProcessor.Create;
