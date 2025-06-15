@@ -27,7 +27,7 @@ object FrameSound: TFrameSound
       Top = 181
       Width = 82
       Caption = 'Mute sound'
-      TabOrder = 0
+      TabOrder = 2
     end
     object PanelSoundLibrary: TPanel
       AnchorSideLeft.Control = Panel1
@@ -37,7 +37,7 @@ object FrameSound: TFrameSound
       Top = 1
       Width = 402
       Caption = 'PanelSoundLibrary'
-      TabOrder = 1
+      TabOrder = 0
     end
     object Bevel1: TBevel
       AnchorSideLeft.Control = PanelSoundLibrary
@@ -68,7 +68,7 @@ object FrameSound: TFrameSound
       BorderStyle = bsSingle
       ClientHeight = 39
       ClientWidth = 339
-      TabOrder = 2
+      TabOrder = 3
       object PanelVolume: TPanel
         AnchorSideLeft.Control = Panel2
         AnchorSideTop.Control = Panel2
@@ -120,7 +120,7 @@ object FrameSound: TFrameSound
       Caption = 'Panel4'
       ClientHeight = 34
       ClientWidth = 280
-      TabOrder = 3
+      TabOrder = 1
       object Label1: TLabel
         AnchorSideLeft.Control = Panel4
         AnchorSideTop.Control = Panel4

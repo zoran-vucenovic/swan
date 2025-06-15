@@ -386,6 +386,7 @@ begin
     Constraints.MaxHeight := 0;
     FillSnapshots;
     Panel1.Enabled := True;
+    Self.SelectNext(Panel1, True, True);
   end;
 
 end;

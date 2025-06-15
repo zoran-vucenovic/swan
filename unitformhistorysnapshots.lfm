@@ -6,10 +6,10 @@ object FormHistorySnapshots: TFormHistorySnapshots
   Caption = 'Auto saving snapshots options'
   ClientHeight = 686
   ClientWidth = 603
+  LCLVersion = '4.1.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '3.5.0.0'
   object Panel15: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
