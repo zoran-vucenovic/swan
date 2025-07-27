@@ -283,20 +283,25 @@ procedure TControlKeyMappings.LoadFromKeyMapRecs(const KMRecs: TKeyMapRecs);
 var
   N, I: Integer;
 begin
-  DisableAlign;
+  Screen.BeginWaitCursor;
   try
-    Clear;
-    for I := 0 to High(KMRecs) do begin
-      N := Self.InternalAddPCKey(KMRecs[I].Key, False);
+    DisableAlign;
+    try
+      Clear;
+      for I := 0 to High(KMRecs) do begin
+        N := Self.InternalAddPCKey(KMRecs[I].Key, False);
 
-      OnePcKeyMappingsMap.Data[N].AddSpectrumKey(KMRecs[I].SpectrumKey);
-    end;
-    for I := 0 to OnePcKeyMappingsMap.Count - 1 do begin
-      OnePcKeyMappingsMap.Data[I].SortSpectrumKeys;
-      OnePcKeyMappingsMap.Data[I].UpdateSpectrumKeysLayout;
+        OnePcKeyMappingsMap.Data[N].AddSpectrumKey(KMRecs[I].SpectrumKey);
+      end;
+      for I := 0 to OnePcKeyMappingsMap.Count - 1 do begin
+        OnePcKeyMappingsMap.Data[I].SortSpectrumKeys;
+        OnePcKeyMappingsMap.Data[I].UpdateSpectrumKeysLayout;
+      end;
+    finally
+      EnableAlign;
     end;
   finally
-    EnableAlign;
+    Screen.EndWaitCursor;
   end;
 end;
 

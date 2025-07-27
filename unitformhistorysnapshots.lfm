@@ -6,7 +6,7 @@ object FormHistorySnapshots: TFormHistorySnapshots
   Caption = 'Auto saving snapshots options'
   ClientHeight = 686
   ClientWidth = 603
-  LCLVersion = '4.1.0.0'
+  LCLVersion = '4.3.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow

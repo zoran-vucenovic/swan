@@ -382,10 +382,15 @@ begin
     AutoSize := True;
     Application.QueueAsyncCall(@AfterShow, Data - 1)
   end else begin
-    Constraints.MinHeight := 0;
-    Constraints.MaxHeight := 0;
-    FillSnapshots;
-    Panel1.Enabled := True;
+    Screen.BeginWaitCursor;
+    try
+      Constraints.MinHeight := 0;
+      Constraints.MaxHeight := 0;
+      FillSnapshots;
+      Panel1.Enabled := True;
+    finally
+      Screen.EndWaitCursor;
+    end;
     Self.SelectNext(Panel1, True, True);
   end;
 

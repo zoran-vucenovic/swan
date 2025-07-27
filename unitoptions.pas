@@ -325,37 +325,43 @@ var
   C: TControl;
 
 begin
-  if FOptionControlsCount <= 0 then begin
-    C := nil;
-  end else begin
-    if (ANumber < 0) or (ANumber >= FOptionControlsCount) then begin
-      ANumber := 0;
-    end;
-
-    C := FOptionControls[ANumber].Control;
-  end;
-
-  if Assigned(FCurrentControl) then
-    FCurrentControl.Visible := C = FCurrentControl;
-
-  if Assigned(C) then begin
-    if C <> FCurrentControl then begin
-      Panel3.Color := Grid.Color;
-
-      FInternalSettingRow := True;
-      try
-        Grid.Row := Grid.FixedRows + ANumber;
-        C.Visible := True;
-        Label1.Caption := FOptionControls[ANumber].LabTitle;
-        Panel3.Color := C.GetRGBColorResolvingParent;
-      finally
-        FInternalSettingRow := False;
+  Screen.BeginWaitCursor;
+  try
+    if FOptionControlsCount <= 0 then begin
+      C := nil;
+    end else begin
+      if (ANumber < 0) or (ANumber >= FOptionControlsCount) then begin
+        ANumber := 0;
       end;
-    end;
-  end else
-    Label1.Caption := ' ';
 
-  FCurrentControl := C;
+      C := FOptionControls[ANumber].Control;
+    end;
+
+    if Assigned(FCurrentControl) then
+      FCurrentControl.Visible := C = FCurrentControl;
+
+    if Assigned(C) then begin
+      if C <> FCurrentControl then begin
+        Panel3.Color := Grid.Color;
+
+        FInternalSettingRow := True;
+        try
+          Grid.Row := Grid.FixedRows + ANumber;
+          C.Visible := True;
+          Label1.Caption := FOptionControls[ANumber].LabTitle;
+          Panel3.Color := C.GetRGBColorResolvingParent;
+        finally
+          FInternalSettingRow := False;
+        end;
+      end;
+    end else
+      Label1.Caption := ' ';
+
+    FCurrentControl := C;
+
+  finally
+    Screen.EndWaitCursor;
+  end;
 end;
 
 class function TFormOptions.CreateOptionsDialog(
