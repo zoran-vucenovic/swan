@@ -467,7 +467,7 @@ begin
           //AssignKeyTexts([' ', '_', 'DELETE', 'FORMAT']); // 0
           AssignKeyTexts([' ', '__', 'DELETE', 'FORMAT']); // 0
         1:
-          AssignKeyTexts([' ', ')', 'GRAPHIC', 'CAT']); // 9
+          AssignKeyTexts([' ', ')', 'GRAPHICS', 'CAT']); // 9
         2:
           AssignKeyTexts([#$e2#$96#$88, '(', #$e2#$87#$92 {right double arrow}, 'POINT']); // 8
         3:
