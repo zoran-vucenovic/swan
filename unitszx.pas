@@ -96,6 +96,7 @@ type
       FOnSzxLoadTape: TOnSzxLoadTape;
       FOnSzxSaveTape: TOnSzxSaveTape;
       FSaveTapeOptions: TSzxSaveTapeOptions;
+      FCompressMemory: Boolean;
 
   private
     Mem: TMemoryStream;
@@ -127,6 +128,7 @@ type
     class property OnSzxLoadTape: TOnSzxLoadTape read FOnSzxLoadTape write FOnSzxLoadTape;
     class property OnSzxSaveTape: TOnSzxSaveTape read FOnSzxSaveTape write FOnSzxSaveTape;
     class property SaveTapeOptions: TSzxSaveTapeOptions read FSaveTapeOptions write FSaveTapeOptions;
+    class property CompressMemory: Boolean read FCompressMemory write FCompressMemory;
   end;
 
 implementation
@@ -376,20 +378,31 @@ end;
 
 function TZxstROM.SaveToStream(const Stream: TStream): Boolean;
 var
-  Str1: TMemoryStream;
+  Str1, Str2: TMemoryStream;
   Rec: TRecRom;
 
 begin
   Result := False;
 
   if Assigned(Szx.RomStream) then begin
-    Str1 := TMemoryStream.Create;
+    Str2 := nil;
     try
       Szx.RomStream.Position := 0;
-      if CompressStream(Szx.RomStream, Str1) then begin
-        Rec.Flags := ZXSTRF_COMPRESSED;
-        Rec.UncompressedSize := Szx.RomStream.Size;
 
+      Rec := Default(TRecRom);
+
+      if Szx.CompressMemory then begin
+        Str1 := nil;
+        Str2 := TMemoryStream.Create;
+        if CompressStream(Szx.RomStream, Str2) then begin
+          Str1 := Str2;
+          Rec.Flags := ZXSTRF_COMPRESSED;
+        end;
+      end else
+        Str1 := Szx.RomStream;
+
+      if Assigned(Str1) then begin
+        Rec.UncompressedSize := Szx.RomStream.Size;
         Rec.Flags := NtoLE(Rec.Flags);
         Rec.UncompressedSize := NtoLE(Rec.UncompressedSize);
 
@@ -398,10 +411,10 @@ begin
           and (Stream.Write(Rec, SizeOf(Rec)) = SizeOf(Rec))
           and (Stream.Write(Str1.Memory^, Str1.Size) = Str1.Size);
       end;
-
     finally
-      Str1.Free;
+      Str2.Free;
     end;
+
   end;
 end;
 
@@ -897,6 +910,7 @@ var
 
 begin
   Result := False;
+
   case Rec.PageNo of
     0..7:
       begin
@@ -1178,6 +1192,7 @@ begin
   FSkipJoystickInfoLoad := True;
   FOnSzxLoadTape := nil;
   FSaveTapeOptions := TSzxSaveTapeOptions.sstoSkip;
+  FCompressMemory := True;
 
   SzxBlocksMap := TSzxBlocksMap.Create;
 
@@ -1407,7 +1422,7 @@ var
   begin
     Result := False;
 
-    FreeAndNil(RomStream);
+    RomStream.Free;
     RomStream := TMemoryStream.Create;
     try
       RomStream.Position := 0;
@@ -1420,7 +1435,7 @@ var
 
 var
   BlockRP: TZxstRamPage;
-  I, J: Integer;
+  I: Integer;
   TapePlayer: TTapePlayer;
 
 begin
@@ -1440,24 +1455,19 @@ begin
           and SaveBlock(TZxstSpecRegs.Create)
           and SaveBlock(TZxstKeyboard.Create)
         then begin
-          case FSpectrum.Memory.RamSizeKB of
-            16:
-              J := 0;
-            48:
-              J := 2;
-          otherwise
-            J := 7;
-          end;
-
-          for I := 0 to J do begin
+          for I := 0 to (FSpectrum.Memory.RamSizeKB shr 4) - 1 do begin
             BlockRP := TZxstRamPage.Create;
+            BlockRP.Rec := Default(TZxstRamPage.TRecRamPage);
             case I of
               0..2:
                 BlockRP.Rec.PageNo := (10 - 5 * I) div 2;
             otherwise
               BlockRP.Rec.PageNo := (3 * I) div 2 - 3;
             end;
-            BlockRP.Rec.Flags := TZxstRamPage.ZXSTRF_COMPRESSED;
+
+            if FCompressMemory then
+              BlockRP.Rec.Flags := BlockRP.Rec.Flags or TZxstRamPage.ZXSTRF_COMPRESSED;
+
             if not SaveBlock(BlockRP) then
               Exit;
           end;

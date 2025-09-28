@@ -246,6 +246,7 @@ type
       cSectionCswCompressionMethod = 'csw_compression_method';
       cSectionSnapshotOptions = 'snapshot_options';
       cSectionSkipJoystickInfoSzxLoad = 'skip_load_joystick_info_from_szx';
+      cSectionCompressSzxMemoryBlocks = 'compress_szx_memory_blocks';
       cSectionSkipTapeInfoSzxLoad = 'skip_load_tape_info_from_szx';
       cSectionSzxSaveOptions = 'szx_save_options';
       cSectionRecentFiles = 'recent_files';
@@ -1677,6 +1678,12 @@ begin
         K := 0;
       TSnapshotSZX.SkipJoystickInfoLoad := JObj2.Get(cSectionSkipJoystickInfoSzxLoad, K) <> 0;
 
+      if TSnapshotSZX.CompressMemory then
+        K := 1
+      else
+        K := 0;
+      TSnapshotSZX.CompressMemory := JObj2.Get(cSectionCompressSzxMemoryBlocks, K) <> 0;
+
       if Assigned(TSnapshotSZX.OnSzxLoadTape) then
         K := 0
       else
@@ -1889,6 +1896,12 @@ begin
         K := 0;
       JObj2.Add(cSectionSkipJoystickInfoSzxLoad, K);
 
+      if TSnapshotSZX.CompressMemory then
+        K := 1
+      else
+        K := 0;
+      JObj2.Add(cSectionCompressSzxMemoryBlocks, K);
+
       if Assigned(TSnapshotSZX.OnSzxLoadTape) then
         K := 0
       else
@@ -2003,6 +2016,7 @@ begin
           if not Assigned(FrameSnapshotOptions) then
             Break;
           FrameSnapshotOptions.SkipJoystickInfoSzxLoad := TSnapshotSZX.SkipJoystickInfoLoad;
+          FrameSnapshotOptions.CompressRamAndRomBlocks := TSnapshotSZX.CompressMemory;
           FrameSnapshotOptions.SkipTapeInfoSzxLoad := not Assigned(TSnapshotSZX.OnSzxLoadTape);
           FrameSnapshotOptions.SaveTapeInfoSzxSave := Integer(TSnapshotSZX.SaveTapeOptions);
 
@@ -2071,6 +2085,7 @@ begin
             UpdateCheckWriteScreen;
 
             TSnapshotSZX.SkipJoystickInfoLoad := FrameSnapshotOptions.SkipJoystickInfoSzxLoad;
+            TSnapshotSZX.CompressMemory := FrameSnapshotOptions.CompressRamAndRomBlocks;
             if FrameSnapshotOptions.SkipTapeInfoSzxLoad then
               TSnapshotSZX.OnSzxLoadTape := nil
             else

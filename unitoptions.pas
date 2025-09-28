@@ -14,6 +14,12 @@ uses
 
 type
 
+  IHasDividerColour = interface
+  ['{4BC9FAF5-4641-4459-A533-45A2D4DD8F71}']
+    function GetDividerColour: TColor;
+    procedure SetDividerColour(AValue: TColor);
+  end;
+
   TFormOptions = class(TForm, IFormAddCloseQuery)
     ButtonPanel1: TButtonPanel;
     Label1: TLabel;
@@ -303,7 +309,10 @@ begin
     Panel7.Color := Panel5.Color;
 
     for I := 0 to FOptionControlsCount - 1 do begin
-      FOptionControls[I].Control.AnchorParallel(akRight, 0, Panel3);
+      C := FOptionControls[I].Control;
+      C.AnchorParallel(akRight, 0, Panel3);
+      if C is IHasDividerColour then
+        (C as IHasDividerColour).SetDividerColour(Panel5.Color);
     end;
 
     Constraints.MinWidth := Panel2.Width + Panel3.Constraints.MinWidth * 3 div 5;

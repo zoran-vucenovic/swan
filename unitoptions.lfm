@@ -7,10 +7,10 @@ object FormOptions: TFormOptions
   Caption = 'Options'
   ClientHeight = 680
   ClientWidth = 541
+  LCLVersion = '4.3.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '3.7.0.0'
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

@@ -9,22 +9,28 @@ interface
 
 uses
   Classes, SysUtils, UnitOptions, UnitCommon, Forms, Controls, ExtCtrls,
-  StdCtrls;
+  StdCtrls, Graphics;
 
 type
 
-  TFrameSnapshotOptions = class(TFrame)
+  TFrameSnapshotOptions = class(TFrame, IHasDividerColour)
+    CheckBoxCompressRamRom: TCheckBox;
     CheckBoxSkipTapeInfoSzxLoad: TCheckBox;
     CheckBoxSkipJoystickInfoSzxLoad: TCheckBox;
     ComboBox1: TComboBox;
     Label1: TLabel;
+    Label2: TLabel;
     Panel1: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
+    Panel4: TPanel;
+    Shape1: TShape;
   private
+    function GetCompressRamAndRomBlocks: Boolean;
     function GetSaveTapeInfoSzxSave: Integer;
     function GetSkipJoystickInfoSzxLoad: Boolean;
     function GetSkipTapeInfoSzxLoad: Boolean;
+    procedure SetCompressRamAndRomBlocks(AValue: Boolean);
     procedure SetSaveTapeInfoSzxSave(const AValue: Integer);
     procedure SetSkipJoystickInfoSzxLoad(AValue: Boolean);
     procedure SetSkipTapeInfoSzxLoad(AValue: Boolean);
@@ -34,9 +40,13 @@ type
 
     class function CreateForAllOptions(AOptionsDialog: TFormOptions): TFrameSnapshotOptions;
 
+    function GetDividerColour: TColor;
+    procedure SetDividerColour(AValue: TColor);
+
     property SkipJoystickInfoSzxLoad: Boolean read GetSkipJoystickInfoSzxLoad write SetSkipJoystickInfoSzxLoad;
     property SkipTapeInfoSzxLoad: Boolean read GetSkipTapeInfoSzxLoad write SetSkipTapeInfoSzxLoad;
     property SaveTapeInfoSzxSave: Integer read GetSaveTapeInfoSzxSave write SetSaveTapeInfoSzxSave;
+    property CompressRamAndRomBlocks: Boolean read GetCompressRamAndRomBlocks write SetCompressRamAndRomBlocks;
   end;
 
 implementation
@@ -44,6 +54,16 @@ implementation
 {$R *.lfm}
 
 { TFrameSnapshotOptions }
+
+function TFrameSnapshotOptions.GetDividerColour: TColor;
+begin
+  Result := Shape1.Brush.Color;
+end;
+
+function TFrameSnapshotOptions.GetCompressRamAndRomBlocks: Boolean;
+begin
+  Result := CheckBoxCompressRamRom.Checked;
+end;
 
 function TFrameSnapshotOptions.GetSaveTapeInfoSzxSave: Integer;
 begin
@@ -58,6 +78,16 @@ end;
 function TFrameSnapshotOptions.GetSkipTapeInfoSzxLoad: Boolean;
 begin
   Result := CheckBoxSkipTapeInfoSzxLoad.Checked;
+end;
+
+procedure TFrameSnapshotOptions.SetCompressRamAndRomBlocks(AValue: Boolean);
+begin
+  CheckBoxCompressRamRom.Checked := AValue;
+end;
+
+procedure TFrameSnapshotOptions.SetDividerColour(AValue: TColor);
+begin
+  Shape1.Brush.Color := AValue;
 end;
 
 procedure TFrameSnapshotOptions.SetSaveTapeInfoSzxSave(const AValue: Integer);
