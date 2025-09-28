@@ -68,9 +68,6 @@ type
       end;
 
       TSzxBlock = class abstract (TObject)
-      public
-        type
-          TChr4 = packed array [0..3] of AnsiChar;
       protected
         function WriteBlockSize(const Stream: TStream): Boolean;
         function LoadFromStream(const Stream: TStream): Boolean; virtual; abstract;
