@@ -2858,7 +2858,7 @@ var
     LoadingFailed(Format('No %s file found in zip.', [S]));
   end;
 
-  function StrInArr(S: String; Arr: Array of String): Boolean;
+  function ExtensionInArr(S: String; Arr: Array of String): Boolean;
   var
     I: Integer;
   begin
@@ -2880,7 +2880,7 @@ var
   L: Boolean;
   Extension: String;
   AcceptedExtensions: TStringDynArray;
-  LoadAsBinary: Boolean;
+  TryLoadAsBinary: Boolean;
   InZip: Boolean;
   ErrMsg: String;
 
@@ -2895,15 +2895,12 @@ begin
 
       Stream := nil;
       Extension := ExtractFileExt(ASourceFile);
-      LoadAsBinary := SpectrumFileKinds = BinFileKindOnly;
       SnapshotFile := nil;
       InZip := False;
 
       ErrMsg := '';
       L := False;
-      if (not LoadAsBinary)
-         and (AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0)
-      then begin
+      if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
         GetAcceptableExtensions(SpectrumFileKinds, True, AcceptedExtensions);
         try
           InZip := TFileUnzipper.GetFileFromZipFile(ASourceFile, AcceptedExtensions, Stream, FileName);
@@ -2985,21 +2982,22 @@ begin
 
             end else begin
 
-              LoadAsBinary := LoadAsBinary
-                or (
-                  (sfkBinary in SpectrumFileKinds)
-                   and StrInArr(Extension, BinaryExtensions)
-                  );
-
               if sfkTape in SpectrumFileKinds then begin
-                if LoadTape(Stream, FileName, Extension, not LoadAsBinary) then begin
+                TryLoadAsBinary :=
+                  (sfkBinary in SpectrumFileKinds)
+                   and ExtensionInArr(Extension, BinaryExtensions);
+
+                if LoadTape(Stream, FileName, Extension, not TryLoadAsBinary) then begin
                   TapePlayer.IsRealPath := not InZip;
                   L := True;
-                end;
-              end;
+                end else
+                  TryLoadAsBinary := (sfkBinary in SpectrumFileKinds) and not ExtensionInArr(Extension, TapeExtensions);
+
+              end else
+                TryLoadAsBinary := sfkBinary in SpectrumFileKinds;
 
               if not L then begin
-                if sfkBinary in SpectrumFileKinds then
+                if TryLoadAsBinary then
                   L := LoadBinary();
 
                 if (not L) and Assigned(Stream) then
@@ -3044,9 +3042,9 @@ begin
 
     if Assigned(TapePlayerClass) then begin
       TapePlayer := TapePlayerClass.Create;
-      TapePlayer.SetSpectrum(Spectrum);
-      TapePlayer.FileName := FileName;
       try
+        TapePlayer.SetSpectrum(Spectrum);
+        TapePlayer.FileName := FileName;
         if TapePlayer.LoadFromStream(AStream) then begin
           TapePlayer.Rewind;
           if FAutoShowTapePlayerWhenTapeLoaded then
