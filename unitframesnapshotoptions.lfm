@@ -14,13 +14,15 @@ object FrameSnapshotOptions: TFrameSnapshotOptions
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
     Left = 0
-    Height = 166
+    Height = 162
     Top = 0
     Width = 288
     AutoSize = True
     BevelOuter = bvNone
-    ClientHeight = 166
+    ClientHeight = 162
     ClientWidth = 288
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 0
     object Panel2: TPanel
       AnchorSideLeft.Control = Panel1
@@ -28,7 +30,7 @@ object FrameSnapshotOptions: TFrameSnapshotOptions
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
       Left = 8
-      Height = 156
+      Height = 152
       Top = 5
       Width = 275
       Anchors = [akTop, akLeft, akRight]
@@ -38,7 +40,7 @@ object FrameSnapshotOptions: TFrameSnapshotOptions
       BorderSpacing.Right = 5
       BorderSpacing.Bottom = 5
       BevelOuter = bvNone
-      ClientHeight = 156
+      ClientHeight = 152
       ClientWidth = 275
       TabOrder = 0
       object Panel3: TPanel
@@ -48,7 +50,7 @@ object FrameSnapshotOptions: TFrameSnapshotOptions
         AnchorSideRight.Control = Panel2
         AnchorSideRight.Side = asrBottom
         Left = 5
-        Height = 71
+        Height = 67
         Top = 85
         Width = 258
         Anchors = [akTop, akLeft, akRight]
@@ -57,9 +59,9 @@ object FrameSnapshotOptions: TFrameSnapshotOptions
         BorderSpacing.Top = 8
         BorderSpacing.Right = 12
         BevelOuter = bvNone
-        ClientHeight = 71
+        ClientHeight = 67
         ClientWidth = 258
-        TabOrder = 0
+        TabOrder = 1
         object Label1: TLabel
           AnchorSideLeft.Control = Panel3
           AnchorSideTop.Control = Panel3
@@ -75,10 +77,11 @@ object FrameSnapshotOptions: TFrameSnapshotOptions
           AnchorSideTop.Side = asrBottom
           Left = 17
           Height = 23
-          Top = 17
+          Hint = 'When saving szx, if the tape file is open in the emulated tape player, you can'#13#10'choose to include the tape with the snapshot, in one of the following ways:'#13#10'- Embed the file in the snapshot (compressed using zlib compression)'#13#10'- Embed the file in the snapshot (not compressed)'#13#10'- Store the file path, so that the tape can be loaded if the same path is'#13#10'   present on the file system when opening the szx.'#13#10'- Ignore the tape in the tape player'
+          Top = 19
           Width = 241
           BorderSpacing.Left = 17
-          BorderSpacing.Top = 2
+          BorderSpacing.Top = 4
           ItemHeight = 15
           ItemIndex = 2
           Items.Strings = (
@@ -96,11 +99,12 @@ object FrameSnapshotOptions: TFrameSnapshotOptions
           AnchorSideTop.Side = asrBottom
           Left = 17
           Height = 19
-          Top = 52
-          Width = 180
+          Hint = 'When saving szx files, ram and rom blocks will be saved without zlib compression'
+          Top = 48
+          Width = 217
           BorderSpacing.Left = 17
-          BorderSpacing.Top = 12
-          Caption = 'Compress ram and rom blocks'
+          BorderSpacing.Top = 6
+          Caption = 'Do not compress ram and rom blocks'
           Checked = True
           State = cbChecked
           TabOrder = 1
@@ -123,7 +127,7 @@ object FrameSnapshotOptions: TFrameSnapshotOptions
         BevelOuter = bvNone
         ClientHeight = 62
         ClientWidth = 258
-        TabOrder = 1
+        TabOrder = 0
         object Label2: TLabel
           Left = 0
           Height = 15
@@ -137,6 +141,7 @@ object FrameSnapshotOptions: TFrameSnapshotOptions
           AnchorSideTop.Side = asrBottom
           Left = 17
           Height = 19
+          Hint = 'Disregard joystick info when loading szx files.'
           Top = 19
           Width = 149
           BorderSpacing.Left = 17
@@ -150,6 +155,7 @@ object FrameSnapshotOptions: TFrameSnapshotOptions
           AnchorSideTop.Side = asrBottom
           Left = 17
           Height = 19
+          Hint = 'Disregard the cassete file stored in szx snapshots.'
           Top = 43
           Width = 105
           BorderSpacing.Top = 5

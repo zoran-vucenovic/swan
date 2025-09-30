@@ -62,7 +62,7 @@ end;
 
 function TFrameSnapshotOptions.GetCompressRamAndRomBlocks: Boolean;
 begin
-  Result := CheckBoxCompressRamRom.Checked;
+  Result := not CheckBoxCompressRamRom.Checked;
 end;
 
 function TFrameSnapshotOptions.GetSaveTapeInfoSzxSave: Integer;
@@ -82,7 +82,7 @@ end;
 
 procedure TFrameSnapshotOptions.SetCompressRamAndRomBlocks(AValue: Boolean);
 begin
-  CheckBoxCompressRamRom.Checked := AValue;
+  CheckBoxCompressRamRom.Checked := not AValue;
 end;
 
 procedure TFrameSnapshotOptions.SetDividerColour(AValue: TColor);
