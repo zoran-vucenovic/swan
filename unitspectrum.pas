@@ -172,7 +172,6 @@ type
     FSoundMuted: Boolean;
     SpectrumColoursBGRA: TSpectrumColoursBGRA;
     FCustomRomsMounted: Boolean;
-    FCustomRomsFileNames: TStringDynArray;
     FLateTimings: Boolean;
     FFastLoad: Boolean;
     HalfRowsCopy: TSpectrumKeyBoard.THalfRows;
@@ -227,8 +226,6 @@ type
     function GetBgraColours: TBGRAColours;
     function IsIssue2: Boolean;
     function GetTotalTicks(): Int64;
-    function GetCustomRomFiles(out ARomFiles: TStringDynArray): Integer;
-    procedure SetCustomRomFiles(const ARomFiles: TStringDynArray);
     procedure UpdateBeeperVol;
 
     property RemainingIntPinUp: Integer // for szx file
@@ -558,27 +555,6 @@ begin
   Result := FSumTicks + FProcessor.TStatesInCurrentFrame;
 end;
 
-function TSpectrum.GetCustomRomFiles(out ARomFiles: TStringDynArray): Integer;
-var
-  I: Integer;
-begin
-  Result := Length(FCustomRomsFileNames);
-  SetLength(ARomFiles{%H-}, Result);
-  for I := Low(FCustomRomsFileNames) to High(FCustomRomsFileNames) do
-    ARomFiles[I] := FCustomRomsFileNames[I];
-end;
-
-procedure TSpectrum.SetCustomRomFiles(const ARomFiles: TStringDynArray);
-var
-  I: Integer;
-begin
-  if Length(ARomFiles) <= 4 then begin
-    SetLength(FCustomRomsFileNames, Length(ARomFiles));
-    for I := Low(ARomFiles) to High(ARomFiles) do
-      FCustomRomsFileNames[I] := ARomFiles[I];
-  end;
-end;
-
 procedure TSpectrum.UpdateSoundOutputMode;
 begin
   if Assigned(FAYSoundChip) then begin
@@ -683,7 +659,6 @@ begin
 
   FreeOnTerminate := False;
 
-  SetLength(FCustomRomsFileNames, 0);
   FPagingEnabled := False;
   FSoundMuted := False;
   FBeepVol := 1;
