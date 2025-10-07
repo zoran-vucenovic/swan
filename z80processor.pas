@@ -21,7 +21,6 @@ type
   TProcessor = class(TObject)
   public
     FrameTicks: Int32Fast;
-    ContendedHighBank: Boolean;
     ContentionFrom: Int32Fast;
     ContentionTo: Int32Fast;
     TicksPerLine: Int32Fast;
@@ -156,6 +155,7 @@ type
     FOnInputRequest: TProcessorEvent;
     FOnOutputRequest: TProcessorEvent;
     FOnNeedWriteScreen: TWriteScrEvent;
+    FContendedBankMask: Word;
 
     procedure EmptyProcessorEvent;
     procedure EmptyWriteScrEvent({%H-}TicksTo: Int32Fast);
@@ -286,6 +286,8 @@ type
 
     procedure SetMemory(Mem: TMemory);
 
+    procedure SetContendedHighBankFlag(AValue: Word); inline;
+
     property FlagsModified: Boolean read FFlagsModified write FFlagsModified;
 
     // PrefixByte might be $CB, $DD, $ED, $FD and $FB
@@ -336,6 +338,12 @@ end;
 procedure TProcessor.EmptyWriteScrEvent(TicksTo: Int32Fast);
 begin
   //
+end;
+
+
+procedure TProcessor.SetContendedHighBankFlag(AValue: Word);
+begin
+  FContendedBankMask := Word($C000) xor (AValue shl 15);
 end;
 
 procedure TProcessor.SetInterruptMode(const AValue: Byte);
@@ -393,9 +401,7 @@ end;
 
 procedure TProcessor.Contention;
 begin
-  if (FAddressBus and $C000 = $4000)
-     or (ContendedHighBank and (FAddressBus and $C000 = $C000))
-  then
+  if FAddressBus and FContendedBankMask = $4000 then
     CheckContention;
 end;
 
@@ -407,9 +413,7 @@ end;
 
 procedure TProcessor.Contention2Times;
 begin
-  if (FAddressBus and $C000 = $4000)
-     or (ContendedHighBank and (FAddressBus and $C000 = $C000))
-  then begin
+  if FAddressBus and FContendedBankMask = $4000 then begin
     CheckContention;
     Inc(FTStatesInCurrentFrame);
     CheckContention;
@@ -420,9 +424,7 @@ end;
 
 procedure TProcessor.Contention5Times;
 begin
-  if (FAddressBus and $C000 = $4000)
-     or (ContendedHighBank and (FAddressBus and $C000 = $C000))
-  then begin
+  if FAddressBus and FContendedBankMask = $4000 then begin
     CheckContention;
     Inc(FTStatesInCurrentFrame);
     CheckContention;
@@ -439,10 +441,7 @@ end;
 
 procedure TProcessor.IOTimings;
 begin
-  if (FAddressBus and $C000 = $4000)
-     or (ContendedHighBank and (FAddressBus and $C000 = $C000))
-  then begin
-    //if FAddressBus and $FF = $FE then begin
+  if FAddressBus and FContendedBankMask = $4000 then begin
     if FAddressBus and 1 = 0 then begin
       // C:1, C:3
       CheckContention;
@@ -461,7 +460,6 @@ begin
       Inc(FTStatesInCurrentFrame);
     end;
   end else begin
-    //if FAddressBus and $FF = $FE then begin
     if FAddressBus and 1 = 0 then begin
       // N:1, C:3
       Inc(FTStatesInCurrentFrame);
@@ -1394,7 +1392,7 @@ begin
   FOnOutputRequest := @EmptyProcessorEvent;
   FOnNeedWriteScreen := @EmptyWriteScrEvent;
   InitRegPointers;
-  ContendedHighBank := False;
+  SetContendedHighBankFlag(0);
   ResetCPU;
 end;
 

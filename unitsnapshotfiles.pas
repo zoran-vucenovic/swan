@@ -239,7 +239,7 @@ begin
         Reset7ffd();
 
       ASpectrum.Memory.ActiveRamPageNo := MountedRamPage;
-      Proc.ContendedHighBank := MountedRamPage and 1 <> 0; { #todo : different on +3! }
+      Proc.SetContendedHighBankFlag(MountedRamPage and 1); { #todo : different on +3! }
       ASpectrum.Memory.ActiveRomPageNo := MountedRomPage;
       ASpectrum.Memory.ShadowScreenDisplay := ShadowScreenDisplay;
       ASpectrum.IsPagingEnabled := PagingEnabled;

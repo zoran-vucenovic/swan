@@ -403,7 +403,7 @@ var
 begin
   if FPagingEnabled then begin
     FMemory.ActiveRamPageNo := FProcessor.DataBus and %111;
-    FProcessor.ContendedHighBank := FProcessor.DataBus and 1 <> 0; { #todo : different on +3! }
+    FProcessor.SetContendedHighBankFlag(FProcessor.DataBus and 1); { #todo : different on +3! }
     B := FMemory.ShadowScreenDisplay;
     if B xor (FProcessor.DataBus and %1000 <> 0) then begin
       FProcessor.OnNeedWriteScreen(FProcessor.TStatesInCurrentFrame - 3);
@@ -1062,7 +1062,7 @@ begin
   FMemory.InitBanks();
   FMemory.ClearRam;
   FPagingEnabled := FIs128KModel;
-  FProcessor.ContendedHighBank := False;
+  FProcessor.SetContendedHighBankFlag(0);
 
   FSumFrameCount := GetTotalFrameCount;
   FFrameCount := 0;
