@@ -44,7 +44,7 @@ begin
       begin
         if FTapePlayer.ActiveBit <> 0 then
           Exit(TicksNeeded);
-        Result := FPauseLength * TicksPerMilliSecond;
+        Result := FPauseLength * TTapePlayer.TicksPerMilliSecond;
         AdjustTicksIfNeeded(Result);
         Result := Result + TicksNeeded;
       end;
@@ -114,12 +114,12 @@ begin
     case State of
       TPlayState.psStart:
         begin
-          TicksToWait := TicksBeforePause;
+          TicksToWait := TTapePlayer.TicksBeforePause;
           State := TPlayState.psData;
         end;
       TPlayState.psData:
         begin
-          TicksToWait := FPauseLength * TicksPerMilliSecond;
+          TicksToWait := FPauseLength * TTapePlayer.TicksPerMilliSecond;
           FTapePlayer.ActiveBit := 0;
           FTapePlayer.InPause := True;
           State := TPlayState.psPause;

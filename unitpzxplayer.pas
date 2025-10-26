@@ -20,7 +20,6 @@ type
 
   TPzxPlayer = class(TTapePlayer)
   protected
-    procedure CheckNextBlock(); override;
     class function CheckHeader(const Stream: TStream): Boolean; override;
     class function GetNextBlockClass(const Stream: TStream): TTapeBlockClass;
       override;
@@ -401,16 +400,19 @@ procedure TPzxBlockPAUS.Details(out S: String);
 var
   M: Int64;
 begin
-  //inherited Details(S);
   M := PauseLen;
-  M := (M + 1750) div 3500;
+  M := (M + TTapePlayer.TicksPerMilliSecond div 2) div TTapePlayer.TicksPerMilliSecond;
 
   if InitialPulseLevel <> 0 then
     S := 'high'
   else
     S := 'low';
-  S := Format('Initial pulse level: %s%sPause length: %d ticks (%d ms)',
-    [S, #13, PauseLen, M]);
+
+  S := Format('Initial pulse level: %s%sPause length: %d ticks (',
+    [S, #13, PauseLen]);
+  if M * TTapePlayer.TicksPerMilliSecond <> PauseLen then
+    S := S + '~';
+  S := S + M.ToString + ' ms)';
 end;
 
 { TPzxBlockDATA }
@@ -433,6 +435,7 @@ procedure TPzxBlockDATA.FillDetails;
         S := '';
 
       MaybeComma := ' ';
+      Result := '';
       for I := 0 to N - 1 do begin
         Result := Result + MaybeComma + IntToStr(SArr[I]);
         MaybeComma := ', ';
@@ -448,6 +451,7 @@ begin
     S := 'high'
   else
     S := 'low';
+
   FDetails :=
     Format('Count (bits): %d%sInitial pulse level: %s%sTail: %d%sP0: %d%sP1: %d%s%s%s%s%s%s',
       [TotalBits, #13, S, #13, Tail, #13, P0, #13, P1, #13, 'S0:', GetSArr(S0), #13, 'S1:', GetSArr(S1)]);
@@ -1043,17 +1047,6 @@ begin
 end;
 
 { TPzxPlayer }
-
-procedure TPzxPlayer.CheckNextBlock;
-begin
-  if FCurrentBlock.GetStopPlaying then
-    StopPlaying
-  else begin
-    StartBlock(FCurrentBlockNumber + 1);
-    if FCurrentBlock = nil then
-      StopPlaying;
-  end;
-end;
 
 class function TPzxPlayer.CheckHeader(const Stream: TStream): Boolean;
 var

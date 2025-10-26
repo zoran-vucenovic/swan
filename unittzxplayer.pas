@@ -19,33 +19,6 @@ implementation
 uses
   SnapshotZ80, SnapshotSNA; // these are included for tzx block 40
 
-const
-  TicksPerMilliSecond = Int64(3500);
-  //
-  // What is the correct duration of oposite level before going to low when entering pause?
-  // According to tzx specification, when pause is non-zero, going to pause should be
-  // emulated by making an edge, wait AT LEAST one millisecond with the oposite
-  // level and then go to low for the rest of the pause period.
-  // Quote from https://worldofspectrum.net/TZXformat.html:
-  //   To ensure that the last edge produced is properly finished there should be
-  //   at least 1 ms. pause of the opposite level and only after that the pulse should go to 'low'
-  // For the majority of tzx files I tried (acutally, all I tested, except one),
-  // one millisecond (3500 ticks) of oposite level is enough, but not in one case I found:
-  //   Pheenix.tzx by Megadodo, original release (https://spectrumcomputing.co.uk/entry/3690/ZX-Spectrum/Pheenix)
-  // This tzx file works when inverted level is kept for at least 4214 (does not work with 4213) ticks.
-  //
-  // Actually, it seems that all tapes work well with 945 ticks!
-  // The pulse duration of 945 ticks is mentioned in pzx specification.
-  // Quote (http://zxds.raxoft.cz/docs/pzx.txt, under DATA block):
-  //   After the very last pulse of the last bit of the data stream is output, one
-  //   last tail pulse of specified duration is output. Non zero duration is
-  //   usually necessary to terminate the last bit of the block properly, for
-  //   example for data block saved with standard ROM routine the duration of the
-  //   tail pulse is 945 T cycles and only then goes the level low again.
-  //
-  // So:
-  TicksBeforePause = Int64(945);
-
 type
 
   TTzxPlayer = class(TTapePlayer)
@@ -378,29 +351,19 @@ var
   end;
 
 begin
-  if FCurrentBlock.GetStopPlaying then begin
-    StopPlaying();
-  end else begin
+  if FCurrentBlock is TTzxBlock then begin
     BL := TTzxBlock(FCurrentBlock);
-    if not (
-       JumptoBlock
+    if JumpToBlock
        or AddCallSeq
        or ReturnFromSequence
        or BL.CheckUserInteraction
-       )
-    then begin
-      LoopCheck;
-      StartBlock(FCurrentBlockNumber + 1);
-    end;
+    then
+      Exit;
 
-    if FCurrentBlock = nil then begin
-      if ActiveBit <> 0 then
-        StartPauseBlock(0)
-      else
-        StopPlaying();
-    end;
+    LoopCheck;
   end;
 
+  inherited CheckNextBlock();
 end;
 
 class function TTzxPlayer.CheckHeader(const Stream: TStream): Boolean;

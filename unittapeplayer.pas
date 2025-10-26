@@ -16,8 +16,6 @@ type
   TTapePlayer = class;
   TTapePlayerClass = class of TTapePlayer;
 
-  { TTapeBlock }
-
   TTapeBlock = class abstract (TObject)
   strict protected
     FTapePlayer: TTapePlayer;
@@ -45,9 +43,35 @@ type
     class function GetBlockIdAsString: String; virtual; abstract;
   end;
 
-  { TTapePlayer }
-
   TTapePlayer = class abstract (TSpectrum.TAbstractTapePlayer)
+  public
+    const
+      TicksPerMilliSecond = Int64(3500);
+      //
+      // What is the correct duration of oposite level before going to low when entering pause?
+      // According to tzx specification, when pause is non-zero, going to pause should be
+      // emulated by making an edge, wait AT LEAST one millisecond with the oposite
+      // level and then go to low for the rest of the pause period.
+      // Quote from https://worldofspectrum.net/TZXformat.html:
+      //   To ensure that the last edge produced is properly finished there should be
+      //   at least 1 ms. pause of the opposite level and only after that the pulse should go to 'low'
+      // For the majority of tzx files I tried (acutally, all I tested, except one),
+      // one millisecond (3500 ticks) of oposite level is enough, but not in one case I found:
+      //   Pheenix.tzx by Megadodo, original release (https://spectrumcomputing.co.uk/entry/3690/ZX-Spectrum/Pheenix)
+      // This tzx file works when inverted level is kept for at least 4214 (does not work with 4213) ticks.
+      //
+      // Actually, it seems that all tapes work well with 945 ticks!
+      // The pulse duration of 945 ticks is mentioned in pzx specification.
+      // Quote (http://zxds.raxoft.cz/docs/pzx.txt, under DATA block):
+      //   After the very last pulse of the last bit of the data stream is output, one
+      //   last tail pulse of specified duration is output. Non zero duration is
+      //   usually necessary to terminate the last bit of the block properly, for
+      //   example for data block saved with standard ROM routine the duration of the
+      //   tail pulse is 945 T cycles and only then goes the level low again.
+      //
+      // So:
+      TicksBeforePause = Int64(945);
+
   public
   // used only in tzx block 28
     type
@@ -65,10 +89,13 @@ type
     FOnSelectBlock: TOnSelectBlock;
     FBlockCount: Integer;
     FFileName: String;
+    FFinalTailBlock: TTapeBlock;
 
     procedure EmptyProcedure;
     procedure SetOnChangeBlock(AValue: TProcedureOfObject);
     procedure ClearBlocks;
+    procedure StartFinalTail;
+
   protected
     type
       TTapeBlockClass = class of TTapeBlock;
@@ -92,7 +119,7 @@ type
     procedure DoOnChangeBlock; inline;
     procedure StartBlock(BlockNumber: Integer);
     class function CheckHeader(const {%H-}Stream: TStream): Boolean; virtual;
-    procedure CheckNextBlock(); virtual; abstract;
+    procedure CheckNextBlock(); virtual;
     function AddBlock(const Stream: TStream): Boolean;
 
     class function GetTapeType: TTapeType; virtual; abstract;
@@ -149,6 +176,27 @@ type
   end;
 
 implementation
+
+type
+
+  TFinalTailBlock = class(TTapeBlock)
+  strict private
+    TicksNeeded: Int64;
+    FFinished: Boolean;
+
+  public
+    constructor Create(ATapePlayer: TTapePlayer); override;
+
+    function GetBlockLength: Integer; override;
+    class function GetBlockDescription: String; override;
+    function LoadBlock(const {%H-}Stream: TStream): Boolean; override;
+    function GetNextPulse: Boolean; override;
+    function GetStopPlaying: Boolean; override;
+
+    procedure Start; override;
+    class function GetBlockId: DWord; override;
+    class function GetBlockIdAsString: String; override;
+  end;
 
 { TTapePlayer.TTapePlayerMap }
 
@@ -220,6 +268,67 @@ begin
   S := '';
 end;
 
+{ TTailBlock }
+
+constructor TFinalTailBlock.Create(ATapePlayer: TTapePlayer);
+begin
+  inherited Create(ATapePlayer);
+  FFinished := True;
+  TicksNeeded := 0;
+end;
+
+function TFinalTailBlock.GetBlockLength: Integer;
+begin
+  Result := 0;
+end;
+
+class function TFinalTailBlock.GetBlockDescription: String;
+begin
+  Result := '';
+end;
+
+function TFinalTailBlock.LoadBlock(const Stream: TStream): Boolean;
+begin
+  Result := False;
+end;
+
+function TFinalTailBlock.GetNextPulse: Boolean;
+begin
+  if FFinished then
+    Exit(False);
+
+  Result := True;
+  if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
+    FFinished := True;
+  end;
+end;
+
+function TFinalTailBlock.GetStopPlaying: Boolean;
+begin
+  Result := True;
+end;
+
+procedure TFinalTailBlock.Start;
+begin
+  inherited Start;
+
+  FFinished := False;
+  TicksNeeded := FTapePlayer.TicksBeforePause;
+  AdjustTicksIfNeeded(TicksNeeded);
+  TicksNeeded := GetCurrentTotalSpectrumTicks + TicksNeeded;
+  FTapePlayer.InPause := True;
+end;
+
+class function TFinalTailBlock.GetBlockId: DWord;
+begin
+  Result := 0;
+end;
+
+class function TFinalTailBlock.GetBlockIdAsString: String;
+begin
+  Result := '';
+end;
+
 { TTapePlayer }
 
 function TTapePlayer.GetBlockCount: Integer;
@@ -263,6 +372,7 @@ constructor TTapePlayer.Create;
 begin
   inherited Create;
 
+  FFinalTailBlock := nil;
   FStream := nil;
   FIsRealPath := False;
   SetLength(Blocks, 2);
@@ -270,6 +380,7 @@ begin
   FOnSelectBlock := nil;
   SetOnChangeBlock(nil);
   FSpectrum := nil;
+  InPause := False;
 end;
 
 procedure TTapePlayer.StartBlock(BlockNumber: Integer);
@@ -296,6 +407,11 @@ end;
 class function TTapePlayer.CheckHeader(const Stream: TStream): Boolean;
 begin
   Result := True;
+end;
+
+procedure TTapePlayer.CheckNextBlock();
+begin
+  StartBlock(FCurrentBlockNumber + 1);
 end;
 
 function TTapePlayer.AddBlock(const Stream: TStream): Boolean;
@@ -357,6 +473,7 @@ begin
   SetOnChangeBlock(nil);
   ClearBlocks;
   FStream.Free;
+  FFinalTailBlock.Free;
 
   inherited Destroy;
 end;
@@ -410,7 +527,18 @@ begin
       FSpectrum.SetEarFromTape(ActiveBit);
       Exit;
     end;
-    CheckNextBlock();
+
+    if FCurrentBlock.GetStopPlaying then
+      StopPlaying()
+    else begin
+      CheckNextBlock();
+      if (FCurrentBlock = nil) or FCurrentBlock.GetStopPlaying then begin
+        if ActiveBit <> 0 then
+          StartFinalTail
+        else
+          StopPlaying();
+      end;
+    end;
   end;
 end;
 
@@ -451,6 +579,7 @@ begin
   ActiveBit := 0;
   if Assigned(FSpectrum) then
     FSpectrum.SetEarFromTape(0);
+  InPause := False;
   DoOnChangeBlock;
 end;
 
@@ -458,6 +587,17 @@ procedure TTapePlayer.StartPauseBlock(const APauseLength: Integer);
 begin
   if FCurrentBlockNumber >= GetLastReallyPlayableBlock then
     FNoMoreReallyPlayableBlocks := True;
+end;
+
+procedure TTapePlayer.StartFinalTail;
+begin
+  if FFinalTailBlock = nil then
+    FFinalTailBlock := TFinalTailBlock.Create(Self);
+  FCurrentBlock := FFinalTailBlock;
+  if FCurrentBlockNumber >= GetLastReallyPlayableBlock then
+    FNoMoreReallyPlayableBlocks := True;
+  FFinalTailBlock.Start;
+  DoOnChangeBlock;
 end;
 
 function TTapePlayer.IsPlaying: Boolean;

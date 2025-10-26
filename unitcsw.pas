@@ -86,7 +86,6 @@ type
 
   TCswPlayer = class(TTapePlayer)
   protected
-    procedure CheckNextBlock(); override;
     class function CheckHeader(const Stream: TStream): Boolean; override;
     class function GetNextBlockClass(const {%H-}Stream: TStream): TTapeBlockClass;
       override;
@@ -429,11 +428,6 @@ begin
 end;
 
 { TCswPlayer }
-
-procedure TCswPlayer.CheckNextBlock();
-begin
-  StopPlaying;
-end;
 
 class function TCswPlayer.CheckHeader(const Stream: TStream): Boolean;
 type
