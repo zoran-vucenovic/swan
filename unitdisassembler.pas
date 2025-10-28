@@ -623,7 +623,7 @@ var
         end;
 
     otherwise // 7
-      Result := 'RST ' + ConvByteToString(y);
+      Result := 'RST ' + ConvByteToString(y shl 3);
     end;
   end;
 
