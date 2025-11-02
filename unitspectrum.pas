@@ -182,6 +182,7 @@ type
     function GetRemainingIntPinUp: Integer;
     procedure SetRemainingIntPinUp(AValue: Integer);
     procedure SetSoundMuted(AValue: Boolean);
+    procedure SetAYOutputMode(AValue: TSoundAY_3_8912.TOutputMode);
     procedure UpdateDebuggedOrPaused;
     procedure SetInternalEar(AValue: Byte);
     procedure SetLateTimings(AValue: Boolean);
@@ -202,7 +203,6 @@ type
     class function DefaultSpectrumModel: TSpectrumModel; static;
 
     procedure SetSpectrumModel(ASpectrumModel: TSpectrumModel; ACustomRoms: TStream);
-    procedure SetAYOutputMode(AValue: TSoundAY_3_8912.TOutputMode);
     procedure AttachFormDebug(AFormDebug: IFormDebug);
     procedure DettachFormDebug;
     procedure SetTapePlayer(ATapePlayer: TAbstractTapePlayer);

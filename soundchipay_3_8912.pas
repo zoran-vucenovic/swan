@@ -97,7 +97,7 @@ type
     class procedure Init; static;
 
   public
-    procedure Fill(const Bp: Int32; P: PInt16; const Len: Integer);
+    procedure Fill(const ABeeper: Int32; P: PInt16; const Len: Integer);
 
     constructor Create;
     function GetRegValue(): Byte;
@@ -319,27 +319,27 @@ begin
 
   FEnvelopeHold := (FEnvelopeShape and %1001) <> %1000;
   FEnvelopeHoldUp := FEnvelopeShape in [11, 13];
-  FEnvelopeAlter := (FEnvelopeShape and %0010) <> 0;
+  FEnvelopeAlter := (FEnvelopeShape and %0010) <> 0; // it only matters when hold is false, so this is good
 end;
 
-procedure TSoundAY_3_8912.Fill(const Bp: Int32; P: PInt16; const Len: Integer);
+procedure TSoundAY_3_8912.Fill(const ABeeper: Int32; P: PInt16; const Len: Integer);
 var
-  J, K, Q, L: Integer;
+  J, K, L: Integer;
   N: Integer;
-  PE: PInt16;
-  NW1: Integer;
-  NW2: Integer;
+  PEnd: PInt16;
+  SoundPlayerCh1: Integer;
+  SoundPlayerCh2: Integer;
 
 begin
   if FIsStereo then
-    PE := P + 2 * Len
+    PEnd := P + 2 * Len
   else
-    PE := P + Len;
+    PEnd := P + Len;
 
-  while P < PE do begin
+  while P < PEnd do begin
 
-    NW1 := 0;
-    NW2 := 0;
+    SoundPlayerCh1 := 0;
+    SoundPlayerCh2 := 0;
 
     Inc(NoisePosition);
     if NoisePosition >= NoiseHalfPeriod then begin
@@ -364,27 +364,27 @@ begin
         N := N and (NoiseLevel or NoiseOnCh[J]);
 
         if FIsStereo then begin
-          NW1 := NW1 + Vols1[J, N];
-          NW2 := NW2 + Vols2[J, N];
+          SoundPlayerCh1 := SoundPlayerCh1 + Vols1[J, N];
+          SoundPlayerCh2 := SoundPlayerCh2 + Vols2[J, N];
         end else
-          NW1 := NW1 + Vols[N];
+          SoundPlayerCh1 := SoundPlayerCh1 + Vols[N];
 
       end;
 
       OutputChCurrentPositions[J] := K + 1;
     end;
 
-    P^ := (NW1 * TSoundPlayer.Volume + Bp) shr 2;
+    P^ := (SoundPlayerCh1 * TSoundPlayer.Volume + ABeeper) shr 2;
     if FIsStereo then begin
       Inc(P);
-      P^ := (NW2 * TSoundPlayer.Volume + Bp) shr 2;
+      P^ := (SoundPlayerCh2 * TSoundPlayer.Volume + ABeeper) shr 2;
     end;
 
-    Inc(FEnvelopePosition);
     if FEnvelopeDirection <> 0 then begin
-      Q := (FEnvelopePosition * 16) div FEnvelopePeriod;
+      Inc(FEnvelopePosition);
+      K := (FEnvelopePosition * 16) div FEnvelopePeriod;
 
-      if Q >= 16 then begin
+      if K >= 16 then begin
         if FEnvelopeHold then begin
           FEnvelopeDirection := 0;
           if FEnvelopeHoldUp then
@@ -403,9 +403,9 @@ begin
         FEnvelopePosition := 0;
       end else begin
         if FEnvelopeDirection = 1 then begin
-          FEnvelopeValue := Q;
+          FEnvelopeValue := K;
         end else
-          FEnvelopeValue := 15 - Q;
+          FEnvelopeValue := 15 - K;
       end;
     end;
 
@@ -417,8 +417,8 @@ constructor TSoundAY_3_8912.Create;
 begin
   inherited Create;
 
-  FOutputMode := TOutputMode.omMono;
-  SetOutputMode(TOutputMode.omStereoABC);
+  FOutputMode := TOutputMode.omStereoABC;
+  SetOutputMode(TOutputMode.omMono);
   SetOnCheckTicks(nil);
   InitRegPointers();
   Reset();
