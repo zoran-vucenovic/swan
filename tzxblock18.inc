@@ -66,14 +66,14 @@ begin
   if State = psFinished then
     Exit(False);
 
-  if Csw.State <> TCswBlock.TCswPlayState.cpsFinished then
-    Result := Csw.GetNextPulse
-  else begin
-    if FPauseAfterBlock > 0 then begin
-      FTapePlayer.StartPauseBlock(FPauseAfterBlock);
+  Result := Csw.GetNextPulse;
+  if Result then begin
+    if Csw.State = TCswBlock.TCswPlayState.cpsFinished then begin
+      if FPauseAfterBlock > 0 then begin
+        FTapePlayer.StartPauseBlock(FPauseAfterBlock);
+      end;
+      State := psFinished;
     end;
-    State := psFinished;
-    Result := True;
   end;
 end;
 

@@ -396,15 +396,11 @@ function TTzxBlock19.GetNextPulse: Boolean;
     PulsesNeeded := 1;
   end;
 
-var
-  ProcTicks: Int64;
-
 begin
   if State = TPlayState.psFinished then
     Exit(False);
 
-  ProcTicks := GetCurrentTotalSpectrumTicks;
-  if ProcTicks >= TicksNeeded then begin
+  if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
     Dec(PulsesNeeded);
     if PulsesNeeded = 0 then begin
       repeat // never loops, but allows break
@@ -451,7 +447,7 @@ begin
     end else
       FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
 
-    TicksNeeded := ProcTicks + TicksNeeded0;
+    TicksNeeded := TicksNeeded + TicksNeeded0;
   end;
 
   Result := True;
@@ -463,7 +459,7 @@ begin
 
   Start1 := True;
   TicksNeeded0 := 0;
-  TicksNeeded := TicksNeeded.MinValue;
+  TicksNeeded := GetCurrentTotalSpectrumTicks;
   PulsesNeeded := 1;
 
   P := Data;

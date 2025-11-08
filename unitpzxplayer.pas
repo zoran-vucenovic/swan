@@ -65,7 +65,6 @@ type
     class function GetBlockDescription: String; override;
     procedure Start; override;
     class function GetBlockIdAsString: String; override;
-    function GetNextPulse: Boolean; override;
     procedure Details(out S: String); override;
   end;
 
@@ -313,11 +312,6 @@ begin
   Result := '';
 end;
 
-function TPzxBlockUnsupported.GetNextPulse: Boolean;
-begin
-  Result := inherited GetNextPulse;
-end;
-
 procedure TPzxBlockUnsupported.Details(out S: String);
 begin
   S := 'Unknown block "' + BlockIdentifier + '"';
@@ -372,26 +366,24 @@ procedure TPzxBlockPAUS.Start;
 begin
   inherited Start;
   FTapePlayer.InPause := True;
-  TicksNeeded := TicksNeeded.MinValue;
+  TicksNeeded := GetCurrentTotalSpectrumTicks;
 end;
 
 function TPzxBlockPAUS.GetNextPulse: Boolean;
 var
-  ProcTicks: Int64;
   TicksNeeded0: Int64;
 
 begin
   if State = ppsFinished then
     Exit(False);
 
-  ProcTicks := GetCurrentTotalSpectrumTicks;
-  if ProcTicks >= TicksNeeded then begin
+  if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
     Inc(State);
 
     FTapePlayer.ActiveBit := InitialPulseLevel;
     TicksNeeded0 := PauseLen;
     AdjustTicksIfNeeded(TicksNeeded0);
-    TicksNeeded := ProcTicks + TicksNeeded0;
+    TicksNeeded := TicksNeeded + TicksNeeded0;
   end;
   Result := True;
 end;
@@ -613,15 +605,13 @@ function TPzxBlockDATA.GetNextPulse: Boolean;
   end;
 
 var
-  ProcTicks: Int64;
   TicksNeeded0: Int64;
 
 begin
   if State = ppsFinished then
     Exit(False);
 
-  ProcTicks := GetCurrentTotalSpectrumTicks;
-  if ProcTicks >= TicksNeeded then begin
+  if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
     if State <> ppsStart then
       FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000
     else begin
@@ -634,7 +624,7 @@ begin
     end;
     TicksNeeded0 := SPulses[SPulsesPos];
     AdjustTicksIfNeeded(TicksNeeded0);
-    TicksNeeded := ProcTicks + TicksNeeded0;
+    TicksNeeded := TicksNeeded + TicksNeeded0;
   end;
 
   Result := True;
@@ -645,7 +635,7 @@ begin
   inherited Start;
 
   P := Data;
-  TicksNeeded := TicksNeeded.MinValue;
+  TicksNeeded := GetCurrentTotalSpectrumTicks;
   PulsesNeeded := 1;
   SPulsesPos := 0;
   BitPosition := 7;
@@ -817,14 +807,11 @@ begin
 end;
 
 function TPzxBlockPULS.GetNextPulse: Boolean;
-var
-  ProcTicks: Int64;
 begin
   if State = ppsFinished then
     Exit(False);
 
-  ProcTicks := GetCurrentTotalSpectrumTicks;
-  if ProcTicks >= TicksNeeded then begin
+  if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
     if State = ppsPlaying then
       FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000
     else begin
@@ -850,7 +837,7 @@ begin
       until False;
     end;
 
-    TicksNeeded := ProcTicks + Duration;
+    TicksNeeded := TicksNeeded + Duration;
   end;
 
   Result := True;
@@ -862,7 +849,7 @@ begin
 
   RepeatCount := 0;
   CurrentPulseNumber := -1;
-  TicksNeeded := TicksNeeded.MinValue;
+  TicksNeeded := GetCurrentTotalSpectrumTicks;
 end;
 
 { TPzxBlockPZXT }

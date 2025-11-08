@@ -103,22 +103,20 @@ end;
 
 function TTzxBlock13.GetNextPulse: Boolean;
 var
-  ProcTicks: Int64;
   TicksNeeded0: Int64;
 
 begin
   if State = TPlayState.psFinished then
     Exit(False);
 
-  ProcTicks := GetCurrentTotalSpectrumTicks;
-  if ProcTicks >= TicksNeeded then begin
+  if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
     if State <> TPlayState.psStart then
       FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
 
     if CurrentPulseNumber < NumOfPulses then begin
       TicksNeeded0 := PulsesLengths[CurrentPulseNumber];
       AdjustTicksIfNeeded(TicksNeeded0);
-      TicksNeeded := ProcTicks + TicksNeeded0;
+      TicksNeeded := TicksNeeded + TicksNeeded0;
       State := TPlayState.psPilot;
     end else begin
       State := TPlayState.psFinished;
@@ -132,13 +130,13 @@ end;
 procedure TTzxBlock13.Start;
 begin
   inherited Start;
-  State := TPlayState.psStart;
 
-  TicksNeeded := TicksNeeded.MinValue;
-  CurrentPulseNumber := 0;
+  if NumOfPulses > 0 then begin
+    State := TPlayState.psStart;
 
-  if NumOfPulses = 0 then
-    State := TPlayState.psFinished;
+    TicksNeeded := GetCurrentTotalSpectrumTicks;
+    CurrentPulseNumber := 0;
+  end;
 end;
 
 procedure TTzxBlock13.Details(out S: String);

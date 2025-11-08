@@ -99,7 +99,6 @@ end;
 
 function TTzxBlockPause.GetNextPulse: Boolean;
 var
-  ProcTicks: Int64;
   TicksToWait: Int64;
 
 begin
@@ -108,8 +107,7 @@ begin
 
   Result := True;
 
-  ProcTicks := GetCurrentTotalSpectrumTicks;
-  if ProcTicks >= TicksNeeded then begin
+  if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
 
     case State of
       TPlayState.psStart:
@@ -131,7 +129,7 @@ begin
     end;
 
     AdjustTicksIfNeeded(TicksToWait);
-    TicksNeeded := ProcTicks + TicksToWait;
+    TicksNeeded := TicksNeeded + TicksToWait;
   end;
 end;
 
@@ -140,7 +138,7 @@ begin
   inherited Start;
   State := TPlayState.psStart;
 
-  TicksNeeded := TicksNeeded.MinValue;
+  TicksNeeded := GetCurrentTotalSpectrumTicks;
 end;
 
 procedure TTzxBlockPause.SetPauseLen(const APauseLength: Integer);

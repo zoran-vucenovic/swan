@@ -94,7 +94,6 @@ begin
             Result := L = 0;
             if not Result then begin
               if Stream.Size - Stream.Position >= L then begin
-                //Stream.Seek(Int64(L), TSeekOrigin.soCurrent);
                 Getmem(Data, L);
                 try
                   if Stream.Read(Data^, L) = L then begin
@@ -123,8 +122,6 @@ begin
 end;
 
 function TTzxBlock15.GetNextPulse: Boolean;
-var
-  ProcTicks: Int64;
 
   procedure ToPause;
   begin
@@ -141,7 +138,7 @@ var
       else
         FTapePlayer.ActiveBit := %01000000;
 
-      TicksNeeded := ProcTicks + TicksNeeded0;
+      TicksNeeded := TicksNeeded + TicksNeeded0;
 
       if BitPosition > 0 then
         Dec(BitPosition)
@@ -159,9 +156,7 @@ begin
   if State = TPlayState.psFinished then
     Exit(False);
 
-  ProcTicks := GetCurrentTotalSpectrumTicks;
-
-  if ProcTicks >= TicksNeeded then begin
+  if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
     // set active bit here
     case State of
       TPlayState.psData:
@@ -184,7 +179,7 @@ begin
 
   State := TPlayState.psStart;
   P := Data;
-  TicksNeeded := TicksNeeded.MinValue;
+  TicksNeeded := GetCurrentTotalSpectrumTicks;
   BitPosition := 7;
   TicksNeeded0 := PulseLen;
   AdjustTicksIfNeeded(TicksNeeded0);

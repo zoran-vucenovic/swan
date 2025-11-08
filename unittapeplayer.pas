@@ -71,6 +71,7 @@ type
       //
       // So:
       TicksBeforePause = Int64(945);
+      //TicksBeforePause = TicksPerMilliSecond;
 
   public
   // used only in tzx block 28

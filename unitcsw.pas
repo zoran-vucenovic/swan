@@ -370,7 +370,7 @@ begin
     else
       FProcTicksPerSec := 3500000;
     FState := TCswPlayState.cpsStart;
-    TicksNeeded := TicksNeeded.MinValue;
+    TicksNeeded := GetCurrentTotalSpectrumTicks;
 
     P := PByte(MS.Memory);
   end else begin
@@ -381,15 +381,13 @@ end;
 
 function TCswBlock.GetNextPulse: Boolean;
 var
-  ProcTicks: Int64;
   TicksNeeded0: Int64;
 
 begin
   if State = TCswPlayState.cpsFinished then
     Exit(False);
 
-  ProcTicks := GetCurrentTotalSpectrumTicks;
-  if ProcTicks >= TicksNeeded then begin
+  if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
     if FState <> TCswPlayState.cpsStart then
       FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
 
@@ -401,7 +399,7 @@ begin
         Inc(P, 4);
       end;
       TicksNeeded0 := (TicksNeeded0 * FProcTicksPerSec + FHalfSampleRate) div FSampleRate;
-      TicksNeeded := ProcTicks + TicksNeeded0;
+      TicksNeeded := TicksNeeded + TicksNeeded0;
       FState := TCswPlayState.cpsPlaying;
     end else begin
       FState := TCswPlayState.cpsFinished;
