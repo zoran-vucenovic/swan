@@ -38,9 +38,9 @@ var
   B: Byte;
 begin
   case State of
-    TPlayState.psPause:
-      Result := TicksNeeded;
     TPlayState.psData:
+      Result := TicksNeeded;
+    TPlayState.psPilot:
       begin
         if FTapePlayer.ActiveBit <> 0 then
           Exit(TicksNeeded);
@@ -115,14 +115,14 @@ begin
       TPlayState.psStart:
         begin
           TicksToWait := TTapePlayer.TicksBeforePause;
-          State := TPlayState.psData;
+          State := TPlayState.psPilot;
         end;
-      TPlayState.psData:
+      TPlayState.psPilot:
         begin
           TicksToWait := FPauseLength * TTapePlayer.TicksPerMilliSecond;
           FTapePlayer.ActiveBit := 0;
           FTapePlayer.InPause := True;
-          State := TPlayState.psPause;
+          State := TPlayState.psData;
         end;
 
     otherwise

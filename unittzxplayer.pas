@@ -79,7 +79,7 @@ type
   TTzxBlock = class abstract (TTapeBlock)
   strict protected
     type
-      TPlayState = (psStart, psPilot, psSync1, psSync2, psData, psPause, psFinished);
+      TPlayState = (psStart, psPilot, psSync1, psSync2, psData, psFinished);
 
   strict protected
     State: TPlayState;
