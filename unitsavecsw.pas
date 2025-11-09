@@ -15,7 +15,7 @@ type
   strict private
     FCompressionMethodZRle: Boolean;
     FStream: TMemoryStream;
-    FActiveBit: Byte;
+    FPulseLevelBit: Byte;
     FSampleRate: Int32;
     FPrevTicks: Int64;
     FPrePreTicks: Int64;
@@ -68,9 +68,9 @@ end;
 
 procedure TSaveCsw.WritePulses();
 begin
-  if FSpectrum.Mic <> FActiveBit then begin
+  if FSpectrum.Mic <> FPulseLevelBit then begin
     DoWrite;
-    FActiveBit := FSpectrum.Mic;
+    FPulseLevelBit := FSpectrum.Mic;
   end;
 end;
 
@@ -143,7 +143,7 @@ procedure TSaveCsw.StartRecording;
 begin
   FPrevTicks := FSpectrum.GetTotalTicks();
   FPrePreTicks := FPrevTicks;
-  FActiveBit := FSpectrum.Mic;
+  FPulseLevelBit := FSpectrum.Mic;
   FTotalPulses := 0;
   FPrevPulseLen := 0;
   FNeedGoBack := False;

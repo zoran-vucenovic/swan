@@ -328,11 +328,8 @@ begin
   if GetBlockLength >= 4 then begin
     if Stream.Read(N{%H-}, 4) = 4 then begin
       N := LEtoN(N);
-      InitialPulseLevel := 0;
-      if N shr 31 <> 0 then begin
-        N := N and $7FFFFFFF;
-        InitialPulseLevel := %01000000;
-      end;
+      InitialPulseLevel := (N shr 31) and 1;
+      N := N and $7FFFFFFF;
       PauseLen := N;
       Result := True;
     end;
@@ -380,7 +377,11 @@ begin
   if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
     Inc(State);
 
-    FTapePlayer.ActiveBit := InitialPulseLevel;
+    if InitialPulseLevel = 0 then
+      FTapePlayer.ResetPulseLevel
+    else
+      FTapePlayer.SetPulseLevel;
+
     TicksNeeded0 := PauseLen;
     AdjustTicksIfNeeded(TicksNeeded0);
     TicksNeeded := TicksNeeded + TicksNeeded0;
@@ -475,11 +476,9 @@ begin
   if GetBlockLength > 8 then begin
     if Stream.Read(N{%H-}, 4) = 4 then begin
       N := LEtoN(N);
-      InitialPulseLevel := 0;
-      if N shr 31 <> 0 then begin
-        N := N and $7FFFFFFF;
-        InitialPulseLevel := %01000000;
-      end;
+      InitialPulseLevel := (N shr 31) and 1;
+      N := N and $7FFFFFFF;
+
       TotalBits := N;
       if Stream.Read(Tail, 2) = 2 then begin
         Tail := LEtoN(Tail);
@@ -491,6 +490,7 @@ begin
             if (GetBlockLength = TotalBytes + (P0 + P1) * 2 + 8)
               and LoadS(P0, S0) and LoadS(P1, S1)
             then begin
+              Data := nil;
               try
                 Data := GetMem(TotalBytes);
                 if Stream.Read(Data^, TotalBytes) = TotalBytes then begin
@@ -506,7 +506,8 @@ begin
                 end;
               finally
                 if not Result then
-                  FreeMemAndNil(Data);
+                  if Assigned(Data) then
+                    FreeMemAndNil(Data);
               end;
             end;
           end;
@@ -613,9 +614,12 @@ begin
 
   if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
     if State <> ppsStart then
-      FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000
+      FTapePlayer.InvertPulseLevel
     else begin
-      FTapePlayer.ActiveBit := Self.InitialPulseLevel;
+      if InitialPulseLevel = 0 then
+        FTapePlayer.ResetPulseLevel
+      else
+        FTapePlayer.SetPulseLevel;
       State := ppsPlaying;
     end;
     Inc(SPulsesPos);
@@ -813,9 +817,9 @@ begin
 
   if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
     if State = ppsPlaying then
-      FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000
+      FTapePlayer.InvertPulseLevel
     else begin
-      FTapePlayer.ActiveBit := 0;
+      FTapePlayer.ResetPulseLevel;
       State := ppsPlaying;
     end;
 
@@ -833,7 +837,7 @@ begin
           AdjustTicksIfNeeded(Duration);
           Break;
         end;
-        FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
+        FTapePlayer.InvertPulseLevel;
       until False;
     end;
 

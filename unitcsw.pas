@@ -389,7 +389,7 @@ begin
 
   if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
     if FState <> TCswPlayState.cpsStart then
-      FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
+      FTapePlayer.InvertPulseLevel;
 
     if P < PEnd then begin
       TicksNeeded0 := P^;

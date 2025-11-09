@@ -42,7 +42,7 @@ begin
       Result := TicksNeeded;
     TPlayState.psPilot:
       begin
-        if FTapePlayer.ActiveBit <> 0 then
+        if FTapePlayer.PulseLevelBit <> 0 then
           Exit(TicksNeeded);
         Result := FPauseLength * TTapePlayer.TicksPerMilliSecond;
         AdjustTicksIfNeeded(Result);
@@ -118,7 +118,7 @@ begin
       TPlayState.psPilot:
         begin
           TicksToWait := FPauseLength * TTapePlayer.TicksPerMilliSecond;
-          FTapePlayer.ActiveBit := 0;
+          FTapePlayer.ResetPulseLevel;
           FTapePlayer.InPause := True;
           State := TPlayState.psData;
         end;

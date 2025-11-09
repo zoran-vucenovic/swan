@@ -246,8 +246,11 @@ var
   begin
     N := BL.GetRelativeJumpValue;
     if N <> 0 then begin
-      StartBlock(FCurrentBlockNumber + N);
-      Exit(True);
+      N := FCurrentBlockNumber + N;
+      if (N >= 0) and (N  < GetBlockCount) then begin
+        StartBlock(N);
+        Exit(True);
+      end;
     end;
     Result := False;
   end;

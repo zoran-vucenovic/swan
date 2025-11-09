@@ -134,9 +134,9 @@ function TTzxBlock15.GetNextPulse: Boolean;
   begin
     if (P < PEnd) or ((P = PEnd) and (BitPosition >= UnusedBitsInLastByte)) then begin
       if ((P^ shr BitPosition) and 1) = 0 then
-        FTapePlayer.ActiveBit := 0
+        FTapePlayer.ResetPulseLevel
       else
-        FTapePlayer.ActiveBit := %01000000;
+        FTapePlayer.SetPulseLevel;
 
       TicksNeeded := TicksNeeded + TicksNeeded0;
 

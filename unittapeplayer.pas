@@ -71,7 +71,6 @@ type
       //
       // So:
       TicksBeforePause = Int64(945);
-      //TicksBeforePause = TicksPerMilliSecond;
 
   public
   // used only in tzx block 28
@@ -91,6 +90,7 @@ type
     FBlockCount: Integer;
     FFileName: String;
     FFinalTailBlock: TTapeBlock;
+    FPulseLevelBit: Byte;
 
     procedure EmptyProcedure;
     procedure SetOnChangeBlock(AValue: TProcedureOfObject);
@@ -142,10 +142,12 @@ type
     class procedure Init;
     class procedure Final;
   public
-    ActiveBit: Byte;
-
     constructor Create; virtual;
     destructor Destroy; override;
+
+    procedure SetPulseLevel; inline;
+    procedure ResetPulseLevel; inline;
+    procedure InvertPulseLevel; inline;
 
     function GetLastReallyPlayableBlock: Integer;
     function NoMoreReallyPlayableBlocks: Boolean;
@@ -170,6 +172,7 @@ type
     class function CheckRealTapePlayerClass(const Stream: TStream): TTapePlayerClass;
 
     function GetBlockCount: Integer;
+    property PulseLevelBit: Byte read FPulseLevelBit;
     property FileName: String read FFileName write FFileName;
     property IsRealPath: Boolean read FIsRealPath write FIsRealPath;
     property OnChangeBlock: TProcedureOfObject read FOnChangeBlock write SetOnChangeBlock;
@@ -332,6 +335,21 @@ end;
 
 { TTapePlayer }
 
+procedure TTapePlayer.SetPulseLevel;
+begin
+  FPulseLevelBit := %01000000;
+end;
+
+procedure TTapePlayer.ResetPulseLevel;
+begin
+  FPulseLevelBit := 0;
+end;
+
+procedure TTapePlayer.InvertPulseLevel;
+begin
+  FPulseLevelBit := FPulseLevelBit xor %01000000;
+end;
+
 function TTapePlayer.GetBlockCount: Integer;
 begin
   Result := FBlockCount;
@@ -373,6 +391,7 @@ constructor TTapePlayer.Create;
 begin
   inherited Create;
 
+  FPulseLevelBit := 0;
   FFinalTailBlock := nil;
   FStream := nil;
   FIsRealPath := False;
@@ -525,7 +544,7 @@ procedure TTapePlayer.GetNextPulse;
 begin
   while Assigned(FCurrentBlock) do begin
     if FCurrentBlock.GetNextPulse() then begin
-      FSpectrum.SetEarFromTape(ActiveBit);
+      FSpectrum.SetEarFromTape(FPulseLevelBit);
       Exit;
     end;
 
@@ -534,7 +553,7 @@ begin
     else begin
       CheckNextBlock();
       if (FCurrentBlock = nil) or FCurrentBlock.GetStopPlaying then begin
-        if ActiveBit <> 0 then
+        if FPulseLevelBit <> 0 then
           StartFinalTail
         else
           StopPlaying();
@@ -561,7 +580,7 @@ begin
     Exit;
   if FCurrentBlockNumber >= FBlockCount then
     Rewind;
-  ActiveBit := 0;
+  ResetPulseLevel;
 
   StartBlock(FCurrentBlockNumber);
   if Assigned(FCurrentBlock) and FCurrentBlock.GetStopPlaying then
@@ -577,7 +596,7 @@ end;
 procedure TTapePlayer.StopPlaying;
 begin
   FCurrentBlock := nil;
-  ActiveBit := 0;
+  ResetPulseLevel;
   if Assigned(FSpectrum) then
     FSpectrum.SetEarFromTape(0);
   InPause := False;

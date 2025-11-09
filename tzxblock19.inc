@@ -333,7 +333,7 @@ function TTzxBlock19.GetNextPulse: Boolean;
 
   procedure ToPause;
   begin
-    FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
+    FTapePlayer.InvertPulseLevel;
     if PauseAfterBlock > 0 then
       FTapePlayer.StartPauseBlock(PauseAfterBlock);
 
@@ -346,11 +346,11 @@ function TTzxBlock19.GetNextPulse: Boolean;
     case SymDef.SymbolFlag of
       0, 1:
         if (SymDef.SymbolFlag = 0) xor Start1 then
-          FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
+          FTapePlayer.InvertPulseLevel;
       2:
-        FTapePlayer.ActiveBit := 0;
+        FTapePlayer.ResetPulseLevel;
       3:
-        FTapePlayer.ActiveBit := %01000000;
+        FTapePlayer.SetPulseLevel;
     otherwise
     end;
     Start1 := False;
@@ -390,7 +390,7 @@ function TTzxBlock19.GetNextPulse: Boolean;
       end;
 
     end else
-      FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
+      FTapePlayer.InvertPulseLevel;
 
     TicksNeeded0 := SymDef.PulseLengths[SymPos];
     PulsesNeeded := 1;
@@ -431,7 +431,7 @@ begin
                 SymDef := SymDefsPilot[Prle.SymbolToBeRepresented];
                 NewSymDef;
               end else
-                FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
+                FTapePlayer.InvertPulseLevel;
 
               PulsesNeeded := Prle.NumberOfRepetitions;
               TicksNeeded0 := SymDef.PulseLengths[SymPos];
@@ -445,7 +445,7 @@ begin
 
       AdjustTicksIfNeeded(TicksNeeded0);
     end else
-      FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
+      FTapePlayer.InvertPulseLevel;
 
     TicksNeeded := TicksNeeded + TicksNeeded0;
   end;

@@ -148,7 +148,7 @@ begin
 
   if GetCurrentTotalSpectrumTicks >= TicksNeeded then begin
     if State <> TPlayState.psStart then
-      FTapePlayer.ActiveBit := FTapePlayer.ActiveBit xor %01000000;
+      FTapePlayer.InvertPulseLevel;
     Dec(PulsesNeeded);
     if PulsesNeeded = 0 then begin
       case State of

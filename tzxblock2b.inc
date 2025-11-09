@@ -4,8 +4,6 @@
 
 {$ifdef tzx_header_section}
 
-{ TTzxBlock2B }
-
 TTzxBlock2B = class (TTzxBlockStandard)
 strict private
   SignalLevel: Byte;
@@ -20,31 +18,33 @@ end;
 
 {$else}
 
-function {TTzxPlayer.}TTzxBlock2B.Load2(const Stream: TStream; L: Integer
-  ): Boolean;
+function TTzxBlock2B.Load2(const Stream: TStream; L: Integer): Boolean;
 begin
   Result := (L = 1) and (Stream.Read(SignalLevel, 1) = 1);
-  if SignalLevel <> 0 then
-    SignalLevel := 64;
+  SignalLevel := SignalLevel and 1;
 end;
 
-class function {TTzxPlayer.}TTzxBlock2B.GetBlockId: DWord;
+class function TTzxBlock2B.GetBlockId: DWord;
 begin
   Result := $2B;
 end;
 
-class function {TTzxPlayer.}TTzxBlock2B.GetBlockDescription: String;
+class function TTzxBlock2B.GetBlockDescription: String;
 begin
   Result := 'Set signal level';
 end;
 
-function {TTzxPlayer.}TTzxBlock2B.GetNextPulse: Boolean;
+function TTzxBlock2B.GetNextPulse: Boolean;
 begin
   Result := False;
-  FTapePlayer.ActiveBit := SignalLevel;
+
+  if SignalLevel = 0 then
+    FTapePlayer.ResetPulseLevel
+  else
+    FTapePlayer.SetPulseLevel;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock2B.Details(out S: String);
+procedure TTzxBlock2B.Details(out S: String);
 begin
   if SignalLevel = 0 then
     S := 'low'
