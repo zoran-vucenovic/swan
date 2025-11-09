@@ -2907,130 +2907,135 @@ begin
     WasPaused := Spectrum.Paused;
     try
       Spectrum.Paused := True;
+      Screen.BeginWaitCursor;
+      try
 
-      Stream := nil;
-      Extension := ExtractFileExt(ASourceFile);
-      SnapshotFile := nil;
-      InZip := False;
+        Stream := nil;
+        Extension := ExtractFileExt(ASourceFile);
+        SnapshotFile := nil;
+        InZip := False;
 
-      ErrMsg := '';
-      L := False;
-      if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
-        GetAcceptableExtensions(SpectrumFileKinds, True, AcceptedExtensions);
-        try
-          InZip := TFileUnzipper.GetFileFromZipFile(ASourceFile, AcceptedExtensions, Stream, FileName);
-        except
-          on E: Exception do begin
-            if E is ENoSpectrumFilesInZip then
-              NoSpectrumFileInZip
-            else
-              ErrMsg := E.Message;
-          end;
-        else
-        end;
-        if InZip then begin
-          if Stream = nil then begin
-            // Canceled by user (a dialog was offered to the user, to choose
-            // from multiple files inside zip. Then he canceled loading, so no error).
-            L := True;
-          end else begin
-            DoDirSeparators(FileName);
-            Extension := ExtractFileExt(FileName);
-            FileName := IncludeTrailingPathDelimiter(ASourceFile) + FileName;
-          end;
-        end;
-      end else
-        try
-          Stream := TFileStream.Create(ASourceFile, fmOpenRead or fmShareDenyWrite);
-          FileName := ASourceFile;
-        except
-          on E: Exception do
-            ErrMsg := E.Message;
-        else
-        end;
-
-      if not L then begin
-
-        if not Assigned(Stream) then begin
-          if FRecentFiles.Remove(ASourceFile) then
-            UpdateRecentFiles;
-          LoadingFailed(ErrMsg);
-
-        end else begin
+        ErrMsg := '';
+        L := False;
+        if AnsiCompareText(Extension, ExtensionSeparator + 'zip') = 0 then begin
+          GetAcceptableExtensions(SpectrumFileKinds, True, AcceptedExtensions);
           try
-            if sfkSnapshot in SpectrumFileKinds then begin
-              if (AnsiCompareText(Extension, ExtensionSeparator + 'szx') = 0)
-                //or (AnsiCompareText(Extension, ExtensionSeparator + 'zx-state') = 0)
-              then
-                SnapshotFile := TSnapshotSZX.Create
-              else if AnsiCompareText(Extension, ExtensionSeparator + 'z80') = 0 then
-                SnapshotFile := TSnapshotZ80.Create
-              else if AnsiCompareText(Extension, ExtensionSeparator + 'sna') = 0 then
-                SnapshotFile := TSnapshotSNA.Create;
+            InZip := TFileUnzipper.GetFileFromZipFile(ASourceFile, AcceptedExtensions, Stream, FileName);
+          except
+            on E: Exception do begin
+              if E is ENoSpectrumFilesInZip then
+                NoSpectrumFileInZip
+              else
+                ErrMsg := E.Message;
             end;
-
-            if Assigned(SnapshotFile) then begin
-              try
-                SnapshotFile.SetSpectrum(Spectrum);
-
-                //Spectrum.ResetSpectrum;
-                Spectrum.InLoadingSnapshot := True;
-                try
-                  try
-                    L := SnapshotFile.LoadFromStream(Stream);
-                  except
-                    on E: ESnapshotLoadError do
-                      LoadingFailed(E.Message);
-                  else
-                  end;
-                  UpdateShowCurrentlyActiveJoystick;
-                  UpdateCheckLateTimings;
-                finally
-                  Spectrum.InLoadingSnapshot := False;
-                end;
-                if not L then
-                  LoadingFailed;
-
-              finally
-                SnapshotFile.Free;
-              end;
-
-            end else begin
-
-              if sfkTape in SpectrumFileKinds then begin
-                TryLoadAsBinary :=
-                  (sfkBinary in SpectrumFileKinds)
-                   and ExtensionInArr(Extension, BinaryExtensions);
-
-                if LoadTape(Stream, FileName, Extension, not TryLoadAsBinary) then begin
-                  TapePlayer.IsRealPath := not InZip;
-                  L := True;
-                end else
-                  TryLoadAsBinary := (sfkBinary in SpectrumFileKinds) and not ExtensionInArr(Extension, TapeExtensions);
-
-              end else
-                TryLoadAsBinary := sfkBinary in SpectrumFileKinds;
-
-              if not L then begin
-                if TryLoadAsBinary then
-                  L := LoadBinary();
-
-                if (not L) and Assigned(Stream) then
-                  LoadingFailed;
-              end;
-            end;
-
-            if L then begin
-              FRecentFiles.Add(ASourceFile);
-              UpdateRecentFiles;
-            end;
-          finally
-            Stream.Free;
+          else
           end;
+          if InZip then begin
+            if Stream = nil then begin
+              // Canceled by user (a dialog was offered to the user, to choose
+              // from multiple files inside zip. Then he canceled loading, so no error).
+              L := True;
+            end else begin
+              DoDirSeparators(FileName);
+              Extension := ExtractFileExt(FileName);
+              FileName := IncludeTrailingPathDelimiter(ASourceFile) + FileName;
+            end;
+          end;
+        end else
+          try
+            Stream := TFileStream.Create(ASourceFile, fmOpenRead or fmShareDenyWrite);
+            FileName := ASourceFile;
+          except
+            on E: Exception do
+              ErrMsg := E.Message;
+          else
+          end;
+
+        if not L then begin
+
+          if not Assigned(Stream) then begin
+            if FRecentFiles.Remove(ASourceFile) then
+              UpdateRecentFiles;
+            LoadingFailed(ErrMsg);
+
+          end else begin
+            try
+              if sfkSnapshot in SpectrumFileKinds then begin
+                if (AnsiCompareText(Extension, ExtensionSeparator + 'szx') = 0)
+                  //or (AnsiCompareText(Extension, ExtensionSeparator + 'zx-state') = 0)
+                then
+                  SnapshotFile := TSnapshotSZX.Create
+                else if AnsiCompareText(Extension, ExtensionSeparator + 'z80') = 0 then
+                  SnapshotFile := TSnapshotZ80.Create
+                else if AnsiCompareText(Extension, ExtensionSeparator + 'sna') = 0 then
+                  SnapshotFile := TSnapshotSNA.Create;
+              end;
+
+              if Assigned(SnapshotFile) then begin
+                try
+                  SnapshotFile.SetSpectrum(Spectrum);
+
+                  //Spectrum.ResetSpectrum;
+                  Spectrum.InLoadingSnapshot := True;
+                  try
+                    try
+                      L := SnapshotFile.LoadFromStream(Stream);
+                    except
+                      on E: ESnapshotLoadError do
+                        LoadingFailed(E.Message);
+                    else
+                    end;
+                    UpdateShowCurrentlyActiveJoystick;
+                    UpdateCheckLateTimings;
+                  finally
+                    Spectrum.InLoadingSnapshot := False;
+                  end;
+                  if not L then
+                    LoadingFailed;
+
+                finally
+                  SnapshotFile.Free;
+                end;
+
+              end else begin
+
+                if sfkTape in SpectrumFileKinds then begin
+                  TryLoadAsBinary :=
+                    (sfkBinary in SpectrumFileKinds)
+                     and ExtensionInArr(Extension, BinaryExtensions);
+
+                  if LoadTape(Stream, FileName, Extension, not TryLoadAsBinary) then begin
+                    TapePlayer.IsRealPath := not InZip;
+                    L := True;
+                  end else
+                    TryLoadAsBinary := (sfkBinary in SpectrumFileKinds) and not ExtensionInArr(Extension, TapeExtensions);
+
+                end else
+                  TryLoadAsBinary := sfkBinary in SpectrumFileKinds;
+
+                if not L then begin
+                  if TryLoadAsBinary then
+                    L := LoadBinary();
+
+                  if (not L) and Assigned(Stream) then
+                    LoadingFailed;
+                end;
+              end;
+
+              if L then begin
+                FRecentFiles.Add(ASourceFile);
+                UpdateRecentFiles;
+              end;
+            finally
+              Stream.Free;
+            end;
+          end;
+
         end;
 
+      finally
+        Screen.EndWaitCursor;
       end;
-
     finally
       Spectrum.Paused := WasPaused;
     end;
