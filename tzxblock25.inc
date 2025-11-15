@@ -22,22 +22,22 @@ begin
   Result := True;
 end;
 
-class function {TTzxPlayer.}TTzxBlock25.GetBlockId: DWord;
+class function TTzxBlock25.GetBlockId: DWord;
 begin
   Result := $25;
 end;
 
-function {TTzxPlayer.}TTzxBlock25.GetBlockLength: Integer;
+function TTzxBlock25.GetBlockLength: Integer;
 begin
   Result := 0;
 end;
 
-function {TTzxPlayer.}TTzxBlock25.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock25.LoadBlock(const Stream: TStream): Boolean;
 begin
   Result := True;
 end;
 
-class function {TTzxPlayer.}TTzxBlock25.GetBlockDescription: String;
+class function TTzxBlock25.GetBlockDescription: String;
 begin
   Result := 'Loop end';
 end;

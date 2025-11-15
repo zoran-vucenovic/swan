@@ -4,8 +4,6 @@
 
 {$ifdef tzx_header_section}
 
-{ TTzxBlock31 }
-
 TTzxBlock31 = class (TTzxBlock)
 strict private
   FLen: Integer;
@@ -32,17 +30,17 @@ begin
   FTextDescription := '';
 end;
 
-class function {TTzxPlayer.}TTzxBlock31.GetBlockId: DWord;
+class function TTzxBlock31.GetBlockId: DWord;
 begin
   Result := $31;
 end;
 
-function {TTzxPlayer.}TTzxBlock31.GetBlockLength: Integer;
+function TTzxBlock31.GetBlockLength: Integer;
 begin
   Result := FLen;
 end;
 
-function {TTzxPlayer.}TTzxBlock31.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock31.LoadBlock(const Stream: TStream): Boolean;
 var
   B: Byte;
 begin
@@ -69,12 +67,12 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock31.GetBlockDescription: String;
+class function TTzxBlock31.GetBlockDescription: String;
 begin
   Result := 'Message block';
 end;
 
-procedure {TTzxPlayer.}TTzxBlock31.Details(out S: String);
+procedure TTzxBlock31.Details(out S: String);
 begin
   S := FTextDescription;
 end;

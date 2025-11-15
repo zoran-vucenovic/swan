@@ -30,7 +30,7 @@ end;
 
 {$else}
 
-class function {TTzxPlayer.}TTzxBlock32.DecodeTextIdByte(TextIdByte: Byte): String;
+class function TTzxBlock32.DecodeTextIdByte(TextIdByte: Byte): String;
 begin
   case TextIdByte of
     $00: Result := 'Full title';
@@ -58,17 +58,17 @@ begin
   SetLength(TextStructures, 0);
 end;
 
-class function {TTzxPlayer.}TTzxBlock32.GetBlockId: DWord;
+class function TTzxBlock32.GetBlockId: DWord;
 begin
   Result := $32;
 end;
 
-class function {TTzxPlayer.}TTzxBlock32.GetBlockDescription: String;
+class function TTzxBlock32.GetBlockDescription: String;
 begin
   Result := 'Archive info';
 end;
 
-function {TTzxPlayer.}TTzxBlock32.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock32.LoadBlock(const Stream: TStream): Boolean;
 var
   W: Word;
   I, L: Integer;
@@ -120,12 +120,12 @@ begin
   Result := False;
 end;
 
-function {TTzxPlayer.}TTzxBlock32.GetBlockLength: Integer;
+function TTzxBlock32.GetBlockLength: Integer;
 begin
   Result := FLen;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock32.Details(out S: String);
+procedure TTzxBlock32.Details(out S: String);
 var
   I: Integer;
   S1: String;

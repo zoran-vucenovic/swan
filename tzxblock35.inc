@@ -4,8 +4,6 @@
 
 {$ifdef tzx_header_section}
 
-{ TTzxBlock35 }
-
 TTzxBlock35 = class (TTzxBlock)
 private
   FLen: Integer;
@@ -33,7 +31,7 @@ begin
   FLen := 0;
 end;
 
-destructor {TTzxPlayer.}TTzxBlock35.Destroy;
+destructor TTzxBlock35.Destroy;
 begin
   if FCustomInfo <> nil then
     Freemem(FCustomInfo);
@@ -41,17 +39,17 @@ begin
   inherited Destroy;
 end;
 
-class function {TTzxPlayer.}TTzxBlock35.GetBlockId: DWord;
+class function TTzxBlock35.GetBlockId: DWord;
 begin
   Result := $35;
 end;
 
-function {TTzxPlayer.}TTzxBlock35.GetBlockLength: Integer;
+function TTzxBlock35.GetBlockLength: Integer;
 begin
   Result := FLen;
 end;
 
-function {TTzxPlayer.}TTzxBlock35.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock35.LoadBlock(const Stream: TStream): Boolean;
 var
   LL: UInt32;
   L: Int32 absolute LL;
@@ -81,12 +79,12 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock35.GetBlockDescription: String;
+class function TTzxBlock35.GetBlockDescription: String;
 begin
   Result := 'Custom info block';
 end;
 
-procedure {TTzxPlayer.}TTzxBlock35.Details(out S: String);
+procedure TTzxBlock35.Details(out S: String);
 begin
   S := FIdentificationString;
 end;

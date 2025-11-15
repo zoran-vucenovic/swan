@@ -4,8 +4,6 @@
 
 {$ifdef tzx_header_section}
 
-{ TTzxBlock40 }
-
 TTzxBlock40 = class (TTzxBlock)
 strict private
   FLen: Integer;
@@ -36,24 +34,24 @@ begin
   FSnapshotType := 0;
 end;
 
-destructor {TTzxPlayer.}TTzxBlock40.Destroy;
+destructor TTzxBlock40.Destroy;
 begin
   FSnapStream.Free;
 
   inherited Destroy;
 end;
 
-class function {TTzxPlayer.}TTzxBlock40.GetBlockId: DWord;
+class function TTzxBlock40.GetBlockId: DWord;
 begin
   Result := $40;
 end;
 
-function {TTzxPlayer.}TTzxBlock40.GetBlockLength: Integer;
+function TTzxBlock40.GetBlockLength: Integer;
 begin
   Result := FLen;
 end;
 
-function {TTzxPlayer.}TTzxBlock40.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock40.LoadBlock(const Stream: TStream): Boolean;
 var
   B: Byte;
   L: Int32;
@@ -86,12 +84,12 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock40.GetBlockDescription: String;
+class function TTzxBlock40.GetBlockDescription: String;
 begin
   Result := 'Snapshot block';
 end;
 
-function {TTzxPlayer.}TTzxBlock40.GetNextPulse: Boolean;
+function TTzxBlock40.GetNextPulse: Boolean;
 var
   S: TSnapshotFile;
   Sp: TSpectrum;
@@ -133,7 +131,7 @@ begin
   end;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock40.Start;
+procedure TTzxBlock40.Start;
 begin
   inherited Start;
 
@@ -142,7 +140,7 @@ begin
     State := TPlayState.psFinished;
 end;
 
-procedure {TTzxPlayer.}TTzxBlock40.Details(out S: String);
+procedure TTzxBlock40.Details(out S: String);
 begin
   if FSnapshotType = 0 then
     S := 'z80'

@@ -15,22 +15,22 @@ end;
 
 {$else}
 
-class function {TTzxPlayer.}TTzxBlock22.GetBlockId: DWord;
+class function TTzxBlock22.GetBlockId: DWord;
 begin
   Result := $22;
 end;
 
-function {TTzxPlayer.}TTzxBlock22.GetBlockLength: Integer;
+function TTzxBlock22.GetBlockLength: Integer;
 begin
   Result := 0;
 end;
 
-function {TTzxPlayer.}TTzxBlock22.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock22.LoadBlock(const Stream: TStream): Boolean;
 begin
   Result := True;
 end;
 
-class function {TTzxPlayer.}TTzxBlock22.GetBlockDescription: String;
+class function TTzxBlock22.GetBlockDescription: String;
 begin
   Result := 'Group end';
 end;

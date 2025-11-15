@@ -28,17 +28,17 @@ begin
   FTextDescription := '';
 end;
 
-class function {TTzxPlayer.}TTzxBlock30.GetBlockId: DWord;
+class function TTzxBlock30.GetBlockId: DWord;
 begin
   Result := $30;
 end;
 
-function {TTzxPlayer.}TTzxBlock30.GetBlockLength: Integer;
+function TTzxBlock30.GetBlockLength: Integer;
 begin
   Result := FLen;
 end;
 
-function {TTzxPlayer.}TTzxBlock30.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock30.LoadBlock(const Stream: TStream): Boolean;
 var
   B: Byte;
 begin
@@ -60,12 +60,12 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock30.GetBlockDescription: String;
+class function TTzxBlock30.GetBlockDescription: String;
 begin
   Result := 'Text description';
 end;
 
-procedure {TTzxPlayer.}TTzxBlock30.Details(out S: String);
+procedure TTzxBlock30.Details(out S: String);
 begin
   S := FTextDescription;
 end;

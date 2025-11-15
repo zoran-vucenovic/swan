@@ -23,12 +23,12 @@ begin
   FLen := 0;
 end;
 
-function {TTzxPlayer.}TTzxBlockStandard.GetBlockLength: Integer;
+function TTzxBlockStandard.GetBlockLength: Integer;
 begin
   Result := FLen;
 end;
 
-function {TTzxPlayer.}TTzxBlockStandard.LoadBlock(const Stream: TStream
+function TTzxBlockStandard.LoadBlock(const Stream: TStream
   ): Boolean;
 var
   LL: UInt32;

@@ -15,17 +15,17 @@ end;
 
 {$else}
 
-class function {TTzxPlayer.}TTzxBlock5A.GetBlockId: DWord;
+class function TTzxBlock5A.GetBlockId: DWord;
 begin
   Result := $5A;
 end;
 
-function {TTzxPlayer.}TTzxBlock5A.GetBlockLength: Integer;
+function TTzxBlock5A.GetBlockLength: Integer;
 begin
   Result := 9;
 end;
 
-function {TTzxPlayer.}TTzxBlock5A.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock5A.LoadBlock(const Stream: TStream): Boolean;
 var
   S: AnsiString;
 begin
@@ -38,7 +38,7 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock5A.GetBlockDescription: String;
+class function TTzxBlock5A.GetBlockDescription: String;
 begin
   Result := 'Glue block';
 end;

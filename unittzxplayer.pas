@@ -106,8 +106,6 @@ type
 {$i tzxblocks.inc}
 {$undef tzx_header_section}
 
-{ TTzxPlayer.TTzxBlock }
-
 class function TTzxBlock.ReadThreeBytes(const Stream: TStream; out
   N: Int32): Boolean;
 var

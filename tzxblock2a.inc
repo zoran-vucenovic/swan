@@ -15,12 +15,12 @@ end;
 
 {$else}
 
-class function {TTzxPlayer.}TTzxBlock2A.GetBlockId: DWord;
+class function TTzxBlock2A.GetBlockId: DWord;
 begin
   Result := $2A;
 end;
 
-class function {TTzxPlayer.}TTzxBlock2A.GetBlockDescription: String;
+class function TTzxBlock2A.GetBlockDescription: String;
 begin
   Result := 'Stop the tape if in 48K mode';
 end;
@@ -30,7 +30,7 @@ begin
   Result := not FTapePlayer.GetSpectrum.Is128KModel;
 end;
 
-function {TTzxPlayer.}TTzxBlock2A.Load2(const Stream: TStream; L: Integer
+function TTzxBlock2A.Load2(const Stream: TStream; L: Integer
   ): Boolean;
 begin
   Result := True;

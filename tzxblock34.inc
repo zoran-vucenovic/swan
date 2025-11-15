@@ -28,17 +28,17 @@ begin
   FGeneralEmulationFlags := Word(%0000000011100111);
 end;
 
-class function {TTzxPlayer.}TTzxBlock34.GetBlockId: DWord;
+class function TTzxBlock34.GetBlockId: DWord;
 begin
   Result := $34;
 end;
 
-function {TTzxPlayer.}TTzxBlock34.GetBlockLength: Integer;
+function TTzxBlock34.GetBlockLength: Integer;
 begin
   Result := 8;
 end;
 
-function {TTzxPlayer.}TTzxBlock34.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock34.LoadBlock(const Stream: TStream): Boolean;
 var
   W: Word;
 begin
@@ -60,7 +60,7 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock34.GetBlockDescription: String;
+class function TTzxBlock34.GetBlockDescription: String;
 begin
   Result := 'Emulation info';
 end;

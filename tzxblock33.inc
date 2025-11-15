@@ -37,7 +37,7 @@ begin
   FLen := 0;
 end;
 
-destructor {TTzxPlayer.}TTzxBlock33.Destroy;
+destructor TTzxBlock33.Destroy;
 begin
   if Assigned(FHWInfo) then
     FreeMem(FHWInfo);
@@ -45,17 +45,17 @@ begin
   inherited Destroy;
 end;
 
-class function {TTzxPlayer.}TTzxBlock33.GetBlockId: DWord;
+class function TTzxBlock33.GetBlockId: DWord;
 begin
   Result := $33;
 end;
 
-function {TTzxPlayer.}TTzxBlock33.GetBlockLength: Integer;
+function TTzxBlock33.GetBlockLength: Integer;
 begin
   Result := FLen;
 end;
 
-function {TTzxPlayer.}TTzxBlock33.LoadBlock(const Stream: TStream): Boolean;
+function TTzxBlock33.LoadBlock(const Stream: TStream): Boolean;
 var
   B: Byte;
   N: Integer;
@@ -83,7 +83,7 @@ begin
   end;
 end;
 
-class function {TTzxPlayer.}TTzxBlock33.GetBlockDescription: String;
+class function TTzxBlock33.GetBlockDescription: String;
 begin
   Result := 'Hardware type';
 end;
