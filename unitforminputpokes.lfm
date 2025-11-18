@@ -7,11 +7,11 @@ object FormInputPokes: TFormInputPokes
   Caption = 'Input pokes'
   ClientHeight = 560
   ClientWidth = 430
+  LCLVersion = '4.5.0.0'
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnShow = FormShow
-  LCLVersion = '3.3.0.0'
-  object Panel1: TPanel
+  object Panel3: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
     AnchorSideRight.Control = Owner
@@ -27,44 +27,36 @@ object FormInputPokes: TFormInputPokes
     ClientHeight = 560
     ClientWidth = 430
     TabOrder = 0
-    object Panel2: TPanel
-      AnchorSideLeft.Control = Panel1
-      AnchorSideTop.Control = Panel1
-      AnchorSideRight.Control = Panel1
+    object Panel1: TPanel
+      AnchorSideLeft.Control = Panel3
+      AnchorSideTop.Control = Panel3
+      AnchorSideRight.Control = Panel3
       AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = ButtonPanel1
+      AnchorSideBottom.Control = Panel3
+      AnchorSideBottom.Side = asrBottom
       Left = 6
-      Height = 516
+      Height = 548
       Top = 6
       Width = 418
       Anchors = [akTop, akLeft, akRight, akBottom]
       BorderSpacing.Around = 6
       BevelOuter = bvNone
+      ClientHeight = 548
+      ClientWidth = 418
       TabOrder = 0
-    end
-    object ButtonPanel1: TButtonPanel
-      AnchorSideRight.Control = Panel1
-      AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = Panel1
-      AnchorSideBottom.Side = asrBottom
-      Left = 261
-      Height = 26
-      Top = 528
-      Width = 163
-      Align = alNone
-      Anchors = [akRight, akBottom]
-      OKButton.Name = 'OKButton'
-      OKButton.DefaultCaption = True
-      HelpButton.Name = 'HelpButton'
-      HelpButton.DefaultCaption = True
-      CloseButton.Name = 'CloseButton'
-      CloseButton.DefaultCaption = True
-      CancelButton.Name = 'CancelButton'
-      CancelButton.DefaultCaption = True
-      TabOrder = 1
-      DefaultButton = pbClose
-      ShowButtons = [pbOK, pbCancel]
-      ShowBevel = False
+      object Panel2: TPanel
+        AnchorSideLeft.Control = Panel1
+        AnchorSideTop.Control = Panel1
+        AnchorSideRight.Control = Panel1
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 516
+        Top = 0
+        Width = 418
+        Anchors = [akTop, akLeft, akRight]
+        BevelOuter = bvNone
+        TabOrder = 0
+      end
     end
   end
 end

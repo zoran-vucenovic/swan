@@ -7,11 +7,11 @@ object FormBrowseTape: TFormBrowseTape
   Caption = 'FormBrowseTape'
   ClientHeight = 607
   ClientWidth = 570
+  LCLVersion = '4.3.0.0'
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '3.7.0.0'
   object Panel3: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

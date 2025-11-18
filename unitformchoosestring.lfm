@@ -7,9 +7,9 @@ object FormChooseString: TFormChooseString
   Caption = 'Choose a file'
   ClientHeight = 312
   ClientWidth = 350
-  OnShow = FormShow
   Position = poDefaultPosOnly
-  LCLVersion = '3.3.0.0'
+  LCLVersion = '4.5.0.0'
+  OnShow = FormShow
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

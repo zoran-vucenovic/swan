@@ -8,10 +8,10 @@ object FormSpectrumKeysDialog: TFormSpectrumKeysDialog
   Caption = 'FormSpectrumKeysDialog'
   ClientHeight = 280
   ClientWidth = 490
+  LCLVersion = '4.5.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '3.1.0.0'
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
@@ -24,75 +24,6 @@ object FormSpectrumKeysDialog: TFormSpectrumKeysDialog
     ClientHeight = 262
     ClientWidth = 472
     TabOrder = 0
-    object PanelViewKeys: TPanel
-      AnchorSideLeft.Control = Panel1
-      AnchorSideTop.Control = Panel1
-      Left = 3
-      Height = 26
-      Top = 3
-      Width = 112
-      AutoSize = True
-      BorderSpacing.Around = 3
-      BevelOuter = bvNone
-      BorderStyle = bsSingle
-      ClientHeight = 22
-      ClientWidth = 108
-      Color = clWindow
-      ParentBackground = False
-      ParentColor = False
-      TabOrder = 0
-      object Panel2: TPanel
-        Left = 3
-        Height = 16
-        Top = 3
-        Width = 102
-        AutoSize = True
-        BorderSpacing.Around = 3
-        BevelOuter = bvNone
-        ClientHeight = 16
-        ClientWidth = 102
-        ParentBackground = False
-        TabOrder = 0
-        object Label1: TLabel
-          AnchorSideLeft.Control = Panel2
-          AnchorSideTop.Control = Panel2
-          AnchorSideTop.Side = asrCenter
-          Left = 0
-          Height = 15
-          Top = 1
-          Width = 34
-          Caption = 'Label1'
-          ParentColor = False
-          ShowAccelChar = False
-        end
-        object Label2: TLabel
-          AnchorSideLeft.Control = Label1
-          AnchorSideLeft.Side = asrBottom
-          AnchorSideTop.Control = Panel2
-          AnchorSideTop.Side = asrCenter
-          Left = 34
-          Height = 15
-          Top = 1
-          Width = 34
-          Caption = 'Label2'
-          ParentColor = False
-          ShowAccelChar = False
-        end
-        object Label3: TLabel
-          AnchorSideLeft.Control = Label2
-          AnchorSideLeft.Side = asrBottom
-          AnchorSideTop.Control = Panel2
-          AnchorSideTop.Side = asrCenter
-          Left = 68
-          Height = 15
-          Top = 1
-          Width = 34
-          Caption = 'Label3'
-          ParentColor = False
-          ShowAccelChar = False
-        end
-      end
-    end
     object ButtonPanel1: TButtonPanel
       AnchorSideLeft.Control = Panel1
       AnchorSideTop.Control = PanelSpectrumKeys
@@ -113,12 +44,12 @@ object FormSpectrumKeysDialog: TFormSpectrumKeysDialog
       CloseButton.DefaultCaption = True
       CancelButton.Name = 'CancelButton'
       CancelButton.DefaultCaption = True
-      TabOrder = 1
+      TabOrder = 0
       ShowBevel = False
     end
     object PanelSpectrumKeys: TPanel
       AnchorSideLeft.Control = Panel1
-      AnchorSideTop.Control = PanelViewKeys
+      AnchorSideTop.Control = Panel3
       AnchorSideTop.Side = asrBottom
       Left = 0
       Height = 192
@@ -126,7 +57,104 @@ object FormSpectrumKeysDialog: TFormSpectrumKeysDialog
       Width = 472
       BevelOuter = bvNone
       BorderStyle = bsSingle
+      TabOrder = 1
+    end
+    object Panel3: TPanel
+      AnchorSideLeft.Control = Panel1
+      AnchorSideTop.Control = Panel1
+      AnchorSideRight.Control = Panel1
+      AnchorSideRight.Side = asrBottom
+      Left = 3
+      Height = 26
+      Top = 3
+      Width = 466
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = True
+      BorderSpacing.Around = 3
+      BevelOuter = bvNone
+      ClientHeight = 26
+      ClientWidth = 466
       TabOrder = 2
+      object PanelViewKeys: TPanel
+        AnchorSideLeft.Control = Panel3
+        AnchorSideTop.Control = Panel3
+        Left = 0
+        Height = 26
+        Top = 0
+        Width = 112
+        AutoSize = True
+        BevelOuter = bvNone
+        BorderStyle = bsSingle
+        ClientHeight = 22
+        ClientWidth = 108
+        Color = clWindow
+        ParentBackground = False
+        ParentColor = False
+        TabOrder = 0
+        object Panel2: TPanel
+          Left = 3
+          Height = 16
+          Top = 3
+          Width = 102
+          AutoSize = True
+          BorderSpacing.Around = 3
+          BevelOuter = bvNone
+          ClientHeight = 16
+          ClientWidth = 102
+          ParentBackground = False
+          TabOrder = 0
+          object Label1: TLabel
+            AnchorSideLeft.Control = Panel2
+            AnchorSideTop.Control = Panel2
+            AnchorSideTop.Side = asrCenter
+            Left = 0
+            Height = 15
+            Top = 1
+            Width = 34
+            Caption = 'Label1'
+            ParentColor = False
+            ShowAccelChar = False
+          end
+          object Label2: TLabel
+            AnchorSideLeft.Control = Label1
+            AnchorSideLeft.Side = asrBottom
+            AnchorSideTop.Control = Panel2
+            AnchorSideTop.Side = asrCenter
+            Left = 34
+            Height = 15
+            Top = 1
+            Width = 34
+            Caption = 'Label2'
+            ParentColor = False
+            ShowAccelChar = False
+          end
+          object Label3: TLabel
+            AnchorSideLeft.Control = Label2
+            AnchorSideLeft.Side = asrBottom
+            AnchorSideTop.Control = Panel2
+            AnchorSideTop.Side = asrCenter
+            Left = 68
+            Height = 15
+            Top = 1
+            Width = 34
+            Caption = 'Label3'
+            ParentColor = False
+            ShowAccelChar = False
+          end
+        end
+      end
+      object Panel4: TPanel
+        AnchorSideTop.Control = Panel3
+        AnchorSideRight.Control = Panel3
+        AnchorSideRight.Side = asrBottom
+        Left = 424
+        Height = 17
+        Top = 0
+        Width = 42
+        Anchors = [akTop, akRight]
+        BevelOuter = bvNone
+        TabOrder = 1
+      end
     end
   end
 end

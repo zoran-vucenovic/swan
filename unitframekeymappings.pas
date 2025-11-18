@@ -366,7 +366,7 @@ begin
   Result := False;
   Fm := TFrameKeyMappings.Create(nil);
   try
-    F := UnitFormForOptionsBasic.TFormForOptionsBasic.CreateForControl(nil, Fm, False);
+    F := UnitFormForOptionsBasic.TFormForOptionsBasic.CreateForControl(nil, Fm, False, 'help:Key-mappings');
     try
       F.AddHandlerFirstShow(@Fm.FormFirstShow);
       F.AddHandlerClose(@Fm.Close);

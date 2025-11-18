@@ -8,8 +8,8 @@ unit UnitFormInputPokes;
 interface
 
 uses
-  Classes, SysUtils, CommonFunctionsLCL, UnitCommon, Forms, Controls, Graphics,
-  Dialogs, Grids, LCLType, ExtCtrls, ButtonPanel;
+  Classes, SysUtils, CommonFunctionsLCL, UnitCommon, UnitSwanButtonPanel, Forms,
+  Controls, Graphics, Dialogs, Grids, LCLType, ExtCtrls;
 
 type
   TPokeEntry = record
@@ -20,9 +20,9 @@ type
   TPokesArray = Array of TPokeEntry;
 
   TFormInputPokes = class(TForm)
-    ButtonPanel1: TButtonPanel;
     Panel1: TPanel;
     Panel2: TPanel;
+    Panel3: TPanel;
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -158,6 +158,8 @@ end;
 { TFormInputPokes }
 
 procedure TFormInputPokes.FormCreate(Sender: TObject);
+var
+  ButtonPanel: TControl;
 begin
   GridNums := TGridNums.Create(Panel2);
   GridNums.AnchorParallel(akTop, 0, Panel2);
@@ -166,6 +168,16 @@ begin
   GridNums.AnchorParallel(akBottom, 0, Panel2);
   GridNums.Parent := Panel2;
   GridNums.OnButtonClick := @GridOnButtonClick;
+
+  HelpKeyword := 'help:Main-menu#pokes';
+
+  ButtonPanel := TSwanButtonPanel.Create(Self);
+  ButtonPanel.Anchors := [];
+  ButtonPanel.AnchorParallel(akLeft, 0, Panel1);
+  ButtonPanel.AnchorParallel(akRight, 0, Panel1);
+  ButtonPanel.AnchorParallel(akBottom, 0, Panel1);
+  ButtonPanel.Parent := Panel1;
+  Panel2.AnchorToNeighbour(akBottom, 5, ButtonPanel);
 
   AfterShow(-1);
 end;

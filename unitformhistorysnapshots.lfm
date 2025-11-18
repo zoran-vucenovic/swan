@@ -6,7 +6,7 @@ object FormHistorySnapshots: TFormHistorySnapshots
   Caption = 'Auto saving snapshots options'
   ClientHeight = 686
   ClientWidth = 603
-  LCLVersion = '4.3.0.0'
+  LCLVersion = '4.5.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
@@ -31,13 +31,11 @@ object FormHistorySnapshots: TFormHistorySnapshots
       AnchorSideTop.Control = Panel15
       AnchorSideRight.Control = Panel15
       AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = ButtonPanel1
       Left = 0
       Height = 648
       Top = 0
       Width = 603
-      Anchors = [akTop, akLeft, akRight, akBottom]
-      AutoSize = True
+      Anchors = [akTop, akLeft, akRight]
       BevelOuter = bvNone
       ClientHeight = 648
       ClientWidth = 603
@@ -179,31 +177,6 @@ object FormHistorySnapshots: TFormHistorySnapshots
           TabOrder = 1
         end
       end
-    end
-    object ButtonPanel1: TButtonPanel
-      AnchorSideLeft.Control = Panel15
-      AnchorSideRight.Control = Panel15
-      AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = Panel15
-      AnchorSideBottom.Side = asrBottom
-      Left = 6
-      Height = 26
-      Top = 654
-      Width = 591
-      Align = alNone
-      Anchors = [akLeft, akRight, akBottom]
-      OKButton.Name = 'OKButton'
-      OKButton.DefaultCaption = True
-      HelpButton.Name = 'HelpButton'
-      HelpButton.DefaultCaption = True
-      CloseButton.Name = 'CloseButton'
-      CloseButton.DefaultCaption = True
-      CancelButton.Name = 'CancelButton'
-      CancelButton.DefaultCaption = True
-      TabOrder = 1
-      DefaultButton = pbClose
-      ShowButtons = [pbOK, pbCancel]
-      ShowBevel = False
     end
   end
 end

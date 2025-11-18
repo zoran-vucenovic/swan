@@ -7,7 +7,7 @@ object FormOptions: TFormOptions
   Caption = 'Options'
   ClientHeight = 680
   ClientWidth = 541
-  LCLVersion = '4.3.0.0'
+  LCLVersion = '4.5.0.0'
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
@@ -27,40 +27,16 @@ object FormOptions: TFormOptions
     ClientHeight = 680
     ClientWidth = 541
     TabOrder = 0
-    object ButtonPanel1: TButtonPanel
-      AnchorSideRight.Control = Panel1
-      AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = Panel1
-      AnchorSideBottom.Side = asrBottom
-      Left = 372
-      Height = 26
-      Top = 648
-      Width = 163
-      Align = alNone
-      Anchors = [akRight, akBottom]
-      OKButton.Name = 'OKButton'
-      OKButton.DefaultCaption = True
-      HelpButton.Name = 'HelpButton'
-      HelpButton.DefaultCaption = True
-      CloseButton.Name = 'CloseButton'
-      CloseButton.DefaultCaption = True
-      CancelButton.Name = 'CancelButton'
-      CancelButton.DefaultCaption = True
-      TabOrder = 1
-      ShowButtons = [pbOK, pbCancel]
-      ShowBevel = False
-    end
     object Panel4: TPanel
       AnchorSideLeft.Control = Panel1
       AnchorSideTop.Control = Panel1
       AnchorSideRight.Control = Panel1
       AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = ButtonPanel1
       Left = 4
       Height = 638
       Top = 4
       Width = 533
-      Anchors = [akTop, akLeft, akRight, akBottom]
+      Anchors = [akTop, akLeft, akRight]
       BorderSpacing.Around = 4
       BevelOuter = bvNone
       ClientHeight = 638

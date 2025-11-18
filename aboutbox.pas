@@ -12,7 +12,7 @@ interface
 
 uses
   Classes, SysUtils, Math, CommonFunctionsLCL, UnitVer, UnitColourFunctions,
-  UnitCommonSpectrum, Forms, Controls, Graphics,
+  UnitCommonSpectrum, UnitCommon, Forms, Controls, Graphics,
   {$ifdef mswindows}
   LCLPlatformDef,
   {$endif}
@@ -507,10 +507,7 @@ begin
 
   Color := clWhite;
 
-  C1 := CreateLinkLabel(Panel9,
-    'https://github.com/zoran-vucenovic/swan', ''
-    //, 'GitHub page '
-    );
+  C1 := CreateLinkLabel(Panel9, TCommonFunctions.ApplicationHome, '');
   C1.AnchorParallel(akTop, 0, Panel9);
   C1.AnchorHorizontalCenterTo(Panel9);
   C1.Parent := Panel9;
@@ -522,7 +519,7 @@ begin
   Label7.Caption := 'The Swan icon created by Handoko';
 
   C2 := CreateLinkLabel(Panel7,
-    'https://github.com/zoran-vucenovic/swan/tree/main/roms', 'original rom images',
+    TCommonFunctions.ApplicationRepository + '/tree/main/roms', 'original rom images',
     'ZX Spectrum ', ', included in the executable, are');
   C2.AnchorToNeighbour(akTop, 9, Label7);
   C2.AnchorHorizontalCenterTo(Panel7);
@@ -624,6 +621,8 @@ begin
   B.Parent := Panel4;
 
   CloseButton := B;
+
+  HelpKeyword := 'help:';
 end;
 
 procedure TFormAbout.FormDeactivate(Sender: TObject);

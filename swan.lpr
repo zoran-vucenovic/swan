@@ -15,11 +15,11 @@ uses
   UnitFrameWordDisplay, UnitSnapshotFiles, UnitSpectrumKeyboard, unit1,
   UnitSpectrum, UnitVer, UnitConfigs, UnitTzxPlayer, UnitFormBrowser,
   UnitColourPalette, UnitSpectrumColourMap, UnitKeyMaps,
-  UnitSpectrumColoursBGRA, UnitKeyMapRecords,
-  UnitSpectrumKeysDialog, UnitFormPressAKey, UnitCommon, UnitCommonSpectrum,
-  UnitJoystick, UnitFrameJoystickSetup, AboutBox, UnitColourFunctions,
-  UnitDataModuleImages, PortAudioHeader, UnitSoundPlayer, unitSoundVolume,
-  FastIntegers, UnitInputLibraryPathDialog, UnitFormInputPokes, UnitSZX,
+  UnitSpectrumColoursBGRA, UnitKeyMapRecords, UnitSpectrumKeysDialog,
+  UnitFormPressAKey, UnitCommon, UnitCommonSpectrum, UnitJoystick,
+  UnitFrameJoystickSetup, AboutBox, UnitColourFunctions, UnitDataModuleImages,
+  PortAudioHeader, UnitSoundPlayer, unitSoundVolume, FastIntegers,
+  UnitInputLibraryPathDialog, UnitFormInputPokes, UnitSZX,
   UnitStreamCompression, UnitFormHistorySnapshots, UnitControlScreenBitmap,
   UnitTapePlayer, UnitPzxPlayer, UnitSpectrumKeysControl, UnitKeyboardOnScreen,
   UnitFormForOptionsBasic, UnitFrameKeyMappings, UnitOptions,
@@ -30,7 +30,8 @@ uses
   UnitCSW, UnitDisassembler, UnitDlgStartAdress, UnitGridSpectrumMemory,
   UnitFormDebug, UnitFrameGridMemory, UnitDebugCpuState, UnitDebugger,
   UnitDebugBreakpointsGrid, UnitFrameBreakpoints, UnitFrameToolbarOptions,
-  UnitSwanTreeView, UnitFrameTapeOptions, UnitControlKeyMappings, UnitSaveCSW;
+  UnitSwanTreeView, UnitFrameTapeOptions, UnitControlKeyMappings, UnitSaveCSW,
+  UnitOnlineHelp, UnitSwanButtonPanel;
 
 {$R *.res}
 

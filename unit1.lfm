@@ -15,7 +15,7 @@ object Form1: TForm1
   KeyPreview = True
   Menu = MainMenu1
   ParentDoubleBuffered = False
-  LCLVersion = '4.3.0.0'
+  LCLVersion = '4.5.0.0'
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDeactivate = FormDeactivate
@@ -250,13 +250,6 @@ object Form1: TForm1
       Caption = 'Colour palette...'
       ImageIndex = 5
       OnExecute = ActionColoursExecute
-    end
-    object ActionAbout: TAction
-      Category = 'Help'
-      Caption = '&About...'
-      Hint = 'About Swan...'
-      ImageIndex = 7
-      OnExecute = ActionAboutExecute
     end
     object ActionShowDebugger: TAction
       Category = 'Debug'
@@ -501,6 +494,20 @@ object Form1: TForm1
       ImageIndex = 42
       OnExecute = ActionStopRecordingExecute
     end
+    object ActionHelp: TAction
+      Category = 'Help'
+      Caption = 'Online help'
+      Hint = 'Show online help'
+      ImageIndex = 43
+      OnExecute = ActionHelpExecute
+    end
+    object ActionAbout: TAction
+      Category = 'Help'
+      Caption = '&About...'
+      Hint = 'About Swan...'
+      ImageIndex = 7
+      OnExecute = ActionAboutExecute
+    end
   end
   object MainMenu1: TMainMenu
     Images = DataModuleImages.ImageList1
@@ -703,6 +710,12 @@ object Form1: TForm1
     end
     object MenuItem19: TMenuItem
       Caption = '&Help'
+      object MenuItemHelp: TMenuItem
+        Action = ActionHelp
+      end
+      object Separator7: TMenuItem
+        Caption = '-'
+      end
       object MenuItemAbout: TMenuItem
         Action = ActionAbout
       end

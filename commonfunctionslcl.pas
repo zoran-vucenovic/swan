@@ -13,13 +13,14 @@ uses
 
 type
 
-  { TCommonFunctionsLCL }
+  TOnGetControl = function(AOwner: TComponent): TControl of object;
 
   TCommonFunctionsLCL = class sealed (TObject)
   strict private
     class var
       Canv: TCanvas;
       MonoFont: TFont;
+      FOnGetHelpControl: TOnGetControl;
   private
     class procedure Init; static;
     class procedure Final; static;
@@ -52,6 +53,7 @@ type
     class function GetBestContrastColorForFont(R, G, B: Integer): TColor;
     class function MakeExtensionsFilter(const ArSt: Array of String): String;
     class function GetMonoFont(): TFont;
+    class property OnGetHelpControl: TOnGetControl read FOnGetHelpControl write FOnGetHelpControl;
   end;
 
   IFormAddCloseQuery = interface
@@ -321,6 +323,7 @@ class procedure TCommonFunctionsLCL.Init;
 begin
   Canv := nil;
   MonoFont := nil;
+  FOnGetHelpControl := nil;
 end;
 
 class procedure TCommonFunctionsLCL.Final;

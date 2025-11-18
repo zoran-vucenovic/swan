@@ -43,9 +43,22 @@ begin
 end;
 
 procedure TFormKeyboardOnScreen.FormCreate(Sender: TObject);
+var
+  HelpControl: TControl;
 begin
   Caption := 'Spectrum keyboard - click on the keys';
   FSpectrumKeysControl := TSpectrumKeysControl.Create(Self, False);
+
+  if Assigned(TCommonFunctionsLCL.OnGetHelpControl) then begin
+    HelpControl := TCommonFunctionsLCL.OnGetHelpControl(FSpectrumKeysControl);
+    if Assigned(HelpControl) then begin
+      HelpControl.AnchorParallel(akTop, 2, FSpectrumKeysControl);
+      HelpControl.AnchorParallel(akRight, 2, FSpectrumKeysControl);
+
+      HelpControl.Parent := FSpectrumKeysControl;
+    end;
+  end;
+
   FSpectrumKeysControl.Anchors := [];
   FSpectrumKeysControl.AnchorParallel(akLeft, 0, Panel1);
   FSpectrumKeysControl.AnchorParallel(akTop, 0, Panel1);

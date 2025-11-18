@@ -504,7 +504,7 @@ begin
   if Assigned(ATree) then begin
     Fm := TFrameToobarOptions.Create(nil);
     try
-      F := TFormForOptionsBasic.CreateForControl(nil, Fm, False);
+      F := TFormForOptionsBasic.CreateForControl(nil, Fm, False, 'help:Toolbar-customisation');
       try
         (F as IFormAddCloseQuery).AddCloseQuery(@Fm.FormCloseQuery);
         Fm.SetTreeAndSelectedItems(ATree, ASelectedItems);

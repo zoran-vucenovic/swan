@@ -8,11 +8,11 @@ object FormKeyboardOnScreen: TFormKeyboardOnScreen
   Caption = 'Spectrum keyboard'
   ClientHeight = 240
   ClientWidth = 320
+  LCLVersion = '4.5.0.0'
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '3.1.0.0'
   object Panel1: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

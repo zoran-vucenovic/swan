@@ -5,6 +5,7 @@ object FrameColourPalette: TFrameColourPalette
   Width = 290
   ClientHeight = 218
   ClientWidth = 290
+  LCLVersion = '4.3.0.0'
   TabOrder = 0
   DesignLeft = 203
   DesignTop = 108
@@ -44,8 +45,8 @@ object FrameColourPalette: TFrameColourPalette
         BorderSpacing.Top = 2
         BorderSpacing.Bottom = 4
         Caption = 'Convert to black and white'
-        OnClick = BitBtn3Click
         TabOrder = 0
+        OnClick = BitBtn3Click
       end
     end
   end
@@ -203,8 +204,8 @@ object FrameColourPalette: TFrameColourPalette
         Width = 57
         AutoSize = True
         Caption = 'Add...'
-        OnClick = BitBtn1Click
         TabOrder = 0
+        OnClick = BitBtn1Click
       end
       object BitBtn2: TBitBtn
         AnchorSideLeft.Control = BitBtn1
@@ -218,8 +219,8 @@ object FrameColourPalette: TFrameColourPalette
         AutoSize = True
         BorderSpacing.Left = 6
         Caption = 'Delete'
-        OnClick = BitBtn2Click
         TabOrder = 1
+        OnClick = BitBtn2Click
       end
     end
   end

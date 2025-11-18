@@ -494,7 +494,7 @@ begin
   try
     Fm.InitJoystickSetup(AJoystickType, AKeys, AEnabled);
 
-    F := TFormForOptionsBasic.CreateForControl(nil, Fm, True);
+    F := TFormForOptionsBasic.CreateForControl(nil, Fm, True, 'help:Joystick-editor');
     try
       F.AddHandlerFirstShow(@(Fm.FormOnFirstShow));
       F.AddCloseQuery(@(Fm.FormOnCloseQuery));

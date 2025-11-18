@@ -9,15 +9,14 @@ interface
 
 uses
   Classes, SysUtils, Types, UnitSnapshotFiles, UnitHistorySnapshots,
-  CommonFunctionsLCL, UnitControlScreenBitmap,
-  UnitSpectrumColoursBGRA, UnitFrameHistorySnapshotOptions, Forms, Controls,
+  CommonFunctionsLCL, UnitControlScreenBitmap, UnitSpectrumColoursBGRA,
+  UnitFrameHistorySnapshotOptions, UnitSwanButtonPanel, Forms, Controls,
   Graphics, Dialogs, ExtCtrls, StdCtrls, LMessages, ButtonPanel;
 
 type
   TFormHistorySnapshots = class(TForm)
     Bevel1: TBevel;
     Bevel2: TBevel;
-    ButtonPanel1: TButtonPanel;
     CheckBox2: TCheckBox;
     Label5: TLabel;
     Panel1: TPanel;
@@ -156,6 +155,8 @@ end;
 { TFormHistorySnapshots }
 
 procedure TFormHistorySnapshots.FormCreate(Sender: TObject);
+var
+  ButtonPanel: TControl;
 begin
   BorderIcons := BorderIcons - [TBorderIcon.biMaximize, TBorderIcon.biMinimize];
   PrevCtrl := nil;
@@ -172,6 +173,13 @@ begin
   Panel2.AutoSize := True;
 
   FrameHistorySnapshotOptions.CheckBoxAutoCreateSnapshots.OnChange := @CheckBoxHistoryEnabledOnChange;
+
+  ButtonPanel := TSwanButtonPanel.Create(Self);
+  ButtonPanel.AnchorParallel(akLeft, 6, Panel15);
+  ButtonPanel.AnchorParallel(akRight, 6, Panel15);
+  ButtonPanel.AnchorParallel(akBottom, 6, Panel15);
+  ButtonPanel.Parent := Panel15;
+  Panel1.AnchorToNeighbour(akBottom, 6, ButtonPanel);
 end;
 
 procedure TFormHistorySnapshots.FormDestroy(Sender: TObject);
@@ -415,7 +423,7 @@ begin
     F.BgraColours := ABGRAColours;
 
     F.UpdateCheckEnabled;
-
+    F.HelpKeyword := 'help:Autosaving-snapshots';
     if F.ShowModal = mrOK then begin
       F.FrameHistorySnapshotOptions.UpdateSnapshotHistoryOptionsFromValues(
         ASnapshotHistoryOptions);

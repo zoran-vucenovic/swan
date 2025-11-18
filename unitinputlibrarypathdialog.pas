@@ -233,7 +233,8 @@ begin
   Fm := TFrameInputLibraryPath.CreateLibraryPathDialog(
     nil, S, AOnCheckLoad, ADoOnCloseOK);
   try
-    F := TFormForOptionsBasic.CreateForControl(nil, Fm, True);
+    F := TFormForOptionsBasic.CreateForControl(
+            nil, Fm, True, 'help:Main-menu#portaudio-library-path');
     try
       F.AddHandlerFirstShow(@Fm.OnFormFirstShow);
       F.AddCloseQuery(@Fm.FormOnCloseQuery);

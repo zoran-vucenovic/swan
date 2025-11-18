@@ -39,6 +39,7 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
+    ActionHelp: TAction;
     ActionStopRecording: TAction;
     ActionStartRecordingCsw: TAction;
     ActionToolbar: TAction;
@@ -96,6 +97,7 @@ type
     LabelModel: TLabel;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
+    MenuItemHelp: TMenuItem;
     MenuItemStartRecordingCsw: TMenuItem;
     MenuItem4: TMenuItem;
     MenuItemToolbar: TMenuItem;
@@ -169,6 +171,7 @@ type
     Separator4: TMenuItem;
     Separator5: TMenuItem;
     Separator6: TMenuItem;
+    Separator7: TMenuItem;
     ToolBar1: TToolBar;
     ToolButton1: TToolButton;
     procedure ActionAboutExecute(Sender: TObject);
@@ -182,6 +185,7 @@ type
     procedure ActionEnableJoystickExecute(Sender: TObject);
     procedure ActionExitExecute(Sender: TObject);
     procedure ActionFullSpeedExecute(Sender: TObject);
+    procedure ActionHelpExecute(Sender: TObject);
     procedure ActionHistorySnapshotsExecute(Sender: TObject);
     procedure ActionIncTapeBlockExecute(Sender: TObject);
     procedure ActionInputPokesExecute(Sender: TObject);
@@ -285,6 +289,9 @@ type
     procedure UpdateTapeRecordingActionsEnabled;
     procedure LoadFromConf;
     procedure SaveToConf;
+    function CreateHelpSpeedButton(AOwner: TComponent; AWidth: Integer
+      ): TSpeedButton;
+    function DoGetHelpControl(AOwner: TComponent): TControl;
     procedure SetSnapshotHistoryEnabled(const B: Boolean);
     procedure ShowAllOptionsDialog(ControlClass: TControlClass);
     procedure UpdateRecentFiles;
@@ -468,6 +475,7 @@ begin
   ActionEnableJoystick.ImageIndex := DataModuleImages.DrawCheckForImage(ActionJoystick.ImageIndex);
   ActionEnableHistory.ImageIndex := DataModuleImages.DrawCheckForImage(ActionHistorySnapshots.ImageIndex);
 
+  TCommonFunctionsLCL.OnGetHelpControl := @DoGetHelpControl;
   UpdateActiveSnapshotHistory;
   FToolBar := nil;
   FInitiallyHideToolBar := False;
@@ -539,6 +547,8 @@ begin
 
   TCommonFunctionsLCL.FormToScreenCentre(Self);
   ToolButton1.OnShowHint := @ToolButtonOnShowHint;
+
+  HelpKeyword := 'help:Main-emulator-window';
 end;
 
 procedure TForm1.FormDeactivate(Sender: TObject);
@@ -665,6 +675,11 @@ begin
   end;
 end;
 
+procedure TForm1.ActionHelpExecute(Sender: TObject);
+begin
+  Application.ShowHelpForObject(Screen.ActiveControl);
+end;
+
 procedure TForm1.ActionHistorySnapshotsExecute(Sender: TObject);
 var
   ActivateHistory: Boolean;
@@ -710,6 +725,7 @@ var
   PE: TPokeEntry;
   I: Integer;
   WasPaused: Boolean;
+
 begin
   if Sender <> FDummyObj then
     AddEventToQueue(@ActionInputPokesExecute)
@@ -1164,6 +1180,7 @@ procedure TForm1.FormDestroy(Sender: TObject);
 begin
   Application.RemoveAsyncCalls(Self);
   Application.RemoveAllHandlersOfObject(Self);
+  TCommonFunctionsLCL.OnGetHelpControl := nil;
   if Assigned(FKeyboardOnScreen) then begin
     FKeyboardOnScreen.RemoveFreeNotification(Self);
     FreeAndNil(FKeyboardOnScreen);
@@ -1963,6 +1980,28 @@ begin
   end;
 end;
 
+function TForm1.CreateHelpSpeedButton(AOwner: TComponent; AWidth: Integer
+  ): TSpeedButton;
+begin
+  Result := TSpeedButton.Create(AOwner);
+  Result.Name := TCommonFunctions.GlobalObjectNameGenerator(Result);
+  Result.Flat := True;
+  Result.ShowCaption := False;
+  Result.ShowHint := True;
+  Result.ImageWidth := AWidth;
+  Result.ClientHeight := AWidth + 1;
+  Result.ClientWidth := AWidth + 3;
+  Result.Action := ActionHelp;
+  Result.Anchors := [];
+end;
+
+function TForm1.DoGetHelpControl(AOwner: TComponent): TControl;
+var
+  Sb: TSpeedButton;
+begin
+  Result := CreateHelpSpeedButton(AOwner, 24);
+end;
+
 procedure TForm1.SetSnapshotHistoryEnabled(const B: Boolean);
 begin
   if Assigned(HistoryQueue) xor B then begin
@@ -1996,6 +2035,11 @@ var
   FrameHistorySnapshotOptions: TFrameHistorySnapshotOptions;
   FrameToolbarOptions: TFrameToobarOptions;
 
+  procedure SetFrameHelpKeyword(Fm: TFrame; KeywordSuffix: AnsiString);
+  begin
+    Fm.HelpKeyword := OptionsDialog.BaseHelpKeyword + '#' + KeywordSuffix;
+  end;
+
 begin
   WasPaused := Spectrum.Paused;
   try
@@ -2011,6 +2055,7 @@ begin
           FrameTapeOptions.AutoShowTapePlayerOnLoadTape := FAutoShowTapePlayerWhenTapeLoaded;
           FrameTapeOptions.FastLoad := FFastLoad;
           FrameTapeOptions.CswCompressionMethodZRle := FCswCompressionMethodZRle;
+          SetFrameHelpKeyword(FrameTapeOptions, 'tape-options');
 
           FrameSnapshotOptions := TFrameSnapshotOptions.CreateForAllOptions(OptionsDialog);
           if not Assigned(FrameSnapshotOptions) then
@@ -2019,6 +2064,7 @@ begin
           FrameSnapshotOptions.CompressRamAndRomBlocks := TSnapshotSZX.CompressMemory;
           FrameSnapshotOptions.SkipTapeInfoSzxLoad := not Assigned(TSnapshotSZX.OnSzxLoadTape);
           FrameSnapshotOptions.SaveTapeInfoSzxSave := Integer(TSnapshotSZX.SaveTapeOptions);
+          SetFrameHelpKeyword(FrameSnapshotOptions, 'snapshot-options');
 
           FrameHistorySnapshotOptions :=
             TFrameHistorySnapshotOptions.CreateForAllOptions(OptionsDialog);
@@ -2027,28 +2073,33 @@ begin
           FrameHistorySnapshotOptions.HistoryEnabled := Assigned(HistoryQueue);
           FrameHistorySnapshotOptions.UpdateValuesFromHistoryOptions(
             SnapshotHistoryOptions);
+          SetFrameHelpKeyword(FrameHistorySnapshotOptions, 'auto-saving-in-memory-snapshots');
 
           FrameColourPalette := TFrameColourPalette.CreateForOptionsDialog(OptionsDialog);
           if not Assigned(FrameColourPalette) then
             Break;
           Spectrum.GetSpectrumColours(Colours);
           FrameColourPalette.LCLColours := Colours;
+          SetFrameHelpKeyword(FrameColourPalette, 'spectrum-colour-palette');
 
           TJoystick.Joystick.GetKeys(AKeys);
           FrameJoystickSetup := TFrameJoystickSetup.CreateForAllOptions(
             OptionsDialog, TJoystick.Joystick.JoystickType, AKeys, TJoystick.Joystick.Enabled);
           if not Assigned(FrameJoystickSetup) then
             Break;
+          SetFrameHelpKeyword(FrameJoystickSetup, 'joystick-options');
 
           FrameKeyMappings := TFrameKeyMappings.CreateFrameKeyMappingsForAllOptions(OptionsDialog);
           if not Assigned(FrameKeyMappings) then
             Break;
           FrameKeyMappings.ParentColor := False;
+          SetFrameHelpKeyword(FrameKeyMappings, 'key-mappings');
 
           FrameSpectrumModel := TFrameSpectrumModel.CreateForAllOptions(
             OptionsDialog, Spectrum, TRomPaths.GetRomPaths);
           if not Assigned(FrameSpectrumModel) then
             Break;
+          SetFrameHelpKeyword(FrameSpectrumModel, 'spectrum-model');
 
           FrameSoundLib := TFrameInputLibraryPath.CreateLibraryPathDialog(
             OptionsDialog, TSoundPlayer.LibPath, @SoundLibraryDialogCheckLoad,
@@ -2059,12 +2110,14 @@ begin
             Break;
           FrameSound.VolLevel := TSoundPlayer.Volume;
           FrameSound.AYOutputMode := Spectrum.AYOutputMode;
+          SetFrameHelpKeyword(FrameSound, 'sound-options');
 
           FrameToolbarOptions := TFrameToobarOptions.CreateForAllOptions(
             OptionsDialog, GetTreeWithToolbarActions, FToolbarActions, Assigned(FToolBar)
           );
           if not Assigned(FrameToolbarOptions) then
             Break;
+          SetFrameHelpKeyword(FrameToolbarOptions, 'toolbar');
 
           OptionsDialog.SetCurrentControlByClass(ControlClass);
 
@@ -3369,6 +3422,7 @@ end;
 procedure TForm1.ShowTapeBrowser();
 var
   TB: TSwanSpeedButtonsBar;
+
 begin
   if FTapeBrowser = nil then begin
     FTapeBrowser := TFormBrowseTape.Create(nil);
@@ -3393,6 +3447,9 @@ begin
             ActionRewind,
             ActionDecTapeBlock,
             ActionIncTapeBlock
+          ],
+          [
+            ActionHelp
           ]);
         TB := nil;
       end;
@@ -3411,6 +3468,8 @@ begin
   if FKeyboardOnScreen = nil then begin
     FKeyboardOnScreen := TFormKeyboardOnScreen.ShowSpectrumKeyboardOnScreen();
     FKeyboardOnScreen.FreeNotification(Self);
+    FKeyboardOnScreen.HelpKeyword :=  'help:Main-menu#on-screen-keyboard';
+
     FKeyboardOnScreen.OnChgSpectrumKeyEx := @KeyFromFormKeyboardOnScreen;
     FKeyboardOnScreen.Show;
     FKeyboardOnScreen.OnKeyDown := @DoOnKeyDown;

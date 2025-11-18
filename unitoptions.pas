@@ -8,9 +8,9 @@ unit UnitOptions;
 interface
 
 uses
-  Classes, SysUtils, Types, CommonFunctionsLCL, UnitCommon, Forms, Controls,
-  Graphics, Dialogs, ExtCtrls, ButtonPanel, Grids, LCLType, LCLIntf, StdCtrls,
-  LazMethodList;
+  Classes, SysUtils, Types, CommonFunctionsLCL, UnitCommon, UnitSwanButtonPanel,
+  Forms, Controls, Graphics, Dialogs, ExtCtrls, ButtonPanel, Grids, LCLType,
+  LCLIntf, StdCtrls, LazMethodList;
 
 type
 
@@ -21,7 +21,6 @@ type
   end;
 
   TFormOptions = class(TForm, IFormAddCloseQuery)
-    ButtonPanel1: TButtonPanel;
     Label1: TLabel;
     Panel1: TPanel;
     Panel2: TPanel;
@@ -52,6 +51,7 @@ type
 
   private
     CloseQueryList: TMethodList;
+    FBaseHelpKeyword: String;
 
     FOptionControlsCount: Integer;
     FOptionControls: Array of TCtrlRec;
@@ -78,6 +78,7 @@ type
     procedure AddCloseQuery(C: TCloseQueryEvent);
     procedure SetCurrentControlByClass(AControlClass: TControlClass);
 
+    property BaseHelpKeyword: String read FBaseHelpKeyword;
     property CurrentControl: TControl read FCurrentControl;
     property OptionControlsCount: Integer read FOptionControlsCount;
   end;
@@ -89,8 +90,13 @@ implementation
 { TFormOptions }
 
 procedure TFormOptions.FormCreate(Sender: TObject);
+var
+  ButtonPanel: TControl;
+
 begin
   Name := TCommonFunctions.GlobalObjectNameGenerator(Self);
+
+  FBaseHelpKeyword := 'help:Options-dialog';
 
   CloseQueryList := nil;
   Label1.Caption := ' ';
@@ -144,6 +150,16 @@ begin
 
   Panel2.AutoSize := True;
   Grid.Parent := Panel2;
+
+  Self.HelpKeyword := FBaseHelpKeyword;
+
+  ButtonPanel := TSwanButtonPanel.Create(Self);
+  ButtonPanel.AnchorParallel(akLeft, 0, Panel1);
+  ButtonPanel.AnchorParallel(akRight, 0, Panel1);
+  ButtonPanel.AnchorParallel(akBottom, 0, Panel1);
+  Panel4.AnchorToNeighbour(akBottom, 0, ButtonPanel);
+  ButtonPanel.BorderSpacing.Around := 6;
+  ButtonPanel.Parent := Panel1;
 end;
 
 procedure TFormOptions.GridOnPrepareCanvas(Sender: TObject; aCol,
@@ -367,7 +383,10 @@ begin
       Label1.Caption := ' ';
 
     FCurrentControl := C;
-
+    if Assigned(C) and (C.HelpKeyword <> '') then
+      Self.HelpKeyword := C.HelpKeyword
+    else
+      Self.HelpKeyword := FBaseHelpKeyword;
   finally
     Screen.EndWaitCursor;
   end;

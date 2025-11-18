@@ -7,10 +7,10 @@ object FormDlgStartAddress: TFormDlgStartAddress
   Caption = 'Load binary file to RAM'
   ClientHeight = 153
   ClientWidth = 296
+  Position = poMainFormCenter
+  LCLVersion = '4.5.0.0'
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
-  Position = poMainFormCenter
-  LCLVersion = '3.3.0.0'
   object Panel2: TPanel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner

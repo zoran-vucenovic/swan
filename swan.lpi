@@ -792,6 +792,16 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="UnitSaveCSW"/>
       </Unit>
+      <Unit>
+        <Filename Value="unitonlinehelp.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitOnlineHelp"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitswanbuttonpanel.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="UnitSwanButtonPanel"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

@@ -83,6 +83,7 @@ begin
   Grid.AnchorParallel(akBottom, 0, Panel2);
   Grid.Parent := Panel2;
   Grid.OnDblClick := @GridOnDblClick;
+  HelpKeyword := 'help:';
 
   AfterShow(-1);
 end;

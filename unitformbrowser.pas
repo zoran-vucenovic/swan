@@ -131,8 +131,7 @@ end;
 
 function TFormBrowseTape.AddActionsToolBar(AToolBar: TControl): Boolean;
 begin
-  if Assigned(FToolBar) then
-    FToolBar.Free;
+  FToolBar.Free;
   FToolBar := AToolBar;
   Result := True;
 
@@ -140,7 +139,7 @@ begin
     AToolBar.Anchors := [];
     AToolBar.AnchorParallel(akLeft, 2, Panel4);
     AToolBar.AnchorParallel(akTop, 0, Panel4);
-    AToolBar.AutoSize := True;
+    AToolBar.AnchorParallel(akRight, 2, Panel4);
     AToolBar.Parent := Panel4;
   end;
 end;
@@ -327,6 +326,8 @@ begin
   LoadFromConf;
 
   CommonFunctionsLCL.TCommonFunctionsLCL.GrowFormHeight(Self);
+
+  HelpKeyword := 'help:Tape-player';
   AfterShow(-1);
 end;
 

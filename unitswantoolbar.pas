@@ -53,7 +53,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
 
-    procedure AddButtonActions(AActions: Array of TCustomAction);
+    procedure AddButtonActions(AActionsLeft: Array of TCustomAction; AActionsRight: Array of TCustomAction);
     procedure RemoveAllButtons;
 
     property ImageWidth: Integer read FImageWidth write SetImageWidth;
@@ -258,9 +258,11 @@ begin
   FImages := nil;
   FImageWidth := 0;
   LastSB := nil;
+  AutoSize := True;
 end;
 
-procedure TSwanSpeedButtonsBar.AddButtonActions(AActions: array of TCustomAction);
+procedure TSwanSpeedButtonsBar.AddButtonActions(
+  AActionsLeft: array of TCustomAction; AActionsRight: array of TCustomAction);
 
 var
   I, J: Integer;
@@ -268,6 +270,8 @@ var
   W, L: Integer;
   A: TCustomAction;
   ImgW: Integer;
+  LeArrLeft: Integer;
+  AnchKind: TAnchorKind;
 
 begin
   ImgW := FImageWidth;
@@ -276,11 +280,22 @@ begin
 
   PrevSB := nil;
 
+  LeArrLeft := Length(AActionsLeft);
   DisableAutoSizing;
   try
     L := 0;
-    for I := Low(AActions) to High(AActions) do begin
-      A := AActions[I];
+    AnchKind := TAnchorKind.akLeft;
+    for I := 0 to LeArrLeft + Length(AActionsRight) - 1 do begin
+      if I = LeArrLeft then begin
+        L := 0;
+        PrevSB := nil;
+        AnchKind := akRight;
+      end;
+      if I < LeArrLeft then begin
+        A := AActionsLeft[I];
+      end else begin
+        A := AActionsRight[I - LeArrLeft];
+      end;
 
       if Assigned(A) then begin
 
@@ -314,9 +329,9 @@ begin
           L := L * ((W + 3) div 4);
 
         if PrevSB = nil then
-          SB.AnchorParallel(akLeft, L, Self)
+          SB.AnchorParallel(AnchKind, L, Self)
         else
-          SB.AnchorToNeighbour(akLeft, L, PrevSB);
+          SB.AnchorToNeighbour(AnchKind, L, PrevSB);
 
         SB.ClientWidth := W + 1;
         SB.ClientHeight := W;
@@ -325,6 +340,7 @@ begin
         SB.Action := A;
 
         SB.Parent := Self;
+        SB.SendToBack;
 
         PrevSB := SB;
         L := 0;

@@ -38,7 +38,12 @@ type
     const
       NonBreakSpace: RawByteString = #$c2 + #$a0;
       NarrowNonBreakSpace: RawByteString = #$e2 + #$80 + #$af;
+
+      ApplicationRepository: RawByteString = 'https://github.com/zoran-vucenovic/swan';
   public
+    class function ApplicationHome: RawByteString; static; inline;
+    class function ApplicationHelp: RawByteString; static; inline;
+
     class function GlobalClassNameGenerator(C: TClass): String; static;
     class function GlobalObjectNameGenerator(Obj: TObject): String; static;
     class function SpectrumCharToUtf8(const Is128K: Boolean; const S: RawByteString): RawByteString; static;
@@ -54,6 +59,16 @@ type
   end;
 
 implementation
+
+class function TCommonFunctions.ApplicationHome: RawByteString;
+begin
+  Result := ApplicationRepository;
+end;
+
+class function TCommonFunctions.ApplicationHelp: RawByteString;
+begin
+  Result := ApplicationRepository + '/wiki';
+end;
 
 class function TCommonFunctions.GlobalClassNameGenerator(C: TClass): String;
 begin

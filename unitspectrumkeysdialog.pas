@@ -23,6 +23,8 @@ type
     Label3: TLabel;
     Panel1: TPanel;
     Panel2: TPanel;
+    Panel3: TPanel;
+    Panel4: TPanel;
     PanelViewKeys: TPanel;
     PanelSpectrumKeys: TPanel;
     procedure FormCreate(Sender: TObject);
@@ -46,7 +48,10 @@ implementation
 { TFormSpectrumKeysDialog }
 
 procedure TFormSpectrumKeysDialog.FormCreate(Sender: TObject);
+var
+  HelpControl: TControl;
 begin
+  Panel4.Hide;
   PCKeyText := ' ';
   ControlSpectrumKeysText := nil;
   Label1.ShowAccelChar := False;
@@ -67,6 +72,20 @@ begin
   Label2.Font.Style := Label2.Font.Style + [fsBold];
   Label2.Font.Color := clNavy;
   Label2.Font.Size := 10;
+
+  HelpKeyword := 'help:Key-mappings#mapping-a-key-step-by-step';
+
+  if Assigned(TCommonFunctionsLCL.OnGetHelpControl) then begin
+    HelpControl := TCommonFunctionsLCL.OnGetHelpControl(Panel4);
+    if Assigned(HelpControl) then begin
+      HelpControl.AnchorParallel(akTop, 0, Panel4);
+      HelpControl.AnchorParallel(akRight, 0, Panel4);
+
+      HelpControl.Parent := Panel4;
+      Panel4.AutoSize := True;
+      Panel4.Show;
+    end;
+  end;
 end;
 
 procedure TFormSpectrumKeysDialog.FormDestroy(Sender: TObject);

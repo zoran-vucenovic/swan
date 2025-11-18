@@ -53,6 +53,7 @@ begin
   Panel1.Constraints.MinHeight := Panel1.Height;
   Panel1.AutoSize := True;
   FilePath := '';
+  HelpKeyword := 'help:';
   AddHandlerFirstShow(@FormFirstShow);
 end;
 

@@ -8,8 +8,8 @@ unit UnitFormForOptionsBasic;
 interface
 
 uses
-  Classes, SysUtils, CommonFunctionsLCL, UnitCommon, Forms, ButtonPanel,
-  LazMethodList, Controls;
+  Classes, SysUtils, CommonFunctionsLCL, UnitCommon, UnitSwanButtonPanel, Forms,
+  ButtonPanel, LazMethodList, Controls;
 
 type
 
@@ -17,7 +17,7 @@ type
   private
     CloseQueryList: TMethodList;
     MainControl: TControl;
-    BP: TButtonPanel;
+    ButtonPanel: TSwanButtonPanel;
     Panel1: TCustomControl;
     FFixConstraints: Boolean;
 
@@ -25,13 +25,14 @@ type
 
   protected
     procedure DoShow; override;
-  public
+  private
     const
       DefaultPanelButtons = [TPanelButton.pbOK, TPanelButton.pbCancel];
-      //DefaultPanelButtonsWithHelp: TPanelButtons = [TPanelButton.pbOK, TPanelButton.pbCancel, TPanelButton.pbHelp];
+      DefaultPanelButtonsWithHelp: TPanelButtons = DefaultPanelButtons + [TPanelButton.pbHelp];
+
   public
     constructor CreateForControl(AOwner: TComponent; C: TControl;
-      AFixConstraints: Boolean; Buttons: TPanelButtons = DefaultPanelButtons);
+      AFixConstraints: Boolean; const AHelpKeyword: AnsiString);
     destructor Destroy; override;
 
     function CloseQuery: Boolean; override;
@@ -83,10 +84,10 @@ begin
       Panel1.AutoSize := False;
 
       MainControl.AnchorParallel(akLeft, 0, Panel1);
-      if Assigned(BP) then begin
-        BP.Anchors := BP.Anchors - [akTop];
-        BP.AnchorParallel(akBottom, 0, Panel1);
-        MainControl.AnchorToNeighbour(akBottom, 0, BP);
+      if Assigned(ButtonPanel) then begin
+        ButtonPanel.Anchors := ButtonPanel.Anchors - [akTop];
+        ButtonPanel.AnchorParallel(akBottom, 0, Panel1);
+        MainControl.AnchorToNeighbour(akBottom, 0, ButtonPanel);
       end else begin
         MainControl.AnchorParallel(akBottom, 0, Panel1);
       end;
@@ -111,7 +112,7 @@ begin
 end;
 
 constructor TFormForOptionsBasic.CreateForControl(AOwner: TComponent;
-  C: TControl; AFixConstraints: Boolean; Buttons: TPanelButtons);
+  C: TControl; AFixConstraints: Boolean; const AHelpKeyword: AnsiString);
 
 begin
   if C = nil then
@@ -124,7 +125,6 @@ begin
   //BorderStyle := bsSingle;
   BorderIcons := BorderIcons - [TBorderIcon.biMaximize, TBorderIcon.biMinimize];
 
-  BP := nil;
   MainControl := C;
   Caption := C.Caption;
 
@@ -139,20 +139,16 @@ begin
   C.AnchorParallel(akRight, 0, Panel1);
   C.AnchorParallel(akTop, 0, Panel1);
 
-  if Buttons <> [] then begin
-    BP := TButtonPanel.Create(Panel1);
-    BP.Name := TCommonFunctions.GlobalObjectNameGenerator(BP);
-    BP.Align := alNone;
-    BP.Anchors := [];
-    BP.ShowBevel := False;
-    BP.ShowButtons := Buttons;
+  ButtonPanel := TSwanButtonPanel.Create(Self);
 
-    BP.AnchorParallel(akRight, 0, Panel1);
-    BP.AnchorToNeighbour(akTop, 0, C);
-    BP.BorderSpacing.Around := 6;
+  Self.HelpKeyword := AHelpKeyword;
 
-    BP.Parent := Panel1;
-  end;
+  ButtonPanel.AnchorParallel(akRight, 0, Panel1);
+  ButtonPanel.AnchorToNeighbour(akTop, 0, C);
+  ButtonPanel.AnchorParallel(akLeft, 0, Panel1);
+  ButtonPanel.BorderSpacing.Around := 6;
+
+  ButtonPanel.Parent := Panel1;
 
   C.Parent := Panel1;
   CloseQueryList := nil;
@@ -183,4 +179,3 @@ begin
 end;
 
 end.
-
