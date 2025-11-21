@@ -422,7 +422,7 @@ begin
   Label3.Font.Color := clMaroon;
   Label3.Font.Style := Label3.Font.Style + [fsBold];
   Label3.Caption := 'Note: ';
-  Label2.Caption := 'When Joystick is enabled, then key mappings to joystick, defined here, take precedence over key mappings to spectrum keys.';
+  Label2.Caption := 'When joystick is enabled, then key mappings to joystick, defined here, take precedence over key mappings to Spectrum keys.';
   Panel1.BevelOuter := bvNone;
   Panel2.BevelOuter := bvNone;
 

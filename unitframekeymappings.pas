@@ -298,7 +298,7 @@ begin
   Label5.Font.Style := Label5.Font.Style + [fsBold];
   Label5.Font.Color := clMaroon;
   Label4.Caption :=
-    'When Joystick is enabled, then key mappings to joystick take precedence over mappings to spectrum keys defined here.';
+    'When joystick is enabled, then key mappings to joystick take precedence over mappings to Spectrum keys defined here.';
   Label4.Font.Color := clMaroon;
 
   PanelAddRemoveScheme.BevelOuter := bvNone;

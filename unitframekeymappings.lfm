@@ -5,6 +5,7 @@ object FrameKeyMappings: TFrameKeyMappings
   Width = 448
   ClientHeight = 693
   ClientWidth = 448
+  LCLVersion = '4.5.0.0'
   TabOrder = 0
   DesignLeft = 394
   DesignTop = 31
