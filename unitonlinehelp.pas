@@ -1,6 +1,9 @@
 unit UnitOnlineHelp;
+// Copyright 2022-2025 Zoran Vučenović
+// SPDX-License-Identifier: Apache-2.0
 
 {$mode ObjFPC}{$H+}
+{$i zxinc.inc}
 
 interface
 
