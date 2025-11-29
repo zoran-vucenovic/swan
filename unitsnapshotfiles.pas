@@ -59,17 +59,12 @@ type
     function SaveToSpectrum(const ASpectrum: TSpectrum): Boolean;
   end;
 
-  TSpectrumFile = class(TObject)
+  TSnapshot = class abstract (TObject)
   strict protected
     FSpectrum: TSpectrum;
-  public
-    procedure SetSpectrum(Value: TSpectrum);
-  end;
-
-  TSnapshot = class abstract (TSpectrumFile)
-  protected
     procedure RaiseSnapshotLoadError(const S: AnsiString);
   public
+    procedure SetSpectrum(Value: TSpectrum);
     function LoadFromStream(const Stream: TStream): Boolean; virtual; abstract;
     function SaveToStream(const Stream: TStream): Boolean; virtual; abstract;
   end;
@@ -77,7 +72,6 @@ type
   TSnapshotFile = class abstract (TSnapshot)
   public
     class function GetDefaultExtension: String; virtual; abstract;
-    function LoadFromFile(const FileName: String): Boolean;
     function SaveToFile(const FileName: String): Boolean;
   end;
 
@@ -368,35 +362,17 @@ begin
 
 end;
 
-{ TSpectrumFile }
-
-procedure TSpectrumFile.SetSpectrum(Value: TSpectrum);
-begin
-  FSpectrum := Value;
-end;
-
 procedure TSnapshot.RaiseSnapshotLoadError(const S: AnsiString);
 begin
   raise ESnapshotLoadError.Create(S);
 end;
 
-{ TSnapshotFile }
-
-function TSnapshotFile.LoadFromFile(const FileName: String): Boolean;
-var
-  Stream: TStream;
+procedure TSnapshot.SetSpectrum(Value: TSpectrum);
 begin
-  Result := False;
-  try
-    Stream := TFileStream.Create(FileName, fmOpenRead);
-    try
-      Result := LoadFromStream(Stream);
-    finally
-      Stream.Free;
-    end;
-  except
-  end;
+  FSpectrum := Value;
 end;
+
+{ TSnapshotFile }
 
 function TSnapshotFile.SaveToFile(const FileName: String): Boolean;
 var
