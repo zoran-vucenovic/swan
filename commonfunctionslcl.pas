@@ -40,7 +40,7 @@ type
   public
     class function CreateLinkLabel(AOwner: TComponent; const ACaption: String = ''): TCustomLabel;
     class procedure FormToScreenCentre(Form: TCustomForm); static;
-    class procedure GrowFormHeight(F: TCustomForm); static;
+    class procedure GrowFormHeight(AForm: TCustomForm); static;
     class procedure AdjustFormPos(Form: TCustomForm; Horizontal: Boolean = False; FormTo: TCustomForm = nil); static;
     class procedure CalculateTextSize(const F: TFont;
         const S: String; out ATextSize: TSize); static;
@@ -348,10 +348,18 @@ var
   M: TMonitor;
   R, FormRect: TRect;
   L, T: Integer;
+  F: TCustomForm;
+
 begin
-  Form.HandleNeeded;
-  if Form.HandleAllocated then begin
-    M := Screen.MonitorFromWindow(Form.Handle);
+  F := Screen.ActiveCustomForm;
+  if F = nil then
+    F := Application.MainForm;
+  if F = nil then
+    F := Form;
+  F.HandleNeeded;
+
+  if F.HandleAllocated then begin
+    M := Screen.MonitorFromWindow(F.Handle);
     R := M.WorkareaRect;
     if (R.Right <= R.Left) or (R.Bottom <= R.Top) then
       R := M.BoundsRect;
@@ -367,25 +375,32 @@ begin
       L := L - Form.Width;
     end;
 
-    T := T div 2;
-    if T < R.Top then
-      T := R.Top;
+    if T < 0 then
+      T := R.Top
+    else
+      T := R.Top + T div 2;
 
-    L := L div 2;
-    if L < R.Left then
-      L := R.Left;
+    if L < 0 then
+      L := R.Left
+    else
+      L := R.Left + L div 2;
 
     Form.SetBounds(L, T, Form.Width, Form.Height);
   end;
 
 end;
 
-class procedure TCommonFunctionsLCL.GrowFormHeight(F: TCustomForm);
+class procedure TCommonFunctionsLCL.GrowFormHeight(AForm: TCustomForm);
 var
   M: TMonitor;
   H: Integer;
   R: TRect;
+  F: TCustomForm;
+
 begin
+  F := Application.MainForm;
+  if F = nil then
+    F := AForm;
   F.HandleNeeded;
   M := Screen.MonitorFromWindow(F.Handle);
   R := M.WorkareaRect;
@@ -393,10 +408,10 @@ begin
     R := M.BoundsRect;
 
   H := (R.Height * 21) div 23;
-  if F.BorderStyle <> TFormBorderStyle.bsNone then
+  if AForm.BorderStyle <> TFormBorderStyle.bsNone then
     H := H - 26;
-  if F.Height < H then
-    F.Height := H;
+  if AForm.Height < H then
+    AForm.Height := H;
 end;
 
 class procedure TCommonFunctionsLCL.AdjustFormPos(Form: TCustomForm;
@@ -429,7 +444,7 @@ begin
       N := 6;
       Nn := N;
       if not Horizontal then begin
-        P.X := (R.Width - FormTo.Width) div 2;
+        P.X := R.Left + (R.Width - FormTo.Width) div 2;
         if FormTo.Left < P.X then begin
           P.X := FormTo.BoundsRect.Right + N;
         end else begin
@@ -438,7 +453,7 @@ begin
             P.X := P.X - N;
         end;
 
-        K := R.Width - W;
+        K := R.Right - W;
 
         if Form.BorderStyle <> bsNone then begin
           R.Bottom := R.Bottom - 27 - N;
@@ -454,7 +469,7 @@ begin
         end;
 
       end else begin
-        K := R.Height - H;
+        K := R.Bottom - H;
 
         if Form.BorderStyle <> bsNone then begin
           Nn := N + 27;
@@ -462,7 +477,7 @@ begin
           K := K - 27;
         end;
 
-        P.Y := (R.Height - FormTo.Height) div 2;
+        P.Y := R.Top + (R.Height - FormTo.Height) div 2;
         if FormTo.Top < P.Y then begin
           P.Y := FormTo.BoundsRect.Bottom + Nn + N;
         end else begin
@@ -479,10 +494,10 @@ begin
 
       end;
 
-      if P.X < 0 then
-        P.X := 0;
-      if P.Y < 0 then
-        P.Y := 0;
+      if P.X < R.Left then
+        P.X := R.Left;
+      if P.Y < R.Top then
+        P.Y := R.Top;
 
       Form.SetBounds(P.X, P.Y, W, H);
     end;
