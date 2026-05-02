@@ -48,6 +48,7 @@ type
     FlCtrlsIff: TFlagsCtrl;
     FlCtrlsInterruptPin: TFlagsCtrl;
     FlCtrlsHalt: TFlagsCtrl;
+    FlCtrlsQ: TFlagsCtrl;
 
     InterruptModeCtrl: TCustomControl;
     LabInterruptMode: TLabel;
@@ -369,11 +370,13 @@ begin
 
   FlCtrlsInterruptPin := TFlagsCtrl.Create(nil, ['interrupt pin'], True, False);
   FlCtrlsHalt := TFlagsCtrl.Create(nil, ['halt'], True, False);
+  FlCtrlsQ := TFlagsCtrl.Create(nil, ['Q'], True, False);
 
   FlCtrlsInterruptPin.Anchors := [];
   FlCtrlsHalt.Anchors := [];
   FlCtrlsIff.Anchors := [];
   FlCtrlsFlags.Anchors := [];
+  FlCtrlsQ.Anchors := [];
 
   FlCtrlsFlags.AnchorParallel(akLeft, 0, FlagsContainer);
   FlCtrlsFlags.AnchorParallel(akTop, 0, FlagsContainer);
@@ -423,6 +426,12 @@ begin
   InterruptModeCtrl.AutoSize := True;
   InterruptModeCtrl.Color := FlCtrlsHalt.Color;
 
+  FlCtrlsQ.AnchorToNeighbour(akTop, SpcRegs, InterruptModeCtrl);
+  FlCtrlsQ.AnchorParallel(akRight, 0, InterruptModeCtrl);
+  FlCtrlsQ.Hint := 'One bit "register Q"' + LineEnding + 'Set if the latest instruction modified flags';
+  FlCtrlsQ.ShowHint := True;
+  FlCtrlsQ.Parent := RegistersContainer;
+
   FlagsContainer.AnchorToNeighbour(akLeft, SpcRegs, InterruptModeCtrl);
   FlagsContainer.AnchorParallel(akTop, 0, InterruptModeCtrl);
 
@@ -462,6 +471,7 @@ begin
   LabInterruptMode.Free;
   LabInterruptModeValue.Free;
 
+  FlCtrlsQ.Free;
   FlCtrlsHalt.Free;
   FlCtrlsInterruptPin.Free;
   FlCtrlsFlags.Free;
@@ -513,6 +523,12 @@ begin
     else
       B := 0;
     FlCtrlsInterruptPin.SetValues(B);
+
+    if AProc.FlagsModified then
+      B := 1
+    else
+      B := 0;
+    FlCtrlsQ.SetValues(B);
 
     LabInterruptModeValue.Caption := AProc.InterruptMode.ToString;
   end;
