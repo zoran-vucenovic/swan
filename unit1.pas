@@ -1996,8 +1996,6 @@ begin
 end;
 
 function TForm1.DoGetHelpControl(AOwner: TComponent): TControl;
-var
-  Sb: TSpeedButton;
 begin
   Result := CreateHelpSpeedButton(AOwner, 24);
 end;
