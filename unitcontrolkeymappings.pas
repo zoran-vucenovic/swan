@@ -11,9 +11,15 @@ uses
   Classes, SysUtils, Types, fgl, UnitKeyMaps, CommonFunctionsLCL,
   UnitKeyMapRecords, UnitSpectrumKeysDialog, UnitCommonSpectrum, UnitCommon,
   Forms, Controls, ExtCtrls, StdCtrls, LCLType,
-  Graphics, LMessages;
+  Graphics, LMessages, LazVersion;
+
+{$if laz_fullversion >= 04990000}
+  {$define OnUserInputEvent_expects_LMessage}
+{$endif}
 
 type
+
+  { TOnePCKeyMappingControl }
 
   TOnePCKeyMappingControl = class(TCustomControl)
   private
@@ -78,7 +84,11 @@ type
 
     function FindSpectrumKeyControl(const AValue: Word): TOneSpectrumKeyControl;
     procedure OnClickLabEditSpectrumKeys(Sender: TObject);
+    {$ifdef OnUserInputEvent_expects_LMessage}
+    procedure UserInputEvent(Sender: TObject; var Msg: TLMessage);
+    {$else}
     procedure UserInputEvent(Sender: TObject; Msg: Cardinal);
+    {$endif}
     procedure PanelPCKeyResize(Sender: TObject);
   protected
     procedure DoOnResize; override;
@@ -446,8 +456,6 @@ begin
   Result := Trim(LabPlus.Caption) <> '';
 end;
 
-{ TOnePCKeyMappingControl }
-
 procedure TOnePCKeyMappingControl.SetPCKey(AValue: Word);
 var
   S: String;
@@ -522,9 +530,17 @@ begin
   end;
 end;
 
+{$ifdef OnUserInputEvent_expects_LMessage}
+procedure TOnePCKeyMappingControl.UserInputEvent(Sender: TObject; var Msg: TLMessage);
+{$else}
 procedure TOnePCKeyMappingControl.UserInputEvent(Sender: TObject; Msg: Cardinal);
+{$endif}
 begin
+  {$ifdef OnUserInputEvent_expects_LMessage}
+  case Msg.msg of
+  {$else}
   case Msg of
+  {$endif}
     LM_LBUTTONDOWN, LM_RBUTTONDOWN:
       if MouseInClient and CanSetFocus then
         SetFocus;

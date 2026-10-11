@@ -10,7 +10,11 @@ interface
 uses
   Classes, SysUtils, Types, UnitKeyMaps, CommonFunctionsLCL, UnitCommonSpectrum,
   UnitSpectrumColourMap, Controls, StdCtrls, Graphics, LMessages, Forms,
-  LCLType;
+  LCLType, LazVersion;
+
+{$if laz_fullversion >= 04990000}
+  {$define OnUserInputEvent_expects_LMessage}
+{$endif}
 
 type
 
@@ -74,7 +78,11 @@ type
                       {%H-}Shift: TShiftState; {%H-}X, {%H-}Y: Integer);
     procedure MouseEventRelease(Sender: TObject; {%H-}Button: TMouseButton;
                       {%H-}Shift: TShiftState; {%H-}X, {%H-}Y: Integer);
+    {$ifdef OnUserInputEvent_expects_LMessage}
+    procedure UserInputEvent(Sender: TObject; var Msg: TLMessage);
+    {$else}
     procedure UserInputEvent(Sender: TObject; Msg: Cardinal);
+    {$endif}
   private
     KeyValue: Word;
     Lab: TLabel;
@@ -681,10 +689,17 @@ begin
   SetChecked(False);
 end;
 
-procedure TSpectrumKeyButtonControl.UserInputEvent(Sender: TObject; Msg: Cardinal
-  );
+{$ifdef OnUserInputEvent_expects_LMessage}
+procedure TSpectrumKeyButtonControl.UserInputEvent(Sender: TObject; var Msg: TLMessage);
+{$else}
+procedure TSpectrumKeyButtonControl.UserInputEvent(Sender: TObject; Msg: Cardinal);
+{$endif}
 begin
+  {$ifdef OnUserInputEvent_expects_LMessage}
+  case Msg.msg of
+  {$else}
   case Msg of
+  {$endif}
     LM_MOUSEMOVE, LM_MOUSEENTER, LM_MOUSELEAVE:
       begin
         if (CanSetFocus and MouseInClient) xor LastMouseInClient then begin

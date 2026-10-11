@@ -11,7 +11,11 @@ uses
   Classes, SysUtils, Types, UnitSnapshotFiles, UnitHistorySnapshots,
   CommonFunctionsLCL, UnitControlScreenBitmap, UnitSpectrumColoursBGRA,
   UnitFrameHistorySnapshotOptions, UnitSwanButtonPanel, Forms, Controls,
-  Graphics, Dialogs, ExtCtrls, StdCtrls, LMessages, ButtonPanel;
+  Graphics, Dialogs, ExtCtrls, StdCtrls, LMessages, LazVersion;
+
+{$if laz_fullversion >= 04990000}
+  {$define OnUserInputEvent_expects_LMessage}
+{$endif}
 
 type
   TFormHistorySnapshots = class(TForm)
@@ -66,7 +70,11 @@ type
     AB: Array of Byte;
     LastSelected: Boolean;
 
+    {$ifdef OnUserInputEvent_expects_LMessage}
+    procedure UserInputEvent(Sender: TObject; var Msg: TLMessage);
+    {$else}
     procedure UserInputEvent(Sender: TObject; Msg: Cardinal);
+    {$endif}
   protected
 
   public
@@ -78,9 +86,17 @@ type
 
 { TSnapshotControl }
 
+{$ifdef OnUserInputEvent_expects_LMessage}
+procedure TSnapshotControl.UserInputEvent(Sender: TObject; var Msg: TLMessage);
+{$else}
 procedure TSnapshotControl.UserInputEvent(Sender: TObject; Msg: Cardinal);
+{$endif}
 begin
+  {$ifdef OnUserInputEvent_expects_LMessage}
+  case Msg.msg of
+  {$else}
   case Msg of
+  {$endif}
     LM_LBUTTONDOWN, LM_RBUTTONDOWN:
       if MouseInClient and CanSetFocus then
         SetFocus;
